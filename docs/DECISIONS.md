@@ -158,13 +158,33 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 
 ## ADR-016 — IPC runtime validation
 
-- **Status:** Accepted principle; implementation mechanism TBD during early Phase 2
+- **Status:** Accepted
 - **Context:** Renderer-to-main IPC crosses the privileged Electron boundary. TypeScript compile-time types do not validate values received at runtime.
 - **Options:** Hand-written validators; Zod; Valibot; another lightweight schema-validation mechanism.
-- **Selected option:** Runtime validation is mandatory for every renderer-to-main IPC request before it reaches a domain service. The exact mechanism remains `TBD` during early Phase 2. Prefer small explicit validators by default unless contract scale demonstrates that a schema library provides sufficient benefit. A type assertion such as `as SomeRequest` is not validation.
-- **Rationale:** Privileged handlers must reject malformed or over-authorized input independently of renderer correctness, without selecting a package before contract scale is known.
-- **Consequences:** Validation occurs at the privileged boundary; invalid payloads map to `INVALID_INPUT`; domain services receive validated data; no schema library may be added without recording the decision; no generic unrestricted IPC payload is allowed.
-- **Phase:** 1 principle; early Phase 2 mechanism gate.
+- **Selected option:** Use small explicit validators for Phase 2 IPC contracts. Every renderer-to-main request is validated before it reaches a domain service, validators return normalized field-level issues, and a type assertion such as `as SomeRequest` is never treated as validation.
+- **Rationale:** Phase 2A has a small contract surface with simple object, identifier, and path primitives. Explicit validators make the privileged checks auditable and testable without adding a schema runtime or bundling cost. If later contract scale makes duplication or drift material, this ADR must be reopened before adding a schema library.
+- **Consequences:** Validation occurs at the privileged boundary; invalid payloads map to `INVALID_INPUT`; domain services receive validated data; validators and their inferred/narrowed contract types are tested together; no generic unrestricted IPC payload is allowed.
+- **Phase:** 1 principle; mechanism resolved in Phase 2A.
+
+## ADR-017 — External URL and navigation policy
+
+- **Status:** Accepted
+- **Context:** BrowserWindow navigation and external URL opening cross a privileged Electron boundary. The development renderer uses an HTTP origin, but that internal development transport must not authorize arbitrary external HTTP navigation.
+- **Options:** Allow common web/mail protocols; allow HTTPS only; block all external opening.
+- **Selected option:** External opening is limited to validated `https:` URLs. Block `http:`, `mailto:`, `file:`, custom protocols, and every other external protocol. Renderer navigation remains restricted to the exact current application origin; the electron-vite development renderer origin is an internal development exception only, while packaged navigation remains restricted to packaged application content.
+- **Rationale:** HTTPS-only external opening provides the required documentation-link capability with the smallest approved external protocol surface.
+- **Consequences:** Main validates URLs before calling `shell.openExternal`; preload never exposes unrestricted external opening or Electron shell primitives; in-window navigation away from the exact application origin is denied.
+- **Phase:** 2A security policy.
+
+## ADR-018 — Automated test infrastructure
+
+- **Status:** Accepted
+- **Context:** Phase 2A requires executable unit, main/service, IPC-boundary, persistence, security, and lifecycle tests. The repository currently uses Vite/electron-vite with TypeScript and has only a failing placeholder test command.
+- **Options:** Node.js built-in test runner; Jest with a TypeScript transform; Vitest; a full Electron end-to-end runner as the initial test layer.
+- **Selected option:** Use Vitest in its Node environment for Phase 2A unit, main/service, contract, persistence, and adapter-level IPC integration tests. Use explicit Electron port/factory adapters so privileged behavior can be exercised without exposing or heavily mocking live Electron objects. Add full Electron end-to-end tooling only when a later work package has behavior that requires it.
+- **Rationale:** Vitest shares the existing Vite TypeScript transform, supplies assertions/mocking in one compatible dependency, and runs on both CI Node 22 and the supported local Node versions. Node's runner would require a separate TypeScript execution convention; Jest would duplicate the Vite transform; a browser/Electron E2E stack is disproportionate before Phase 2A has renderer workflows.
+- **Consequences:** `npm test` is the stable CI command and runs Vitest once; focused tests use `*.test.ts`; CI runs tests after typecheck and lint; renderer DOM tooling is not installed until genuinely needed; real Electron smoke/E2E coverage remains a later incremental gate rather than being claimed by adapter tests.
+- **Phase:** 2A test infrastructure gate.
 
 ## Dependency candidate register
 
@@ -182,3 +202,4 @@ No package is installed by this analysis.
 | HTML/CSS/JSON intelligence | Monaco workers | Built for editor integration | Confirm diagnostics/capability coverage | Worker packaging | TBD Phase 3 |
 | Python intelligence | Pyright provider | Strong completion/diagnostics | Distribution and executable/package lifecycle | PATH/config and child-process packaging | TBD Phase 3 |
 | TypeScript Run | `tsx`, `ts-node`, `tsc` + Node, native Node TS | Multiple viable UX choices | Semantics/version/config trade-offs | Must test Windows invocation/stop | TBD Phase 4 |
+| Automated tests | `vitest` | Reuses Vite/TypeScript transform; unit, service, and adapter integration support | Keep Electron E2E separate until required | No native ABI; CI Node 22 compatible | SELECTED Phase 2A |

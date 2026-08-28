@@ -32,17 +32,19 @@ reference evidence, not source or runtime dependencies.
 ## 3. Current baseline
 
 - Phase 0 and Phase 1 documentation are complete.
-- The source tree remains the Phase 0 foundation: one Electron main entry, an
-  empty preload entry, and a minimal React renderer.
+- Phase 2A now provides application/window lifecycle, shared contracts, validated
+  IPC, a narrow lifecycle preload bridge, project identity/path, persistence,
+  internal cleanup, and automated-test foundations. The React renderer remains
+  the minimal foundation; user-facing Core IDE work begins in Phase 2B.
 - The current BrowserWindow enables `contextIsolation`, disables
   `nodeIntegration`, and enables sandboxing.
-- No Core IDE service, UI, IPC domain, language provider, PTY integration, Run
-  service, Git service, or settings service has been implemented.
+- No Phase 2B+ Explorer/editor/search/terminal UI or service, language provider,
+  PTY integration, Run service, Git service, or settings UX has been implemented.
 - No Orca source, module, submodule, or runtime dependency is present.
 - Existing quality commands are `npm run typecheck`, `npm run lint`, and
   `npm run build`.
-- The current `npm test` script is a placeholder that exits with failure. Test
-  command: `TBD` when test infrastructure is introduced.
+- Vitest is the Phase 2A unit/main/service/adapter integration test runner.
+  `npm test` is the stable non-watch test command and runs in CI.
 
 ## 4. Implementation principles
 
@@ -80,7 +82,7 @@ Section 20 before affected work continues.
 
 | Work | Initial status | Primary outcome |
 |---|---|---|
-| Phase 2A — Core Contracts & Application Foundation | `NOT_STARTED` | Secure contracts and application/service foundation |
+| Phase 2A — Core Contracts & Application Foundation | `COMPLETE` | Secure contracts and application/service foundation |
 | Phase 2B — Project & File Explorer | `NOT_STARTED` | One authorized local project and file operations |
 | Phase 2C — Monaco Editor, Tabs & Save | `NOT_STARTED` | Safe multi-tab editing and unsaved protection |
 | Phase 2D — Project Search | `NOT_STARTED` | Responsive, cancellable project search |
@@ -208,17 +210,14 @@ change dependency direction without an ADR/document update.
 - **ADR-011 — Renderer state management:** resolve during early Phase 2 before
   shared shell/project/editor state expands. Compare actual cross-feature needs;
   do not add a state library by default.
-- **ADR-016 — IPC runtime validation mechanism:** resolve before production IPC
-  handlers multiply. Spike explicit validators and, only if contract scale
-  warrants it, compare a lightweight schema library. No package is selected by
-  this plan.
-- **Test Infrastructure Gate:** resolve before Phase 2A acceptance. Determine the
-  minimum automated setup for unit tests, main/service tests, IPC integration
-  tests, and renderer tests only where they add genuine Phase 2A value. Record
-  the selected framework/tooling, stable project test command(s), any required
-  Electron-specific approach, CI integration implications, and why the setup is
-  sufficient for Phase 2A and reusable by later phases. This plan does not select
-  a framework or install a dependency.
+- **ADR-016 — IPC runtime validation mechanism:** resolved in Phase 2A. Small
+  explicit validators are used for the current contract scale; a schema library
+  requires reopening the ADR if later scale provides contrary evidence.
+- **Test Infrastructure Gate:** resolved in ADR-018. Vitest in its Node
+  environment covers unit, main/service, contract, persistence, and adapter-level
+  IPC integration tests through `npm test`. Electron ports/factories keep tests
+  meaningful without introducing a full E2E stack before renderer workflows
+  require one; CI executes the same stable command.
 
 #### Implementation sequence
 
@@ -257,9 +256,8 @@ change dependency direction without an ADR/document update.
   mapping, subscription cleanup, renderer destruction, shutdown order.
 - Security inspection: BrowserWindow flags, navigation handling, no raw IPC or
   generic command exposure.
-- Automated test framework/tooling and command(s): `TBD` until the Phase 2A Test
-  Infrastructure Gate; they must be selected, recorded, and executable before
-  Phase 2A acceptance.
+- Automated test framework/tooling: Vitest, selected by ADR-018. Stable command:
+  `npm test`; tests use the `*.test.ts` convention and run in CI.
 
 #### Acceptance criteria
 
@@ -288,8 +286,8 @@ change dependency direction without an ADR/document update.
 - Record completed foundation work in `docs/CHANGELOG-THESIS.md` only after
   verification.
 - Update `docs/CODEBASE-MAP.md` for paths that actually exist.
-- Update ADR-011/ADR-016 with evidence and the selected mechanism when their gates
-  are completed.
+- Update ADR-011 only if its gate becomes necessary. ADR-016, ADR-017, and
+  ADR-018 record the validation, external-URL, and test-infrastructure decisions.
 
 ### 8.2 Phase 2B — Project & File Explorer
 
@@ -1105,13 +1103,13 @@ dependency packaging, application packaging, installer, and documentation review
 | Decision | Related ADR | Required before | Current status | What must be verified |
 |---|---|---|---|---|
 | Renderer state management | ADR-011 | Shared Phase 2 shell/project/editor state expands | Proposed; unresolved | Actual cross-feature update needs, lifecycle ownership, complexity, bundle/dependency cost |
-| IPC runtime validation mechanism | ADR-016, ADR-003 | Production IPC handlers multiply in early Phase 2 | Accepted principle; mechanism TBD | Explicit-validator adequacy, contract scale, error mapping, type inference, dependency/security cost |
+| IPC runtime validation mechanism | ADR-016, ADR-003 | Production IPC handlers multiply in early Phase 2 | RESOLVED Phase 2A — explicit validators | Current contracts are small; validators provide normalized issues and audited narrowing without schema runtime cost |
 | React Monaco integration | Dependency candidate register, ADR-006 | Phase 2C Editor implementation | TBD | Model/view ownership, mount/disposal control, workers, build behavior, bundle impact |
 | JS/TS/HTML/CSS/JSON providers | ADR-013, ADR-015 | Phase 3 implementation | Proposed; unresolved | Matrix capabilities, cross-file behavior, sync, lifecycle, development/production-build behavior, provider distribution feasibility, license/maintenance; full packaged/installed verification is Phase 7 |
 | Python/Pyright strategy | ADR-013, ADR-015 | Python Phase 3 implementation | Candidate only; unresolved | Distribution, executable/config discovery, lifecycle, development/production-build behavior, minimal packaging feasibility if needed, logs, Windows behavior, license; full packaged/installed verification is Phase 7 |
 | Large-file language thresholds | Architecture §8 | Phase 3 acceptance for expensive features | TBD | Measured responsiveness/memory while edit/save remains available |
 | TypeScript Run strategy | ADR-014 | TypeScript Phase 4 implementation | Proposed; unresolved | Node versions, ESM/CJS, `tsconfig`, errors/maps, startup, Windows paths, stop/tree cleanup |
-| Test infrastructure and command | Requirement Phase 7 / current package baseline | Phase 2A acceptance, before Phase 2A automated tests are considered complete | TBD; must be resolved during Phase 2A | Unit testing, main/service testing, IPC integration, Electron compatibility, genuinely needed renderer testing, CI behavior, and stable project test command(s) |
+| Test infrastructure and command | ADR-018 / Requirement Phase 7 | Phase 2A acceptance, before Phase 2A automated tests are considered complete | RESOLVED Phase 2A — Vitest; `npm test` | Node-environment unit/main/service/IPC adapter coverage, Vite/TypeScript compatibility, CI Node 22, and later opt-in renderer/Electron E2E tooling only when required |
 
 Decision-gate completion records evidence in `docs/DECISIONS.md` or the relevant
 decision register. This plan does not select any unresolved option.

@@ -1,40 +1,109 @@
-import { app, BrowserWindow } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  shell,
+} from 'electron'
 import { join } from 'node:path'
 
-function createWindow(): void {
-  const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
+import {
+  LIFECYCLE_CHANNELS,
+  type RecentProjectMetadata,
+} from '../shared/contracts'
+import { DesktopApplication } from './app/desktop-application'
+import { FoundationIpcService } from './ipc/foundation-ipc-service'
+import { IpcHandlerRegistry } from './ipc/ipc-handler-registry'
+import { PersistenceService } from './services/persistence/persistence-service'
+import { ProcessManager } from './services/process/process-manager'
+import { ProjectService } from './services/project/project-service'
+import { WindowManager } from './window/window-manager'
 
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+interface AppMetadata {
+  recentProjects: RecentProjectMetadata[]
+}
 
-      // Security foundation
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
+let desktopApplication: DesktopApplication | undefined
+let windowManager: WindowManager | undefined
+let shutdownRequested = false
+let removeLifecyclePublisher: (() => void) | undefined
+
+void app.whenReady().then(async () => {
+  const processManager = new ProcessManager()
+  const projectService = new ProjectService()
+  const persistenceService = new PersistenceService<AppMetadata>({
+    filePath: join(app.getPath('userData'), 'app-state.json'),
+    schemaVersion: 1,
+    defaultValue: () => ({ recentProjects: [] }),
+    validate: isAppMetadata,
+  })
+
+  windowManager = new WindowManager({
+    createWindow: (options) => new BrowserWindow(options),
+    openExternal: (url) => shell.openExternal(url),
+    preloadPath: join(__dirname, '../preload/index.js'),
+    rendererFile: join(__dirname, '../renderer/index.html'),
+    developmentRendererUrl: !app.isPackaged
+      ? process.env.ELECTRON_RENDERER_URL
+      : undefined,
+    onExternalOpenError: () => {
+      console.error('Failed to open an approved external URL.')
     },
   })
 
-  if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
-    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
-  } else {
-    mainWindow.loadFile(
-      join(__dirname, '../renderer/index.html'),
-    )
-  }
-}
+  const ipcRegistry = new IpcHandlerRegistry(ipcMain)
+  const foundationIpc = new FoundationIpcService(
+    ipcRegistry,
+    () => desktopApplication?.getStatus() ?? { state: 'CREATED' },
+  )
 
-app.whenReady().then(() => {
-  createWindow()
+  desktopApplication = new DesktopApplication([
+    persistenceService,
+    processManager,
+    projectService,
+    foundationIpc,
+    windowManager,
+  ])
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
+  removeLifecyclePublisher = desktopApplication.subscribe((status) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (!window.isDestroyed()) {
+        window.webContents.send(LIFECYCLE_CHANNELS.statusChanged, status)
+      }
     }
   })
+
+  await desktopApplication.start()
+}).catch(() => {
+  console.error('Student Coding IDE failed to start.')
+  app.exit(1)
+})
+
+app.on('activate', () => {
+  void windowManager?.ensureMainWindow().catch(() => {
+    console.error('Student Coding IDE failed to create its main window.')
+  })
+})
+
+app.on('before-quit', (event) => {
+  if (!desktopApplication || desktopApplication.getStatus().state === 'STOPPED') {
+    return
+  }
+
+  event.preventDefault()
+  if (shutdownRequested) {
+    return
+  }
+  shutdownRequested = true
+
+  void desktopApplication.shutdown()
+    .catch(() => {
+      console.error('Student Coding IDE cleanup did not finish cleanly.')
+    })
+    .finally(() => {
+      removeLifecyclePublisher?.()
+      removeLifecyclePublisher = undefined
+      app.quit()
+    })
 })
 
 app.on('window-all-closed', () => {
@@ -42,3 +111,26 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
+
+function isAppMetadata(value: unknown): value is AppMetadata {
+  return typeof value === 'object'
+    && value !== null
+    && 'recentProjects' in value
+    && Array.isArray(value.recentProjects)
+    && value.recentProjects.every(isRecentProjectMetadata)
+}
+
+function isRecentProjectMetadata(
+  value: unknown,
+): value is RecentProjectMetadata {
+  return typeof value === 'object'
+    && value !== null
+    && 'id' in value
+    && typeof value.id === 'string'
+    && 'name' in value
+    && typeof value.name === 'string'
+    && 'rootPath' in value
+    && typeof value.rootPath === 'string'
+    && 'lastOpenedAt' in value
+    && typeof value.lastOpenedAt === 'string'
+}
