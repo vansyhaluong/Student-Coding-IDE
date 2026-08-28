@@ -15,7 +15,7 @@ source Orca vào source tree để chỉnh sửa và không kế thừa Git hist
 
 #### 1.2.1. Student Coding IDE repository
 
-* Student Coding IDE repository: <https://github.com/vansyhaluong/IDE>
+* Student Coding IDE repository: <https://github.com/vansyhaluong/Student-Coing-IDE>
 * Repository model: Independent implementation.
 
 Repository này là source repository chính thức của Student Coding IDE. Không gọi
@@ -25,7 +25,7 @@ repository này là Orca fork trong documentation hoặc Git workflow của proj
 
 * Reference repository: <https://github.com/stablyai/orca>
 * Reference branch: `main`
-* Reference Commit: TBD — phải được chốt trong Phase 0.
+* Reference Commit: `4bb337741c335cfcc428d3b4271023566e2dadb8`
 * Reference license: MIT License.
 
 Reference Commit phải được lưu trong `docs/REFERENCE-BASELINE.md` để quá trình
@@ -62,24 +62,26 @@ Orca hoặc sửa Orca thành Student Coding IDE.
 
 ### 1.3. Technology Stack
 
-Stack định hướng ban đầu của Student Coding IDE:
+Stack đã được xác lập qua Phase 0 và các ADR được chấp nhận trong Phase 1:
 
 | Thành phần | Công nghệ / định hướng |
 | --- | --- |
 | Desktop shell | Electron |
-| Renderer UI | React, TypeScript |
-| Build / Development | Vite hoặc electron-vite — TBD trong Phase 0 hoặc Phase 1 |
+| Renderer UI | React + TypeScript |
+| Build / Development | electron-vite |
 | Editor | Monaco Editor |
-| Terminal UI | xterm.js hoặc giải pháp tương đương — TBD trong Phase 1 |
-| Terminal / PTY backend | PTY-based implementation phù hợp Windows — TBD trong Phase 1 |
+| Terminal UI | xterm.js |
+| Terminal / PTY backend | `node-pty`, subject to the Phase 2 Windows/native compatibility gate |
 | Styling | Tailwind CSS |
-| Local persistence | Local application storage phù hợp Electron — TBD trong Phase 1 |
-| Git | Local Git CLI hoặc abstraction phù hợp — TBD trong Phase 1 |
-| Language Intelligence | Language Service / Language Server architecture |
+| Local persistence | Versioned JSON dưới Electron user data, với atomic write, backup và recovery |
+| Git | Local Git CLI phía sau typed GitService |
+| Language Intelligence | Language Service / Language Server architecture; provider selection vẫn TBD trước Phase 3 |
 
 Student Coding IDE là Electron desktop application, không phải Next.js web
-application. Các lựa chọn còn TBD phải được ghi quyết định trong
-`docs/DECISIONS.md` trước khi subsystem tương ứng được implementation.
+application. Các lựa chọn còn TBD hợp lệ, bao gồm renderer shared state library,
+language provider, Python/Pyright distribution và TypeScript Run strategy, phải
+được ghi quyết định trong `docs/DECISIONS.md` trước khi subsystem tương ứng được
+implementation.
 
 ### 1.4. Mục tiêu
 
@@ -98,9 +100,9 @@ Mục tiêu chính là xây dựng một IDE hoạt động ổn định trướ
 
 ---
 
-# 2. Phạm vi dự án
+## 2. Phạm vi dự án
 
-## 2.1. Trong phạm vi
+### 2.1. Trong phạm vi
 
 Phiên bản đầu cần hỗ trợ:
 
@@ -119,7 +121,7 @@ Phiên bản đầu cần hỗ trợ:
 
 ---
 
-## 2.2. Ngoài phạm vi hiện tại
+### 2.2. Ngoài phạm vi hiện tại
 
 Các chức năng sau **chưa thực hiện trong giai đoạn đầu**:
 
@@ -143,9 +145,9 @@ Các chức năng này có thể được nghiên cứu ở phase sau.
 
 ---
 
-# 3. Đối tượng sử dụng
+## 3. Đối tượng sử dụng
 
-## 3.1. Sinh viên / người học lập trình
+### 3.1. Sinh viên / người học lập trình
 
 Người dùng có thể:
 
@@ -162,13 +164,13 @@ Người dùng có thể:
 
 ---
 
-# 4. Yêu cầu chức năng
+## 4. Yêu cầu chức năng
 
-## FR-001 — Mở project
+### FR-001 — Mở project
 
 Người dùng có thể mở một thư mục trên máy làm project.
 
-### Yêu cầu
+#### Yêu cầu
 
 * Cho phép chọn thư mục từ hệ thống.
 * Hiển thị cấu trúc thư mục trong Explorer.
@@ -177,11 +179,11 @@ Người dùng có thể mở một thư mục trên máy làm project.
 
 ---
 
-## FR-002 — Tạo project mới
+### FR-002 — Tạo project mới
 
 Người dùng có thể tạo một project mới.
 
-### Yêu cầu
+#### Yêu cầu
 
 Người dùng nhập:
 
@@ -194,11 +196,11 @@ Giai đoạn đầu có thể chỉ hỗ trợ tạo thư mục project trống.
 
 ---
 
-## FR-003 — Recent Projects
+### FR-003 — Recent Projects
 
 Hệ thống lưu danh sách các project đã mở gần đây.
 
-### Yêu cầu
+#### Yêu cầu
 
 Hiển thị:
 
@@ -210,9 +212,9 @@ Người dùng có thể nhấn vào project để mở lại.
 
 ---
 
-# 5. File Explorer
+## 5. File Explorer
 
-## FR-004 — Hiển thị cấu trúc project
+### FR-004 — Hiển thị cấu trúc project
 
 Explorer phải hiển thị:
 
@@ -224,7 +226,7 @@ Dạng cây thư mục.
 
 ---
 
-## FR-005 — Tạo file
+### FR-005 — Tạo file
 
 Người dùng có thể:
 
@@ -243,7 +245,7 @@ main.py
 
 ---
 
-## FR-006 — Tạo folder
+### FR-006 — Tạo folder
 
 Người dùng có thể tạo folder mới trong project.
 
@@ -258,7 +260,7 @@ models/
 
 ---
 
-## FR-007 — Rename
+### FR-007 — Rename
 
 Cho phép đổi tên:
 
@@ -267,7 +269,7 @@ Cho phép đổi tên:
 
 ---
 
-## FR-008 — Delete
+### FR-008 — Delete
 
 Cho phép xóa:
 
@@ -279,9 +281,9 @@ nguy cơ làm mất dữ liệu.
 
 ---
 
-# 6. Code Editor
+## 6. Code Editor
 
-## FR-009 — Mở file
+### FR-009 — Mở file
 
 Khi người dùng chọn file trong Explorer:
 
@@ -291,7 +293,7 @@ Khi người dùng chọn file trong Explorer:
 
 ---
 
-## FR-010 — Multiple Tabs
+### FR-010 — Multiple Tabs
 
 Cho phép mở nhiều file cùng lúc dưới dạng tab.
 
@@ -309,13 +311,13 @@ Người dùng có thể:
 
 ---
 
-## FR-011 — Syntax Highlighting
+### FR-011 — Syntax Highlighting
 
 Editor phải hỗ trợ tô màu syntax theo ngôn ngữ.
 
 Mức hỗ trợ ngôn ngữ của phiên bản đầu được chia thành các tier:
 
-### Tier 1 — Language Intelligence và Run
+#### Tier 1 — Language Intelligence và Run
 
 Các ngôn ngữ cần được ưu tiên triển khai đầy đủ:
 
@@ -334,7 +336,7 @@ Acceptance criteria tối thiểu cho mỗi ngôn ngữ Tier 1:
 * Problems panel.
 * Run.
 
-### Tier 2 — Language Intelligence
+#### Tier 2 — Language Intelligence
 
 Các ngôn ngữ cần hỗ trợ:
 
@@ -352,7 +354,7 @@ Acceptance criteria tối thiểu cho mỗi ngôn ngữ Tier 2:
 
 Tier 2 không bắt buộc hỗ trợ Run trong V1.
 
-### Tier 3 — Mở rộng sau khi Tier 1 và Tier 2 ổn định
+#### Tier 3 — Mở rộng sau khi Tier 1 và Tier 2 ổn định
 
 Trong phiên bản đầu, các ngôn ngữ sau có thể chỉ hỗ trợ syntax highlighting:
 
@@ -368,7 +370,7 @@ Test Explorer.
 
 ---
 
-## FR-012 — Auto Save / Manual Save
+### FR-012 — Auto Save / Manual Save
 
 Người dùng có thể lưu file bằng:
 
@@ -380,7 +382,7 @@ Auto Save được bật hoặc tắt trong Settings theo FR-036.
 
 ---
 
-## FR-013 — Unsaved Changes Protection
+### FR-013 — Unsaved Changes Protection
 
 IDE phải bảo vệ file có thay đổi chưa được lưu khi người dùng:
 
@@ -402,13 +404,13 @@ NFR-004 — Data Safety.
 
 ---
 
-## FR-014 — Line Number
+### FR-014 — Line Number
 
 Editor hiển thị số dòng.
 
 ---
 
-## FR-015 — Search trong file
+### FR-015 — Search trong file
 
 Cho phép tìm kiếm nội dung trong file hiện tại.
 
@@ -420,7 +422,7 @@ Ctrl + F
 
 ---
 
-## FR-016 — Search trong project
+### FR-016 — Search trong project
 
 Cho phép tìm kiếm text trên toàn bộ project.
 
@@ -441,7 +443,7 @@ Search toàn project phải:
 
 ---
 
-## FR-017 — IntelliSense
+### FR-017 — IntelliSense
 
 Đối với các ngôn ngữ Tier 1, IDE phải hỗ trợ:
 
@@ -459,6 +461,15 @@ Find References là optional enhancement và không phải acceptance criteria c
 
 Kiến trúc phải ưu tiên sử dụng giao thức hoặc language service tiêu chuẩn,
 không triển khai logic IntelliSense riêng cho từng ngôn ngữ bên trong editor.
+
+Runtime và dependency detection phải dùng các trạng thái khái niệm:
+
+```text
+NOT_CONFIGURED
+MISSING
+AVAILABLE
+INVALID_CONFIGURATION
+```
 
 Language Service Manager phải expose ít nhất các trạng thái khái niệm:
 
@@ -487,12 +498,12 @@ Ví dụ với Python, Python runtime dùng để chạy chương trình; Python
 service dùng cho IntelliSense và diagnostics. Khi runtime AVAILABLE nhưng
 language service MISSING, Run vẫn phải hoạt động và IDE phải báo lý do Language
 Intelligence không hoạt động. Khi runtime MISSING nhưng language service
-AVAILABLE, Language Intelligence vẫn có thể hoạt động và Run phải báo thiếu
+RUNNING, Language Intelligence vẫn có thể hoạt động và Run phải báo thiếu
 runtime.
 
 ---
 
-## FR-018 — Diagnostics
+### FR-018 — Diagnostics
 
 Đối với các ngôn ngữ thuộc Tier 1 và Tier 2, IDE phải:
 
@@ -508,9 +519,9 @@ chức năng Run Code.
 
 ---
 
-# 7. Terminal
+## 7. Terminal
 
-## FR-019 — Integrated Terminal
+### FR-019 — Integrated Terminal
 
 IDE cung cấp terminal tích hợp.
 
@@ -527,7 +538,7 @@ git status
 
 ---
 
-## FR-020 — Multiple Terminal
+### FR-020 — Multiple Terminal
 
 Có thể mở nhiều terminal session.
 
@@ -541,7 +552,7 @@ Terminal 3
 
 ---
 
-## FR-021 — Terminal Working Directory
+### FR-021 — Terminal Working Directory
 
 Khi mở terminal trong project, working directory mặc định phải là thư mục project.
 
@@ -553,9 +564,9 @@ D:\Projects\MyApp
 
 ---
 
-# 8. Run Code
+## 8. Run Code
 
-## FR-022 — Run Current File
+### FR-022 — Run Current File
 
 Người dùng có thể chạy file hiện tại bằng nút:
 
@@ -585,7 +596,7 @@ criteria của V1.
 
 ---
 
-## FR-023 — Run Project
+### FR-023 — Run Project
 
 Trong V1, built-in Run Project ưu tiên:
 
@@ -594,7 +605,7 @@ Trong V1, built-in Run Project ưu tiên:
 
 Ví dụ:
 
-### Node.js
+#### Node.js
 
 ```bash
 npm run dev
@@ -607,9 +618,9 @@ sau này. Framework auto-detection cũng không thuộc V1.
 
 ---
 
-# 9. Output Panel
+## 9. Output Panel
 
-## FR-024 — Hiển thị Output
+### FR-024 — Hiển thị Output
 
 Khi chạy chương trình, output được hiển thị trong một panel riêng.
 
@@ -622,7 +633,7 @@ Process exited with code 0
 
 ---
 
-## FR-025 — Hiển thị Error
+### FR-025 — Hiển thị Error
 
 Nếu chương trình lỗi, hệ thống hiển thị:
 
@@ -639,7 +650,7 @@ Process exited with code 1
 
 ---
 
-## FR-026 — Stop Process
+### FR-026 — Stop Process
 
 Nếu chương trình đang chạy, người dùng có thể nhấn:
 
@@ -660,9 +671,9 @@ Không được terminate process không thuộc run session của IDE.
 
 ---
 
-# 10. Git
+## 10. Git
 
-## FR-027 — Git Repository Detection
+### FR-027 — Git Repository Detection
 
 IDE tự kiểm tra project có Git hay không.
 
@@ -671,8 +682,9 @@ Nếu có `.git`, hiển thị thông tin Git.
 Git là external dependency. IDE phải xác định tối thiểu các trạng thái:
 
 ```text
-AVAILABLE
+NOT_CONFIGURED
 MISSING
+AVAILABLE
 INVALID_CONFIGURATION
 ```
 
@@ -684,7 +696,7 @@ Nếu Git không được tìm thấy hoặc cấu hình không hợp lệ:
 
 ---
 
-## FR-028 — Git Status
+### FR-028 — Git Status
 
 Hiển thị file:
 
@@ -695,7 +707,7 @@ Hiển thị file:
 
 ---
 
-## FR-029 — Git Stage / Unstage
+### FR-029 — Git Stage / Unstage
 
 Cho phép stage file.
 
@@ -709,7 +721,7 @@ Cho phép unstage file nếu Git abstraction được chọn hỗ trợ an toàn
 
 ---
 
-## FR-030 — Git Commit
+### FR-030 — Git Commit
 
 Cho phép nhập commit message và commit.
 
@@ -721,7 +733,7 @@ feat: add student management
 
 ---
 
-## FR-031 — Git Branch
+### FR-031 — Git Branch
 
 Cho phép:
 
@@ -734,7 +746,7 @@ an toàn; đây không phải acceptance criteria bắt buộc.
 
 ---
 
-## FR-032 — Git History
+### FR-032 — Git History
 
 Cho phép xem lịch sử commit cơ bản.
 
@@ -747,9 +759,9 @@ Hiển thị:
 
 ---
 
-# 11. Settings
+## 11. Settings
 
-## FR-033 — Theme
+### FR-033 — Theme
 
 Cho phép lựa chọn:
 
@@ -759,13 +771,13 @@ Cho phép lựa chọn:
 
 ---
 
-## FR-034 — Editor Font Size
+### FR-034 — Editor Font Size
 
 Cho phép thay đổi kích thước font editor.
 
 ---
 
-## FR-035 — Tab Size
+### FR-035 — Tab Size
 
 Cho phép cấu hình:
 
@@ -776,13 +788,13 @@ Cho phép cấu hình:
 
 ---
 
-## FR-036 — Auto Save
+### FR-036 — Auto Save
 
 Cho phép bật hoặc tắt Auto Save.
 
 ---
 
-# 12. Keyboard Shortcuts
+## 12. Keyboard Shortcuts
 
 Các shortcut cơ bản:
 
@@ -799,9 +811,9 @@ Shortcut có thể thay đổi sau.
 
 ---
 
-# 13. Dữ liệu cục bộ
+## 13. Dữ liệu cục bộ
 
-## FR-037 — Local Application State
+### FR-037 — Local Application State
 
 IDE có thể lưu cục bộ các thông tin:
 
@@ -817,7 +829,7 @@ Không yêu cầu database server riêng.
 
 ---
 
-# 14. Database của project người dùng
+## 14. Database của project người dùng
 
 IDE không yêu cầu project phải sử dụng database cụ thể.
 
@@ -834,9 +846,9 @@ IDE chỉ đóng vai trò môi trường phát triển.
 
 ---
 
-# 15. Yêu cầu phi chức năng
+## 15. Yêu cầu phi chức năng
 
-## NFR-001 — Desktop Application
+### NFR-001 — Desktop Application
 
 Ứng dụng phải chạy được trên Windows.
 
@@ -849,7 +861,7 @@ Windows 11
 
 ---
 
-## NFR-002 — Local First
+### NFR-002 — Local First
 
 Các thao tác chính phải hoạt động trên máy người dùng:
 
@@ -865,7 +877,7 @@ Không phụ thuộc cloud để thực hiện các chức năng cơ bản.
 
 ---
 
-## NFR-003 — Performance
+### NFR-003 — Performance
 
 IDE cần:
 
@@ -877,7 +889,7 @@ IDE cần:
 
 ---
 
-## NFR-004 — Data Safety
+### NFR-004 — Data Safety
 
 Không được tự động:
 
@@ -890,7 +902,7 @@ Các thao tác nguy hiểm cần có xác nhận.
 
 ---
 
-## NFR-005 — Maintainability
+### NFR-005 — Maintainability
 
 Source code Student Coding IDE phải:
 
@@ -902,7 +914,7 @@ Source code Student Coding IDE phải:
 
 ---
 
-## NFR-006 — Language Service Reliability
+### NFR-006 — Language Service Reliability
 
 Language service phải chạy tách biệt với luồng giao diện chính.
 
@@ -915,7 +927,7 @@ Khi language service khởi động chậm, bị lỗi hoặc bị dừng:
 
 ---
 
-## NFR-007 — Desktop Security Boundary
+### NFR-007 — Desktop Security Boundary
 
 Renderer không được truy cập filesystem, process, shell hoặc Node.js API một
 cách tùy tiện. Kiến trúc phải ưu tiên boundary:
@@ -945,7 +957,7 @@ Yêu cầu:
 
 ---
 
-# 16. Kiến trúc dự kiến
+## 16. Kiến trúc dự kiến
 
 Student Coding IDE có kiến trúc và source implementation độc lập. Orca chỉ là
 nguồn tham khảo để hỗ trợ phân tích và design decisions.
@@ -982,7 +994,7 @@ Desktop Application
 
 ---
 
-# 17. Phần tham khảo từ Orca
+## 17. Phần tham khảo từ Orca
 
 Các khu vực có thể nghiên cứu từ Orca:
 
@@ -1006,7 +1018,7 @@ design decisions của project.
 
 ---
 
-# 18. Phần cần nghiên cứu trước khi implementation
+## 18. Phần cần nghiên cứu trước khi implementation
 
 Trước khi implementation subsystem tương ứng phải xác định:
 
@@ -1031,7 +1043,7 @@ Trước khi implementation subsystem tương ứng phải xác định:
 
 ---
 
-# 19. Nguyên tắc phân loại khi nghiên cứu Orca
+## 19. Nguyên tắc phân loại khi nghiên cứu Orca
 
 Phase 1 phải phân loại từng subsystem hoặc capability được khảo sát theo một
 trong các nhóm:
@@ -1069,9 +1081,9 @@ Feature Orca có nhưng Student Coding IDE V1 không cần triển khai.
 
 ---
 
-# 20. AI Agent
+## 20. AI Agent
 
-## V1
+### V1
 
 AI Agent không thuộc scope V1. Student Coding IDE V1 không implement:
 
@@ -1093,9 +1105,9 @@ giữ hoặc disable source AI của Orca.
 
 ---
 
-# 21. Phase phát triển
+## 21. Phase phát triển
 
-## Phase 0 — Project Initialization & Reference Baseline
+### Phase 0 — Project Initialization & Reference Baseline
 
 Mục tiêu:
 
@@ -1106,7 +1118,7 @@ Mục tiêu:
    * Electron.
    * React.
    * TypeScript.
-   * Vite hoặc electron-vite; lựa chọn chính xác là TBD trong Phase 0 hoặc Phase 1.
+   * `electron-vite`, đã được chọn và verify trong Phase 0.
    * Monaco Editor.
    * Tailwind CSS.
 5. Khởi tạo desktop application foundation.
@@ -1128,7 +1140,7 @@ Student Coding IDE clean foundation runs successfully.
 
 ---
 
-## Phase 1 — Orca Analysis & Architecture Design
+### Phase 1 — Orca Analysis & Architecture Design
 
 Nghiên cứu Orca ở mức Reference Implementation:
 
@@ -1155,17 +1167,26 @@ Sau Phase 1 phải tạo hoặc cập nhật:
 
 ```text
 docs/ARCHITECTURE.md
+docs/ORCA-ANALYSIS.md
 docs/CODEBASE-MAP.md
 docs/DECISIONS.md
 docs/LANGUAGE-SUPPORT.md
 ```
+
+`ORCA-ANALYSIS.md` ghi lại phân tích source tham khảo Orca, evidence,
+classification, risk và implication cho Student Coding IDE.
+
+Phase 1 đã chọn xterm.js + `node-pty` với Phase 2 Windows/native compatibility
+gate, chấp nhận local Git CLI phía sau typed GitService và chấp nhận versioned
+JSON persistence. Các lựa chọn provider và TypeScript Run vẫn giữ decision gate
+của phase tương ứng.
 
 `CODEBASE-MAP.md` phải map source của Student Coding IDE, không sao chép codebase
 map của Orca. Có thể có phần riêng ghi reference mapping của Orca nếu hữu ích.
 
 ---
 
-## Phase 2 — Core IDE
+### Phase 2 — Core IDE
 
 Đảm bảo các chức năng:
 
@@ -1178,12 +1199,14 @@ map của Orca. Có thể có phần riêng ghi reference mapping của Orca n�
 * Unsaved changes protection.
 * Search.
 * Terminal.
+* ProjectService có thể persist recent-project metadata tối thiểu cần cho project
+  lifecycle; Phase 2 không triển khai đầy đủ Recent Projects UX hoặc management.
 
 hoạt động ổn định.
 
 ---
 
-## Phase 3 — Language Intelligence
+### Phase 3 — Language Intelligence
 
 Triển khai hoặc chỉnh sửa:
 
@@ -1203,7 +1226,7 @@ Formatter và debugger không thuộc phase này.
 
 ---
 
-## Phase 4 — Run & Output
+### Phase 4 — Run & Output
 
 Triển khai hoặc chỉnh sửa:
 
@@ -1217,7 +1240,7 @@ Triển khai hoặc chỉnh sửa:
 
 ---
 
-## Phase 5 — Git
+### Phase 5 — Git
 
 Hoàn thiện:
 
@@ -1232,14 +1255,15 @@ Hoàn thiện:
 
 ---
 
-## Phase 6 — Settings & UX
+### Phase 6 — Settings & UX
 
 Hoàn thiện:
 
 * Theme.
 * Editor settings.
 * Auto Save.
-* Recent projects.
+* User-facing Recent Projects UX và management, dựa trên metadata foundation của
+  ProjectService.
 * Keyboard shortcuts.
 * Runtime và language-service path configuration nếu cần.
 * Git path nếu cần.
@@ -1247,7 +1271,7 @@ Hoàn thiện:
 
 ---
 
-## Phase 7 — Testing & Stabilization
+### Phase 7 — Testing & Stabilization
 
 Quality gate bắt buộc:
 
@@ -1279,7 +1303,7 @@ Không yêu cầu coverage percentage cao trong V1. Test phải ưu tiên:
 
 ---
 
-# 22. Các phase tương lai
+## 22. Các phase tương lai
 
 Các chức năng có thể xem xét sau khi core IDE hoàn thành:
 
@@ -1338,7 +1362,7 @@ Các chức năng trên chưa phải requirement bắt buộc của phiên bản
 
 ---
 
-# 23. Git Workflow
+## 23. Git Workflow
 
 Sử dụng:
 
@@ -1368,7 +1392,7 @@ research activity riêng và không được merge source Orca vào Student Codi
 
 ---
 
-# 24. Commit Convention
+## 24. Commit Convention
 
 Sử dụng Conventional Commits.
 
@@ -1384,7 +1408,7 @@ test: add project manager tests
 
 ---
 
-# 25. Documentation
+## 25. Documentation
 
 Dự án cần duy trì:
 
@@ -1392,12 +1416,16 @@ Dự án cần duy trì:
 docs/
 ├── REQUIREMENT.md
 ├── REFERENCE-BASELINE.md
+├── ORCA-ANALYSIS.md
 ├── ARCHITECTURE.md
 ├── CODEBASE-MAP.md
 ├── LANGUAGE-SUPPORT.md
 ├── DECISIONS.md
 └── CHANGELOG-THESIS.md
 ```
+
+Convention ngôn ngữ: `REQUIREMENT.md` được duy trì chủ yếu bằng tiếng Việt; các
+tài liệu technical architecture và reference được duy trì bằng tiếng Anh.
 
 ### REFERENCE-BASELINE.md
 
@@ -1411,6 +1439,12 @@ Ghi lại:
 * Những phần không sử dụng.
 
 File này không mô tả Orca như source baseline trực tiếp của Student Coding IDE.
+
+### ORCA-ANALYSIS.md
+
+Ghi lại source analysis, evidence, classification, risk và implication từ Orca
+Reference cho Student Coding IDE. Evidence trong file phản ánh analysis đã được
+verify ở Phase 1; các consistency update sau đó không mặc định re-verify Orca.
 
 ### ARCHITECTURE.md
 
@@ -1465,7 +1499,7 @@ Matrix khởi tạo có thể dùng cấu trúc:
 
 Ghi decision log hoặc ADR-style record cho các quyết định quan trọng, bao gồm:
 
-* Vite hoặc electron-vite.
+* electron-vite build and development tool.
 * IPC architecture.
 * Terminal implementation.
 * Language servers.
@@ -1481,7 +1515,7 @@ Student Coding IDE tạo ra.
 
 ---
 
-# 26. Definition of Done
+## 26. Definition of Done
 
 Một feature được xem là hoàn thành khi:
 
@@ -1514,7 +1548,7 @@ Một feature được xem là hoàn thành khi:
 
 ---
 
-# 27. Mục tiêu phiên bản đầu tiên
+## 27. Mục tiêu phiên bản đầu tiên
 
 Phiên bản đầu được xem là đạt yêu cầu khi người dùng có thể thực hiện workflow:
 
@@ -1549,7 +1583,7 @@ phải báo rõ trạng thái và action phù hợp thay vì để workflow âm 
 
 ---
 
-# 28. Nguyên tắc quan trọng của đồ án
+## 28. Nguyên tắc quan trọng của đồ án
 
 Orca là open-source Reference Implementation được sử dụng để nghiên cứu kiến
 trúc, behavior, UX và cách giải quyết technical problem. Student Coding IDE là
