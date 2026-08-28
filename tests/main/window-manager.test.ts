@@ -1,3 +1,5 @@
+import { join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { describe, expect, it, vi } from 'vitest'
 
 import {
@@ -80,18 +82,20 @@ describe('WindowManager security', () => {
   })
 
   it('restricts packaged navigation to the packaged renderer file', () => {
-    const rendererFile = 'D:\\app\\renderer\\index.html'
+    const rendererDirectory = resolve('test-fixtures', 'renderer')
+    const rendererFile = join(rendererDirectory, 'index.html')
     const policy = { rendererFile }
-    const rendererUrl = new URL(
-      `file:///${rendererFile.replaceAll('\\\\', '/')}`,
+    const rendererUrl = pathToFileURL(rendererFile).href
+    const otherRendererUrl = pathToFileURL(
+      join(rendererDirectory, 'other.html'),
+    ).href
+    const arbitraryFileUrl = pathToFileURL(
+      resolve('test-fixtures', 'outside', 'secret.html'),
     ).href
 
     expect(isAllowedApplicationNavigation(rendererUrl, policy)).toBe(true)
-    expect(isAllowedApplicationNavigation(
-      'file:///D:/app/renderer/other.html',
-      policy,
-    )).toBe(false)
-    expect(isAllowedApplicationNavigation('https://example.com', policy))
+    expect(isAllowedApplicationNavigation(otherRendererUrl, policy)).toBe(false)
+    expect(isAllowedApplicationNavigation(arbitraryFileUrl, policy))
       .toBe(false)
   })
 
