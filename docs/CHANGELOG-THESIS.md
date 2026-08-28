@@ -32,3 +32,25 @@ This changelog records substantial work created for the independent Student Codi
 ### Implementation status
 
 No Core IDE feature was implemented in Phase 1. No Orca source, module, commit, submodule, or runtime dependency was copied into Student Coding IDE.
+
+## Phase 2A — Core Contracts & Application Foundation
+
+### Foundation implementation
+
+- Added deterministic application startup/shutdown ownership and a secure WindowManager preserving sandbox, context isolation, disabled Node integration, exact application-origin navigation, and HTTPS-only external opening.
+- Added side-effect-free shared contracts, structured AppError serialization, explicit runtime IPC validation, narrow lifecycle preload APIs, handler cleanup, and lifecycle status events.
+- Added canonical project identity and project-relative path foundations with Windows drive-letter, case, separator, and UNC normalization behavior.
+- Added versioned JSON persistence with schema validation, serialized temporary-file replacement, last-known-good backup, and corrupt/unsupported-state recovery.
+- Added a limited internal owned-resource ProcessManager foundation without Terminal, Run, language-server, or generic command execution.
+
+### Decisions and verification
+
+- Resolved ADR-016 with explicit validators for the current small IPC contract surface.
+- Recorded HTTPS-only external URL handling in ADR-017.
+- Resolved the Phase 2A Test Infrastructure Gate in ADR-018 with Vitest and the stable `npm test` command, including CI execution.
+- Added focused automated coverage for contracts, errors, lifecycle, IPC validation, security/navigation, project identity/path handling, persistence/recovery, cleanup ownership, and preload subscription cleanup.
+- Verified typecheck, lint, build, tests, and documentation diff checks before marking Phase 2A complete.
+
+### Scope boundary
+
+No Phase 2B Explorer/filesystem workflow, Monaco/editor, Search, Terminal, Run, Git, Language Intelligence, Settings UX, or other later work-package implementation was added.
