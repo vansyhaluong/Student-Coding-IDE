@@ -1,16 +1,25 @@
 # Student Coding IDE Codebase Map
 
-This map describes the current independent source tree and planned module locations. The source remains the Phase 0 foundation, while Phase 1 documentation and architecture design are complete. Planned paths are design targets only; Phase 1 does not create them.
+This map describes the current independent source tree and planned module locations. Phase 2A adds the application, security, contract, validation, project-identity, persistence, cleanup, and automated-test foundations. User-facing Core IDE features remain assigned to Phase 2B and later work packages.
 
-## Current source tree before Phase 2 implementation
+## Current source tree after Phase 2A foundation
 
 | Current path | Role | Status |
 |---|---|---|
 | `src/main/index.ts` | Electron readiness, one BrowserWindow, secure webPreferences, application close behavior | Existing foundation |
-| `src/preload/index.ts` | Empty preload entry | Existing foundation; domain bridge planned |
+| `src/main/app/` | DesktopApplication startup order, lifecycle state, and deterministic reverse-order cleanup | Implemented Phase 2A foundation |
+| `src/main/window/` | Secure BrowserWindow ownership and accepted navigation/external-URL policy | Implemented Phase 2A foundation |
+| `src/main/ipc/` | Validated handler registration, safe result/error mapping, and lifecycle handler | Implemented Phase 2A foundation |
+| `src/main/errors/` | Structured domain errors and safe IPC serialization | Implemented Phase 2A foundation |
+| `src/main/services/project/` | Canonical project identity and safe relative-path foundations | Implemented Phase 2A foundation; full project workflow remains Phase 2B |
+| `src/main/services/persistence/` | Versioned JSON, serialized writes, backup, and recovery foundation | Implemented Phase 2A foundation |
+| `src/main/services/process/` | Internal owned-resource registry and deterministic cleanup primitives | Implemented Phase 2A foundation; no process executor |
+| `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, and project contract types | Implemented Phase 2A foundation |
+| `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed lifecycle bridge with response validation and subscription cleanup | Implemented Phase 2A foundation |
 | `src/renderer/src/main.tsx` | React renderer bootstrap | Existing foundation |
 | `src/renderer/src/App.tsx` | Minimal Phase 0 application surface | Existing foundation |
 | `src/renderer/src/styles.css` | Tailwind import and initial global styles | Existing foundation |
+| `tests/` | Vitest contract, main/service, IPC adapter, persistence, preload, security, and lifecycle tests | Implemented Phase 2A test foundation |
 | `electron.vite.config.ts` | main/preload/renderer build configuration | Existing foundation |
 | `docs/` | Requirements, reference, architecture, decisions, and thesis record | Existing and Phase 1 output |
 

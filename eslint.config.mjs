@@ -29,6 +29,8 @@ export default tseslint.config(
     files: [
       'src/main/**/*.ts',
       'src/preload/**/*.ts',
+      'src/shared/**/*.ts',
+      'tests/**/*.ts',
       'electron.vite.config.ts',
     ],
 
