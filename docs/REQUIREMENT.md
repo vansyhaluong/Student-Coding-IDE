@@ -1419,6 +1419,7 @@ docs/
 ├── ORCA-ANALYSIS.md
 ├── ARCHITECTURE.md
 ├── CODEBASE-MAP.md
+├── IMPLEMENTATION-PLAN.md
 ├── LANGUAGE-SUPPORT.md
 ├── DECISIONS.md
 └── CHANGELOG-THESIS.md
@@ -1464,6 +1465,12 @@ Feature
 Map này phải phản ánh independent source implementation của Student Coding IDE.
 Reference mapping của Orca, nếu cần, phải nằm trong phần riêng và không được trộn
 với codebase map của project.
+
+### IMPLEMENTATION-PLAN.md
+
+Execution roadmap gồm work-package dependencies, decision gates, test strategy
+và phase exit criteria. File này không thay thế requirement hoặc architecture và
+không tự cho phép bắt đầu implementation.
 
 ### LANGUAGE-SUPPORT.md
 
