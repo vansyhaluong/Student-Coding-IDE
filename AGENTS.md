@@ -244,7 +244,7 @@ documentation:
 - `docs/CHANGELOG-THESIS.md`: record only implemented, verified work.
 
 Allowed statuses are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and `COMPLETE`.
-Transitions are `NOT_STARTED -> IN_PROGRESS` when authorized work begins, `IN_PROGRESS -> BLOCKED` for a concrete blocker, `BLOCKED -> IN_PROGRESS` when work resumes, and `IN_PROGRESS -> COMPLETE` only after the full Exit Gate passes.
+Transitions are `NOT_STARTED -> IN_PROGRESS` when authorized work begins, `IN_PROGRESS -> BLOCKED` for a concrete blocker, `BLOCKED -> IN_PROGRESS` when work resumes, `IN_PROGRESS -> COMPLETE` only after the full Exit Gate passes, and `COMPLETE -> IN_PROGRESS` only when a verified defect, regression, failed acceptance criterion, or post-completion review finding reopens the completed phase for corrective work. A corrective reopening must document its reason, must not silently expand scope or start new features, and may return to `COMPLETE` only after all original exit gates and new regression checks pass again.
 Never mark `COMPLETE` for partial or planned work, typecheck/lint/build alone, unexecuted tests, or documentation claims.
 
 ## 14. Out-of-scope work
@@ -261,6 +261,14 @@ When Orca evidence is relevant, use the locked commit in
 `docs/REFERENCE-BASELINE.md`, cite useful source paths/symbols, and classify/adapt
 the concept as documented. Implement Student Coding IDE independently. Never copy
 Orca source because it already solves a problem.
+
+When implementing or modifying visible IDE UI, Orca at that locked baseline is
+the primary visual and interaction reference unless the user explicitly chooses
+another direction. Preserve the established visual language and do not
+independently redesign the application. If a feature requires a material
+departure from that direction, stop and request user confirmation. Product
+requirements, accepted Student Coding IDE architecture, and security boundaries
+always take precedence over the reference UI.
 
 ## 16. Task start checklist
 

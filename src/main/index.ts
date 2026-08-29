@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   shell,
 } from 'electron'
@@ -8,11 +9,18 @@ import { join } from 'node:path'
 
 import {
   LIFECYCLE_CHANNELS,
+  FILE_CHANNELS,
+  PROJECT_CHANNELS,
+  type FileChangedEvent,
+  type ProjectChangedEvent,
   type RecentProjectMetadata,
 } from '../shared/contracts'
 import { DesktopApplication } from './app/desktop-application'
 import { FoundationIpcService } from './ipc/foundation-ipc-service'
+import { FileIpcService } from './ipc/file-ipc-service'
 import { IpcHandlerRegistry } from './ipc/ipc-handler-registry'
+import { ProjectIpcService } from './ipc/project-ipc-service'
+import { FileSystemService } from './services/filesystem/filesystem-service'
 import { PersistenceService } from './services/persistence/persistence-service'
 import { ProcessManager } from './services/process/process-manager'
 import { ProjectService } from './services/project/project-service'
@@ -29,12 +37,31 @@ let removeLifecyclePublisher: (() => void) | undefined
 
 void app.whenReady().then(async () => {
   const processManager = new ProcessManager()
-  const projectService = new ProjectService()
   const persistenceService = new PersistenceService<AppMetadata>({
     filePath: join(app.getPath('userData'), 'app-state.json'),
     schemaVersion: 1,
     defaultValue: () => ({ recentProjects: [] }),
     validate: isAppMetadata,
+  })
+  const projectService = new ProjectService(
+    undefined,
+    process.platform,
+    {
+      getRecentProjects: () => persistenceService.getValue().recentProjects,
+      updateRecentProjects: (recentProjects) => persistenceService.update({
+        ...persistenceService.getValue(),
+        recentProjects,
+      }),
+    },
+    () => {
+      console.error('A project state listener failed unexpectedly.')
+    },
+  )
+  const fileSystemService = new FileSystemService(projectService, {
+    trashItem: (path) => shell.trashItem(path),
+    onWatcherError: () => {
+      console.error('The active project watcher stopped unexpectedly.')
+    },
   })
 
   windowManager = new WindowManager({
@@ -55,12 +82,39 @@ void app.whenReady().then(async () => {
     ipcRegistry,
     () => desktopApplication?.getStatus() ?? { state: 'CREATED' },
   )
+  const projectIpc = new ProjectIpcService(
+    ipcRegistry,
+    projectService,
+    {
+      selectDirectory: async (purpose) => {
+        const result = await dialog.showOpenDialog({
+          title: purpose === 'open-project'
+            ? 'Open Project'
+            : 'Choose Project Location',
+          properties: ['openDirectory', 'createDirectory'],
+        })
+        return result.canceled ? null : result.filePaths[0] ?? null
+      },
+      publishChanged: (event) => publishToWindows(
+        PROJECT_CHANNELS.changed,
+        event,
+      ),
+    },
+  )
+  const fileIpc = new FileIpcService(
+    ipcRegistry,
+    fileSystemService,
+    (event) => publishToWindows(FILE_CHANNELS.changed, event),
+  )
 
   desktopApplication = new DesktopApplication([
     persistenceService,
     processManager,
     projectService,
+    fileSystemService,
     foundationIpc,
+    projectIpc,
+    fileIpc,
     windowManager,
   ])
 
@@ -77,6 +131,17 @@ void app.whenReady().then(async () => {
   console.error('Student Coding IDE failed to start.')
   app.exit(1)
 })
+
+function publishToWindows(
+  channel: string,
+  event: ProjectChangedEvent | FileChangedEvent,
+): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed()) {
+      window.webContents.send(channel, event)
+    }
+  }
+}
 
 app.on('activate', () => {
   void windowManager?.ensureMainWindow().catch(() => {

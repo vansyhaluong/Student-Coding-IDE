@@ -1,10 +1,8 @@
-import type { LifecycleApi } from '../../shared/contracts'
+import type { StudentIdeApi } from '../../shared/contracts'
 
 declare global {
   interface Window {
-    studentIde: {
-      lifecycle: LifecycleApi
-    }
+    studentIde: StudentIdeApi
   }
 }
 
