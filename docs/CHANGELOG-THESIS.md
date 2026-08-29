@@ -88,3 +88,61 @@ No Phase 2B Explorer/filesystem workflow, Monaco/editor, Search, Terminal, Run, 
 - Verified 100 Vitest tests across 16 files, typecheck, lint, production build, adversarial security/lifecycle review, and whitespace checks before returning Phase 2B to complete.
 - Left ADR-011 unresolved because focused React state remains sufficient.
 - Added no Phase 2C+ Monaco/editor/save, Search, Terminal, Run, Git, Language Intelligence, Problems, or Settings UX implementation.
+
+## Phase 2C — Monaco Editor, Tabs & Save
+
+### Editor and model lifecycle
+
+- Added locally bundled Monaco with explicit editor, TypeScript/JavaScript,
+  HTML, CSS, and JSON worker entry points and a thin `@monaco-editor/react`
+  mounting layer.
+- Added a renderer-owned EditorModelManager with one canonical model per
+  normalized project/file identity, language assignment, retained tabs,
+  active-tab selection, dirty baselines, version-aware save snapshots, view
+  state, and explicit listener/model disposal.
+- Kept the editor session above transient React effect lifecycles so Vite Fast
+  Refresh does not clear active tabs or dispose canonical models; real renderer
+  page unload remains the disposal boundary.
+- Replaced the Phase 2B read-only preview with editable Monaco tabs while
+  preserving the established Orca-aligned application shell.
+
+### Data safety and external changes
+
+- Added validated project-scoped file writes through the existing Main-owned
+  FileSystemService and narrow preload bridge; Renderer receives no direct disk,
+  Node, Electron, or generic command capability.
+- Added Ctrl+S and version-aware dirty clearing so a stale save cannot mark a
+  subsequently edited model clean.
+- Added Save / Don't Save / Cancel protection for dirty tabs and consolidated
+  Save All / Don't Save All / Cancel decisions for project/application
+  transitions and affected folder descendants. Save failure, renderer loss,
+  invalid ownership, stale resolution, and timeout fail closed.
+- Added clean external-file reconciliation into the retained Monaco model while
+  preserving clean state, plus dirty-buffer conflict warnings that never
+  overwrite local edits.
+- Added generation and model-identity guards for out-of-order watcher reads,
+  project switches, closed/reopened files, saves, and Fast Refresh lifecycle
+  replacement.
+
+### Corrective runtime review and verification
+
+- Corrected a Monaco layout defect caused by an unused grid row consuming the
+  flexible editor area; the editor now fills its flex parent and resizes without
+  hard-coded viewport heights or overlays.
+- Corrected an intermittent active-editor reset caused by transient hook cleanup
+  disposing renderer-session models during React/Vite refresh.
+- Added deterministic unit and jsdom integration coverage for canonical identity,
+  dirty/save races, unsaved decisions, watcher reload/conflict behavior,
+  out-of-order responses, stale projects, disposed documents, Explorer refresh,
+  StrictMode/Fast Refresh lifecycle, and Main transition ownership/cleanup.
+- Manual Electron smoke passed edit/save/reopen, clean external reload, dirty
+  conflict protection, application-close decisions, tab/model undo and view
+  retention, Fast Refresh retention, resize/layout, and Monaco workers.
+- Verified 134 Vitest tests across 18 files, typecheck, lint, production build,
+  adversarial data-safety/lifecycle review, and whitespace checks before marking
+  Phase 2C complete.
+
+### Scope boundary
+
+No Phase 2D project search, Terminal, Run, Git, Language Intelligence, Problems,
+Settings UX, formatter, debugger, or extension-host work was added.

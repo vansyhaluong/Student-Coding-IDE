@@ -47,6 +47,7 @@ describe('Phase 2B preload bridges', () => {
         isSymbolicLink: false,
       }],
     })
+    ipcRenderer.responses.set(FILE_CHANNELS.write, { ok: true, value: null })
     const api = createPreloadApi(ipcRenderer)
 
     expect(Object.keys(api).sort()).toEqual(['file', 'lifecycle', 'project'])
@@ -58,6 +59,16 @@ describe('Phase 2B preload bridges', () => {
       'project_1234567890abcdef12345678' as never,
       '',
     )).resolves.toMatchObject({ ok: true })
+    await expect(api.file.write(
+      'project_1234567890abcdef12345678' as never,
+      'main.ts',
+      'saved',
+    )).resolves.toEqual({ ok: true, value: null })
+    expect(ipcRenderer.invoke).toHaveBeenCalledWith(FILE_CHANNELS.write, {
+      projectId: 'project_1234567890abcdef12345678',
+      relativePath: 'main.ts',
+      content: 'saved',
+    })
 
     ipcRenderer.responses.set(FILE_CHANNELS.listDirectory, {
       ok: true,

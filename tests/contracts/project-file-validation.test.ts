@@ -5,6 +5,7 @@ import {
   validateCreateProjectRequest,
   validateProjectPathRequest,
   validateRenameEntryRequest,
+  validateWriteFileRequest,
 } from '../../src/shared/contracts'
 
 const projectId = 'project_1234567890abcdef12345678'
@@ -15,6 +16,7 @@ describe('Phase 2B contract validation', () => {
     expect(validateProjectPathRequest({ projectId, relativePath: 'src/main.ts' }).ok).toBe(true)
     expect(validateCreateEntryRequest({ projectId, parentPath: 'src', name: 'main.ts' }).ok).toBe(true)
     expect(validateRenameEntryRequest({ projectId, relativePath: 'src/main.ts', newName: 'index.ts' }).ok).toBe(true)
+    expect(validateWriteFileRequest({ projectId, relativePath: 'src/main.ts', content: 'text' }).ok).toBe(true)
   })
 
   it('rejects missing, malformed, foreign-format, and unknown fields', () => {
@@ -24,5 +26,6 @@ describe('Phase 2B contract validation', () => {
     expect(validateProjectPathRequest({ projectId: 'foreign', relativePath: '' }).ok).toBe(false)
     expect(validateProjectPathRequest({ projectId, relativePath: 42 }).ok).toBe(false)
     expect(validateCreateEntryRequest({ projectId, parentPath: '', name: 'a', mode: 'write' }).ok).toBe(false)
+    expect(validateWriteFileRequest({ projectId, relativePath: 'a.ts', content: 42 }).ok).toBe(false)
   })
 })
