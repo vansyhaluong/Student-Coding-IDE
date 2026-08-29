@@ -3,6 +3,7 @@ import {
   validateCreateEntryRequest,
   validateProjectPathRequest,
   validateRenameEntryRequest,
+  validateWriteFileRequest,
   type FileChangedEvent,
 } from '../../shared/contracts'
 import type { ManagedService } from '../app/desktop-application'
@@ -41,6 +42,14 @@ export class FileIpcService implements ManagedService {
         handle: ({ projectId, relativePath }) => (
           this.fileSystemService.read(projectId, relativePath)
         ),
+      }),
+      this.registry.register({
+        channel: FILE_CHANNELS.write,
+        validate: validateWriteFileRequest,
+        handle: async ({ projectId, relativePath, content }) => {
+          await this.fileSystemService.write(projectId, relativePath, content)
+          return null
+        },
       }),
       this.registry.register({
         channel: FILE_CHANNELS.createFile,

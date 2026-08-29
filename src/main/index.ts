@@ -14,6 +14,7 @@ import {
   type FileChangedEvent,
   type ProjectChangedEvent,
   type RecentProjectMetadata,
+  type UnsavedTransitionRequestEvent,
 } from '../shared/contracts'
 import { DesktopApplication } from './app/desktop-application'
 import { FoundationIpcService } from './ipc/foundation-ipc-service'
@@ -23,6 +24,7 @@ import { ProjectIpcService } from './ipc/project-ipc-service'
 import { FileSystemService } from './services/filesystem/filesystem-service'
 import { PersistenceService } from './services/persistence/persistence-service'
 import { ProcessManager } from './services/process/process-manager'
+import { UnsavedTransitionService } from './services/lifecycle/unsaved-transition-service'
 import { ProjectService } from './services/project/project-service'
 import { WindowManager } from './window/window-manager'
 
@@ -32,7 +34,9 @@ interface AppMetadata {
 
 let desktopApplication: DesktopApplication | undefined
 let windowManager: WindowManager | undefined
+let unsavedTransitionService: UnsavedTransitionService | undefined
 let shutdownRequested = false
+let applicationCloseApproved = false
 let removeLifecyclePublisher: (() => void) | undefined
 
 void app.whenReady().then(async () => {
@@ -64,6 +68,30 @@ void app.whenReady().then(async () => {
     },
   })
 
+  const ipcRegistry = new IpcHandlerRegistry(ipcMain)
+  unsavedTransitionService = new UnsavedTransitionService(
+    ipcRegistry,
+    projectService,
+    {
+      getRenderer: () => {
+        const window = BrowserWindow.getAllWindows().find(
+          (candidate) => !candidate.isDestroyed(),
+        )
+        return window
+          ? {
+              senderId: window.webContents.id,
+              send: (event: UnsavedTransitionRequestEvent) => {
+                window.webContents.send(
+                  LIFECYCLE_CHANNELS.unsavedTransitionRequested,
+                  event,
+                )
+              },
+            }
+          : null
+      },
+    },
+  )
+
   windowManager = new WindowManager({
     createWindow: (options) => new BrowserWindow(options),
     openExternal: (url) => shell.openExternal(url),
@@ -75,9 +103,16 @@ void app.whenReady().then(async () => {
     onExternalOpenError: () => {
       console.error('Failed to open an approved external URL.')
     },
+    requestClose: async () => {
+      const approved = await unsavedTransitionService?.requestApplicationClose() ?? false
+      if (approved) applicationCloseApproved = true
+      return approved
+    },
+    onCloseRequestError: () => {
+      console.error('Application close coordination failed.')
+    },
   })
 
-  const ipcRegistry = new IpcHandlerRegistry(ipcMain)
   const foundationIpc = new FoundationIpcService(
     ipcRegistry,
     () => desktopApplication?.getStatus() ?? { state: 'CREATED' },
@@ -113,6 +148,7 @@ void app.whenReady().then(async () => {
     projectService,
     fileSystemService,
     foundationIpc,
+    unsavedTransitionService,
     projectIpc,
     fileIpc,
     windowManager,
@@ -160,11 +196,25 @@ app.on('before-quit', (event) => {
   }
   shutdownRequested = true
 
-  void desktopApplication.shutdown()
+  const requestApproval = applicationCloseApproved
+    ? Promise.resolve(true)
+    : BrowserWindow.getAllWindows().some((window) => !window.isDestroyed())
+      ? unsavedTransitionService?.requestApplicationClose() ?? Promise.resolve(false)
+      : Promise.resolve(false)
+
+  void requestApproval.then((approved) => {
+    if (!approved) {
+      shutdownRequested = false
+      return
+    }
+    applicationCloseApproved = true
+    return desktopApplication?.shutdown()
+  })
     .catch(() => {
       console.error('Student Coding IDE cleanup did not finish cleanly.')
     })
     .finally(() => {
+      if (!applicationCloseApproved) return
       removeLifecyclePublisher?.()
       removeLifecyclePublisher = undefined
       app.quit()

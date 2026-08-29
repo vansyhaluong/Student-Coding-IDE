@@ -58,6 +58,8 @@ describe('FileSystemService', () => {
     ])
     expect(rootEntries.some((entry) => entry.relativePath === 'src/deep')).toBe(false)
     await expect(service.read(project.id, 'README.md')).resolves.toBe('hello')
+    await expect(service.write(project.id, 'README.md', 'saved')).resolves.toBeUndefined()
+    await expect(service.read(project.id, 'README.md')).resolves.toBe('saved')
   })
 
   it('does not enumerate nested directories when listing the project root', async () => {
@@ -245,6 +247,8 @@ describe('FileSystemService', () => {
     })
 
     await expect(service.read(project.id, 'outside-link'))
+      .rejects.toMatchObject({ code: 'PERMISSION_DENIED' })
+    await expect(service.write(project.id, 'outside-link', 'escape'))
       .rejects.toMatchObject({ code: 'PERMISSION_DENIED' })
   })
 

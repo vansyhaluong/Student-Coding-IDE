@@ -10,6 +10,7 @@ export const FILE_CHANNELS = {
   listDirectory: 'file:list-directory',
   stat: 'file:stat',
   read: 'file:read',
+  write: 'file:write',
   createFile: 'file:create',
   createDirectory: 'file:create-directory',
   rename: 'file:rename',
@@ -46,6 +47,10 @@ export interface RenameEntryRequest extends ProjectPathRequest {
   newName: string
 }
 
+export interface WriteFileRequest extends ProjectPathRequest {
+  content: string
+}
+
 export interface FileChangedEvent {
   projectId: ProjectId
   relativePath: string
@@ -65,6 +70,11 @@ export interface FileApi {
     projectId: ProjectId,
     relativePath: string,
   ): Promise<AppResult<string>>
+  write(
+    projectId: ProjectId,
+    relativePath: string,
+    content: string,
+  ): Promise<AppResult<null>>
   createFile(
     projectId: ProjectId,
     parentPath: string,
@@ -111,6 +121,15 @@ export function validateRenameEntryRequest(
   return validateStrings<RenameEntryRequest>(
     value,
     ['projectId', 'relativePath', 'newName'],
+  )
+}
+
+export function validateWriteFileRequest(
+  value: unknown,
+): ValidationResult<WriteFileRequest> {
+  return validateStrings<WriteFileRequest>(
+    value,
+    ['projectId', 'relativePath', 'content'],
   )
 }
 

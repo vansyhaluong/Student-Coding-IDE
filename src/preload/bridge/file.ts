@@ -40,6 +40,17 @@ export function createFileBridge(ipcRenderer: IpcRendererLike): FileApi {
         FILE_CHANNELS.read,
       )
     },
+    async write(projectId, relativePath, content) {
+      return parseAppResult(
+        await ipcRenderer.invoke(FILE_CHANNELS.write, {
+          projectId,
+          relativePath,
+          content,
+        }),
+        (value): value is null => value === null,
+        FILE_CHANNELS.write,
+      )
+    },
     async createFile(projectId, parentPath, name) {
       return invokeEntry(ipcRenderer, FILE_CHANNELS.createFile, {
         projectId,

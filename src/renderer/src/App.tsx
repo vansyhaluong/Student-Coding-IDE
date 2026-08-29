@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { ProjectIdentity } from '../../shared/contracts'
+import { EditorWorkbench } from './features/editor/EditorWorkbench'
+import { editorModelManager } from './features/editor/editor-session'
+import {
+  useEditorWorkspace,
+  type UnsavedChoice,
+} from './features/editor/use-editor-workspace'
 import { ProjectExplorer } from './features/explorer/ProjectExplorer'
-
-interface PreviewState {
-  path: string
-  content: string
-}
 
 interface IconProps {
   className?: string
@@ -50,8 +51,8 @@ export default function App() {
   const [project, setProject] = useState<ProjectIdentity | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [preview, setPreview] = useState<PreviewState | null>(null)
   const projectGeneration = useRef(0)
+  const editor = useEditorWorkspace(project, editorModelManager)
 
   useEffect(() => {
     let active = true
@@ -68,7 +69,6 @@ export default function App() {
     const unsubscribe = window.studentIde.project.onChanged(({ activeProject }) => {
       projectGeneration.current += 1
       setProject(activeProject)
-      setPreview(null)
       setError(null)
       setLoading(false)
     })
@@ -177,29 +177,21 @@ export default function App() {
           )}
         </aside>
 
-        <section className="preview-surface" aria-label="File preview">
-          {preview ? (
-            <>
-              <header className="preview-header">
-                <span className="preview-label">Read-only preview</span>
-                <h1 title={preview.path}>{preview.path}</h1>
-              </header>
-              <pre className="file-preview"><code>{preview.content}</code></pre>
-            </>
+        <section className="preview-surface" aria-label="Editor area">
+          {project ? (
+            <EditorWorkbench
+              manager={editor.manager}
+              onSave={editor.save}
+              onClose={editor.closeDocument}
+            />
           ) : (
             <div className="preview-empty">
-              {project ? (
-                <p>Select a file to preview</p>
-              ) : (
-                <>
-                  <FolderOpenIcon className="workspace-empty-icon" />
-                  <p>Open a project to get started</p>
-                  <div className="workspace-empty-actions">
-                    <button onClick={() => void openProject()} disabled={loading}>Open project</button>
-                    <button onClick={() => void createProject()} disabled={loading}>Create project</button>
-                  </div>
-                </>
-              )}
+              <FolderOpenIcon className="workspace-empty-icon" />
+              <p>Open a project to get started</p>
+              <div className="workspace-empty-actions">
+                <button onClick={() => void openProject()} disabled={loading}>Open project</button>
+                <button onClick={() => void createProject()} disabled={loading}>Create project</button>
+              </div>
             </div>
           )}
         </section>
@@ -209,8 +201,9 @@ export default function App() {
             <ProjectExplorer
               key={project.id}
               project={project}
-              onPreview={(path, content) => setPreview({ path, content })}
-              onClearPreview={() => setPreview(null)}
+              onOpenFile={(path) => void editor.openFile(path)}
+              onRenamed={editor.renamed}
+              onRequestDelete={editor.requestDelete}
             />
           ) : (
             <section className="explorer-panel" aria-label="Project Explorer">
@@ -231,8 +224,47 @@ export default function App() {
           <span className={`status-dot${project ? ' active' : ''}`} aria-hidden="true" />
           {loading ? 'Loading…' : project ? project.name : 'No project open'}
         </span>
-        <span>{error ? 'Project action failed' : 'Ready'}</span>
+        <span>{error || editor.error ? 'Action failed' : 'Ready'}</span>
       </footer>
+
+      {editor.dialog && (
+        <UnsavedDialog
+          state={editor.dialog}
+          onChoose={editor.choose}
+        />
+      )}
+      {editor.error && <div className="editor-error" role="alert">{editor.error}</div>}
     </main>
   )
 }
+
+function UnsavedDialog({
+  state,
+  onChoose,
+}: {
+  state: NonNullable<ReturnType<typeof useEditorWorkspace>['dialog']>
+  onChoose(choice: UnsavedChoice): void
+}) {
+  const multiple = state.mode === 'multiple'
+  return (
+    <div className="dialog-backdrop" role="presentation">
+      <section className="unsaved-dialog" role="dialog" aria-modal="true" aria-labelledby="unsaved-title">
+        <h2 id="unsaved-title">Unsaved changes</h2>
+        <p>{multiple
+          ? 'Save all affected files before continuing?'
+          : 'Save this file before continuing?'}</p>
+        <ul>
+          {state.documents.map((document) => (
+            <li key={document.key}>{document.relativePath}</li>
+          ))}
+        </ul>
+        <div className="dialog-actions">
+          <button onClick={() => onChoose('save')}>{multiple ? 'Save All' : 'Save'}</button>
+          <button onClick={() => onChoose('discard')}>{multiple ? "Don't Save All" : "Don't Save"}</button>
+          <button onClick={() => onChoose('cancel')}>Cancel</button>
+        </div>
+      </section>
+    </div>
+  )
+}
+// test fast refresh
