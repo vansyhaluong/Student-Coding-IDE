@@ -38,6 +38,21 @@ describe('serializeAppError', () => {
     })
   })
 
+  it.each([
+    ['EACCES', 'PERMISSION_DENIED'],
+    ['EPERM', 'PERMISSION_DENIED'],
+    ['EBUSY', 'PERMISSION_DENIED'],
+    ['EEXIST', 'INVALID_INPUT'],
+  ])('maps %s without leaking paths', (nodeCode, appCode) => {
+    const error = Object.assign(new Error('D:\\private\\locked.txt'), {
+      code: nodeCode,
+    })
+    const serialized = serializeAppError(error, 'file:rename')
+
+    expect(serialized.code).toBe(appCode)
+    expect(serialized.message).not.toContain('private')
+  })
+
   it('redacts unknown errors', () => {
     const serialized = serializeAppError(
       new Error('token=do-not-leak'),

@@ -32,14 +32,14 @@ reference evidence, not source or runtime dependencies.
 ## 3. Current baseline
 
 - Phase 0 and Phase 1 documentation are complete.
-- Phase 2A now provides application/window lifecycle, shared contracts, validated
-  IPC, a narrow lifecycle preload bridge, project identity/path, persistence,
-  internal cleanup, and automated-test foundations. The React renderer remains
-  the minimal foundation; user-facing Core IDE work begins in Phase 2B.
+- Phase 2A provides application/window lifecycle, shared contracts, validated
+  IPC, persistence, internal cleanup, and automated-test foundations. Phase 2B
+  now provides one active local project, project-scoped filesystem operations,
+  bounded watcher awareness, narrow project/file bridges, and the lazy Explorer.
 - The current BrowserWindow enables `contextIsolation`, disables
   `nodeIntegration`, and enables sandboxing.
-- No Phase 2B+ Explorer/editor/search/terminal UI or service, language provider,
-  PTY integration, Run service, Git service, or settings UX has been implemented.
+- No Phase 2C+ Monaco/editor/save, project search, terminal/PTY, language
+  provider, Run service, Git service, or settings UX has been implemented.
 - No Orca source, module, submodule, or runtime dependency is present.
 - Existing quality commands are `npm run typecheck`, `npm run lint`, and
   `npm run build`.
@@ -83,7 +83,7 @@ Section 20 before affected work continues.
 | Work | Initial status | Primary outcome |
 |---|---|---|
 | Phase 2A — Core Contracts & Application Foundation | `COMPLETE` | Secure contracts and application/service foundation |
-| Phase 2B — Project & File Explorer | `NOT_STARTED` | One authorized local project and file operations |
+| Phase 2B — Project & File Explorer | `COMPLETE` | One authorized local project and file operations |
 | Phase 2C — Monaco Editor, Tabs & Save | `NOT_STARTED` | Safe multi-tab editing and unsaved protection |
 | Phase 2D — Project Search | `NOT_STARTED` | Responsive, cancellable project search |
 | Phase 2E — Integrated Terminal | `NOT_STARTED` | Multiple Windows PTY sessions through xterm.js + `node-pty` |
@@ -96,6 +96,25 @@ Section 20 before affected work continues.
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
 `COMPLETE`. A status may become `COMPLETE` only after its exit gate passes.
+
+Phase 2B was correctively reopened from `COMPLETE` to `IN_PROGRESS` after its
+final adversarial review found four acceptance defects: concurrent project
+transitions could bypass the transition guard, Create Project was not atomic
+when persistence failed after directory creation, stale file-preview responses
+could overwrite the latest selection, and Renderer user-facing behavior lacked
+component/integration coverage. This reopening is limited to correcting those
+verified Phase 2B defects and does not authorize Phase 2C work.
+
+The Renderer integration-test dependency gate was resolved by explicit user
+approval and manual installation of `jsdom`, `@testing-library/react`, and
+`@testing-library/dom` as development-only dependencies. Main, service,
+security, and IPC tests remain in the Node environment; only Renderer component
+integration tests use jsdom.
+
+The corrective review returned Phase 2B to `COMPLETE` after serialized project
+transitions, safe empty-directory compensation, stale-response protection, and
+Renderer component integration coverage passed the original exit gate and the
+new regression checks. Phase 2C remains `NOT_STARTED`.
 
 ## 7. Dependency graph
 
@@ -305,10 +324,14 @@ projects.
 #### Scope
 
 - Open/create/close/switch one local folder project.
+- Create a project by selecting a parent directory and creating a uniquely named
+  empty child directory; fail if that target already exists.
 - Validate and canonicalize the project root.
 - Use project IDs plus project-relative paths for all file operations.
 - Lazy-load typed file/directory entries.
 - Read, create file/folder, rename, delete, stat, and refresh.
+- Delete only by moving the authorized target to the operating-system Recycle
+  Bin after renderer confirmation; never fall back to permanent deletion.
 - Persist only minimal recent-project metadata required internally by
   ProjectService.
 - Add minimal project-scoped watcher behavior only for Explorer refresh and

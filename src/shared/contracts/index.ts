@@ -1,4 +1,6 @@
 export * from './app-error'
+export * from './file'
 export * from './lifecycle'
 export * from './project'
+export * from './student-ide'
 export * from './validation'

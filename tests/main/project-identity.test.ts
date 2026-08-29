@@ -79,5 +79,15 @@ describe('project identity foundation', () => {
       'D:\\secret.txt',
       'win32',
     )).toThrow()
+    expect(() => resolveProjectRelativePath(
+      'C:\\Projects\\Demo',
+      'file.txt:secret',
+      'win32',
+    )).toThrow()
+    expect(() => resolveProjectRelativePath(
+      'C:\\Projects\\Demo',
+      'NUL.txt',
+      'win32',
+    )).toThrow()
   })
 })
