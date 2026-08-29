@@ -158,13 +158,50 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 
 ## ADR-016 — IPC runtime validation
 
-- **Status:** Accepted principle; implementation mechanism TBD during early Phase 2
+- **Status:** Accepted
 - **Context:** Renderer-to-main IPC crosses the privileged Electron boundary. TypeScript compile-time types do not validate values received at runtime.
 - **Options:** Hand-written validators; Zod; Valibot; another lightweight schema-validation mechanism.
-- **Selected option:** Runtime validation is mandatory for every renderer-to-main IPC request before it reaches a domain service. The exact mechanism remains `TBD` during early Phase 2. Prefer small explicit validators by default unless contract scale demonstrates that a schema library provides sufficient benefit. A type assertion such as `as SomeRequest` is not validation.
-- **Rationale:** Privileged handlers must reject malformed or over-authorized input independently of renderer correctness, without selecting a package before contract scale is known.
-- **Consequences:** Validation occurs at the privileged boundary; invalid payloads map to `INVALID_INPUT`; domain services receive validated data; no schema library may be added without recording the decision; no generic unrestricted IPC payload is allowed.
-- **Phase:** 1 principle; early Phase 2 mechanism gate.
+- **Selected option:** Use small explicit validators for Phase 2 IPC contracts. Every renderer-to-main request is validated before it reaches a domain service, validators return normalized field-level issues, and a type assertion such as `as SomeRequest` is never treated as validation.
+- **Rationale:** Phase 2A has a small contract surface with simple object, identifier, and path primitives. Explicit validators make the privileged checks auditable and testable without adding a schema runtime or bundling cost. If later contract scale makes duplication or drift material, this ADR must be reopened before adding a schema library.
+- **Consequences:** Validation occurs at the privileged boundary; invalid payloads map to `INVALID_INPUT`; domain services receive validated data; validators and their inferred/narrowed contract types are tested together; no generic unrestricted IPC payload is allowed.
+- **Phase:** 1 principle; mechanism resolved in Phase 2A.
+
+## ADR-017 — External URL and navigation policy
+
+- **Status:** Accepted
+- **Context:** BrowserWindow navigation and external URL opening cross a privileged Electron boundary. The development renderer uses an HTTP origin, but that internal development transport must not authorize arbitrary external HTTP navigation.
+- **Options:** Allow common web/mail protocols; allow HTTPS only; block all external opening.
+- **Selected option:** External opening is limited to validated `https:` URLs. Block `http:`, `mailto:`, `file:`, custom protocols, and every other external protocol. Renderer navigation remains restricted to the exact current application origin; the electron-vite development renderer origin is an internal development exception only, while packaged navigation remains restricted to packaged application content.
+- **Rationale:** HTTPS-only external opening provides the required documentation-link capability with the smallest approved external protocol surface.
+- **Consequences:** Main validates URLs before calling `shell.openExternal`; preload never exposes unrestricted external opening or Electron shell primitives; in-window navigation away from the exact application origin is denied.
+- **Phase:** 2A security policy.
+
+## ADR-018 — Automated test infrastructure
+
+- **Status:** Accepted
+- **Context:** Phase 2A requires executable unit, main/service, IPC-boundary, persistence, security, and lifecycle tests. The repository currently uses Vite/electron-vite with TypeScript and has only a failing placeholder test command.
+- **Options:** Node.js built-in test runner; Jest with a TypeScript transform; Vitest; a full Electron end-to-end runner as the initial test layer.
+- **Selected option:** Use Vitest in its Node environment by default for unit, main/service, contract, persistence, security, and adapter-level IPC integration tests. Use explicit Electron port/factory adapters so privileged behavior can be exercised without exposing or heavily mocking live Electron objects. Renderer component integration tests that require DOM interaction use file-scoped jsdom with React Testing Library; Node remains the environment for all other tests. Add full Electron end-to-end tooling only when a later work package has behavior that requires it.
+- **Rationale:** Vitest shares the existing Vite TypeScript transform, supplies assertions/mocking in one compatible dependency, and runs on both CI Node 22 and the supported local Node versions. Node's runner would require a separate TypeScript execution convention; Jest would duplicate the Vite transform; a browser/Electron E2E stack is disproportionate before a workflow genuinely requires it. Phase 2B corrective review demonstrated a concrete need for component interaction coverage that reducer-only tests could not provide, so `jsdom`, `@testing-library/react`, and `@testing-library/dom` were explicitly approved as development-only dependencies.
+- **Consequences:** `npm test` is the stable CI command and runs Vitest once; focused tests use `*.test.ts`; CI runs tests after typecheck and lint; only Renderer component test files opt into jsdom; real Electron smoke/E2E coverage remains a later incremental gate rather than being claimed by component or adapter tests.
+- **Phase:** 2A test infrastructure gate; component-test environment extended during Phase 2B corrective review.
+
+## ADR-019 — Phase 2C editor integration and data-safety policy
+
+- **Status:** Accepted
+- **Context:** Phase 2C requires retained Monaco models, source-file writes, unsaved protection across project/application transitions, Explorer coordination, and bounded external-change behavior. The existing architecture fixed ownership boundaries but intentionally left the React wrapper and destructive multi-document policies to the Phase 2C gate.
+- **Selected options:**
+  - Use `@monaco-editor/react` only as the React mounting layer and configure it with the locally imported `monaco-editor` instance. `EditorModelManager` remains authoritative for document/model identity, dirty baselines, view state, and disposal.
+  - Keep focused React/editor state without adding a global renderer-state dependency. ADR-011 remains pending unless later cross-feature evidence requires a shared store.
+  - Use one consolidated `Save All` / `Don't Save All` / `Cancel` decision for transitions involving multiple dirty documents. A failed save aborts the transition; earlier successful saves remain saved.
+  - Before deleting one open dirty file, require `Save` / `Don't Save` / `Cancel`. Only an approved and, where selected, successfully saved document is closed before the existing Recycle Bin operation.
+  - Deleting a folder resolves every open dirty descendant in one consolidated `Save All` / `Don't Save All` / `Cancel` decision. Descendants are selected by normalized project-relative ancestry, never raw string-prefix matching. All required saves must succeed before any affected document is closed; clean descendants close immediately before the Recycle Bin request. A failed Recycle Bin operation is surfaced and never falls back to permanent deletion.
+  - Automatically reload externally changed clean documents while retaining view state where practical. Preserve dirty buffers and expose an external-change conflict warning; no Phase 2C merge editor is introduced.
+  - Save source files through a validated direct write. Source-file atomic replacement and disk-conflict/version detection are not claimed. Application/workspace JSON persistence retains ADR-010 atomic replacement.
+  - Use a narrow transition-ID request/response protocol driven by Main. It participates in the authoritative ProjectService transition guard and application-close coordination; invalid/stale responses, renderer disappearance, timeout, and save failure fail closed.
+- **Rationale:** These policies preserve the accepted privilege boundary and prevent silent source loss while keeping Phase 2C smaller than a general conflict-management or renderer RPC subsystem.
+- **Consequences:** File write receives only ProjectId, normalized project-relative path, and text. Project/application transitions may wait for the owning renderer. The protocol is lifecycle-specific, validates transition ownership and identity, and cannot execute arbitrary renderer requests. Phase 2C tests must cover save races, multi-document decisions, delete coordination, external changes, timeout/disappearance, and stale transition responses.
+- **Phase:** 2C decision gate.
 
 ## Dependency candidate register
 
@@ -173,7 +210,7 @@ No package is installed by this analysis.
 | Area | Candidate | Pros | Cons / maintenance risk | Native/Windows impact | Status |
 |---|---|---|---|---|---|
 | Editor | `monaco-editor` | Required editor engine, strong language primitives | Large bundle/worker configuration | No native ABI; worker packaging must be verified | SELECTED by requirement |
-| React Monaco integration | `@monaco-editor/react` or small local adapter | Wrapper simplifies mount | Wrapper can obscure model/disposal control | No native impact | TBD Phase 2 |
+| React Monaco integration | `@monaco-editor/react` over local `monaco-editor` | Thin mount integration while the app retains model/view/disposal ownership | Requires explicit local loader and worker configuration | No native impact | SELECTED Phase 2C |
 | Terminal UI | `@xterm/xterm` + fit/search addons as needed | Established terminal rendering | Version/addon compatibility | No native ABI | SELECTED |
 | PTY | `node-pty` | Real PTY/ConPTY semantics | Native rebuild and release maintenance | High: Electron ABI and installer test | SELECTED with gate |
 | Persistence | Small internal JSON adapter | Minimal dependency and explicit schema | Must correctly implement atomic/recovery behavior | Windows file locks/rename tests | SELECTED direction |
@@ -182,3 +219,4 @@ No package is installed by this analysis.
 | HTML/CSS/JSON intelligence | Monaco workers | Built for editor integration | Confirm diagnostics/capability coverage | Worker packaging | TBD Phase 3 |
 | Python intelligence | Pyright provider | Strong completion/diagnostics | Distribution and executable/package lifecycle | PATH/config and child-process packaging | TBD Phase 3 |
 | TypeScript Run | `tsx`, `ts-node`, `tsc` + Node, native Node TS | Multiple viable UX choices | Semantics/version/config trade-offs | Must test Windows invocation/stop | TBD Phase 4 |
+| Automated tests | `vitest` | Reuses Vite/TypeScript transform; unit, service, and adapter integration support | Keep Electron E2E separate until required | No native ABI; CI Node 22 compatible | SELECTED Phase 2A |

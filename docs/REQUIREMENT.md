@@ -194,6 +194,11 @@ Hệ thống tạo thư mục project tương ứng.
 
 Giai đoạn đầu có thể chỉ hỗ trợ tạo thư mục project trống.
 
+Trong V1, người dùng chọn thư mục cha và nhập tên project. Hệ thống chỉ tạo một
+thư mục project trống mới dưới thư mục cha đó. Nếu thư mục đích đã tồn tại, thao
+tác phải thất bại an toàn; không tái sử dụng thư mục rỗng có sẵn, ghi đè, hợp
+nhất nội dung hoặc tự động chọn tên khác.
+
 ---
 
 ### FR-003 — Recent Projects
@@ -278,6 +283,11 @@ Cho phép xóa:
 
 Phải có xác nhận trước khi xóa folder không rỗng hoặc thực hiện thao tác xóa có
 nguy cơ làm mất dữ liệu.
+
+Trong V1, mọi thao tác xóa file hoặc folder đều yêu cầu xác nhận rõ ràng trong
+Renderer. Sau khi xác nhận, Main chuyển mục tiêu vào Recycle Bin bằng capability
+Electron được giới hạn cho domain filesystem. Không xóa vĩnh viễn và không tự
+động fallback sang xóa vĩnh viễn nếu thao tác Recycle Bin thất bại.
 
 ---
 
@@ -1419,6 +1429,7 @@ docs/
 ├── ORCA-ANALYSIS.md
 ├── ARCHITECTURE.md
 ├── CODEBASE-MAP.md
+├── IMPLEMENTATION-PLAN.md
 ├── LANGUAGE-SUPPORT.md
 ├── DECISIONS.md
 └── CHANGELOG-THESIS.md
@@ -1464,6 +1475,12 @@ Feature
 Map này phải phản ánh independent source implementation của Student Coding IDE.
 Reference mapping của Orca, nếu cần, phải nằm trong phần riêng và không được trộn
 với codebase map của project.
+
+### IMPLEMENTATION-PLAN.md
+
+Execution roadmap gồm work-package dependencies, decision gates, test strategy
+và phase exit criteria. File này không thay thế requirement hoặc architecture và
+không tự cho phép bắt đầu implementation.
 
 ### LANGUAGE-SUPPORT.md
 

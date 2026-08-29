@@ -1,16 +1,29 @@
 # Student Coding IDE Codebase Map
 
-This map describes the current independent source tree and planned module locations. The source remains the Phase 0 foundation, while Phase 1 documentation and architecture design are complete. Planned paths are design targets only; Phase 1 does not create them.
+This map describes the current independent source tree and planned module locations. Phase 2A established the application and security foundations, Phase 2B added the authorized project/filesystem Explorer, and Phase 2C adds retained Monaco editing, save, external-change handling, and unsaved-transition protection. Later Core IDE features remain assigned to Phase 2D and subsequent work packages.
 
-## Current source tree before Phase 2 implementation
+## Current source tree through Phase 2C
 
 | Current path | Role | Status |
 |---|---|---|
-| `src/main/index.ts` | Electron readiness, one BrowserWindow, secure webPreferences, application close behavior | Existing foundation |
-| `src/preload/index.ts` | Empty preload entry | Existing foundation; domain bridge planned |
-| `src/renderer/src/main.tsx` | React renderer bootstrap | Existing foundation |
-| `src/renderer/src/App.tsx` | Minimal Phase 0 application surface | Existing foundation |
-| `src/renderer/src/styles.css` | Tailwind import and initial global styles | Existing foundation |
+| `src/main/index.ts` | Electron readiness, secure BrowserWindow composition, Phase 2C unsaved-close coordination, and deterministic shutdown | Implemented through Phase 2C |
+| `src/main/app/` | DesktopApplication startup order, lifecycle state, and deterministic reverse-order cleanup | Implemented Phase 2A foundation |
+| `src/main/window/` | Secure BrowserWindow ownership and accepted navigation/external-URL policy | Implemented Phase 2A foundation |
+| `src/main/ipc/` | Validated handler registration, safe result/error mapping, lifecycle transition resolution, project, and file read/write adapters | Implemented through Phase 2C |
+| `src/main/errors/` | Structured domain errors and safe IPC serialization | Implemented Phase 2A foundation |
+| `src/main/services/project/` | One active project, create/open/close/switch, transition guards, identity, authorization, and recent metadata | Implemented Phase 2B |
+| `src/main/services/filesystem/` | Authorized lazy list/read/write/stat/create/rename/Recycle Bin operations and bounded watcher lifecycle | Implemented through Phase 2C |
+| `src/main/services/lifecycle/` | Transition-ID unsaved-change coordination for project switch/close and application close, including timeout and renderer-ownership checks | Implemented Phase 2C |
+| `src/main/services/persistence/` | Versioned JSON, serialized writes, backup, and recovery foundation | Implemented Phase 2A foundation |
+| `src/main/services/process/` | Internal owned-resource registry and deterministic cleanup primitives | Implemented Phase 2A foundation; no process executor |
+| `src/shared/contracts/` | Side-effect-free error, validation, lifecycle-transition, project, file read/write/event, and public API contract types | Implemented through Phase 2C |
+| `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed lifecycle/project/file bridges with response validation and subscription cleanup | Implemented through Phase 2C |
+| `src/renderer/src/main.tsx` | React renderer bootstrap and renderer-session editor-model disposal on real page unload | Implemented through Phase 2C |
+| `src/renderer/src/App.tsx` | Focused project shell, Explorer/editor coordination, and unsaved decision presentation | Implemented through Phase 2C |
+| `src/renderer/src/features/explorer/` | Lazy Explorer tree, local feature state, refresh, mutation controls, errors, and confirmation | Implemented Phase 2B |
+| `src/renderer/src/features/editor/` | Renderer-session model owner, Monaco worker setup, retained models, tabs, dirty/version/view state, save, external conflict/reload, and lifecycle coordination | Implemented Phase 2C |
+| `src/renderer/src/styles.css` | Tailwind import and responsive Orca-aligned shell, Explorer, tabs, dialogs, conflicts, and flex-sized Monaco workbench styling | Implemented through Phase 2C |
+| `tests/` | Vitest contract, main/service, IPC, persistence, preload, security, lifecycle, watcher, path, editor-model, and file-scoped jsdom integration tests | Implemented through Phase 2C |
 | `electron.vite.config.ts` | main/preload/renderer build configuration | Existing foundation |
 | `docs/` | Requirements, reference, architecture, decisions, and thesis record | Existing and Phase 1 output |
 
