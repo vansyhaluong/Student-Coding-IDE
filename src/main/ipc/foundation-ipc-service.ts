@@ -8,6 +8,7 @@ import { IpcHandlerRegistry } from './ipc-handler-registry'
 
 export class FoundationIpcService implements ManagedService {
   readonly name = 'FoundationIpcService'
+  private removeHandler: (() => void) | undefined
 
   constructor(
     private readonly registry: IpcHandlerRegistry,
@@ -15,7 +16,7 @@ export class FoundationIpcService implements ManagedService {
   ) {}
 
   start(): void {
-    this.registry.register({
+    this.removeHandler = this.registry.register({
       channel: LIFECYCLE_CHANNELS.getStatus,
       validate: validateGetLifecycleStatusRequest,
       handle: () => this.getStatus(),
@@ -23,6 +24,7 @@ export class FoundationIpcService implements ManagedService {
   }
 
   stop(): void {
-    this.registry.dispose()
+    this.removeHandler?.()
+    this.removeHandler = undefined
   }
 }
