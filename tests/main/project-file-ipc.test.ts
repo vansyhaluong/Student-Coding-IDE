@@ -83,6 +83,28 @@ describe('Phase 2B IPC adapters', () => {
       relativePath: 'main.ts',
     })).resolves.toEqual({ ok: true, value: 'const value = 1' })
 
+    await expect(ipcMain.invoke(FILE_CHANNELS.write, {
+      projectId: opened.value.id,
+      relativePath: 'main.ts',
+      content: 'const value = 2',
+    })).resolves.toEqual({ ok: true, value: null })
+    await expect(ipcMain.invoke(FILE_CHANNELS.read, {
+      projectId: opened.value.id,
+      relativePath: 'main.ts',
+    })).resolves.toEqual({ ok: true, value: 'const value = 2' })
+
+    await expect(ipcMain.invoke(FILE_CHANNELS.write, {
+      projectId: opened.value.id,
+      relativePath: '../outside.ts',
+      content: 'escape',
+    })).resolves.toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
+
+    await expect(ipcMain.invoke(FILE_CHANNELS.write, {
+      projectId: 'project_aaaaaaaaaaaaaaaaaaaaaaaa',
+      relativePath: 'main.ts',
+      content: 'foreign',
+    })).resolves.toMatchObject({ ok: false, error: { code: 'PERMISSION_DENIED' } })
+
     await expect(ipcMain.invoke(FILE_CHANNELS.read, {
       projectId: 'project_aaaaaaaaaaaaaaaaaaaaaaaa',
       relativePath: 'main.ts',

@@ -35,9 +35,29 @@ describe('lifecycle preload bridge', () => {
     expect(Object.keys(api.lifecycle).sort()).toEqual([
       'getStatus',
       'onStatusChanged',
+      'onUnsavedTransitionRequested',
+      'resolveUnsavedTransition',
     ])
     expect(api).not.toHaveProperty('ipcRenderer')
     expect(api).not.toHaveProperty('execute')
+  })
+
+  it('uses a narrow validated transition resolution call', async () => {
+    const ipcRenderer = new FakeIpcRenderer()
+    ipcRenderer.response = { ok: true, value: null }
+    const invoke = vi.spyOn(ipcRenderer, 'invoke')
+    const bridge = createLifecycleBridge(ipcRenderer)
+    await expect(bridge.resolveUnsavedTransition(
+      '12345678-1234-4123-8123-123456789abc',
+      false,
+    )).resolves.toEqual({ ok: true, value: null })
+    expect(invoke).toHaveBeenCalledWith(
+      LIFECYCLE_CHANNELS.resolveUnsavedTransition,
+      {
+        transitionId: '12345678-1234-4123-8123-123456789abc',
+        proceed: false,
+      },
+    )
   })
 
   it('returns a validated response and rejects malformed main responses', async () => {

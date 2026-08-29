@@ -34,12 +34,15 @@ reference evidence, not source or runtime dependencies.
 - Phase 0 and Phase 1 documentation are complete.
 - Phase 2A provides application/window lifecycle, shared contracts, validated
   IPC, persistence, internal cleanup, and automated-test foundations. Phase 2B
-  now provides one active local project, project-scoped filesystem operations,
+  provides one active local project, project-scoped filesystem operations,
   bounded watcher awareness, narrow project/file bridges, and the lazy Explorer.
+- Phase 2C provides retained canonical Monaco models, tabs, dirty/version/view
+  state, manual save, clean external reload, dirty external conflict protection,
+  and fail-closed unsaved coordination for tab, project, and application close.
 - The current BrowserWindow enables `contextIsolation`, disables
   `nodeIntegration`, and enables sandboxing.
-- No Phase 2C+ Monaco/editor/save, project search, terminal/PTY, language
-  provider, Run service, Git service, or settings UX has been implemented.
+- No Phase 2D+ project search, terminal/PTY, language provider, Run service, Git
+  service, or settings UX has been implemented.
 - No Orca source, module, submodule, or runtime dependency is present.
 - Existing quality commands are `npm run typecheck`, `npm run lint`, and
   `npm run build`.
@@ -84,7 +87,7 @@ Section 20 before affected work continues.
 |---|---|---|
 | Phase 2A — Core Contracts & Application Foundation | `COMPLETE` | Secure contracts and application/service foundation |
 | Phase 2B — Project & File Explorer | `COMPLETE` | One authorized local project and file operations |
-| Phase 2C — Monaco Editor, Tabs & Save | `NOT_STARTED` | Safe multi-tab editing and unsaved protection |
+| Phase 2C — Monaco Editor, Tabs & Save | `COMPLETE` | Safe multi-tab editing and unsaved protection |
 | Phase 2D — Project Search | `NOT_STARTED` | Responsive, cancellable project search |
 | Phase 2E — Integrated Terminal | `NOT_STARTED` | Multiple Windows PTY sessions through xterm.js + `node-pty` |
 | Phase 2F — Core IDE Stabilization | `NOT_STARTED` | Integrated Core IDE workflow and cleanup |
@@ -114,7 +117,13 @@ integration tests use jsdom.
 The corrective review returned Phase 2B to `COMPLETE` after serialized project
 transitions, safe empty-directory compensation, stale-response protection, and
 Renderer component integration coverage passed the original exit gate and the
-new regression checks. Phase 2C remains `NOT_STARTED`.
+new regression checks. Phase 2C began with explicit authorization after its
+Monaco integration and data-safety policies were approved and recorded in
+ADR-019. Its dirty-descendant deletion policy, external-reload races, Monaco
+layout defect, and development Fast Refresh editor-reset defect were corrected
+without changing retained-model ownership or weakening dirty-buffer protection.
+The Phase 2C automated gates and manual Electron smoke passed before it moved to
+`COMPLETE`. Phase 2D and later work remain `NOT_STARTED`.
 
 ## 7. Dependency graph
 
@@ -561,6 +570,27 @@ projects, or the application.
 - Update the codebase map and thesis changelog after verification.
 - Document the implemented V1 external-file policy if it narrows an existing
   architecture option.
+
+#### Completion evidence
+
+- `@monaco-editor/react` remains a thin mount over the locally bundled Monaco
+  instance and local development/production workers; EditorModelManager owns one
+  canonical model per normalized project/file identity.
+- Version-aware save, dirty baselines, view state, tab lifecycle, consolidated
+  unsaved decisions, project/application transition ownership, timeout/failure
+  behavior, and model/listener disposal pass automated coverage.
+- Clean external changes reconcile the retained model and remain clean; dirty
+  buffers remain untouched and surface a conflict. Generation/model-identity
+  guards reject out-of-order reloads, project-switch responses, disposed models,
+  and responses owned by a pre-refresh hook instance.
+- Corrective runtime review fixed the Monaco flex-row sizing defect and moved the
+  model manager to renderer-session ownership so React/Vite effect refreshes do
+  not clear active tabs. The manager is disposed on actual renderer page unload.
+- Manual Electron smoke passed edit/save/reopen, clean reload, dirty conflict,
+  application-close decisions, tab/model/undo/view retention, resize/layout,
+  Fast Refresh retention, and Monaco worker behavior.
+- Final verification passed 134 Vitest tests across 18 files, typecheck, lint,
+  production build, adversarial review, and `git diff --check`.
 
 ### 8.4 Phase 2D — Project Search
 
@@ -1127,7 +1157,7 @@ dependency packaging, application packaging, installer, and documentation review
 |---|---|---|---|---|
 | Renderer state management | ADR-011 | Shared Phase 2 shell/project/editor state expands | Proposed; unresolved | Actual cross-feature update needs, lifecycle ownership, complexity, bundle/dependency cost |
 | IPC runtime validation mechanism | ADR-016, ADR-003 | Production IPC handlers multiply in early Phase 2 | RESOLVED Phase 2A — explicit validators | Current contracts are small; validators provide normalized issues and audited narrowing without schema runtime cost |
-| React Monaco integration | Dependency candidate register, ADR-006 | Phase 2C Editor implementation | TBD | Model/view ownership, mount/disposal control, workers, build behavior, bundle impact |
+| React Monaco integration | ADR-006, ADR-019 | Phase 2C Editor implementation | RESOLVED Phase 2C — thin `@monaco-editor/react` mount over local `monaco-editor` | Model/view ownership remains with EditorModelManager; local workers, development/build behavior, and disposal must pass the Phase 2C gate |
 | JS/TS/HTML/CSS/JSON providers | ADR-013, ADR-015 | Phase 3 implementation | Proposed; unresolved | Matrix capabilities, cross-file behavior, sync, lifecycle, development/production-build behavior, provider distribution feasibility, license/maintenance; full packaged/installed verification is Phase 7 |
 | Python/Pyright strategy | ADR-013, ADR-015 | Python Phase 3 implementation | Candidate only; unresolved | Distribution, executable/config discovery, lifecycle, development/production-build behavior, minimal packaging feasibility if needed, logs, Windows behavior, license; full packaged/installed verification is Phase 7 |
 | Large-file language thresholds | Architecture §8 | Phase 3 acceptance for expensive features | TBD | Measured responsiveness/memory while edit/save remains available |

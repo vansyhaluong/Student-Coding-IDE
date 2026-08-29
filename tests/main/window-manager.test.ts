@@ -38,7 +38,16 @@ class FakeWindow implements BrowserWindowLike {
   readonly loadURL = vi.fn(async () => undefined)
   readonly loadFile = vi.fn(async () => undefined)
   readonly destroy = vi.fn()
+  readonly close = vi.fn()
   readonly isDestroyed = vi.fn(() => false)
+  closeListener: ((event: { preventDefault(): void }) => void) | undefined
+  readonly on = vi.fn((
+    event: 'close',
+    listener: (event: { preventDefault(): void }) => void,
+  ) => {
+    void event
+    this.closeListener = listener
+  })
 }
 
 describe('WindowManager security', () => {
@@ -49,6 +58,26 @@ describe('WindowManager security', () => {
       nodeIntegration: false,
       sandbox: true,
     })
+  })
+
+  it('fails window close closed until asynchronous unsaved coordination approves', async () => {
+    const window = new FakeWindow()
+    const requestClose = vi.fn(async () => true)
+    const manager = new WindowManager({
+      createWindow: () => window,
+      openExternal: async () => undefined,
+      preloadPath: 'preload.js',
+      rendererFile: 'index.html',
+      requestClose,
+    })
+    await manager.start()
+    const preventDefault = vi.fn()
+
+    window.closeListener?.({ preventDefault })
+    expect(preventDefault).toHaveBeenCalledOnce()
+    expect(window.close).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(window.close).toHaveBeenCalledOnce())
+    expect(requestClose).toHaveBeenCalledOnce()
   })
 
   it.each([

@@ -186,6 +186,23 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 - **Consequences:** `npm test` is the stable CI command and runs Vitest once; focused tests use `*.test.ts`; CI runs tests after typecheck and lint; only Renderer component test files opt into jsdom; real Electron smoke/E2E coverage remains a later incremental gate rather than being claimed by component or adapter tests.
 - **Phase:** 2A test infrastructure gate; component-test environment extended during Phase 2B corrective review.
 
+## ADR-019 — Phase 2C editor integration and data-safety policy
+
+- **Status:** Accepted
+- **Context:** Phase 2C requires retained Monaco models, source-file writes, unsaved protection across project/application transitions, Explorer coordination, and bounded external-change behavior. The existing architecture fixed ownership boundaries but intentionally left the React wrapper and destructive multi-document policies to the Phase 2C gate.
+- **Selected options:**
+  - Use `@monaco-editor/react` only as the React mounting layer and configure it with the locally imported `monaco-editor` instance. `EditorModelManager` remains authoritative for document/model identity, dirty baselines, view state, and disposal.
+  - Keep focused React/editor state without adding a global renderer-state dependency. ADR-011 remains pending unless later cross-feature evidence requires a shared store.
+  - Use one consolidated `Save All` / `Don't Save All` / `Cancel` decision for transitions involving multiple dirty documents. A failed save aborts the transition; earlier successful saves remain saved.
+  - Before deleting one open dirty file, require `Save` / `Don't Save` / `Cancel`. Only an approved and, where selected, successfully saved document is closed before the existing Recycle Bin operation.
+  - Deleting a folder resolves every open dirty descendant in one consolidated `Save All` / `Don't Save All` / `Cancel` decision. Descendants are selected by normalized project-relative ancestry, never raw string-prefix matching. All required saves must succeed before any affected document is closed; clean descendants close immediately before the Recycle Bin request. A failed Recycle Bin operation is surfaced and never falls back to permanent deletion.
+  - Automatically reload externally changed clean documents while retaining view state where practical. Preserve dirty buffers and expose an external-change conflict warning; no Phase 2C merge editor is introduced.
+  - Save source files through a validated direct write. Source-file atomic replacement and disk-conflict/version detection are not claimed. Application/workspace JSON persistence retains ADR-010 atomic replacement.
+  - Use a narrow transition-ID request/response protocol driven by Main. It participates in the authoritative ProjectService transition guard and application-close coordination; invalid/stale responses, renderer disappearance, timeout, and save failure fail closed.
+- **Rationale:** These policies preserve the accepted privilege boundary and prevent silent source loss while keeping Phase 2C smaller than a general conflict-management or renderer RPC subsystem.
+- **Consequences:** File write receives only ProjectId, normalized project-relative path, and text. Project/application transitions may wait for the owning renderer. The protocol is lifecycle-specific, validates transition ownership and identity, and cannot execute arbitrary renderer requests. Phase 2C tests must cover save races, multi-document decisions, delete coordination, external changes, timeout/disappearance, and stale transition responses.
+- **Phase:** 2C decision gate.
+
 ## Dependency candidate register
 
 No package is installed by this analysis.
@@ -193,7 +210,7 @@ No package is installed by this analysis.
 | Area | Candidate | Pros | Cons / maintenance risk | Native/Windows impact | Status |
 |---|---|---|---|---|---|
 | Editor | `monaco-editor` | Required editor engine, strong language primitives | Large bundle/worker configuration | No native ABI; worker packaging must be verified | SELECTED by requirement |
-| React Monaco integration | `@monaco-editor/react` or small local adapter | Wrapper simplifies mount | Wrapper can obscure model/disposal control | No native impact | TBD Phase 2 |
+| React Monaco integration | `@monaco-editor/react` over local `monaco-editor` | Thin mount integration while the app retains model/view/disposal ownership | Requires explicit local loader and worker configuration | No native impact | SELECTED Phase 2C |
 | Terminal UI | `@xterm/xterm` + fit/search addons as needed | Established terminal rendering | Version/addon compatibility | No native ABI | SELECTED |
 | PTY | `node-pty` | Real PTY/ConPTY semantics | Native rebuild and release maintenance | High: Electron ABI and installer test | SELECTED with gate |
 | Persistence | Small internal JSON adapter | Minimal dependency and explicit schema | Must correctly implement atomic/recovery behavior | Windows file locks/rename tests | SELECTED direction |

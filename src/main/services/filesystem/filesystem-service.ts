@@ -31,7 +31,11 @@ export interface FileSystemPort {
   lstat(path: string): Promise<StatsLike>
   readdir(path: string): Promise<readonly DirectoryEntryLike[]>
   readFile(path: string): Promise<string>
-  writeFile(path: string, data: string): Promise<void>
+  writeFile(
+    path: string,
+    data: string,
+    options?: { exclusive: boolean },
+  ): Promise<void>
   mkdir(path: string): Promise<void>
   rename(source: string, destination: string): Promise<void>
 }
@@ -74,7 +78,11 @@ const nodeFileSystem: FileSystemPort = {
   lstat: lstatAsync,
   readdir: (path) => readdirAsync(path, { withFileTypes: true }),
   readFile: (path) => readFileAsync(path, 'utf8'),
-  writeFile: (path, data) => writeFileAsync(path, data, { flag: 'wx' }),
+  writeFile: (path, data, options) => writeFileAsync(
+    path,
+    data,
+    options?.exclusive ? { flag: 'wx' } : undefined,
+  ),
   mkdir: (path) => mkdirAsync(path),
   rename: renameAsync,
 }
@@ -162,6 +170,21 @@ export class FileSystemService implements ManagedService {
     }
     this.projectService.getAuthorizedProject(project.id)
     return this.fileSystem.readFile(target.canonicalPath)
+  }
+
+  async write(
+    projectId: ProjectId,
+    relativePath: string,
+    content: string,
+  ): Promise<void> {
+    const project = this.projectService.getAuthorizedProject(projectId)
+    const target = await this.resolveExisting(project, relativePath, false)
+    if (!target.stats.isFile() && !target.stats.isSymbolicLink()) {
+      throw invalidPath('The requested path is not a file.', 'file:write')
+    }
+    const revalidated = await this.resolveExisting(project, relativePath, false)
+    this.projectService.getAuthorizedProject(project.id)
+    await this.fileSystem.writeFile(revalidated.canonicalPath, content)
   }
 
   createFile(
@@ -261,7 +284,7 @@ export class FileSystemService implements ManagedService {
     await this.assertMissing(targetPath, operation)
     this.projectService.getAuthorizedProject(project.id)
     if (kind === 'file') {
-      await this.fileSystem.writeFile(targetPath, '')
+      await this.fileSystem.writeFile(targetPath, '', { exclusive: true })
     } else {
       await this.fileSystem.mkdir(targetPath)
     }
