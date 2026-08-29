@@ -30,7 +30,9 @@ export interface BrowserWindowLike {
   loadURL(url: string): Promise<void>
   loadFile(path: string): Promise<void>
   destroy(): void
+  close(): void
   isDestroyed(): boolean
+  on(event: 'close', listener: (event: PreventableEvent) => void): void
 }
 
 export interface WindowManagerOptions {
@@ -40,11 +42,15 @@ export interface WindowManagerOptions {
   rendererFile: string
   developmentRendererUrl?: string
   onExternalOpenError?(error: unknown): void
+  requestClose?(): Promise<boolean>
+  onCloseRequestError?(error: unknown): void
 }
 
 export class WindowManager implements ManagedService {
   readonly name = 'WindowManager'
   private mainWindow: BrowserWindowLike | undefined
+  private closeApproved = false
+  private closeRequestPending = false
 
   constructor(private readonly options: WindowManagerOptions) {}
 
@@ -60,7 +66,10 @@ export class WindowManager implements ManagedService {
     const mainWindow = this.options.createWindow(createSecureWindowOptions(
       this.options.preloadPath,
     ))
+    this.closeApproved = false
+    this.closeRequestPending = false
     this.configureNavigation(mainWindow)
+    this.configureClose(mainWindow)
     this.mainWindow = mainWindow
 
     if (this.options.developmentRendererUrl) {
@@ -93,6 +102,24 @@ export class WindowManager implements ManagedService {
 
       event.preventDefault()
       this.openApprovedExternalUrl(url)
+    })
+  }
+
+  private configureClose(window: BrowserWindowLike): void {
+    window.on('close', (event) => {
+      if (this.closeApproved || !this.options.requestClose) return
+      event.preventDefault()
+      if (this.closeRequestPending) return
+      this.closeRequestPending = true
+      void this.options.requestClose().then((approved) => {
+        this.closeRequestPending = false
+        if (!approved || window.isDestroyed() || this.mainWindow !== window) return
+        this.closeApproved = true
+        window.close()
+      }).catch((error: unknown) => {
+        this.closeRequestPending = false
+        this.options.onCloseRequestError?.(error)
+      })
     })
   }
 

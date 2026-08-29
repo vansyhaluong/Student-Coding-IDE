@@ -23,8 +23,13 @@ import {
 
 interface ProjectExplorerProps {
   project: ProjectIdentity
-  onPreview(path: string, content: string): void
-  onClearPreview(): void
+  onOpenFile?(path: string): void
+  onRenamed?(previous: FileEntry, renamed: FileEntry): void
+  onRequestDelete?(entry: FileEntry): Promise<boolean>
+  /** Phase 2B compatibility only; no longer called. */
+  onPreview?(path: string, content: string): void
+  /** Phase 2B compatibility only; no longer called. */
+  onClearPreview?(): void
 }
 
 interface IconProps {
@@ -106,20 +111,19 @@ function LinkIcon({ className }: IconProps) {
 
 export function ProjectExplorer({
   project,
-  onPreview,
-  onClearPreview,
+  onOpenFile,
+  onRenamed,
+  onRequestDelete,
 }: ProjectExplorerProps) {
   const [state, dispatch] = useReducer(explorerReducer, initialExplorerModel)
   const [operationError, setOperationError] = useState<string | null>(null)
   const mounted = useRef(true)
-  const previewGeneration = useRef(0)
   const directoryGenerations = useRef<Record<string, number>>({})
 
   useEffect(() => {
     mounted.current = true
     return () => {
       mounted.current = false
-      previewGeneration.current += 1
     }
   }, [])
 
@@ -169,33 +173,15 @@ export function ProjectExplorer({
       ? parentDirectory(selectedEntry.relativePath)
       : ''
 
-  const selectEntry = async (entry: FileEntry): Promise<void> => {
-    const requestGeneration = previewGeneration.current + 1
-    previewGeneration.current = requestGeneration
+  const selectEntry = (entry: FileEntry): void => {
     dispatch({ type: 'select', path: entry.relativePath })
     setOperationError(null)
-    onClearPreview()
-    if (entry.kind !== 'file') {
-      return
-    }
-    const result = await window.studentIde.file.read(project.id, entry.relativePath)
-    if (
-      !mounted.current
-      || requestGeneration !== previewGeneration.current
-    ) return
-    if (result.ok) {
-      onPreview(entry.relativePath, result.value)
-    } else {
-      setOperationError(result.error.message)
-      onClearPreview()
-    }
+    if (entry.kind === 'file') onOpenFile?.(entry.relativePath)
   }
 
   const toggleDirectory = (entry: FileEntry): void => {
-    previewGeneration.current += 1
     dispatch({ type: 'select', path: entry.relativePath })
     dispatch({ type: 'toggle-directory', path: entry.relativePath })
-    onClearPreview()
     if (!state.directories[entry.relativePath]) {
       void loadDirectory(entry.relativePath)
     }
@@ -216,8 +202,6 @@ export function ProjectExplorer({
     if (!selectedEntry) return
     const newName = window.prompt('Rename item', selectedEntry.name)
     if (!newName || newName === selectedEntry.name) return
-    previewGeneration.current += 1
-    onClearPreview()
     const parent = parentDirectory(selectedEntry.relativePath)
     const result = await window.studentIde.file.rename(
       project.id,
@@ -225,6 +209,7 @@ export function ProjectExplorer({
       newName,
     )
     if (!mounted.current) return
+    if (result.ok) onRenamed?.(selectedEntry, result.value)
     await finishMutation(result, parent)
   }
 
@@ -234,8 +219,7 @@ export function ProjectExplorer({
       selectedEntry.name,
       (message) => window.confirm(message),
     )) return
-    previewGeneration.current += 1
-    onClearPreview()
+    if (onRequestDelete && !await onRequestDelete(selectedEntry)) return
     const parent = parentDirectory(selectedEntry.relativePath)
     const result = await window.studentIde.file.delete(project.id, selectedEntry.relativePath)
     if (!mounted.current) return
@@ -318,7 +302,7 @@ interface DirectoryContentsProps {
   expanded: Record<string, true>
   selectedPath: string | null
   onLoad(path: string): Promise<void>
-  onSelect(entry: FileEntry): Promise<void>
+  onSelect(entry: FileEntry): void
   onToggle(entry: FileEntry): void
 }
 
