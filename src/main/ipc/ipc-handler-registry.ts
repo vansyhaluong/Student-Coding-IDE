@@ -42,7 +42,7 @@ export class IpcHandlerRegistry {
 
   register<TRequest, TResponse>(
     definition: IpcRequestDefinition<TRequest, TResponse>,
-  ): void {
+  ): () => void {
     if (this.channels.has(definition.channel)) {
       throw new Error(`IPC handler already registered: ${definition.channel}`)
     }
@@ -71,6 +71,11 @@ export class IpcHandlerRegistry {
         )
       }
     })
+    return () => {
+      if (this.channels.delete(definition.channel)) {
+        this.ipcMain.removeHandler(definition.channel)
+      }
+    }
   }
 
   dispose(): void {

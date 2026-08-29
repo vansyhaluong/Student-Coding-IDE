@@ -12,9 +12,16 @@ the reference version reproducible.
 
 ## 2. Purpose
 
-Orca is used only as a reference implementation for studying desktop IDE
-architecture, behavior, and UX patterns. Student Coding IDE is an independent
-implementation.
+Orca at the locked commit above is the primary visual and interaction reference
+for visible Student Coding IDE surfaces. Intentional resemblance includes the
+dark workbench character, shell hierarchy, panel proportions, compact Explorer
+density, typography hierarchy, spacing, and interaction-state restraint.
+
+Student Coding IDE remains an independent implementation. Its requirements,
+accepted architecture, domain ownership, and security boundaries remain
+authoritative. Orca architecture does not automatically become Student Coding
+IDE architecture, and Student Coding IDE requirements and security take
+precedence whenever they conflict with an Orca UI pattern.
 
 The project:
 
@@ -24,6 +31,10 @@ The project:
 - does not use an upstream-merge workflow with Orca;
 - does not treat Orca modules as modules that must be retained or modified
   directly.
+
+Visible UI may adapt Orca's visual and interaction language, but must not copy
+Orca source files, components, styling declarations, custom assets, modules, or
+state architecture.
 
 ## 3. Areas identified for reference study
 

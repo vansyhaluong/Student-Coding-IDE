@@ -107,6 +107,8 @@ export function resolveProjectRelativePath(
   if (
     relativePath.length === 0
     || relativePath.includes('\0')
+    || relativePath.split(/[\\/]/).includes('..')
+    || (platform === 'win32' && hasInvalidWindowsPathSegment(relativePath))
     || isWindowsAbsolute(relativePath)
     || isPosixAbsolute(relativePath)
   ) {
@@ -133,6 +135,16 @@ export function resolveProjectRelativePath(
   return platform === 'win32'
     ? normalizeWindows(resolved)
     : normalizePosix(resolved)
+}
+
+function hasInvalidWindowsPathSegment(relativePath: string): boolean {
+  return relativePath.split(/[\\/]/).some((segment) => {
+    const baseName = segment.split('.')[0]?.toUpperCase() ?? ''
+    return segment.length === 0
+      || /[<>:"|?*]/.test(segment)
+      || /[. ]$/.test(segment)
+      || /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/.test(baseName)
+  })
 }
 
 function isAbsoluteForPlatform(

@@ -194,6 +194,11 @@ Hệ thống tạo thư mục project tương ứng.
 
 Giai đoạn đầu có thể chỉ hỗ trợ tạo thư mục project trống.
 
+Trong V1, người dùng chọn thư mục cha và nhập tên project. Hệ thống chỉ tạo một
+thư mục project trống mới dưới thư mục cha đó. Nếu thư mục đích đã tồn tại, thao
+tác phải thất bại an toàn; không tái sử dụng thư mục rỗng có sẵn, ghi đè, hợp
+nhất nội dung hoặc tự động chọn tên khác.
+
 ---
 
 ### FR-003 — Recent Projects
@@ -278,6 +283,11 @@ Cho phép xóa:
 
 Phải có xác nhận trước khi xóa folder không rỗng hoặc thực hiện thao tác xóa có
 nguy cơ làm mất dữ liệu.
+
+Trong V1, mọi thao tác xóa file hoặc folder đều yêu cầu xác nhận rõ ràng trong
+Renderer. Sau khi xác nhận, Main chuyển mục tiêu vào Recycle Bin bằng capability
+Electron được giới hạn cho domain filesystem. Không xóa vĩnh viễn và không tự
+động fallback sang xóa vĩnh viễn nếu thao tác Recycle Bin thất bại.
 
 ---
 

@@ -9,6 +9,32 @@ export type ValidationResult<T> =
 
 export type RuntimeValidator<T> = (value: unknown) => ValidationResult<T>
 
+export function validateExactObject(
+  value: unknown,
+  fields: readonly string[],
+): ValidationResult<Record<string, unknown>> {
+  if (!isPlainObject(value)) {
+    return {
+      ok: false,
+      issues: [{ path: '$', message: 'Expected an object' }],
+    }
+  }
+
+  const allowed = new Set(fields)
+  const unknownFields = Object.keys(value).filter((key) => !allowed.has(key))
+  if (unknownFields.length > 0) {
+    return {
+      ok: false,
+      issues: unknownFields.map((key) => ({
+        path: `$.${key}`,
+        message: 'Unknown field',
+      })),
+    }
+  }
+
+  return { ok: true, value }
+}
+
 export function isPlainObject(
   value: unknown,
 ): value is Record<string, unknown> {
@@ -23,23 +49,6 @@ export function isPlainObject(
 export function validateEmptyObject(
   value: unknown,
 ): ValidationResult<Record<string, never>> {
-  if (!isPlainObject(value)) {
-    return {
-      ok: false,
-      issues: [{ path: '$', message: 'Expected an object' }],
-    }
-  }
-
-  const keys = Object.keys(value)
-  if (keys.length > 0) {
-    return {
-      ok: false,
-      issues: keys.map((key) => ({
-        path: `$.${key}`,
-        message: 'Unknown field',
-      })),
-    }
-  }
-
-  return { ok: true, value: {} }
+  const result = validateExactObject(value, [])
+  return result.ok ? { ok: true, value: {} } : result
 }
