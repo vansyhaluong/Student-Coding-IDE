@@ -146,3 +146,81 @@ No Phase 2B Explorer/filesystem workflow, Monaco/editor, Search, Terminal, Run, 
 
 No Phase 2D project search, Terminal, Run, Git, Language Intelligence, Problems,
 Settings UX, formatter, debugger, or extension-host work was added.
+
+## Phase 2D — Project Search (`COMPLETE`)
+
+### Search service and security boundary
+
+- Added a Main-owned SearchService using only Node built-ins and the active
+  ProjectService authorization boundary; no dependency, external executable,
+  search binary, native module, or generic filesystem capability was added.
+- Added literal case-insensitive disk-content search with asynchronous streaming
+  directory traversal, owner/project operation IDs, cooperative supersession,
+  owner-scoped cancellation, and renderer-liveness checks.
+- Added default `.git`, `node_modules`, `dist`, `build`, and `out` exclusions;
+  all symbolic links, obvious binary extensions, NUL-containing content,
+  unreadable entries, and files over 1 MiB are skipped safely.
+- Bounded traversal to 50,000 entries and 10,000 scanned text files, results to
+  1,000 matches in batches of 50, query length to 256 characters, and previews
+  to 240 characters.
+- Added explicit validated `search:start`, `search:cancel`, and `search:event`
+  contracts plus a narrow typed preload bridge. Renderer supplies no root or
+  absolute path and receives no Node, raw IPC, shell, or process capability.
+
+### Search UI and editor integration
+
+- Added persistent `Explorer | Search` tabs inside the existing right sidebar;
+  Explorer remains the default and switching tabs preserves both feature state
+  without remounting editor models.
+- Added idle, searching, cancellation, grouped-result, no-result, bounded-result,
+  and structured error states with file paths, line numbers, and text previews.
+- Added search-result navigation through the existing editor workspace. It opens
+  or reuses the canonical Monaco model, activates the existing tab, reveals and
+  selects the match, and focuses the editor without changing saved baselines,
+  undo state, dirty content, or disk content.
+- Added independent renderer guards for superseded query events, project-switch
+  events, component cleanup, and out-of-order file opens.
+
+### Orca UI parity corrective pass
+
+- Re-audited the complete visible Phase 2Bâ€“2D shell against the locked Orca
+  commit `4bb337741c335cfcc428d3b4271023566e2dadb8` as a strict visual and
+  interaction reference, while retaining an independent implementation.
+- Rebalanced the three-column shell with 280 px session-only resizable sidebars,
+  moved editor tabs into the Orca-style top-chrome hierarchy, introduced semantic
+  dark surface/text/border/focus tokens, and aligned Projects, Explorer, Search,
+  workspace empty state, and footer density and hierarchy.
+- Enabled Electron's native hidden title-bar overlay with a renderer drag region,
+  preserving native Windows controls and all existing BrowserWindow security
+  flags.
+- Added the explicitly authorized `lucide-react` icon package and OFL-1.1 Geist
+  font package through normal dependency workflows; no Orca asset or source was
+  copied and no second icon system was introduced.
+- Replaced native prompt/confirm flows with Student IDE-owned focus-contained
+  dialogs while preserving project transition serialization, dirty-file choices,
+  save-failure blocking, and Main-owned Recycle Bin deletion.
+- Added an Orca-aligned Search query row with a 180 ms debounce, immediate stale
+  operation supersession, delayed visible loading feedback, collapsible groups,
+  and case-insensitive literal preview highlighting.
+- Added focused regression assertions for title-bar configuration, sidebar
+  resizing, dialog focus/Escape behavior, Search debounce/loading, result
+  highlighting, and result-group disclosure; no filesystem authority, search
+  semantics, or Monaco model ownership changed.
+
+### Verification state
+
+- Added focused contract, SearchService, IPC ownership, preload validation,
+  result grouping, no-result/error, cancellation, query/project race, canonical
+  model reuse, dirty-buffer preservation, and Monaco reveal/select tests.
+- The full automated suite passes 157 tests across 21 files. Typecheck, lint,
+  production build, and `git diff --check` pass.
+- Final adversarial review found no Phase 2D blocker. Manual Electron visual and
+  functional smoke passed top chrome/tabs, sidebar resizing, Monaco layout,
+  Explorer/Search retention, dialogs, Search debounce/loading/navigation,
+  dirty-buffer preservation, keyboard behavior, visual parity, and runtime/IPC
+  error checks. Phase 2D is `COMPLETE`.
+
+### Scope boundary
+
+No replace, regex/options UI, Terminal, Run, Git, Language Intelligence,
+Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.

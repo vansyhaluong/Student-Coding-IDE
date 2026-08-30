@@ -142,6 +142,12 @@ export function createSecureWindowOptions(
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#171717',
+      symbolColor: '#b8b8bc',
+      height: 36,
+    },
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,

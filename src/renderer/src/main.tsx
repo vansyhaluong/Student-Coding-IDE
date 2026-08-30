@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import App from './App'
 import { editorModelManager } from './features/editor/editor-session'
+import '@fontsource-variable/geist'
 import './styles.css'
 
 const root = document.getElementById('root')
