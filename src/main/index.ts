@@ -11,9 +11,11 @@ import {
   LIFECYCLE_CHANNELS,
   FILE_CHANNELS,
   PROJECT_CHANNELS,
+  SEARCH_CHANNELS,
   type FileChangedEvent,
   type ProjectChangedEvent,
   type RecentProjectMetadata,
+  type SearchEvent,
   type UnsavedTransitionRequestEvent,
 } from '../shared/contracts'
 import { DesktopApplication } from './app/desktop-application'
@@ -21,11 +23,13 @@ import { FoundationIpcService } from './ipc/foundation-ipc-service'
 import { FileIpcService } from './ipc/file-ipc-service'
 import { IpcHandlerRegistry } from './ipc/ipc-handler-registry'
 import { ProjectIpcService } from './ipc/project-ipc-service'
+import { SearchIpcService } from './ipc/search-ipc-service'
 import { FileSystemService } from './services/filesystem/filesystem-service'
 import { PersistenceService } from './services/persistence/persistence-service'
 import { ProcessManager } from './services/process/process-manager'
 import { UnsavedTransitionService } from './services/lifecycle/unsaved-transition-service'
 import { ProjectService } from './services/project/project-service'
+import { SearchService } from './services/search/search-service'
 import { WindowManager } from './window/window-manager'
 
 interface AppMetadata {
@@ -66,6 +70,13 @@ void app.whenReady().then(async () => {
     onWatcherError: () => {
       console.error('The active project watcher stopped unexpectedly.')
     },
+  })
+  const searchService = new SearchService(projectService, {
+    isOwnerAlive: (ownerId) => BrowserWindow.getAllWindows().some(
+      (window) => !window.isDestroyed()
+        && !window.webContents.isDestroyed()
+        && window.webContents.id === ownerId,
+    ),
   })
 
   const ipcRegistry = new IpcHandlerRegistry(ipcMain)
@@ -141,16 +152,27 @@ void app.whenReady().then(async () => {
     fileSystemService,
     (event) => publishToWindows(FILE_CHANNELS.changed, event),
   )
+  const searchIpc = new SearchIpcService(
+    ipcRegistry,
+    searchService,
+    (ownerId, event) => publishToRenderer(
+      ownerId,
+      SEARCH_CHANNELS.event,
+      event,
+    ),
+  )
 
   desktopApplication = new DesktopApplication([
     persistenceService,
     processManager,
     projectService,
     fileSystemService,
+    searchService,
     foundationIpc,
     unsavedTransitionService,
     projectIpc,
     fileIpc,
+    searchIpc,
     windowManager,
   ])
 
@@ -177,6 +199,19 @@ function publishToWindows(
       window.webContents.send(channel, event)
     }
   }
+}
+
+function publishToRenderer(
+  ownerId: number,
+  channel: string,
+  event: SearchEvent,
+): void {
+  const window = BrowserWindow.getAllWindows().find(
+    (candidate) => !candidate.isDestroyed()
+      && !candidate.webContents.isDestroyed()
+      && candidate.webContents.id === ownerId,
+  )
+  window?.webContents.send(channel, event)
 }
 
 app.on('activate', () => {

@@ -3,12 +3,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
   FileEntry,
   ProjectIdentity,
+  SearchMatch,
   UnsavedTransitionRequestEvent,
 } from '../../../../shared/contracts'
 import {
   EditorModelManager,
   type EditorDocument,
 } from './models/editor-model-manager'
+import type { EditorNavigationRequest } from './editor-navigation'
 
 export type UnsavedChoice = 'save' | 'discard' | 'cancel'
 
@@ -24,11 +26,13 @@ export function useEditorWorkspace(
 ) {
   const [error, setError] = useState<string | null>(null)
   const [dialog, setDialog] = useState<UnsavedDialogState | null>(null)
+  const [navigation, setNavigation] = useState<EditorNavigationRequest | null>(null)
   const dialogResolver = useRef<((choice: UnsavedChoice) => void) | null>(null)
   const projectRef = useRef(project)
   const previousProject = useRef(project)
   const openGeneration = useRef(0)
   const externalGenerations = useRef(new Map<string, number>())
+  const navigationGeneration = useRef(0)
 
   projectRef.current = project
 
@@ -87,14 +91,16 @@ export function useEditorWorkspace(
     return true
   }, [save])
 
-  const openFile = useCallback(async (relativePath: string): Promise<void> => {
+  const openFile = useCallback(async (
+    relativePath: string,
+  ): Promise<EditorDocument | null> => {
     const activeProject = projectRef.current
-    if (!activeProject) return
+    if (!activeProject) return null
     const existing = manager.findDocument(activeProject.id, relativePath)
     if (existing) {
       openGeneration.current += 1
       manager.activate(existing.key)
-      return
+      return existing
     }
     const generation = ++openGeneration.current
     setError(null)
@@ -104,16 +110,38 @@ export function useEditorWorkspace(
         generation === openGeneration.current
         && projectRef.current?.id === activeProject.id
       ) setError(result.error.message)
-      return
+      return null
     }
-    if (projectRef.current?.id !== activeProject.id) return
-    manager.openDocument(
+    if (projectRef.current?.id !== activeProject.id) return null
+    return manager.openDocument(
       activeProject.id,
       relativePath,
       result.value,
       generation === openGeneration.current,
     )
   }, [manager])
+
+  const navigateToSearchMatch = useCallback(async (
+    match: SearchMatch,
+  ): Promise<void> => {
+    const activeProject = projectRef.current
+    if (!activeProject || activeProject.id !== match.projectId) return
+    const generation = ++navigationGeneration.current
+    const document = await openFile(match.relativePath)
+    if (
+      !document
+      || generation !== navigationGeneration.current
+      || projectRef.current?.id !== match.projectId
+    ) return
+    setNavigation({
+      id: generation,
+      projectId: match.projectId,
+      relativePath: document.relativePath,
+      lineNumber: match.lineNumber,
+      columnStart: match.columnStart,
+      columnEnd: match.columnEnd,
+    })
+  }, [openFile])
 
   const closeDocument = useCallback(async (key: string): Promise<void> => {
     const document = manager.getOpenDocuments().find((item) => item.key === key)
@@ -179,6 +207,8 @@ export function useEditorWorkspace(
     const oldProject = previousProject.current
     if (oldProject && oldProject.id !== project?.id) {
       openGeneration.current += 1
+      navigationGeneration.current += 1
+      setNavigation(null)
       externalGenerations.current.clear()
       manager.closeProject(oldProject.id)
     }
@@ -265,6 +295,7 @@ export function useEditorWorkspace(
 
   useEffect(() => () => {
     openGeneration.current += 1
+    navigationGeneration.current += 1
     externalGenerations.current.clear()
     dialogResolver.current?.('cancel')
     dialogResolver.current = null
@@ -274,9 +305,11 @@ export function useEditorWorkspace(
     manager,
     dialog,
     error,
+    navigation,
     choose,
     save,
     openFile,
+    navigateToSearchMatch,
     closeDocument,
     requestDelete,
     renamed,
