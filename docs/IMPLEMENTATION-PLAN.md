@@ -39,10 +39,18 @@ reference evidence, not source or runtime dependencies.
 - Phase 2C provides retained canonical Monaco models, tabs, dirty/version/view
   state, manual save, clean external reload, dirty external conflict protection,
   and fail-closed unsaved coordination for tab, project, and application close.
+- Phase 2D is complete with Main-owned bounded disk-content search, typed
+  search IPC/preload contracts, Explorer/Search sidebar tabs, stale-operation
+  guards, and retained-model result navigation. A cross-cutting Orca UI parity
+  corrective pass has also aligned the visible Phase 2Bâ€“2D shell at the locked
+  reference commit without changing feature ownership. The explicitly authorized
+  `lucide-react` and license-compatible Geist font packages support the shared
+  icon and typography system. Automated gates, adversarial review, and manual
+  Electron visual/functional smoke all passed.
 - The current BrowserWindow enables `contextIsolation`, disables
   `nodeIntegration`, and enables sandboxing.
-- No Phase 2D+ project search, terminal/PTY, language provider, Run service, Git
-  service, or settings UX has been implemented.
+- No Phase 2E+ terminal/PTY, language provider, Run service, Git service, or
+  settings UX has been implemented.
 - No Orca source, module, submodule, or runtime dependency is present.
 - Existing quality commands are `npm run typecheck`, `npm run lint`, and
   `npm run build`.
@@ -88,7 +96,7 @@ Section 20 before affected work continues.
 | Phase 2A — Core Contracts & Application Foundation | `COMPLETE` | Secure contracts and application/service foundation |
 | Phase 2B — Project & File Explorer | `COMPLETE` | One authorized local project and file operations |
 | Phase 2C — Monaco Editor, Tabs & Save | `COMPLETE` | Safe multi-tab editing and unsaved protection |
-| Phase 2D — Project Search | `NOT_STARTED` | Responsive, cancellable project search |
+| Phase 2D — Project Search | `COMPLETE` | Responsive, cancellable project search |
 | Phase 2E — Integrated Terminal | `NOT_STARTED` | Multiple Windows PTY sessions through xterm.js + `node-pty` |
 | Phase 2F — Core IDE Stabilization | `NOT_STARTED` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `NOT_STARTED` | Tier 1/2 intelligence, diagnostics, and Problems |
@@ -123,7 +131,11 @@ ADR-019. Its dirty-descendant deletion policy, external-reload races, Monaco
 layout defect, and development Fast Refresh editor-reset defect were corrected
 without changing retained-model ownership or weakening dirty-buffer protection.
 The Phase 2C automated gates and manual Electron smoke passed before it moved to
-`COMPLETE`. Phase 2D and later work remain `NOT_STARTED`.
+`COMPLETE`. Phase 2D began with explicit authorization and fixed product choices
+for case-insensitive literal search and shared Explorer/Search sidebar tabs. Its
+bounded search, navigation, Orca/STYLEGUIDE corrective UI pass, automated gates,
+adversarial review, and manual Electron smoke passed before it moved to
+`COMPLETE`. Phase 2E and later work remain `NOT_STARTED`.
 
 ## 7. Dependency graph
 
@@ -691,6 +703,26 @@ operation, and navigate a result into the editor.
 
 - Record actual limits/exclusion policy and implemented modules.
 - Update the thesis changelog only after verification.
+
+#### Completed implementation evidence
+
+- Search reads project files from disk in Main; it does not merge unsaved Monaco
+  buffers into results. Navigation reuses the current canonical model and never
+  overwrites dirty content.
+- Search is literal and case-insensitive. Default excluded directories are
+  `.git`, `node_modules`, `dist`, `build`, and `out`; symbolic links, obvious
+  binary files, NUL-containing files, and files over 1 MiB are skipped.
+- Defensive bounds are 256 query characters, 10,000 scanned text files, 50,000
+  visited entries, 1,000 matches, 50 matches per event batch, and 240 preview
+  characters.
+- A newer owner search cooperatively cancels the older operation. Main checks
+  project and renderer ownership throughout traversal; Renderer independently
+  ignores mismatched operation IDs and project IDs. In-flight filesystem reads
+  are not claimed to be forcibly cancelled.
+- Automated contract, service, IPC/preload, renderer, navigation, and race
+  coverage is present. The full 157-test suite, typecheck, lint, production
+  build, `git diff --check`, final adversarial review, and manual Electron
+  visual/functional smoke passed. Phase 2D is `COMPLETE`.
 
 ### 8.5 Phase 2E — Integrated Terminal
 

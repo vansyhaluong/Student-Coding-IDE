@@ -23,6 +23,13 @@ const monacoModels = vi.hoisted(() => [] as Array<{
   dispose(): void
 }>)
 const editorCommands = vi.hoisted(() => [] as Array<() => void>)
+const editorSelections = vi.hoisted(() => [] as Array<{
+  startLineNumber: number
+  startColumn: number
+  endLineNumber: number
+  endColumn: number
+}>)
+const editorReveals = vi.hoisted(() => [] as typeof editorSelections)
 
 vi.mock('../../src/renderer/src/features/editor/monaco', () => ({
   monaco: { KeyMod: { CtrlCmd: 1 }, KeyCode: { KeyS: 2 } },
@@ -66,6 +73,8 @@ vi.mock('@monaco-editor/react', async () => {
           focus: vi.fn(),
           restoreViewState: vi.fn(),
           saveViewState: vi.fn(() => null),
+          setSelection: vi.fn((range) => editorSelections.push(range)),
+          revealRangeInCenter: vi.fn((range) => editorReveals.push(range)),
           setModel: vi.fn(),
         })
       }, [onMount])
@@ -88,6 +97,9 @@ import type {
   ProjectApi,
   ProjectIdentity,
   ProjectChangedEvent,
+  SearchApi,
+  SearchEvent,
+  SearchMatch,
   StudentIdeApi,
   UnsavedTransitionRequestEvent,
 } from '../../src/shared/contracts'
@@ -102,6 +114,8 @@ afterEach(() => {
   editorModelManager.dispose()
   monacoModels.splice(0)
   editorCommands.splice(0)
+  editorSelections.splice(0)
+  editorReveals.splice(0)
   vi.restoreAllMocks()
 })
 
@@ -203,15 +217,20 @@ describe('ProjectExplorer integration', () => {
         listDirectory: async () => success([]),
       },
     })
-    vi.spyOn(window, 'prompt')
-      .mockReturnValueOnce('main.ts')
-      .mockReturnValueOnce('src')
     renderExplorer()
     await screen.findByText('Empty folder')
 
     fireEvent.click(screen.getByRole('button', { name: 'New file' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), {
+      target: { value: 'main.ts' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
     await waitFor(() => expect(createFile).toHaveBeenCalledWith(project.id, '', 'main.ts'))
     fireEvent.click(screen.getByRole('button', { name: 'New folder' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), {
+      target: { value: 'src' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
     await waitFor(() => expect(createDirectory).toHaveBeenCalledWith(project.id, '', 'src'))
   })
 
@@ -224,11 +243,14 @@ describe('ProjectExplorer integration', () => {
         rename,
       },
     })
-    vi.spyOn(window, 'prompt').mockReturnValue('renamed.ts')
     renderExplorer()
     fireEvent.click(await screen.findByTitle('main.ts'))
 
     fireEvent.click(screen.getByRole('button', { name: 'Rename selected item' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'New name' }), {
+      target: { value: 'renamed.ts' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }))
 
     await waitFor(() => expect(rename).toHaveBeenCalledWith(
       project.id,
@@ -246,9 +268,6 @@ describe('ProjectExplorer integration', () => {
         read: async () => success('content'),
       },
     })
-    const confirm = vi.spyOn(window, 'confirm')
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true)
     renderExplorer()
     fireEvent.click(await screen.findByTitle('main.ts'))
     const deleteButton = screen.getByRole('button', {
@@ -256,11 +275,12 @@ describe('ProjectExplorer integration', () => {
     })
 
     fireEvent.click(deleteButton)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(deleteEntry).not.toHaveBeenCalled()
     fireEvent.click(deleteButton)
+    fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
 
     await waitFor(() => expect(deleteEntry).toHaveBeenCalledWith(project.id, 'main.ts'))
-    expect(confirm).toHaveBeenCalledTimes(2)
   })
 
   it('shows bridge mutation errors without hiding them in renderer state', async () => {
@@ -270,11 +290,14 @@ describe('ProjectExplorer integration', () => {
         listDirectory: async () => success([]),
       },
     })
-    vi.spyOn(window, 'prompt').mockReturnValue('main.ts')
     renderExplorer()
     await screen.findByText('Empty folder')
 
     fireEvent.click(screen.getByRole('button', { name: 'New file' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), {
+      target: { value: 'main.ts' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
 
     expect((await screen.findByRole('alert')).textContent).toContain('Cannot create file')
   })
@@ -298,7 +321,278 @@ describe('ProjectExplorer integration', () => {
   })
 })
 
+describe('Project Search integration', () => {
+  it('shows grouped loading/results states and preserves search state across sidebar tabs', async () => {
+    const searchEvents = createSearchEventBus()
+    const start = vi.fn(async (...args: Parameters<SearchApi['start']>) => {
+      void args
+      return success(null)
+    })
+    const listDirectory = vi.fn(async () => success<FileEntry[]>([]))
+    installApi({
+      file: { listDirectory },
+      project: { getActive: async () => success(project) },
+      search: { start, onEvent: searchEvents.subscribe },
+    })
+    render(createElement(App))
+    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    const input = screen.getByLabelText('Search project')
+    await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
+    fireEvent.change(input, { target: { value: 'save' } })
+
+    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    expect(screen.queryByText('Searching…')).toBeNull()
+    expect(await screen.findByText('Searching…')).not.toBeNull()
+    const operationId = start.mock.calls[0]![1]
+    act(() => searchEvents.publish(batchEvent(operationId, [
+      searchMatch('src/main.ts', 2, 4, 8, 'const save = true'),
+      searchMatch('src/main.ts', 8, 1, 5, 'save()'),
+      searchMatch('README.md', 3, 7, 11, 'Press Save to continue'),
+    ])))
+    act(() => searchEvents.publish(completeEvent(operationId)))
+
+    expect(await screen.findByText('3 matches in 2 files')).not.toBeNull()
+    expect(screen.getByText('main.ts')).not.toBeNull()
+    expect(screen.getByText('README.md')).not.toBeNull()
+    const firstMatch = screen.getByRole('button', { name: 'src/main.ts line 2' })
+    expect(firstMatch.textContent).toContain('const save = true')
+    expect(firstMatch.querySelector('mark')?.textContent).toBe('save')
+    const mainGroup = screen.getByTitle('src/main.ts')
+    fireEvent.click(mainGroup)
+    expect(mainGroup.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.click(mainGroup)
+    expect(mainGroup.getAttribute('aria-expanded')).toBe('true')
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Explorer' }))
+    await screen.findByText('Empty folder')
+    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    expect(screen.getByText('3 matches in 2 files')).not.toBeNull()
+    expect((input as HTMLInputElement).value).toBe('save')
+    expect(listDirectory).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows no-results and structured search error states', async () => {
+    const searchEvents = createSearchEventBus()
+    const start = vi.fn(async (...args: Parameters<SearchApi['start']>) => {
+      void args
+      return success(null)
+    })
+    installApi({
+      project: { getActive: async () => success(project) },
+      search: { start, onEvent: searchEvents.subscribe },
+    })
+    render(createElement(App))
+    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    const input = screen.getByLabelText('Search project')
+    await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
+    fireEvent.change(input, { target: { value: 'missing' } })
+    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    act(() => searchEvents.publish(completeEvent(start.mock.calls[0]![1])))
+    expect(await screen.findByText('No results found.')).not.toBeNull()
+
+    fireEvent.change(input, { target: { value: 'locked' } })
+    await waitFor(() => expect(start).toHaveBeenCalledTimes(2))
+    act(() => searchEvents.publish({
+      type: 'error',
+      projectId: project.id,
+      operationId: start.mock.calls[1]![1],
+      error: {
+        code: 'PERMISSION_DENIED',
+        message: 'Search access was denied.',
+        retryable: false,
+      },
+    }))
+    expect((await screen.findByRole('alert')).textContent).toContain('Search access was denied.')
+  })
+
+  it('ignores Query A events after Query B becomes authoritative', async () => {
+    const searchEvents = createSearchEventBus()
+    const start = vi.fn(async (...args: Parameters<SearchApi['start']>) => {
+      void args
+      return success(null)
+    })
+    installApi({
+      project: { getActive: async () => success(project) },
+      search: { start, onEvent: searchEvents.subscribe },
+    })
+    render(createElement(App))
+    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    const input = screen.getByLabelText('Search project')
+    await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
+    fireEvent.change(input, { target: { value: 'alpha' } })
+    await waitFor(() => expect(start).toHaveBeenCalledTimes(1))
+    fireEvent.change(input, { target: { value: 'beta' } })
+    await waitFor(() => expect(start).toHaveBeenCalledTimes(2))
+    const firstId = start.mock.calls[0]![1]
+    const secondId = start.mock.calls[1]![1]
+
+    act(() => searchEvents.publish(batchEvent(firstId, [
+      searchMatch('stale.ts', 1, 1, 6, 'alpha'),
+    ])))
+    act(() => searchEvents.publish(batchEvent(secondId, [
+      searchMatch('fresh.ts', 1, 1, 5, 'beta'),
+    ])))
+    act(() => searchEvents.publish(completeEvent(secondId)))
+
+    expect(await screen.findByText('fresh.ts')).not.toBeNull()
+    expect(screen.queryByText('stale.ts')).toBeNull()
+  })
+
+  it('debounces rapid query changes into one authoritative search', async () => {
+    const searchEvents = createSearchEventBus()
+    const start = vi.fn(async (...args: Parameters<SearchApi['start']>) => {
+      void args
+      return success(null)
+    })
+    installApi({
+      project: { getActive: async () => success(project) },
+      search: { start, onEvent: searchEvents.subscribe },
+    })
+    render(createElement(App))
+    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    const input = screen.getByLabelText('Search project')
+    await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
+
+    fireEvent.change(input, { target: { value: 'sa' } })
+    fireEvent.change(input, { target: { value: 'save' } })
+
+    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    expect(start.mock.calls[0]?.[2]).toBe('save')
+  })
+
+  it('clears results on project switch and ignores late old-project events', async () => {
+    const searchEvents = createSearchEventBus()
+    const start = vi.fn(async (...args: Parameters<SearchApi['start']>) => {
+      void args
+      return success(null)
+    })
+    let publishProjectChanged: ((event: ProjectChangedEvent) => void) | undefined
+    installApi({
+      project: {
+        getActive: async () => success(project),
+        onChanged: (listener) => {
+          publishProjectChanged = listener
+          return () => undefined
+        },
+      },
+      search: { start, onEvent: searchEvents.subscribe },
+    })
+    render(createElement(App))
+    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    const input = screen.getByLabelText('Search project')
+    await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
+    fireEvent.change(input, { target: { value: 'alpha' } })
+    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    const operationId = start.mock.calls[0]![1]
+    act(() => searchEvents.publish(batchEvent(operationId, [
+      searchMatch('old.ts', 1, 1, 6, 'alpha'),
+    ])))
+    expect(await screen.findByText('old.ts')).not.toBeNull()
+
+    const nextProject = {
+      id: 'project_aaaaaaaaaaaaaaaaaaaaaaaa',
+      name: 'Next',
+    } as ProjectIdentity
+    act(() => publishProjectChanged?.({ activeProject: nextProject }))
+    act(() => searchEvents.publish(batchEvent(operationId, [
+      searchMatch('late.ts', 2, 1, 6, 'alpha'),
+    ])))
+
+    await waitFor(() => expect(screen.queryByText('old.ts')).toBeNull())
+    expect(screen.queryByText('late.ts')).toBeNull()
+    expect((input as HTMLInputElement).value).toBe('')
+    expect(screen.getByText('Type to search in files')).not.toBeNull()
+  })
+
+  it('reuses a dirty canonical model and reveals each selected result without overwriting it', async () => {
+    const searchEvents = createSearchEventBus()
+    const start = vi.fn(async (...args: Parameters<SearchApi['start']>) => {
+      void args
+      return success(null)
+    })
+    const read = vi.fn(async () => success('disk save\nsecond save'))
+    installApi({
+      file: { read },
+      project: { getActive: async () => success(project) },
+      search: { start, onEvent: searchEvents.subscribe },
+    })
+    render(createElement(App))
+    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    const input = screen.getByLabelText('Search project')
+    await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
+    fireEvent.change(input, {
+      target: { value: 'save' },
+    })
+    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    const operationId = start.mock.calls[0]![1]
+    act(() => searchEvents.publish(batchEvent(operationId, [
+      searchMatch('main.ts', 1, 6, 10, 'disk save'),
+      searchMatch('main.ts', 2, 8, 12, 'second save'),
+    ])))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'main.ts line 1' }))
+    await waitFor(() => expect(monacoModels).toHaveLength(1))
+    await waitFor(() => expect(editorSelections.at(-1)).toEqual({
+      startLineNumber: 1,
+      startColumn: 6,
+      endLineNumber: 1,
+      endColumn: 10,
+    }))
+    act(() => monacoModels[0]!.setValue('unsaved local content'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'main.ts line 2' }))
+    await waitFor(() => expect(editorSelections.at(-1)).toEqual({
+      startLineNumber: 2,
+      startColumn: 8,
+      endLineNumber: 2,
+      endColumn: 12,
+    }))
+    expect(editorReveals.at(-1)).toEqual(editorSelections.at(-1))
+    expect(monacoModels).toHaveLength(1)
+    expect(monacoModels[0]?.getValue()).toBe('unsaved local content')
+    expect(read).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText('Unsaved changes')).not.toBeNull()
+  })
+})
+
 describe('App project integration', () => {
+  it('keeps editor tabs in top chrome and sidebars keyboard-resizable in session', async () => {
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('A'),
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+
+    expect(screen.getByRole('tablist', { name: 'Open editors' }).closest('.app-chrome')).not.toBeNull()
+    const leftResizer = screen.getByRole('separator', { name: 'Resize left sidebar' })
+    const rightResizer = screen.getByRole('separator', { name: 'Resize right sidebar' })
+    expect(leftResizer.getAttribute('aria-valuenow')).toBe('280')
+    expect(rightResizer.getAttribute('aria-valuenow')).toBe('280')
+    fireEvent.keyDown(leftResizer, { key: 'ArrowRight' })
+    fireEvent.keyDown(rightResizer, { key: 'ArrowLeft' })
+    expect(leftResizer.getAttribute('aria-valuenow')).toBe('290')
+    expect(rightResizer.getAttribute('aria-valuenow')).toBe('290')
+    expect(screen.getByTestId('monaco-editor')).not.toBeNull()
+  })
+
+  it('focuses and dismisses the create-project dialog without a native prompt', async () => {
+    installApi({ project: { getActive: async () => success(null) } })
+    render(createElement(App))
+    await screen.findByText('No folder is currently open.')
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Create project' })[0]!)
+    const input = screen.getByRole('textbox', { name: 'Project name' })
+    await waitFor(() => expect(document.activeElement).toBe(input))
+    fireEvent.keyDown(input, { key: 'Escape' })
+
+    expect(screen.queryByRole('dialog', { name: 'Create project' })).toBeNull()
+  })
+
   it('retains the active canonical model across an App remount in the same renderer session', async () => {
     installApi({
       file: {
@@ -354,7 +648,8 @@ describe('App project integration', () => {
 
     expect(monacoModels[0]?.getValue()).toBe('disk C')
     expect(monacoModels[0]?.disposed).toBe(false)
-    expect(screen.getByRole('tab').getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Close main.ts' })
+      .closest('[role="tab"]')?.getAttribute('aria-selected')).toBe('true')
   })
 
   it('keeps the active editor through Explorer, watcher, and same-project updates', async () => {
@@ -388,7 +683,8 @@ describe('App project integration', () => {
 
     await waitFor(() => expect(retainedModel?.getValue()).toBe('disk B'))
     expect(screen.getByRole('button', { name: 'Close main.ts' })).not.toBeNull()
-    expect(screen.getByRole('tab').getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Close main.ts' })
+      .closest('[role="tab"]')?.getAttribute('aria-selected')).toBe('true')
     expect(monacoModels).toHaveLength(1)
     expect(retainedModel?.disposed).toBe(false)
     expect(screen.queryByText('Select a file to start editing')).toBeNull()
@@ -912,7 +1208,6 @@ describe('App project integration', () => {
       },
       project: { getActive: async () => success(project) },
     })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     render(createElement(App))
     fireEvent.click(await screen.findByTitle('src'))
     fireEvent.click(await screen.findByTitle('src/a.ts'))
@@ -924,6 +1219,7 @@ describe('App project integration', () => {
     })
     fireEvent.click(screen.getAllByTitle('src')[0]!)
     fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Move to Recycle Bin' }))
     expect(await screen.findByRole('button', { name: 'Save All' })).not.toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Save All' }))
@@ -952,6 +1248,7 @@ function installApi(overrides: {
   file?: Partial<FileApi>
   lifecycle?: Partial<LifecycleApi>
   project?: Partial<ProjectApi>
+  search?: Partial<SearchApi>
 } = {}): StudentIdeApi {
   const api: StudentIdeApi = {
     file: {
@@ -980,6 +1277,12 @@ function installApi(overrides: {
       close: async () => success(null),
       onChanged: () => () => undefined,
       ...overrides.project,
+    },
+    search: {
+      start: async () => success(null),
+      cancel: async () => success(null),
+      onEvent: () => () => undefined,
+      ...overrides.search,
     },
   }
   window.studentIde = api
@@ -1048,6 +1351,55 @@ function createFileChangedEventBus(): {
     publish(event) {
       for (const listener of [...listeners]) listener(event)
     },
+  }
+}
+
+function createSearchEventBus(): {
+  subscribe: SearchApi['onEvent']
+  publish(event: SearchEvent): void
+} {
+  const listeners = new Set<(event: SearchEvent) => void>()
+  return {
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    publish(event) {
+      for (const listener of [...listeners]) listener(event)
+    },
+  }
+}
+
+function searchMatch(
+  relativePath: string,
+  lineNumber: number,
+  columnStart: number,
+  columnEnd: number,
+  preview: string,
+): SearchMatch {
+  return {
+    projectId: project.id,
+    relativePath,
+    lineNumber,
+    columnStart,
+    columnEnd,
+    preview,
+  }
+}
+
+function batchEvent(operationId: string, matches: SearchMatch[]): SearchEvent {
+  return { type: 'batch', projectId: project.id, operationId, matches }
+}
+
+function completeEvent(operationId: string): SearchEvent {
+  return {
+    type: 'complete',
+    projectId: project.id,
+    operationId,
+    status: 'completed',
+    scannedFiles: 1,
+    skippedFiles: 0,
+    limitReached: false,
   }
 }
 

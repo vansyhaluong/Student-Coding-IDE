@@ -52,11 +52,16 @@ class FakeWindow implements BrowserWindowLike {
 
 describe('WindowManager security', () => {
   it('preserves the required BrowserWindow security flags', () => {
-    expect(createSecureWindowOptions('preload.js').webPreferences).toMatchObject({
+    const options = createSecureWindowOptions('preload.js')
+    expect(options.webPreferences).toMatchObject({
       preload: 'preload.js',
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+    })
+    expect(options).toMatchObject({
+      titleBarStyle: 'hidden',
+      titleBarOverlay: { height: 36 },
     })
   })
 
