@@ -6,6 +6,17 @@ import {
   useRef,
   useState,
 } from 'react'
+import {
+  ChevronRight,
+  File,
+  FilePlus2,
+  Folder,
+  FolderPlus,
+  Link2,
+  Pencil,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react'
 
 import type {
   AppError,
@@ -14,12 +25,13 @@ import type {
 } from '../../../../shared/contracts'
 import {
   explorerReducer,
-  confirmRecycleBinDelete,
   initialExplorerModel,
   loadedDirectoryPaths,
   parentDirectory,
   type DirectoryLoadState,
 } from './explorer-model'
+import { Button } from '../../components/ui/Button'
+import { Dialog, PromptDialog } from '../../components/ui/Dialog'
 
 interface ProjectExplorerProps {
   project: ProjectIdentity
@@ -32,82 +44,9 @@ interface ProjectExplorerProps {
   onClearPreview?(): void
 }
 
-interface IconProps {
-  className?: string
-}
-
-function ChevronIcon({ expanded }: { expanded: boolean }) {
-  return (
-    <svg className={`tree-chevron${expanded ? ' expanded' : ''}`} viewBox="0 0 16 16" aria-hidden="true">
-      <path d="m6 3.5 4.5 4.5L6 12.5" />
-    </svg>
-  )
-}
-
-function FileIcon({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M3 1.75h6l4 4v8.5H3z" />
-      <path d="M9 1.75v4h4" />
-    </svg>
-  )
-}
-
-function FolderIcon({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M1.75 3.5h4l1.25 1.4h7.25v7.6H1.75z" />
-    </svg>
-  )
-}
-
-function NewFileIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M3 1.75h6l4 4v8.5H3zM9 1.75v4h4M5.5 10h5M8 7.5v5" />
-    </svg>
-  )
-}
-
-function NewFolderIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M1.75 3.5h4l1.25 1.4h7.25v7.6H1.75zM6.25 8.75h3.5M8 7v3.5" />
-    </svg>
-  )
-}
-
-function RefreshIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M12.25 5.5A5 5 0 1 0 13 9M12.25 2.5v3h-3" />
-    </svg>
-  )
-}
-
-function RenameIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="m3 11.5-.5 2 2-.5L12 5.5 10.5 4zM9.5 5l1.5 1.5" />
-    </svg>
-  )
-}
-
-function DeleteIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M3.5 4.5h9M6 4.5v-2h4v2M5 6.5v6M8 6.5v6M11 6.5v6M4 4.5l.5 10h7l.5-10" />
-    </svg>
-  )
-}
-
-function LinkIcon({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M6.25 9.75 9.75 6.25M5.25 11.75l-1 1a2.12 2.12 0 0 1-3-3l2-2a2.12 2.12 0 0 1 3 0M10.75 4.25l1-1a2.12 2.12 0 0 1 3 3l-2 2a2.12 2.12 0 0 1-3 0" />
-    </svg>
-  )
-}
+type EntryDialogState =
+  | { mode: 'create'; kind: 'file' | 'directory' }
+  | { mode: 'rename'; entry: FileEntry }
 
 export function ProjectExplorer({
   project,
@@ -117,6 +56,8 @@ export function ProjectExplorer({
 }: ProjectExplorerProps) {
   const [state, dispatch] = useReducer(explorerReducer, initialExplorerModel)
   const [operationError, setOperationError] = useState<string | null>(null)
+  const [entryDialog, setEntryDialog] = useState<EntryDialogState | null>(null)
+  const [deleteCandidate, setDeleteCandidate] = useState<FileEntry | null>(null)
   const mounted = useRef(true)
   const directoryGenerations = useRef<Record<string, number>>({})
 
@@ -187,41 +128,37 @@ export function ProjectExplorer({
     }
   }
 
-  const createEntry = async (kind: 'file' | 'directory'): Promise<void> => {
-    const label = kind === 'file' ? 'file' : 'folder'
-    const name = window.prompt(`Name the new ${label}`)
-    if (!name) return
-    const result = kind === 'file'
-      ? await window.studentIde.file.createFile(project.id, selectedDirectory, name)
-      : await window.studentIde.file.createDirectory(project.id, selectedDirectory, name)
-    if (!mounted.current) return
-    await finishMutation(result, selectedDirectory)
-  }
-
-  const renameSelected = async (): Promise<void> => {
-    if (!selectedEntry) return
-    const newName = window.prompt('Rename item', selectedEntry.name)
-    if (!newName || newName === selectedEntry.name) return
-    const parent = parentDirectory(selectedEntry.relativePath)
+  const submitEntryName = async (name: string): Promise<void> => {
+    const request = entryDialog
+    if (!request) return
+    setEntryDialog(null)
+    if (request.mode === 'create') {
+      const result = request.kind === 'file'
+        ? await window.studentIde.file.createFile(project.id, selectedDirectory, name)
+        : await window.studentIde.file.createDirectory(project.id, selectedDirectory, name)
+      if (!mounted.current) return
+      await finishMutation(result, selectedDirectory)
+      return
+    }
+    if (name === request.entry.name) return
+    const parent = parentDirectory(request.entry.relativePath)
     const result = await window.studentIde.file.rename(
       project.id,
-      selectedEntry.relativePath,
-      newName,
+      request.entry.relativePath,
+      name,
     )
     if (!mounted.current) return
-    if (result.ok) onRenamed?.(selectedEntry, result.value)
+    if (result.ok) onRenamed?.(request.entry, result.value)
     await finishMutation(result, parent)
   }
 
-  const deleteSelected = async (): Promise<void> => {
-    if (!selectedEntry) return
-    if (!confirmRecycleBinDelete(
-      selectedEntry.name,
-      (message) => window.confirm(message),
-    )) return
-    if (onRequestDelete && !await onRequestDelete(selectedEntry)) return
-    const parent = parentDirectory(selectedEntry.relativePath)
-    const result = await window.studentIde.file.delete(project.id, selectedEntry.relativePath)
+  const confirmDelete = async (): Promise<void> => {
+    const entry = deleteCandidate
+    if (!entry) return
+    setDeleteCandidate(null)
+    if (onRequestDelete && !await onRequestDelete(entry)) return
+    const parent = parentDirectory(entry.relativePath)
+    const result = await window.studentIde.file.delete(project.id, entry.relativePath)
     if (!mounted.current) return
     if (!result.ok) {
       setOperationError(result.error.message)
@@ -255,25 +192,15 @@ export function ProjectExplorer({
     <section className="explorer-panel" aria-label="Project Explorer">
       <div className="explorer-toolbar">
         <div className="explorer-project-name" title={project.name}>
-          <FolderIcon className="tree-entry-icon folder" />
+          <Folder className="tree-entry-icon folder" />
           <span>{project.name}</span>
         </div>
         <div className="explorer-actions" aria-label="File actions">
-          <button onClick={() => void createEntry('file')} title="New file" aria-label="New file">
-            <NewFileIcon />
-          </button>
-          <button onClick={() => void createEntry('directory')} title="New folder" aria-label="New folder">
-            <NewFolderIcon />
-          </button>
-          <button onClick={() => void refresh()} title="Refresh Explorer" aria-label="Refresh Explorer">
-            <RefreshIcon />
-          </button>
-          <button disabled={!selectedEntry} onClick={() => void renameSelected()} title="Rename selected item" aria-label="Rename selected item">
-            <RenameIcon />
-          </button>
-          <button className="danger-action" disabled={!selectedEntry} onClick={() => void deleteSelected()} title="Move selected item to Recycle Bin" aria-label="Move selected item to Recycle Bin">
-            <DeleteIcon />
-          </button>
+          <Button variant="ghost" size="iconSmall" onClick={() => setEntryDialog({ mode: 'create', kind: 'file' })} title="New file" aria-label="New file"><FilePlus2 /></Button>
+          <Button variant="ghost" size="iconSmall" onClick={() => setEntryDialog({ mode: 'create', kind: 'directory' })} title="New folder" aria-label="New folder"><FolderPlus /></Button>
+          <Button variant="ghost" size="iconSmall" onClick={() => void refresh()} title="Refresh Explorer" aria-label="Refresh Explorer"><RefreshCw /></Button>
+          <Button variant="ghost" size="iconSmall" disabled={!selectedEntry} onClick={() => selectedEntry && setEntryDialog({ mode: 'rename', entry: selectedEntry })} title="Rename selected item" aria-label="Rename selected item"><Pencil /></Button>
+          <Button variant="ghost" size="iconSmall" className="danger-action" disabled={!selectedEntry} onClick={() => setDeleteCandidate(selectedEntry)} title="Move selected item to Recycle Bin" aria-label="Move selected item to Recycle Bin"><Trash2 /></Button>
         </div>
       </div>
 
@@ -291,6 +218,36 @@ export function ProjectExplorer({
           onToggle={toggleDirectory}
         />
       </div>
+      {entryDialog && (
+        <PromptDialog
+          title={entryDialog.mode === 'create'
+            ? `New ${entryDialog.kind === 'file' ? 'file' : 'folder'}`
+            : 'Rename item'}
+          description={entryDialog.mode === 'create'
+            ? `Create it inside ${selectedDirectory || project.name}.`
+            : `Rename “${entryDialog.entry.name}”.`}
+          label={entryDialog.mode === 'create' ? 'Name' : 'New name'}
+          initialValue={entryDialog.mode === 'rename' ? entryDialog.entry.name : ''}
+          submitLabel={entryDialog.mode === 'create' ? 'Create' : 'Rename'}
+          onSubmit={(name) => void submitEntryName(name)}
+          onCancel={() => setEntryDialog(null)}
+        />
+      )}
+      {deleteCandidate && (
+        <Dialog
+          title="Move to Recycle Bin?"
+          description={`“${deleteCandidate.name}” will be moved to the Recycle Bin.`}
+          onCancel={() => setDeleteCandidate(null)}
+          actions={(
+            <>
+              <Button variant="ghost" onClick={() => setDeleteCandidate(null)}>Cancel</Button>
+              <Button variant="destructive" data-dialog-primary="true" onClick={() => void confirmDelete()}>
+                Move to Recycle Bin
+              </Button>
+            </>
+          )}
+        />
+      )}
     </section>
   )
 }
@@ -343,15 +300,26 @@ function DirectoryContents({
               className={`tree-row${selectedPath === entry.relativePath ? ' selected' : ''}`}
               style={{ paddingLeft: 8 + depth * 16 }}
               onClick={() => isDirectory ? onToggle(entry) : void onSelect(entry)}
+              onKeyDown={(event) => {
+                if (!isDirectory) return
+                if (event.key === 'ArrowRight' && !isExpanded) {
+                  event.preventDefault()
+                  onToggle(entry)
+                } else if (event.key === 'ArrowLeft' && isExpanded) {
+                  event.preventDefault()
+                  onToggle(entry)
+                }
+              }}
               aria-expanded={isDirectory ? isExpanded : undefined}
+              aria-current={selectedPath === entry.relativePath ? 'true' : undefined}
               title={entry.relativePath}
             >
-              <span className="tree-caret">{isDirectory ? <ChevronIcon expanded={isExpanded} /> : null}</span>
+              <span className="tree-caret">{isDirectory ? <ChevronRight className={`tree-chevron${isExpanded ? ' expanded' : ''}`} /> : null}</span>
               {entry.isSymbolicLink
-                ? <LinkIcon className="tree-entry-icon link" />
+                ? <Link2 className="tree-entry-icon link" />
                 : isDirectory
-                  ? <FolderIcon className="tree-entry-icon folder" />
-                  : <FileIcon className="tree-entry-icon file" />}
+                  ? <Folder className="tree-entry-icon folder" />
+                  : <File className="tree-entry-icon file" />}
               <span className="tree-name">{entry.name}</span>
             </button>
             {isDirectory && isExpanded && (

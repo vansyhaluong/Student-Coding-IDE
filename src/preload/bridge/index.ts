@@ -5,6 +5,7 @@ import {
   type IpcRendererLike,
 } from './lifecycle'
 import { createProjectBridge } from './project'
+import { createSearchBridge } from './search'
 
 export function createPreloadApi(
   ipcRenderer: IpcRendererLike,
@@ -13,5 +14,6 @@ export function createPreloadApi(
     file: createFileBridge(ipcRenderer),
     lifecycle: createLifecycleBridge(ipcRenderer),
     project: createProjectBridge(ipcRenderer),
+    search: createSearchBridge(ipcRenderer),
   }
 }

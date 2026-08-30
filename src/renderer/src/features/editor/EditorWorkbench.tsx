@@ -4,17 +4,18 @@ import type { editor } from 'monaco-editor'
 
 import { monaco } from './monaco'
 import type { EditorModelManager } from './models/editor-model-manager'
+import type { EditorNavigationRequest } from './editor-navigation'
 
 interface EditorWorkbenchProps {
   manager: EditorModelManager
   onSave(key: string): Promise<boolean>
-  onClose(key: string): Promise<void>
+  navigation: EditorNavigationRequest | null
 }
 
 export function EditorWorkbench({
   manager,
   onSave,
-  onClose,
+  navigation,
 }: EditorWorkbenchProps) {
   const [, setRevision] = useState(0)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
@@ -26,7 +27,6 @@ export function EditorWorkbench({
     setRevision((revision) => revision + 1)
   }), [manager])
 
-  const documents = manager.getOpenDocuments()
   const active = manager.getActiveDocument()
 
   const attachActiveModel = useCallback(() => {
@@ -52,6 +52,26 @@ export function EditorWorkbench({
     attachActiveModel()
   }, [attachActiveModel])
 
+  useEffect(() => {
+    const editorInstance = editorRef.current
+    if (
+      !editorInstance
+      || !active
+      || !navigation
+      || active.projectId !== navigation.projectId
+      || active.relativePath !== navigation.relativePath
+    ) return
+    const range = {
+      startLineNumber: navigation.lineNumber,
+      startColumn: navigation.columnStart,
+      endLineNumber: navigation.lineNumber,
+      endColumn: navigation.columnEnd,
+    }
+    editorInstance.setSelection(range)
+    editorInstance.revealRangeInCenter(range)
+    editorInstance.focus()
+  }, [active, navigation])
+
   const onMount: OnMount = (editorInstance) => {
     editorRef.current = editorInstance
     editorInstance.addCommand(
@@ -74,33 +94,6 @@ export function EditorWorkbench({
 
   return (
     <section className="editor-workbench" aria-label="Code editor">
-      {documents.length > 0 && (
-        <div className="editor-tabs" role="tablist" aria-label="Open editors">
-          {documents.map((document) => (
-            <div
-              className={`editor-tab${active?.key === document.key ? ' active' : ''}`}
-              key={document.key}
-              role="tab"
-              aria-selected={active?.key === document.key}
-            >
-              <button
-                className="editor-tab-label"
-                onClick={() => manager.activate(document.key)}
-                title={document.relativePath}
-              >
-                <span>{fileName(document.relativePath)}</span>
-                {document.dirty && <span className="dirty-dot" aria-label="Unsaved changes">●</span>}
-              </button>
-              <button
-                className="editor-tab-close"
-                aria-label={`Close ${fileName(document.relativePath)}`}
-                onClick={() => void onClose(document.key)}
-              >×</button>
-            </div>
-          ))}
-        </div>
-      )}
-
       {active?.externalConflict && (
         <div className="editor-conflict" role="alert">
           This file changed on disk. Your unsaved editor content was preserved.
@@ -133,8 +126,4 @@ export function EditorWorkbench({
       </div>
     </section>
   )
-}
-
-function fileName(path: string): string {
-  return path.split('/').at(-1) ?? path
 }
