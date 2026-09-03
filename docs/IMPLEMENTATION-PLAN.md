@@ -49,8 +49,10 @@ reference evidence, not source or runtime dependencies.
   Electron visual/functional smoke all passed.
 - The current BrowserWindow enables `contextIsolation`, disables
   `nodeIntegration`, and enables sandboxing.
-- No Phase 2E+ terminal/PTY, language provider, Run service, Git service, or
-  settings UX has been implemented.
+- Phase 2E provides the integrated terminal through completed packages
+  2E-A–2E-J and corrective Steps 1–3. The final consolidated review passed;
+  no language provider, Run service, Git service, or Settings UX has been
+  implemented.
 - No Orca source, module, submodule, or runtime dependency is present.
 - Existing quality commands are `npm run typecheck`, `npm run lint`, and
   `npm run build`.
@@ -82,12 +84,18 @@ does not reopen those choices.
 
 ## 5. Planning blockers / documentation conflict
 
-No authority conflict blocks this plan at creation time.
+Phase 2E-J corrective review reopened ADR-020 after natural root exit proved that
+PID ownership could disappear before descendant cleanup. Step 1 ProcessManager
+ownership correction, Step 2 Windows Job Object/natural-root correction, and
+Step 3 fail-closed application-shutdown semantics are complete. The explicitly
+authorized final consolidated review passed, so Phase 2E-J and Phase 2E are
+`COMPLETE`. V1 remains Windows 10/11 x64, and Windows CI plus packaged
+acceptance remain Phase 7.
 
-Open decisions recorded in Section 13 are expected gates, not documentation
-conflicts. If a later implementation task discovers a conflict, it must identify
-the exact files and sections here and follow the change-control process in
-Section 20 before affected work continues.
+Other open decisions recorded in Section 14 are expected gates, not
+documentation conflicts. If implementation discovers another conflict, it must
+identify the exact files and sections here and follow Section 20 change control
+before affected work continues.
 
 ## 6. High-level roadmap and status
 
@@ -97,7 +105,7 @@ Section 20 before affected work continues.
 | Phase 2B — Project & File Explorer | `COMPLETE` | One authorized local project and file operations |
 | Phase 2C — Monaco Editor, Tabs & Save | `COMPLETE` | Safe multi-tab editing and unsaved protection |
 | Phase 2D — Project Search | `COMPLETE` | Responsive, cancellable project search |
-| Phase 2E — Integrated Terminal | `NOT_STARTED` | Multiple Windows PTY sessions through xterm.js + `node-pty` |
+| Phase 2E — Integrated Terminal | `COMPLETE` | 2E-J corrective Steps 1–3 and final consolidated review passed |
 | Phase 2F — Core IDE Stabilization | `NOT_STARTED` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `NOT_STARTED` | Tier 1/2 intelligence, diagnostics, and Problems |
 | Phase 4 — Run & Output | `NOT_STARTED` | Trusted Run strategies, output, stop, and cleanup |
@@ -135,7 +143,9 @@ The Phase 2C automated gates and manual Electron smoke passed before it moved to
 for case-insensitive literal search and shared Explorer/Search sidebar tabs. Its
 bounded search, navigation, Orca/STYLEGUIDE corrective UI pass, automated gates,
 adversarial review, and manual Electron smoke passed before it moved to
-`COMPLETE`. Phase 2E and later work remain `NOT_STARTED`.
+`COMPLETE`. Phase 2E-A through Phase 2E-J are `COMPLETE`; corrective Steps 1–3
+and the explicitly authorized final consolidated review passed. Phase 2E is
+`COMPLETE`; Phase 2F and later work remain `NOT_STARTED`.
 
 ## 7. Dependency graph
 
@@ -726,6 +736,21 @@ operation, and navigate a result into the editor.
 
 ### 8.5 Phase 2E — Integrated Terminal
 
+#### Work-package status
+
+| Work package | Status | Evidence |
+|---|---|---|
+| Phase 2E-A — dependency and terminal-policy preparation | `COMPLETE` | Approved xterm.js and `node-pty` versions and Windows V1 policies recorded |
+| Phase 2E-B — Windows / Electron native compatibility spike | `COMPLETE` | Electron 44 Windows x64 native smoke and electron-vite externalization smoke passed |
+| Phase 2E-C — terminal contracts and validators | `COMPLETE` | Shared contracts, strict validators, typed events/states, Main-only PTY port, and deterministic fake verified |
+| Phase 2E-D — production TerminalService | `COMPLETE` | Main-owned registry, node-pty adapter, shell resolution, batching, ownership, and cleanup verified |
+| Phase 2E-E — terminal IPC and preload bridge | `COMPLETE` | Strict Main handlers, owner-only typed events, narrow validated preload API, and WebContents cleanup verified |
+| Phase 2E-F — Renderer terminal UI | `COMPLETE` | Renderer-session controller, xterm/FitAddon Bottom Panel, multiple-session controls, focused tests, and real Electron smoke verified |
+| Phase 2E-G — terminal transition/lifecycle policy | `COMPLETE` | Fail-closed project transition lease, terminal warning, ordered dirty/terminal decisions, project-scoped cleanup, and focused regressions verified |
+| Phase 2E-H — Windows Terminal Behavior & Process Cleanup | `COMPLETE` | Verified Main-only targeted Windows process-tree cleanup, native behavior/race matrix, controlled PID safety, and production-build UX smoke |
+| Phase 2E-I — consolidated terminal verification gate | `COMPLETE` | FR-019–FR-021 traceability, full regression/common gates, consolidated Windows native evidence, and end-user workflow smoke passed |
+| Phase 2E-J — final terminal security/lifecycle review | `COMPLETE` | Corrective Steps 1–3 and final consolidated review passed |
+
 #### Goal
 
 Implement FR-019 through FR-021 as a distinct PTY subsystem using the accepted
@@ -744,8 +769,9 @@ resize them, close them, and exit the application without leaving IDE-owned PTYs
 - Lifecycle states `CREATING`, `RUNNING`, `CLOSING`, `EXITED`, and `FAILED`.
 - Multiple sessions as required by FR-020.
 - Initial cwd at active project root.
-- Configured-valid shell, supported system default, PowerShell, then `cmd.exe`
-  fallback order.
+- Valid `pwsh`, Windows PowerShell, then `ComSpec`/`cmd.exe` fallback order.
+- No configured custom shell in Phase 2E; user-configurable shell selection is
+  deferred to Phase 6 Settings.
 - Renderer subscription cleanup and application shutdown cleanup.
 - Windows/native compatibility spike before Terminal implementation is accepted.
 
@@ -784,6 +810,579 @@ resize them, close them, and exit the application without leaving IDE-owned PTYs
   close, application shutdown cleanup, and that no unrelated process is killed.
   If this spike fails, stop Terminal work and reopen ADR-007 with evidence.
 
+Phase 2E-B completed on Windows x64 on 2026-08-30. `node-pty` 1.1.0 loaded from
+its shipped Windows x64 prebuild under Electron 44.0.0 (bundled Node 24.18.1,
+module ABI 149) without a rebuild. A real Windows PowerShell PTY started at the
+repository root, accepted deterministic input, emitted ordered output, remained
+usable after an 80x24 to 100x30 resize, returned control after terminal byte
+`0x03`, emitted one exit event with code 0, released its owned PID, and allowed
+Electron to exit cleanly. `pwsh` was unavailable and Windows PowerShell was
+therefore selected ahead of the available `cmd.exe` fallback. A main-only
+electron-vite build preserved `node-pty` as an external dependency and the built
+Main entry repeated the successful Electron-native smoke. No
+`@electron/rebuild`, native build-chain step, configuration change, production
+terminal code, or additional dependency was required. Full session-tree cleanup
+and packaged/installed-app verification remain assigned to Phase 2E-H and Phase
+7 respectively.
+
+Phase 2E-H is defined below. Phase 2E-G did not absorb descendant-tree cleanup
+or authorize a stronger Windows termination strategy.
+
+Phase 2E-C completed the side-effect-free terminal contract foundation without
+starting production terminal wiring. It defines opaque branded session IDs,
+bounded dimensions and UTF-8 input, exact create/input/resize/close payloads, a
+`data | exit | error` event union, normalized nullable exit metadata, and the
+five accepted lifecycle states with a pure transition predicate. Successful
+create is the single readiness boundary and returns `RUNNING`, so no redundant
+`ready` event is defined. Main-only PTY port types isolate future native adapter
+details from shared/browser code, while a timer-free fake provides deterministic
+spawn failure, input, resize, data, exit, late-event, duplicate-exit, close, and
+disposal behavior for service tests. Focused tests and the full 183-test suite,
+typecheck, lint, production build, and whitespace checks passed. Phase 2E-D
+remains `NOT_STARTED`.
+
+Phase 2E-D completed the production Main backend without exposing it through IPC
+or Renderer code. `NodePtyPort` is the only module that imports `node-pty` and
+adapts native spawn, data, exit, write, resize, close, and disposal to the 2E-C
+port. The Windows resolver checks valid `pwsh`, Windows PowerShell, then absolute
+`ComSpec`/system `cmd.exe` paths without executing discovery commands. Main
+supplies the canonical active-project root and a copy of its environment with
+undefined values removed.
+
+`TerminalService` owns opaque IDs, renderer/project authorization context,
+session state, PTY handles, dimensions, per-session sequence numbers, and
+ProcessManager registrations. Output uses an 8 ms batching window with a 64 KiB
+UTF-8 queue bound, forced trailing flush before exit, and no history/replay.
+Exited/failed metadata is bounded to 256 tombstones for idempotent close. Close
+uses the semantic PTY close plus a two-second bounded exit wait; timeout retains
+the owned ProcessManager fallback and does not introduce broad process-tree
+killing. Owner, project, and shutdown cleanup continue after individual errors.
+
+The full 207-test suite, typecheck, lint, production build, and whitespace checks
+passed. A temporary Main-only Electron 44 smoke built the production adapter with
+external `node-pty`, selected Windows PowerShell, received deterministic output,
+resized, emitted one exit with code 0, and left no owned PID. The harness was
+removed.
+
+Phase 2E-E completed the production capability boundary without adding terminal
+UI. Main registers the four exact terminal request handlers once through the
+central IPC registry, derives renderer ownership only from `event.sender.id`,
+uses immutable Main session metadata for later project ownership, serializes all
+failures as AppResult/AppError values, and routes validated `terminal:event`
+objects only to the owning live WebContents. Destroyed owners and real main-frame
+reloads trigger idempotent owner-scoped cleanup; React remounts and in-place
+navigation do not.
+
+The typed preload surface now exposes only create, input, resize, close, and an
+unsubscribe-returning event subscription. It validates outgoing requests,
+incoming responses, and incoming events, and fans all local subscribers out from
+one underlying terminal listener without exposing raw IPC. The full 219-test
+suite, typecheck, lint, production build, whitespace checks, dependency/scope
+review, and adversarial security review passed. That package introduced no
+Renderer terminal UI.
+
+Phase 2E-F completed the visible Renderer terminal without changing the approved
+IPC/preload contracts. A Renderer-session `TerminalController` owns stable xterm
+and FitAddon instances, one terminal-event subscription, monotonic sequence
+acceptance, bounded serialized writes, exact input forwarding, visible-only
+fitting, deduplicated resize propagation, and exact-once local disposal. React
+owns only Bottom Panel visibility, active-session presentation, controls, and
+user-initiated focus requests, so ordinary remounts neither create nor close
+Main sessions.
+
+The initially closed Bottom Panel provides a bounded horizontal resizer, dense
+session tabs, New/Close controls, quiet empty/project-required states, and
+retained exit/error scrollback. The full 236-test suite across 29 files,
+typecheck, lint, production build, and whitespace checks passed. A real Electron
+44 smoke selected Windows PowerShell at the repository project root, verified
+prompt/input/output, `Get-Location`, Vietnamese Unicode, Ctrl+C recovery,
+panel/window/sidebar resizing, two-session selection and isolation, exit,
+close/reopen, and an unclipped usable Monaco editor.
+
+Phase 2E-G completed project-transition coordination without broadening the
+terminal IPC surface. `TerminalService` now issues a project-scoped transition
+lease that blocks new creates, drains creates already in flight, snapshots
+whether live PTYs remain, and releases its block idempotently. The existing
+serialized ProjectService guard asks the owning renderer only when a live
+terminal exists, closes only the old project's sessions after confirmation,
+and does not commit the project switch/close until cleanup succeeds. Cancel,
+renderer loss, timeout, and cleanup failure all fail closed and preserve the
+current project authority.
+
+Renderer resolution remains ordered: dirty-buffer Save/Don't Save/Cancel is
+resolved first, the destructive terminal confirmation is shown second, and
+discarded editor models are retained until Main commits the transition. Focused
+service and Renderer tests cover in-flight create races, cancellation, cleanup
+failure, rapid serialized transitions, safe default focus, dialog ordering,
+and clean transitions. The full 249-test suite across 29 files, typecheck, lint,
+production build, and whitespace checks passed. The earlier Phase 2E-F real
+Electron/ConPTY smoke remains the native UI/process evidence; Phase 2E-G changed
+only project-transition coordination around that verified terminal lifecycle.
+
+#### Phase 2E-H — Windows Terminal Behavior & Process Cleanup
+
+**Status:** `COMPLETE`.
+
+##### Goal
+
+Determine and, only where evidence and an explicit decision authorize it,
+correct the remaining Windows x64 terminal robustness and owned-process cleanup
+behavior. Reuse the completed 2E-B–2E-G contracts, service, IPC, UI, lifecycle,
+and tests; do not reimplement them.
+
+##### Known facts and assumptions
+
+- **Fact:** V1 acceptance targets Windows 10 and Windows 11 on x64. Electron 44
+  and `node-pty` 1.1.0 already passed a Windows x64 native compatibility smoke.
+- **Fact:** The accepted shell order is valid `pwsh`, Windows PowerShell, then
+  `ComSpec`/`cmd.exe`; custom shell configuration remains Phase 6.
+- **Fact:** Current CI is Ubuntu-only. It can run pure tests but cannot validate
+  ConPTY, Windows shell, or Windows process-tree behavior.
+- **Fact:** Existing service tests prove semantic session ownership, batching,
+  exit ordering, close timeouts, and lifecycle coordination with a fake PTY;
+  they do not prove descendant termination on Windows.
+- **Decision:** V1 targets Windows 10/11 x64 without declaring a minimum build in
+  Phase 2E-H. The recorded evidence host is not the product minimum.
+- **Evidence:** Current `node-pty` close/kill left one controlled grandchild alive;
+  ADR-020 therefore initially accepted verified targeted taskkill behind a
+  Main-only seam. Phase 2E-J corrective Step 2 later superseded that primary
+  policy with atomic Windows Job ownership; taskkill is now legacy-only.
+- **Decision:** Windows CI is deferred to Phase 2E-I evaluation. Emoji is required,
+  CJK is supplemental, and the approved H/I/J responsibility split remains in
+  force.
+
+##### In scope
+
+- Verification of the accepted Windows shell fallback chain without redesigning
+  it or installing a shell solely for the test.
+- ConPTY behavior under real Electron for bounded input/output, resize, close,
+  self-exit, trailing output, and concurrent close/exit cases.
+- Controlled owned-process inspection for one PTY shell, one harmless long-running
+  child, and, where practical, one harmless child-created grandchild.
+- Orphan checks after closing one terminal, project close, project switch,
+  renderer loss/main-frame replacement, and application shutdown.
+- Vietnamese, common Unicode, required emoji input/output, paths containing
+  spaces, and PowerShell and `cmd.exe` output. CJK is supplemental.
+- Ctrl+C as exact terminal input byte `\x03`, interruption of a harmless
+  foreground long-running process, return to a usable shell prompt, and repeat
+  input after recovery. Verify with the selected PowerShell and with `cmd.exe`
+  where practical.
+- Long-running foreground-process behavior and the focused Windows race matrix
+  below.
+- Verification-only outcomes where current production behavior passes.
+- The narrowly scoped production correction authorized after the blocker spike:
+  Main-only verified targeted process-tree termination under ADR-020.
+
+##### Explicitly out of scope
+
+- Custom shell settings or Phase 6 Settings work.
+- Terminal replay, reattach, live-session persistence, split terminals, terminal
+  search, shell integration, command decorations, cwd tracking, or link providers.
+- RunService, Language Server, Git integration, or a public generic process
+  executor/signal API.
+- Packaging or installer implementation, ASAR policy, release artifacts,
+  installer/uninstaller tests, signing, or any other Phase 7 release work.
+- ARM64 support unless separately re-authorized.
+- Repetition of completed 2E-B–2E-G production design or pure tests unless a
+  Windows finding requires a focused regression.
+
+##### Windows target and shell verification
+
+- Run native evidence on actual Windows x64 under the repository Electron
+  runtime and record Windows edition, version/build, architecture, Electron,
+  bundled Node/module ABI, `node-pty`, selected shell executable, and whether
+  `pwsh`, Windows PowerShell, and `cmd.exe` were available.
+- Do not claim a minimum Windows/ConPTY build until the user selects it.
+- Preserve the fallback order exactly. Resolver tests remain authoritative for
+  unavailable candidates; native smoke must launch the selected PowerShell and
+  must exercise the `cmd.exe` fallback where practical. An unavailable `pwsh`
+  is recorded, not installed as an unapproved test dependency.
+- Project cwd must equal the authorized canonical root, including a controlled
+  project path containing spaces.
+
+##### Unicode, Ctrl+C, exit, and close behavior
+
+- **Required:** Vietnamese and representative common Unicode round-trip through
+  xterm, preload/IPC, PTY, and the selected shell; PowerShell and `cmd.exe`
+  output; and a project path containing spaces.
+- **Required:** emoji smoke. **Supplemental:** CJK; a CJK-only limitation does not
+  block H unless it demonstrates a general Unicode regression.
+- Ctrl+C sends `\x03` unchanged, interrupts only the foreground harmless test
+  process, returns to a prompt, and leaves the session usable. No generic signal
+  method is introduced.
+- Evidence covers clean shell exit, non-zero self-exit, terminal-tab close,
+  process self-exit, close concurrent with exit, trailing output before the one
+  final exit event, duplicate-exit suppression, rejected/no-op input and resize
+  after exit as already contracted, and retained Renderer scrollback.
+- Windows-native evidence supplements rather than duplicates pure service tests;
+  add a focused regression only for a Windows-specific finding or adapter seam.
+
+##### Process-tree cleanup decision spike
+
+Use uniquely identifiable, harmless processes created by the smoke and record
+their exact PIDs. The minimum scenario is:
+
+```text
+owned PTY shell
+  -> harmless long-running child
+       -> optional harmless long-running grandchild
+```
+
+For each cleanup trigger below, capture the owned PID set before the trigger,
+perform only the scoped IDE action, wait a bounded documented interval, and
+verify each recorded process exited. Also verify a separately created unrelated
+control process remains alive. Never kill by process name or inspect/terminate
+unrelated system-wide processes.
+
+| Trigger | Required observation |
+|---|---|
+| Close one terminal tab | That terminal's PTY/shell and tested descendants exit; another terminal and the unrelated control remain alive |
+| Close all terminals for project | Every PTY/shell and tested descendant owned by the old project exits; foreign/unrelated processes remain alive |
+| Renderer loss/main-frame replacement | Only sessions owned by that WebContents and their tested descendants exit |
+| Project close | Confirmed old-project sessions and tested descendants exit before project authority changes |
+| Project switch | Same as project close; the new project receives no stale terminal event or old process |
+| Application shutdown | All IDE-owned PTY/shell processes and tested descendants exit within the bounded shutdown observation window |
+
+The initial evidence measured current `node-pty` close/kill plus ProcessManager
+behavior and found grandchild PID 26396 alive after shell 22796 and child 18376
+exited. Unrelated control PID 29916 remained alive. The user then selected the
+ADR-020 Windows V1 strategy below:
+
+| Candidate | Benefit | Material risk/cost |
+|---|---|---|
+| Existing `node-pty` close/kill | Smallest change; preserves current ownership model | May not prove or guarantee descendant termination |
+| `taskkill /PID <owned-pid> /T` | Built into Windows; explicit tree intent | PID reuse/ownership validation, command invocation, force semantics, and race risk |
+| Owned process-tree enumeration | Can validate every targeted PID before termination | Enumeration races, permissions, more code, and incomplete ancestry snapshots |
+| Windows Job Objects | Strong lifecycle containment and kill-on-close semantics | Native integration/dependency, Electron ABI, nesting, maintenance, and packaging impact |
+
+The current production backend uses a dedicated Windows Job Object assigned
+atomically by `PROC_THREAD_ATTRIBUTE_JOB_LIST` at node-pty's ConPTY
+`CreateProcessW` boundary. Patched capability absence or Job establishment
+failure rejects creation. Natural root exit retains the opaque native Job token,
+session, and ProcessManager resource until explicit Job termination, bounded
+empty confirmation, and handle release succeed. `KILL_ON_JOB_CLOSE` is disabled.
+The fingerprinted targeted-taskkill implementation remains only for explicit
+legacy/unestablished ownership and cannot run after Job establishment or Job
+termination failure. Renderer/preload/IPC authority is unchanged.
+
+##### Focused Windows race matrix
+
+| Race | Required result |
+|---|---|
+| Resize during sustained output | Ordered usable output; bounded resize behavior; no crash/hang |
+| Close during sustained output | Bounded close; no post-final output/event leak; no orphan |
+| Close concurrent with process exit | One final exit outcome; idempotent cleanup |
+| Ctrl+C then immediate close | No stuck prompt/process and no orphan |
+| Project switch while child runs | Existing confirmation/lease order holds; old owned tree exits or transition fails closed |
+| Renderer loss while child runs | Owner-scoped cleanup; no cross-session termination |
+| App shutdown while output is emitted | Trailing output handling remains bounded; shutdown completes; no owned orphan |
+| Rapid terminal create/close | No unregistered PTY, stale session, or cross-session event |
+| Close after process already exited | Idempotent close; retained scrollback; no duplicate exit |
+
+##### Test strategy
+
+**A. Automated unit/integration**
+
+- Reuse fake PTY tests for deterministic states, ownership, failure, batching,
+  trailing output, duplicate exit, late callbacks, project/owner cleanup, and
+  close races.
+- Add Windows-specific automated coverage only where it uniquely proves adapter,
+  process-inspection, quoting/path-with-spaces, or cleanup behavior.
+- Do not convert a native Windows claim into a fake-only assertion.
+
+**B. Electron native smoke on Windows**
+
+- Run actual Electron on Windows x64 and verify native PTY load, recorded shell
+  selection, canonical cwd with spaces, input/output, required Unicode, Ctrl+C,
+  resize, clean/non-zero/self exit, terminal close, and descendant cleanup.
+- Use controlled marker output and PID files/records only for smoke-owned
+  processes; remove temporary harness artifacts after evidence is captured.
+- Record pass/fail per scenario and any surviving owned PID. A survivor is a
+  blocker, not a warning to ignore.
+
+**C. Manual Windows smoke**
+
+- Use the real Bottom Panel only for behavior difficult or unreliable to
+  automate: visible Unicode rendering, prompt recovery after Ctrl+C, retained
+  scrollback, responsive resize during output, and user-driven project
+  close/switch confirmation with a running child.
+- Do not repeat 2E-F's general layout, tab-selection, focus, or basic multiple-
+  session smoke unless H changes those paths or a regression appears.
+
+##### CI boundary
+
+- Ubuntu CI continues to run pure tests, typecheck, lint, and build; it provides
+  no Windows-native acceptance evidence.
+- Adding a Windows CI job is not authorized in 2E-H. Windows-native CI evaluation
+  is explicitly deferred to Phase 2E-I; Phase 7 retains packaged/installed
+  Windows acceptance.
+
+##### Boundary with Phase 2E-I, Phase 2E-J, and Phase 7
+
+- **2E-H:** low-level Windows/ConPTY behavior, owned descendant-process evidence,
+  decision spike, and only an explicitly authorized cleanup correction plus its
+  focused regressions.
+- **2E-I:** terminal-wide consolidated test/evidence audit and end-user Electron
+  acceptance gate. It runs only missing matrix cells or regression-sensitive
+  scenarios. Passing H native evidence from the same commit/environment is
+  reused rather than repeated. The user must approve this exact split.
+- **2E-J:** final terminal security/lifecycle/adversarial review, documentation
+  reconciliation, and final Phase 2E completion assessment. It does not serve as
+  a hidden feature package or replace unresolved H/I evidence.
+- **Phase 7:** full packaging, ASAR/native inclusion policy, packaged/installed
+  runtime, release artifacts, signing, installer/uninstaller, and Windows 10/11
+  release acceptance. H uses development/production-build Electron only and
+  does not claim packaged or installed behavior.
+
+##### Acceptance criteria
+
+1. Evidence is collected under actual Electron on Windows x64 with the exact OS,
+   Electron/Node ABI, `node-pty`, and shell environment recorded.
+2. The accepted `pwsh` -> Windows PowerShell -> `ComSpec`/`cmd.exe` chain remains
+   unchanged and is verified at resolver and available-native-shell layers.
+3. Canonical project cwd, including a controlled path with spaces, passes.
+4. Vietnamese, common Unicode, PowerShell output, and `cmd.exe` output pass; the
+   selected CJK/emoji classification is recorded and satisfied.
+5. Ctrl+C is delivered as `\x03`, interrupts the harmless foreground process,
+   returns to a prompt, and leaves the PowerShell session usable; `cmd.exe` is
+   covered where practical and any limitation is recorded.
+6. Resize/output, clean and non-zero self-exit, tab close, concurrent close/exit,
+   trailing output, duplicate suppression, post-exit input/resize behavior, and
+   retained scrollback satisfy the documented contracts.
+7. Close-one, project cleanup, renderer loss, project close/switch, and app
+   shutdown leave no tested owned PTY/shell process behind.
+8. The controlled child/grandchild scenario explicitly establishes whether
+   current cleanup terminates descendants; no owned PID survives a scenario
+   claimed as passing.
+9. Cleanup failure remains bounded and safe: project transitions fail closed,
+   errors remain structured/redacted, and no unrelated process is terminated.
+10. Multiple sessions remain isolated; another session and the unrelated control
+    process survive every single-session/project-scoped cleanup scenario.
+11. No Renderer privilege, raw IPC, generic spawn/signal API, broad process-name
+    kill, or `node-pty` import outside Main is introduced.
+12. No dependency or stronger Windows cleanup strategy is added without separate
+    authorization and recorded decision change.
+13. Applicable automated tests plus `npm run typecheck`, `npm run lint`,
+    `npm run build`, and `git diff --check` pass.
+14. Windows evidence, limitations, exact commands/harness ownership, PID results,
+    and cleanup timing are documented without claiming Phase 7 packaging.
+
+##### Exit gate
+
+Phase 2E-H becomes `COMPLETE` only when:
+
+1. every approved H Windows scenario and applicable race-matrix cell passes;
+2. descendant behavior is either verified safe with the current implementation,
+   or corrected using an explicitly authorized strategy and then re-verified;
+3. no PTY, shell, child, or tested grandchild owned by a passing smoke remains,
+   and no unrelated control/cross-session process is terminated;
+4. all automated and common quality gates pass and Windows evidence is recorded;
+5. the minimum Windows/ConPTY, Unicode depth, Windows CI timing, cleanup strategy
+   (if needed), and H/I boundary decisions are resolved; and
+6. no unresolved Windows/native blocker remains.
+
+If stronger cleanup is required but not authorized, or a controlled owned
+descendant remains, set 2E-H to `BLOCKED`; do not mark partial verification
+`COMPLETE`.
+
+##### Completion evidence
+
+- Environment: registry-reported Windows 10 Home Single Language 25H2, build
+  10.0.26200.9168, x64; Electron 44.0.0 with bundled Node 24.18.1; `node-pty`
+  1.1.0. This build is evidence only, not the product minimum.
+- Shells: `pwsh` unavailable; Windows PowerShell and `cmd.exe` available; the
+  resolver selected Windows PowerShell. Both shells passed cwd-with-spaces,
+  Vietnamese/common Unicode, required emoji, input/output, and Ctrl+C recovery.
+  CJK supplemental smoke also passed.
+- Original corrected tree: shell 19276 -> child 30408 -> grandchild 31956 all
+  exited; unrelated control 30688 survived. The final ordering retest used shell
+  9800 -> child 31076 -> grandchild 25892 with control 15224 and the same result.
+- Cleanup matrix control PID 16700 survived close-one (20196/17844/32580), close
+  project terminals (15892/21568/16672), project switch
+  (16444/12048/32960), project close (31236/5152/3636), renderer/main-frame loss
+  (32660/33432/31996), and application shutdown (32004/24696/13308). Every owned
+  PID was absent after the bounded wait, each scenario emitted one logical exit,
+  and ProcessManager was zero only after tree termination completion.
+- Native behavior passed resize during sustained output, close during output,
+  close concurrent with exit, Ctrl+C then close, rapid create/close, close after
+  exit, clean exit 0, non-zero exit 7, trailing output ordering, duplicate-exit
+  suppression, and post-exit input/resize rejection. Renderer tests preserve
+  exited scrollback and suppress stale mutations. A separate actual-Electron
+  shutdown race observed output before shutdown, stopped shell PID 16508 in
+  2,475 ms, emitted one exit, left ProcessManager at zero, and reached
+  DesktopApplication `STOPPED`.
+- Production-build Electron Bottom Panel smoke visibly verified Vietnamese and
+  emoji rendering, Ctrl+C recovery, output through resize marker 500, retained
+  `UI_SCROLL_KEEP` after exit code 7, and closing a tab running `Start-Sleep`.
+  Project transition UX was not repeated against the developer's active real
+  project; controlled native transition scenarios and existing 2E-G integration
+  tests provide that evidence without risking user data.
+- Automated result: 265 tests across 30 files pass. Typecheck, lint, production
+  build, and `git diff --check` pass. No dependency, CI workflow, Renderer API,
+  Job Object implementation, packaging policy, or installer work was added.
+
+##### Resolved Phase 2E-H decisions
+
+1. Windows 10/11 x64 remains the V1 target; Phase 2E-H does not invent a minimum
+   Windows/ConPTY build.
+2. Windows CI is deferred to Phase 2E-I evaluation.
+3. ADR-020 selects verified targeted `/PID <owned-root-pid> /T /F` termination.
+4. Vietnamese/common Unicode and emoji are required; CJK is supplemental.
+5. H owns Windows behavior/correction, I consolidated verification, and J final
+   review/completion assessment.
+
+#### Phase 2E-I — Consolidated Terminal Verification Gate
+
+**Status:** `COMPLETE`.
+
+**Dependency:** Phase 2E-H is `COMPLETE` and its applicable decisions are
+resolved. The proposed H/I split must be user-approved before I begins.
+
+**Scope:** Audit traceability and evidence across 2E-B through 2E-H; run the full
+automated terminal/regression suite and common quality gates; execute only the
+Windows/Electron matrix cells that are missing, stale after an H correction, or
+required on an additional approved Windows environment; and perform one concise
+end-user terminal workflow smoke. H evidence from the same commit, runtime, and
+environment is accepted directly and is not repeated for ceremony.
+
+**Out of scope:** New terminal features, a new cleanup strategy, hidden defect
+fixes, final adversarial sign-off, and Phase 7 packaging. A defect reopens the
+owning package or returns to an explicitly authorized corrective task.
+
+**Acceptance/exit gate:** Every FR-019–FR-021 and terminal security/lifecycle
+criterion maps to current passing evidence; no required Windows matrix cell is
+missing; all automated/common gates pass; the approved Windows-environment/CI
+policy is satisfied; and limitations are documented. I cannot replace failed or
+blocked H descendant-cleanup evidence.
+
+##### Phase 2E-I completion evidence
+
+- **Traceability:** FR-019 maps to the Main-owned `TerminalService`, strict
+  terminal IPC/preload capability, Renderer `TerminalController`, and xterm
+  Bottom Panel evidence. FR-020 maps to isolated Main/Renderer session registries,
+  multiple-session controls, cross-session ownership tests, and native two-session
+  smoke. FR-021 maps to active-project authorization, canonical project-root cwd,
+  resolver/service tests, and actual Electron cwd-with-spaces evidence.
+- **Security/lifecycle:** Contract, service, IPC, preload, Renderer, transition,
+  and Windows terminator tests cover exact payload validation, immutable project
+  and WebContents ownership, stale-event rejection, no raw IPC or generic process
+  authority, bounded/redacted failure, project/owner/application cleanup, one
+  final exit, and unrelated-process survival. The passing 2E-H matrix remains
+  current on the same source, Electron runtime, and Windows environment.
+- **Consolidated native gate:** Electron 44.0.0 / bundled Node 24.18.1 on Windows
+  x64 selected Windows PowerShell and passed canonical cwd with spaces, normal
+  output, Vietnamese/common Unicode/emoji, Ctrl+C recovery, resize, trailing
+  output, non-zero exit 7, post-exit input/resize rejection, multiple-session
+  isolation, and isolated close. Owned trees 4212 -> 7968 -> 12332 and
+  30072 -> 6784 -> 26632 were removed for focused close and application shutdown;
+  unrelated control PID 16612 survived, each session emitted one exit, and
+  ProcessManager reached zero only after cleanup.
+- **End-user workflow:** The production Electron preview passed a concise manual
+  Bottom Panel workflow: open the terminal, render `2E-I UI Tiếng Việt 😀`, create
+  and switch between two sessions, close one session running `Start-Sleep`, and
+  continue using the unaffected session.
+- **Automated/common gates:** 265 tests across 30 files pass. `npm run typecheck`,
+  `npm run lint`, `npm run build`, and `git diff --check` pass. The initial
+  sandboxed test/build attempts were infrastructure-denied with `spawn EPERM`;
+  the required commands passed when rerun with process-spawn permission.
+- **Windows CI policy:** Phase 2 does not add a Windows CI job. Ubuntu CI remains
+  the portable automated gate, while terminal-affecting work requires recorded
+  actual-Windows Electron evidence. The current local gate supplies that evidence;
+  Phase 7 still owns packaged/installed Windows CI and release acceptance.
+- **Limitations:** The native smoke observed non-fatal `node-pty`
+  `conpty_console_list_agent` `AttachConsole failed` diagnostics during process
+  list probing; PTY behavior, targeted descendant cleanup, exit ordering, and
+  control-process isolation still passed. No packaging, installer, Windows ARM64,
+  custom shell, Job Object, or Phase 2E-J claim is made.
+
+#### Phase 2E-J — Final Terminal Security/Lifecycle Review
+
+**Status:** `COMPLETE` — corrective Steps 1–3 and the final consolidated review
+passed.
+
+**Dependency:** Phase 2E-I is `COMPLETE`.
+
+**Corrective sequence:** Step 1 corrected ProcessManager so pending or failed
+cleanup remains registered. Step 2 introduced atomic Windows Job ownership and
+made natural root exit retain authority through explicit Job finalization. Step
+3 corrected application shutdown so cleanup failure retains `STOPPING`, service
+and process/Job ownership, and Electron quit interception; a later graceful quit
+retries retained cleanup. All three corrective steps and the separately
+authorized final 2E-J review are complete.
+
+##### Corrective Step 3 completion evidence
+
+- `DesktopApplication.shutdown()` now shares one in-flight stop, removes each
+  started service only after successful cleanup, retains `STOPPING` and the
+  failed/not-yet-stopped services after rejection, and permits deterministic
+  retry. `STOPPED` is emitted only after every mandatory service succeeds.
+- Reverse dependency cleanup remains intact. TerminalService finalization runs
+  before ProcessManager; a terminal/Job failure stops that attempt before a
+  duplicate ProcessManager retry. WindowManager is explicitly shutdown-last so
+  cleanup failure does not destroy the only graceful retry surface.
+- A Main-only `ApplicationQuitCoordinator` prevents the first and repeated
+  `before-quit` events while approval/cleanup is pending. Success authorizes one
+  final `app.quit()` and lets its recursive event/window close pass. Failure logs
+  through a redacted callback, does not call final quit, and clears the rejected
+  attempt for a later user-driven retry. `window-all-closed` continues through
+  the same intercepted quit path.
+- Focused DesktopApplication, coordinator, WindowManager, and terminal
+  integration coverage verifies success, failure, retry, concurrency,
+  idempotence, recursive-event protection, retained Job/ProcessManager
+  ownership, live-root shutdown, and natural-root finalization. The full suite
+  passes 297 tests across 32 files.
+- Electron 44 Windows x64 production-service native smoke passed live-root tree
+  `32972 -> 16304 -> 1756` with control PID `30836`, and natural-root tree
+  `8688 -> 23492 -> 31696` with control PID `8812`. In the second scenario the
+  root exited while both descendants and ProcessManager ownership remained;
+  shutdown then terminated and emptied the Job, released ProcessManager,
+  reached `STOPPED`, and requested one final quit. Both control processes
+  survived and no tested owned PID remained.
+- Cleanup-failure/retry evidence uses test seams only; no production failure
+  injection remains. Typecheck, lint, production build, and `git diff --check`
+  pass. No dependency, native strategy, Renderer/preload/IPC authority,
+  force-quit policy, packaging, installer, or final 2E-J review was added.
+
+##### Final consolidated review evidence
+
+- The complete Renderer → preload → IPC → Main terminal boundary, creation
+  policy, Job ownership, natural-root finalization, ProcessManager retention,
+  explicit/project/renderer/application cleanup paths, output/exit ordering,
+  resize/input races, multiple-session isolation, and legacy taskkill gate were
+  re-audited without a material finding.
+- The repository patch verified against pinned `node-pty` 1.1.0, a fresh native
+  rebuild produced and loaded the patched Electron 44 x64 artifact, the marker
+  was enforced, and electron-vite production build passed.
+- Current Windows Job smoke used `16612 -> 26072 -> 5480`, Job-owned helpers
+  `19248` and `7760`, and unrelated control PID `24160`. Natural root exit left
+  four active Job members; finalization emptied the Job, removed every owned
+  process, preserved the control, and emitted one exit.
+- Current production-service shutdown smoke passed live-root tree
+  `19452 -> 25648 -> 2672` with control PID `32508`, and natural-root tree
+  `17768 -> 22220 -> 18304` with control PID `2316`. Both released
+  ProcessManager only after Job finalization, reached `STOPPED`, requested one
+  final quit, and left no tested orphan.
+- The full suite passes 297 tests across 32 files. Typecheck, lint, production
+  build, and `git diff --check` pass. The unchanged Phase 2E-I native/UI matrix
+  remains the same-source evidence for cwd with spaces, Unicode/emoji/CJK,
+  PowerShell/cmd, Ctrl+C, resize, multiple sessions, project transitions, and
+  renderer-loss cleanup. No Search regression or unresolved blocker was found.
+
+**Scope:** Perform the final adversarial review of renderer privilege, IPC
+validation/ownership, stale events, lifecycle cleanup, cross-session isolation,
+error redaction, and documentation/evidence consistency. Reconcile the
+architecture, decisions, codebase map, implementation plan, and thesis changelog,
+then assess the complete Phase 2E exit gate.
+
+**Out of scope:** Feature implementation, cleanup-strategy selection, repeated
+native smoke without a review finding, or any Phase 7 packaging/release task. A
+verified defect reopens the owning package under change control; J does not hide
+the correction inside a documentation sign-off.
+
+**Acceptance/exit gate:** No unresolved critical security, lifecycle, native,
+or documentation finding remains; A–I retain passing evidence; the overall
+Phase 2E acceptance/exit gate passes; Phase 2E is `COMPLETE`.
+
 #### Implementation sequence
 
 1. Run and record the ADR-007 native compatibility spike without treating it as
@@ -799,7 +1398,8 @@ resize them, close them, and exit the application without leaving IDE-owned PTYs
 #### Error and edge cases
 
 - `node-pty` install or ABI mismatch.
-- Configured shell invalid, PowerShell missing, or `cmd.exe` fallback required.
+- `pwsh` or Windows PowerShell missing, `ComSpec` invalid, or `cmd.exe` fallback
+  unavailable.
 - Project closes while terminals exist.
 - Renderer is destroyed while a PTY emits data.
 - Resize/input arrives for an exited or foreign session.
@@ -1195,6 +1795,11 @@ dependency packaging, application packaging, installer, and documentation review
 | Large-file language thresholds | Architecture §8 | Phase 3 acceptance for expensive features | TBD | Measured responsiveness/memory while edit/save remains available |
 | TypeScript Run strategy | ADR-014 | TypeScript Phase 4 implementation | Proposed; unresolved | Node versions, ESM/CJS, `tsconfig`, errors/maps, startup, Windows paths, stop/tree cleanup |
 | Test infrastructure and command | ADR-018 / Requirement Phase 7 | Phase 2A acceptance, before Phase 2A automated tests are considered complete | RESOLVED Phase 2A — Vitest; `npm test` | Node-environment unit/main/service/IPC adapter coverage, Vite/TypeScript compatibility, CI Node 22, and later opt-in renderer/Electron E2E tooling only when required |
+| Windows terminal cleanup strategy | ADR-007, ADR-008, ADR-020 | Phase 2E-J corrective Step 2 | RESOLVED — Windows Job Object primary | Atomic `PROC_THREAD_ATTRIBUTE_JOB_LIST`, fail-closed capability/spawn, retained natural-root ownership, explicit terminate/empty/release; taskkill legacy-only |
+| Minimum Windows/ConPTY baseline | ADR-007, ADR-020 | Phase 2E-H completion | RESOLVED Phase 2E-H — no exact minimum build introduced | V1 remains Windows 10/11 x64; recorded build is evidence only |
+| Windows terminal CI timing | ADR-018, ADR-020 | Phase 2E-I completion | RESOLVED Phase 2E-I — no Phase 2 Windows job | Ubuntu CI remains the portable automated gate; terminal-affecting work requires recorded actual-Windows Electron evidence; Phase 7 retains packaged/installed Windows CI and release acceptance |
+| Terminal Unicode depth | ADR-020 | Phase 2E-H completion | RESOLVED Phase 2E-H — Vietnamese/common Unicode/emoji required; CJK supplemental | Native PTY and production-build xterm smoke passed the selected depth |
+| Phase 2E-H/2E-I evidence split | ADR-020 | Phase 2E-H implementation prompt | RESOLVED — H native behavior/correction, I consolidated verification, J final review | I reuses same-commit H evidence and runs only missing/stale cells |
 
 Decision-gate completion records evidence in `docs/DECISIONS.md` or the relevant
 decision register. This plan does not select any unresolved option.

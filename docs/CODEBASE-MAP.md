@@ -1,32 +1,35 @@
 # Student Coding IDE Codebase Map
 
-This map describes the current independent source tree and planned module locations. Phase 2A established the application and security foundations, Phase 2B added the authorized project/filesystem Explorer, Phase 2C added retained Monaco editing and data-safety behavior, and Phase 2D completed bounded project search, editor navigation, and the Orca/STYLEGUIDE corrective UI pass. Later Core IDE features remain assigned to Phase 2E and subsequent work packages.
+This map describes the current independent source tree and planned module locations. Phase 2A established the application and security foundations, Phase 2B added the authorized project/filesystem Explorer, Phase 2C added retained Monaco editing and data-safety behavior, Phase 2D completed bounded project search and the Orca/STYLEGUIDE corrective UI pass, Phase 2E-C added the terminal contract/PTY-port test foundation, Phase 2E-D added the production Main terminal backend, Phase 2E-E added its production IPC/preload boundary, Phase 2E-F added the Renderer terminal experience, Phase 2E-G added fail-closed project-transition coordination, Phase 2E-H added verified Windows owned-process-tree termination, Phase 2E-I completed consolidated terminal traceability, Phase 2E-J corrective Step 2 added production Windows Job Object ownership and natural-root finalization, and corrective Step 3 added fail-closed application shutdown and retry semantics. Core IDE features remain assigned to subsequent authorized work packages.
 
-## Current source tree through Phase 2D
+## Current source tree through the Phase 2E-J final consolidated review
 
 | Current path | Role | Status |
 |---|---|---|
-| `src/main/index.ts` | Electron readiness, secure BrowserWindow composition, unsaved-close coordination, renderer-owned search event routing, and deterministic shutdown | Implemented through Phase 2D |
-| `src/main/app/` | DesktopApplication startup order, lifecycle state, and deterministic reverse-order cleanup | Implemented Phase 2A foundation |
-| `src/main/window/` | Secure BrowserWindow ownership and accepted navigation/external-URL policy | Implemented Phase 2A foundation |
-| `src/main/ipc/` | Validated handler registration, safe result/error mapping, lifecycle transition resolution, project/file adapters, and owner-scoped search start/cancel adapters | Implemented through Phase 2D |
+| `src/main/index.ts` | Electron readiness, secure BrowserWindow composition, unsaved/terminal transition coordination, owner-scoped search/terminal event routing, production TerminalService/IPC composition, and fail-closed Electron quit wiring | Implemented through Phase 2E-J corrective Step 3 |
+| `src/main/app/` | DesktopApplication startup/reverse shutdown ownership plus Main-only before-quit approval, in-flight cleanup sharing, retry, and final-quit coordination | Implemented through Phase 2E-J corrective Step 3 |
+| `src/main/window/` | Secure BrowserWindow ownership, accepted navigation/external-URL policy, and final-quit authorization that prevents the last window bypassing cleanup | Implemented through Phase 2E-J corrective Step 3 |
+| `src/main/ipc/` | Validated handler registration, safe result/error mapping, lifecycle/project/file/search adapters, and terminal handlers with owner-only event routing and WebContents cleanup | Implemented through Phase 2E-E |
 | `src/main/errors/` | Structured domain errors and safe IPC serialization | Implemented Phase 2A foundation |
 | `src/main/services/project/` | One active project, create/open/close/switch, transition guards, identity, authorization, and recent metadata | Implemented Phase 2B |
 | `src/main/services/filesystem/` | Authorized lazy list/read/write/stat/create/rename/Recycle Bin operations and bounded watcher lifecycle | Implemented through Phase 2C |
 | `src/main/services/search/` | Main-owned asynchronous disk-content traversal, exclusions, binary/size policy, batching, bounds, ownership, and cooperative cancellation | Implemented Phase 2D |
-| `src/main/services/lifecycle/` | Transition-ID unsaved-change coordination for project switch/close and application close, including timeout and renderer-ownership checks | Implemented Phase 2C |
+| `src/main/services/lifecycle/` | Transition-ID dirty-buffer and terminal coordination for project switch/close plus application-close unsaved protection, including timeout and renderer-ownership checks | Implemented through Phase 2E-G |
 | `src/main/services/persistence/` | Versioned JSON, serialized writes, backup, and recovery foundation | Implemented Phase 2A foundation |
-| `src/main/services/process/` | Internal owned-resource registry and deterministic cleanup primitives | Implemented Phase 2A foundation; no process executor |
-| `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, project, file, and search request/event/public API contracts | Implemented through Phase 2D |
-| `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed lifecycle/project/file/search bridges with response/event validation and subscription cleanup | Implemented through Phase 2D |
-| `src/renderer/src/main.tsx` | React renderer bootstrap, packaged Geist loading, and renderer-session editor-model disposal on real page unload | Implemented through Phase 2D |
-| `src/renderer/src/App.tsx` | Resizable Orca-aligned project/editor/tools shell, top-chrome editor tabs, Explorer/Search coordination, and unsaved decision presentation | Implemented through Phase 2D |
-| `src/renderer/src/components/` | Shared semantic buttons, focus-managed dialogs, and keyboard/pointer sidebar resizing | Implemented Phase 2D corrective pass |
+| `src/main/services/process/` | Internal owned-resource registry plus narrow Main-only Job-owned/legacy-root process-tree abstraction, primary Windows Job finalizer, and gated fingerprinted taskkill legacy backend | Implemented through Phase 2E-J corrective Step 2; no public process executor |
+| `src/main/services/terminal/` | Main-owned TerminalService registry/ownership/lifecycle/batching, project-transition leases, Windows shell resolution, environment policy, native-independent PTY port, sole production patched-node-pty adapter, retained natural-root ownership, and unified Job finalization | Implemented through Phase 2E-J corrective Step 2 |
+| `patches/` and `scripts/` | Inspectable node-pty 1.1.0 Windows Job patch, loud deterministic apply/rebuild verification, Electron 44 capability load check, native Job-tree smoke, and production-service live-root/natural-root application-shutdown smoke | Implemented through Phase 2E-J corrective Step 3 |
+| `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, project, file, search, and terminal request/event/state contracts | Implemented through Phase 2E-C |
+| `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed lifecycle/project/file/search/terminal bridges with request/response/event validation and subscription cleanup | Implemented through Phase 2E-E |
+| `src/renderer/src/main.tsx` | React renderer bootstrap, packaged Geist/xterm styles, and renderer-session editor/terminal disposal on real page unload | Implemented through Phase 2E-F |
+| `src/renderer/src/App.tsx` | Resizable Orca-aligned project/editor/tools shell, top-chrome editor tabs, Explorer/Search coordination, Bottom Panel ownership, and ordered dirty/terminal transition decisions | Implemented through Phase 2E-G |
+| `src/renderer/src/components/` | Shared semantic buttons, focus-managed dialogs, and keyboard/pointer sidebar and Bottom Panel resizing | Implemented through Phase 2E-F |
 | `src/renderer/src/features/explorer/` | Lazy Explorer tree, local feature state, refresh, mutation controls, errors, and confirmation | Implemented Phase 2B |
-| `src/renderer/src/features/editor/` | Renderer-session model owner, Monaco lifecycle/data safety, and explicit search-result reveal/select/focus navigation | Implemented through Phase 2D |
+| `src/renderer/src/features/editor/` | Renderer-session model owner, Monaco lifecycle/data safety, search navigation, and fail-closed dirty/terminal transition presentation | Implemented through Phase 2E-G |
 | `src/renderer/src/features/search/` | Search query/state, grouped bounded results, cancellation, stale-event guards, and navigation requests | Implemented Phase 2D |
-| `src/renderer/src/styles.css` | Semantic dark tokens and Orca-aligned shell, typography, controls, Explorer/Search, editor, dialogs, interaction states, and scrollbars | Implemented through Phase 2D |
-| `tests/` | Vitest contract, service, IPC, preload, security/lifecycle, path/model, and file-scoped jsdom integration/regression tests | Implemented through Phase 2D |
+| `src/renderer/src/features/terminal/` | Renderer-session TerminalController, xterm/FitAddon factory, stable session hosts, ordered writes, fitting/resizing, Bottom Panel, and multiple-session controls | Implemented Phase 2E-F |
+| `src/renderer/src/styles.css` | Semantic dark tokens and Orca-aligned shell, typography, controls, Explorer/Search, editor, terminal Bottom Panel, dialogs, interaction states, and scrollbars | Implemented through Phase 2E-F |
+| `tests/` | Vitest contract, service, IPC, preload, security/lifecycle, path/model, terminal backend/boundary/controller/UI/transition, Windows Job/legacy process-tree termination, natural-root/race, fail-closed application quit/retry, and file-scoped jsdom integration/regression tests | Implemented through Phase 2E-J corrective Step 3 |
 | `electron.vite.config.ts` | main/preload/renderer build configuration | Existing foundation |
 | `docs/` | Requirements, reference, architecture, decisions, and thesis record | Existing and Phase 1 output |
 

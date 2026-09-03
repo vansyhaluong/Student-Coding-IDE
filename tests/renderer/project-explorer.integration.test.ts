@@ -109,6 +109,8 @@ const project = {
   name: 'Demo',
 } as ProjectIdentity
 
+const SEARCH_DEBOUNCE_TEST_TIMEOUT_MS = 3_000
+
 afterEach(() => {
   cleanup()
   editorModelManager.dispose()
@@ -340,7 +342,10 @@ describe('Project Search integration', () => {
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'save' } })
 
-    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    await waitFor(
+      () => expect(start).toHaveBeenCalledOnce(),
+      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
+    )
     expect(screen.queryByText('Searching…')).toBeNull()
     expect(await screen.findByText('Searching…')).not.toBeNull()
     const operationId = start.mock.calls[0]![1]
@@ -386,12 +391,18 @@ describe('Project Search integration', () => {
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'missing' } })
-    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    await waitFor(
+      () => expect(start).toHaveBeenCalledOnce(),
+      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
+    )
     act(() => searchEvents.publish(completeEvent(start.mock.calls[0]![1])))
     expect(await screen.findByText('No results found.')).not.toBeNull()
 
     fireEvent.change(input, { target: { value: 'locked' } })
-    await waitFor(() => expect(start).toHaveBeenCalledTimes(2))
+    await waitFor(
+      () => expect(start).toHaveBeenCalledTimes(2),
+      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
+    )
     act(() => searchEvents.publish({
       type: 'error',
       projectId: project.id,
@@ -420,9 +431,15 @@ describe('Project Search integration', () => {
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'alpha' } })
-    await waitFor(() => expect(start).toHaveBeenCalledTimes(1))
+    await waitFor(
+      () => expect(start).toHaveBeenCalledTimes(1),
+      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
+    )
     fireEvent.change(input, { target: { value: 'beta' } })
-    await waitFor(() => expect(start).toHaveBeenCalledTimes(2))
+    await waitFor(
+      () => expect(start).toHaveBeenCalledTimes(2),
+      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
+    )
     const firstId = start.mock.calls[0]![1]
     const secondId = start.mock.calls[1]![1]
 
@@ -456,7 +473,10 @@ describe('Project Search integration', () => {
     fireEvent.change(input, { target: { value: 'sa' } })
     fireEvent.change(input, { target: { value: 'save' } })
 
-    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    await waitFor(
+      () => expect(start).toHaveBeenCalledOnce(),
+      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
+    )
     expect(start.mock.calls[0]?.[2]).toBe('save')
   })
 
@@ -482,7 +502,10 @@ describe('Project Search integration', () => {
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'alpha' } })
-    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    await waitFor(
+      () => expect(start).toHaveBeenCalledOnce(),
+      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
+    )
     const operationId = start.mock.calls[0]![1]
     act(() => searchEvents.publish(batchEvent(operationId, [
       searchMatch('old.ts', 1, 1, 6, 'alpha'),
@@ -523,7 +546,10 @@ describe('Project Search integration', () => {
     fireEvent.change(input, {
       target: { value: 'save' },
     })
-    await waitFor(() => expect(start).toHaveBeenCalledOnce())
+    await waitFor(
+      () => expect(start).toHaveBeenCalledOnce(),
+      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
+    )
     const operationId = start.mock.calls[0]![1]
     act(() => searchEvents.publish(batchEvent(operationId, [
       searchMatch('main.ts', 1, 6, 10, 'disk save'),
@@ -835,7 +861,7 @@ describe('App project integration', () => {
     await waitFor(() => expect(screen.queryByLabelText('Unsaved changes')).toBeNull())
   })
 
-  it('returns Cancel and Don\'t Save decisions to the scoped Main transition', async () => {
+  it('returns Cancel and Don\'t Save decisions without discarding before Main commits', async () => {
     let requestUnsaved: ((event: UnsavedTransitionRequestEvent) => void) | undefined
     const resolveUnsavedTransition = vi.fn(async () => success(null))
     installApi({
@@ -871,7 +897,7 @@ describe('App project integration', () => {
       '22222222-2222-4222-8222-222222222222',
       true,
     ))
-    expect(screen.queryByRole('button', { name: 'Close main.ts' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Close main.ts' })).not.toBeNull()
   })
 
   it('blocks a Main transition when Save fails', async () => {
@@ -904,6 +930,121 @@ describe('App project integration', () => {
       false,
     ))
     expect(screen.getByLabelText('Unsaved changes')).not.toBeNull()
+  })
+
+  it('shows one terminal confirmation with safe default focus and returns the explicit decision', async () => {
+    let requestUnsaved: ((event: UnsavedTransitionRequestEvent) => void) | undefined
+    const resolveUnsavedTransition = vi.fn(async () => success(null))
+    installApi({
+      lifecycle: {
+        onUnsavedTransitionRequested: (listener) => {
+          requestUnsaved = listener
+          return () => undefined
+        },
+        resolveUnsavedTransition,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    await screen.findByRole('button', { name: 'Close project' })
+
+    act(() => requestUnsaved?.(transitionEvent(
+      '44444444-4444-4444-8444-444444444444',
+      true,
+      'project-switch',
+    )))
+    const dialog = await screen.findByRole('dialog', { name: 'Close running terminals?' })
+    expect(dialog).not.toBeNull()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    await waitFor(() => expect(resolveUnsavedTransition).toHaveBeenCalledWith(
+      '44444444-4444-4444-8444-444444444444',
+      false,
+    ))
+
+    resolveUnsavedTransition.mockClear()
+    act(() => requestUnsaved?.(transitionEvent(
+      '77777777-7777-4777-8777-777777777777',
+      true,
+    )))
+    fireEvent.click(await screen.findByRole('button', {
+      name: 'Close Terminals & Continue',
+    }))
+    await waitFor(() => expect(resolveUnsavedTransition).toHaveBeenCalledWith(
+      '77777777-7777-4777-8777-777777777777',
+      true,
+    ))
+  })
+
+  it('orders dirty resolution before terminal confirmation and retains dirty state on terminal Cancel', async () => {
+    let requestUnsaved: ((event: UnsavedTransitionRequestEvent) => void) | undefined
+    const resolveUnsavedTransition = vi.fn(async () => success(null))
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('A'),
+      },
+      lifecycle: {
+        onUnsavedTransitionRequested: (listener) => {
+          requestUnsaved = listener
+          return () => undefined
+        },
+        resolveUnsavedTransition,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    act(() => monacoModels[0]!.setValue('dirty'))
+
+    act(() => requestUnsaved?.(transitionEvent(
+      '55555555-5555-4555-8555-555555555555',
+      true,
+      'project-close',
+    )))
+    expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).not.toBeNull()
+    expect(screen.queryByRole('dialog', { name: 'Close running terminals?' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: "Don't Save" }))
+    expect(await screen.findByRole('dialog', { name: 'Close running terminals?' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Close main.ts' })).not.toBeNull()
+    expect(screen.getByLabelText('Unsaved changes')).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    await waitFor(() => expect(resolveUnsavedTransition).toHaveBeenCalledWith(
+      '55555555-5555-4555-8555-555555555555',
+      false,
+    ))
+    expect(screen.getByRole('button', { name: 'Close main.ts' })).not.toBeNull()
+    expect(screen.getByLabelText('Unsaved changes')).not.toBeNull()
+  })
+
+  it('resolves a clean transition immediately when no live terminal confirmation is required', async () => {
+    let requestUnsaved: ((event: UnsavedTransitionRequestEvent) => void) | undefined
+    const resolveUnsavedTransition = vi.fn(async () => success(null))
+    installApi({
+      lifecycle: {
+        onUnsavedTransitionRequested: (listener) => {
+          requestUnsaved = listener
+          return () => undefined
+        },
+        resolveUnsavedTransition,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    await screen.findByRole('button', { name: 'Close project' })
+    act(() => requestUnsaved?.(transitionEvent(
+      '66666666-6666-4666-8666-666666666666',
+    )))
+
+    await waitFor(() => expect(resolveUnsavedTransition).toHaveBeenCalledWith(
+      '66666666-6666-4666-8666-666666666666',
+      true,
+    ))
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('reloads a clean external change and preserves dirty content with a warning', async () => {
@@ -1284,6 +1425,13 @@ function installApi(overrides: {
       onEvent: () => () => undefined,
       ...overrides.search,
     },
+    terminal: {
+      create: async () => failure('Not configured'),
+      input: async () => failure('Not configured'),
+      resize: async () => failure('Not configured'),
+      close: async () => failure('Not configured'),
+      onEvent: () => () => undefined,
+    },
   }
   window.studentIde = api
   return api
@@ -1322,11 +1470,16 @@ function failure<T>(message: string): AppResult<T> {
   }
 }
 
-function transitionEvent(transitionId: string): UnsavedTransitionRequestEvent {
+function transitionEvent(
+  transitionId: string,
+  terminalConfirmationRequired = false,
+  reason: UnsavedTransitionRequestEvent['reason'] = 'project-close',
+): UnsavedTransitionRequestEvent {
   return {
     transitionId,
-    reason: 'project-close',
+    reason,
     project,
+    terminalConfirmationRequired,
   }
 }
 

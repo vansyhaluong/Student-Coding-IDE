@@ -9,6 +9,7 @@ export interface OwnedResource {
 export class ProcessManager implements ManagedService {
   readonly name = 'ProcessManager'
   private readonly resources = new Map<string, OwnedResource>()
+  private readonly cleanupTasks = new Map<string, Promise<void>>()
 
   register(resource: OwnedResource): () => void {
     if (this.resources.has(resource.id)) {
@@ -16,7 +17,12 @@ export class ProcessManager implements ManagedService {
     }
     this.resources.set(resource.id, resource)
     return () => {
-      this.resources.delete(resource.id)
+      if (
+        !this.cleanupTasks.has(resource.id)
+        && this.resources.get(resource.id) === resource
+      ) {
+        this.resources.delete(resource.id)
+      }
     }
   }
 
@@ -38,12 +44,8 @@ export class ProcessManager implements ManagedService {
     const errors: unknown[] = []
 
     for (const resource of resources.reverse()) {
-      if (!this.resources.delete(resource.id)) {
-        continue
-      }
-
       try {
-        await resource.close()
+        await this.cleanupResource(resource)
       } catch (error) {
         errors.push(error)
       }
@@ -52,5 +54,29 @@ export class ProcessManager implements ManagedService {
     if (errors.length > 0) {
       throw new AggregateError(errors, 'Owned resource cleanup failed')
     }
+  }
+
+  private cleanupResource(resource: OwnedResource): Promise<void> {
+    if (this.resources.get(resource.id) !== resource) {
+      return Promise.resolve()
+    }
+
+    const existingTask = this.cleanupTasks.get(resource.id)
+    if (existingTask) return existingTask
+
+    const task = Promise.resolve()
+      .then(() => resource.close())
+      .then(() => {
+        if (this.resources.get(resource.id) === resource) {
+          this.resources.delete(resource.id)
+        }
+      })
+    this.cleanupTasks.set(resource.id, task)
+    void task.finally(() => {
+      if (this.cleanupTasks.get(resource.id) === task) {
+        this.cleanupTasks.delete(resource.id)
+      }
+    }).catch(() => undefined)
+    return task
   }
 }

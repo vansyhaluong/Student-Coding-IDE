@@ -7,6 +7,10 @@ import {
 
 export type ProjectId = string & { readonly __brand: 'ProjectId' }
 
+export function isProjectId(value: unknown): value is ProjectId {
+  return typeof value === 'string' && /^project_[a-f0-9]{24}$/.test(value)
+}
+
 export interface ProjectIdentity {
   id: ProjectId
   name: string
