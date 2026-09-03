@@ -138,9 +138,9 @@ project:open            file:list-directory
 project:close           file:read
 search:start            file:write
 search:cancel           file:changed
-terminal:create         terminal:data
+terminal:create         terminal:event
 terminal:input          terminal:resize
-terminal:close          terminal:exit
+terminal:close
 run:start               run:stdout
 run:stop                run:stderr
 run:exit                git:status
@@ -218,9 +218,72 @@ Language services consume model/document change events through provider adapters
 
 The selected direction is xterm.js in the renderer and `node-pty` in the main process. The renderer terminal object is a view; the main `TerminalService` owns PTYs and the authoritative session registry.
 
-A terminal session has `CREATING`, `RUNNING`, `CLOSING`, `EXITED`, or `FAILED` state; ID, shell profile, cwd, dimensions, and timestamps. IPC covers create, input, resize, close, data, and exit. V1 may support multiple sessions but does not persist live PTYs across application restarts.
+A terminal session has `CREATING`, `RUNNING`, `CLOSING`, `EXITED`, or `FAILED`
+state; ID, shell profile, cwd, and dimensions. IPC covers create, input, resize,
+close, data, and exit. V1 supports multiple sessions but does not persist live
+PTYs across application restarts.
 
-On Windows, the shell profile resolves in this order: configured valid shell, supported system default, PowerShell, then `cmd.exe`. The initial cwd is the active project root. `node-pty` is native and therefore requires a Phase 2 Windows/native compatibility spike before Terminal implementation is accepted. That spike verifies installation, Electron ABI compatibility, PTY startup inside Electron, PowerShell/cmd launch, input/output, resize, close, process cleanup, and native-module feasibility on Windows. Full packaged-app verification, release artifacts, installer work, and installer smoke testing remain Phase 7 responsibilities. Cleanup waits for exit evidence and escalates termination without targeting unrelated processes.
+The terminal IPC adapter exact-validates create/input/resize/close requests and
+derives renderer ownership exclusively from the invoking WebContents. It routes
+the typed event union on one `terminal:event` channel only to that live owner.
+The preload exposes only those semantic operations and a validated,
+unsubscribe-returning event API; it never exposes raw IPC. Actual WebContents
+destruction or a new main-frame document load closes only that owner's sessions,
+while React remounts and same-document navigation do not affect PTYs.
+
+The Renderer keeps one session-scoped `TerminalController` outside the React
+component tree. It owns stable xterm/FitAddon instances and host elements, one
+preload event subscription, per-session sequence/write state, visible-only fit
+observers, and local disposal. React owns Bottom Panel visibility, selected-tab
+presentation, controls, and explicit focus requests only; component remounts do
+not recreate xterm instances or destroy Main PTYs. The panel height is bounded
+session-only UI state and is not persisted.
+
+Main batches each session's ordered PTY output over a short 8 ms window and
+bounds queued UTF-8 data to 64 KiB before forcing a flush. It keeps no output
+history or replay buffer. Final session metadata is retained only in a bounded
+256-entry tombstone set for idempotent close; native handles and listeners are
+released on final exit.
+
+Project close or switch acquires a Main-owned, project-scoped terminal transition
+lease before renderer confirmation. The lease blocks new terminal creation and
+drains creates already in flight so the transition cannot miss a PTY. Dirty
+editor decisions are resolved before a separate destructive terminal warning.
+After confirmation, Main closes only the old project's sessions and commits the
+project transition only after cleanup succeeds. Cancellation, renderer loss,
+timeout, or cleanup failure preserves both current project authority and any
+terminal sessions not successfully closed; renderer state is reconciled only
+after the authoritative project-changed event.
+
+On Windows, the V1 shell profile resolves in this order: valid `pwsh`, Windows PowerShell, then `ComSpec`/`cmd.exe`. Phase 2E does not support a configured custom shell; user-configurable shell selection is deferred to Phase 6 Settings. The initial cwd is the active project root. `node-pty` is native and therefore requires a Phase 2 Windows/native compatibility spike before Terminal implementation is accepted. That spike verifies installation, Electron ABI compatibility, PTY startup inside Electron, PowerShell/cmd launch, input/output, resize, close, process cleanup, and native-module feasibility on Windows. Full packaged-app verification, release artifacts, installer work, and installer smoke testing remain Phase 7 responsibilities. Cleanup waits for exit evidence and escalates termination without targeting unrelated processes.
+
+Phase 2E-J corrective Step 2 makes a Windows Job Object the primary V1 terminal
+process-tree owner. The pinned `node-pty` 1.1.0 ConPTY source is patched
+reproducibly so `CreateProcessW` receives `PROC_THREAD_ATTRIBUTE_JOB_LIST` in its
+existing `STARTUPINFOEX` path. A new Windows terminal therefore starts already
+inside its dedicated Job or creation fails closed. Main verifies a narrow native
+capability marker before spawn; an upstream/unpatched binary cannot silently
+serve a new production terminal.
+
+The native layer retains each Job `HANDLE` behind an opaque integration-created
+token. Root-process exit records a lifecycle fact but does not destroy that
+registry entry, release ProcessManager responsibility, or finalize the terminal.
+TerminalService funnels natural exit, explicit close, project cleanup, and
+renderer-owner loss through one idempotent finalization task:
+`TerminateJobObject`, bounded confirmation that
+`JobObjectBasicAccountingInformation.ActiveProcesses == 0`, native handle
+release, then ProcessManager/session release and exactly one terminal exit event.
+`JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` is deliberately not enabled. A termination,
+empty-confirmation, or release failure retains the token, handle, session, and
+ProcessManager ownership and fails closed.
+
+The prior fingerprinted `taskkill.exe /PID <pid> /T /F` backend remains only for
+explicit legacy/unestablished-Job ownership. It still requires immediate OS
+identity revalidation. It is forbidden once Job ownership was established and
+is never attempted after Job termination failure. The process-tree seam and
+native token remain Main-only; Renderer, preload, IPC, and shared terminal
+contracts gain no PID, Job, executable, environment, signal, or kill authority.
+V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 ## 10. Run architecture
 
@@ -276,6 +339,30 @@ Writes use temporary-file plus replace semantics, are serialized per document, a
 
 Cancellation is domain-specific. There is no public generic cancellation or command API.
 
+Application shutdown uses `RUNNING -> STOPPING -> STOPPED`. `STOPPING` blocks
+new work while Main stops started services in reverse dependency order. A
+service is released from `DesktopApplication` ownership only after its `stop()`
+call succeeds. The WindowManager is the final recovery surface and stops only
+after all other mandatory cleanup succeeds.
+
+Cleanup failure propagates, retains the application in `STOPPING`, preserves the
+failed service and its process/Job ownership, and prevents Electron's final quit.
+A later graceful quit retries only retained cleanup; concurrent quit requests
+share the in-flight shutdown. `STOPPED` means every required service cleanup,
+including TerminalService Job finalization and ProcessManager release, has
+succeeded. Only then does the Main-owned quit coordinator authorize one final
+`app.quit()` pass. The recursive `before-quit` event and final window close pass
+through that authorization without starting another cleanup transaction.
+
+Window close requests route into the same Electron quit coordinator and remain
+prevented while cleanup is pending or failed. `window-all-closed` also calls the
+same intercepted `app.quit()` path on non-macOS platforms; it cannot bypass
+mandatory cleanup. This policy covers graceful application shutdown only. It
+does not claim cleanup guarantees for Task Manager force termination, power
+loss, operating-system crashes, or equivalent unpreventable termination, and it
+introduces no `app.exit()`, `process.exit()`, timeout force-quit, or force-quit
+fallback.
+
 ## 15. Logging
 
 Main, renderer, run/terminal, and language-service logs have separate sources and session IDs. Main owns persistent diagnostic logs and rotation policy; renderer forwards structured diagnostics through a narrow logging method if needed. Terminal content and run output remain user-visible session data rather than general application logs.
@@ -304,6 +391,7 @@ The Phase 0 foundation already enables `contextIsolation`, disables `nodeIntegra
 - Run/Git use executable plus argument arrays and avoid `shell: true`.
 - Process stop validates ownership and terminates descendants without broad process-name killing.
 - The Phase 2 native compatibility spike must confirm that `node-pty` installs, matches the Electron ABI, starts inside Electron, handles PowerShell/cmd, input/output, resize, close, and owned-process cleanup on Windows.
+- Phase 2E-H recorded actual Windows x64/ConPTY behavior and implemented ADR-020's verified targeted owned-root process-tree termination. V1 intentionally retains the Windows 10/11 x64 label without deriving a minimum build from the evidence host. Phase 2E-I retains Ubuntu CI as the portable automated gate and requires recorded actual-Windows Electron evidence for terminal-affecting work; Phase 7 owns packaged/installed Windows CI and release acceptance.
 - Phase 7 verifies native-module inclusion in the full packaged application, release artifact, installer, CI packaging path, and Windows installer smoke test.
 - Watcher behavior, locked files, antivirus delays, and atomic-replace fallbacks require Windows integration tests.
 

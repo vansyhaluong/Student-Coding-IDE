@@ -6,6 +6,7 @@ import {
 } from './lifecycle'
 import { createProjectBridge } from './project'
 import { createSearchBridge } from './search'
+import { createTerminalBridge } from './terminal'
 
 export function createPreloadApi(
   ipcRenderer: IpcRendererLike,
@@ -15,5 +16,6 @@ export function createPreloadApi(
     lifecycle: createLifecycleBridge(ipcRenderer),
     project: createProjectBridge(ipcRenderer),
     search: createSearchBridge(ipcRenderer),
+    terminal: createTerminalBridge(ipcRenderer),
   }
 }

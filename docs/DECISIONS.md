@@ -69,7 +69,9 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 - **Options:** `child_process` pipes; direct ConPTY implementation; xterm.js + `node-pty`; web terminal service.
 - **Selected option:** xterm.js renderer UI plus main-process `node-pty`.
 - **Rationale:** Pipes do not provide terminal semantics; direct ConPTY is disproportionate; the selected pair is established and maps cleanly to the required process boundary.
+- **Windows V1 shell policy:** Resolve valid `pwsh`, then Windows PowerShell, then `ComSpec`/`cmd.exe`. Phase 2E has no configured custom-shell support; user-configurable shell selection is deferred to Phase 6 Settings.
 - **Consequences:** `node-pty` is native. Before Terminal implementation is accepted, the Phase 2 spike verifies installation, Electron ABI compatibility, PTY startup inside Electron, PowerShell/cmd launch, input/output, resize, close, process cleanup, and native-module feasibility on Windows. Full packaged-app verification, release artifacts, installer work, and installer smoke testing remain Phase 7 responsibilities. If the compatibility spike fails, reopen this ADR before feature code proceeds.
+- **Phase 2E-B evidence (2026-08-30):** On Windows x64, the `node-pty` 1.1.0 shipped prebuild loaded and operated under Electron 44.0.0 / bundled Node 24.18.1 / module ABI 149 without rebuilding. Windows PowerShell was selected because `pwsh` was unavailable; the repository-root PTY passed deterministic input/output, resize, Ctrl+C, single exit-event/code capture, owned-PID release, and clean Electron-exit checks. An electron-vite Main build retained external `node-pty` resolution and repeated the native smoke successfully. `@electron/rebuild` and a native build chain are not required now. This evidence does not claim production TerminalService behavior, descendant-tree cleanup, packaging, or installer acceptance.
 - **Phase:** 1 decision; Phase 2 spike/implementation.
 
 ## ADR-008 — Separate process semantics
@@ -202,6 +204,60 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 - **Rationale:** These policies preserve the accepted privilege boundary and prevent silent source loss while keeping Phase 2C smaller than a general conflict-management or renderer RPC subsystem.
 - **Consequences:** File write receives only ProjectId, normalized project-relative path, and text. Project/application transitions may wait for the owning renderer. The protocol is lifecycle-specific, validates transition ownership and identity, and cannot execute arbitrary renderer requests. Phase 2C tests must cover save races, multi-document decisions, delete coordination, external changes, timeout/disappearance, and stale transition responses.
 - **Phase:** 2C decision gate.
+
+## ADR-020 — Windows terminal descendant-process cleanup
+
+- **Status:** Accepted — reopened and superseded by Phase 2E-J corrective Step 2.
+- **Context:** Phase 2E-B proved Electron/`node-pty` native compatibility and Phase 2E-D/G implemented semantic session/project cleanup. Phase 2E-H then proved that `node-pty` `kill()` alone was insufficient: shell PID 22796 and child PID 18376 exited, but owned grandchild PID 26396 remained alive after three seconds while unrelated control PID 29916 correctly survived. Main had already emitted one exit and removed the ProcessManager resource, creating a false-clean descendant state.
+- **Options:** Retain current `node-pty` close/kill behavior if controlled evidence proves it sufficient; invoke targeted `taskkill /PID <owned-pid> /T`; enumerate and terminate a validated owned process tree; contain PTY trees with Windows Job Objects.
+- **Selected option:** Windows Job Object is the primary Windows V1 terminal process-tree backend. A small reproducible patch to pinned `node-pty` 1.1.0 extends its ConPTY `STARTUPINFOEX` path with `PROC_THREAD_ATTRIBUTE_JOB_LIST`, assigning a dedicated Job atomically at the native `CreateProcessW` boundary. Spawn fails closed if the patched capability, Job creation, attribute association, or process creation is unavailable. The native integration retains the Job handle behind an opaque integration-created token independent of root-process lifetime. Natural root exit retains session and ProcessManager ownership. Finalization is explicit `TerminateJobObject`, bounded `ActiveProcesses == 0` confirmation, `CloseHandle`, then session/ProcessManager release. `KILL_ON_JOB_CLOSE` is not enabled. The previous fingerprinted targeted-taskkill backend remains only for explicit legacy/unestablished ownership and is forbidden after Job establishment or Job termination failure.
+- **Trade-offs:**
+  - Current behavior is smallest and easiest to maintain, but evidence may show descendants survive.
+  - Targeted `taskkill /T` is built into Windows, but PID ownership/reuse, invocation, force semantics, and close races require strict control.
+  - Process-tree enumeration can validate targets individually, but ancestry snapshots race with spawn/exit and add permissions/platform code.
+  - Job Objects provide strong containment/kill-on-close semantics, but introduce native integration, nesting, ABI, maintenance, and Phase 7 packaging implications.
+- **Evidence:** The original Phase 2E-H targeted-taskkill evidence remains valid only for the gated legacy backend. Corrective Step 2 rebuilt the patched native module for Electron 44 x64 and verified its capability marker. The native smoke created shell 28332, child 24636, grandchild 16628, Job-owned conhost helpers 28792 and 25964, and unrelated control 2396. After the shell exited naturally, its PID was gone while the Job remained valid with four active descendants. Explicit Job termination removed the descendants/helpers, preserved the control process, confirmed the Job empty, released the handle, and produced one PTY exit event. A production-service Electron smoke used shell 33128, child 31128, grandchild 6332, and control 5888; ProcessManager stayed registered after natural root exit and reached zero only after successful Job finalization, with one terminal exit. Automated lifecycle/race tests verify failure retention and duplicate-trigger sharing.
+- **Related decisions:** V1 remains Windows 10/11 x64 without turning this evidence host into a minimum build. Phase 7 retains packaged/installed Windows CI and release acceptance. Renderer/preload authority is unchanged. Phase 2E-J corrective Step 1 fixed ProcessManager cleanup ownership; Step 2 owns natural-root/Job finalization; Step 3 separately owns application-shutdown semantics.
+- **Consequences:** Every newly created production Windows terminal is Job-owned or fails creation. Root PID is not cleanup authority after Job establishment. Job failure retains native and Main ownership; no PID fallback is allowed. An opaque token can address only Jobs created by this integration, and unknown/stale tokens fail. Patch application and Electron ABI rebuild fail loudly, while packaging policy remains Phase 7. Never kill by process name or expose generic renderer spawn/signal/process-control authority.
+- **Phase:** 2E-J corrective Step 2; Phase 7 retains packaged/installed verification.
+
+## ADR-021 — Graceful application shutdown failure semantics
+
+- **Status:** Accepted.
+- **Context:** Phase 2E-J found that `DesktopApplication` transitioned to
+  `STOPPED` in a `finally` path and Electron's `before-quit` handler called
+  `app.quit()` after cleanup rejection. Either path could report false shutdown
+  success after terminal/Job cleanup failed.
+- **Selected option:** Graceful shutdown is fail-closed. The application uses
+  `RUNNING -> STOPPING -> STOPPED`, reaches `STOPPED` only after every mandatory
+  started service stops successfully, and remains `STOPPING` after failure.
+  Successfully stopped services are removed individually; the failed service
+  and not-yet-stopped dependencies remain owned for a deterministic later retry.
+  Concurrent shutdown calls share one in-flight attempt. WindowManager stops
+  last so the existing close surface remains available while cleanup is
+  incomplete.
+- **Electron coordination:** The first `before-quit` is prevented while close
+  approval and cleanup run. Cleanup success authorizes exactly one final
+  `app.quit()`; the resulting recursive event passes through without another
+  stop. Cleanup failure is logged through a redacted Main callback, does not
+  authorize final quit, and clears only the failed attempt so a later graceful
+  quit can retry. BrowserWindow close and non-macOS `window-all-closed` route
+  through this same coordinator.
+- **Rationale:** This preserves the Step 1 ProcessManager and Step 2 Windows Job
+  ownership invariant without adding a force-quit policy, failure UX, public
+  lifecycle state, dependency, native helper, or Renderer/preload/IPC authority.
+- **Consequences:** `STOPPING` can be retained across a failed cleanup attempt;
+  normal privileged work remains unavailable, but the existing window close
+  path can request another retry. No automatic retry, timeout force quit,
+  `app.exit()`, or `process.exit()` fallback exists. Unpreventable OS/process
+  termination remains outside graceful-shutdown guarantees.
+- **Evidence:** Phase 2E-J corrective Step 3 automated coverage verifies state
+  transitions, error propagation, retained ownership, retry, concurrent calls,
+  recursive quit protection, final-quit cardinality, and WindowManager bypass
+  prevention. Electron 44 Windows x64 native smokes verify live-root and
+  natural-root Job cleanup before `STOPPED`, one final quit request, descendant
+  removal, ProcessManager release, and unrelated-process survival.
+- **Phase:** 2E-J corrective Step 3.
 
 ## Dependency candidate register
 

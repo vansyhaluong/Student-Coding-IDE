@@ -20,14 +20,23 @@ export interface UnsavedDialogState {
   documents: readonly EditorDocument[]
 }
 
+export interface TerminalTransitionDialogState {
+  reason: 'project-close' | 'project-switch'
+  project: ProjectIdentity
+}
+
 export function useEditorWorkspace(
   project: ProjectIdentity | null,
   manager: EditorModelManager,
 ) {
   const [error, setError] = useState<string | null>(null)
   const [dialog, setDialog] = useState<UnsavedDialogState | null>(null)
+  const [terminalTransitionDialog, setTerminalTransitionDialog] = useState<
+    TerminalTransitionDialogState | null
+  >(null)
   const [navigation, setNavigation] = useState<EditorNavigationRequest | null>(null)
   const dialogResolver = useRef<((choice: UnsavedChoice) => void) | null>(null)
+  const terminalDialogResolver = useRef<((proceed: boolean) => void) | null>(null)
   const projectRef = useRef(project)
   const previousProject = useRef(project)
   const openGeneration = useRef(0)
@@ -52,6 +61,24 @@ export function useEditorWorkspace(
     dialogResolver.current = null
     setDialog(null)
     resolve?.(choice)
+  }, [])
+
+  const requestTerminalConfirmation = useCallback((
+    state: TerminalTransitionDialogState,
+  ) => new Promise<boolean>((resolve) => {
+    if (terminalDialogResolver.current) {
+      resolve(false)
+      return
+    }
+    terminalDialogResolver.current = resolve
+    setTerminalTransitionDialog(state)
+  }), [])
+
+  const chooseTerminalTransition = useCallback((proceed: boolean) => {
+    const resolve = terminalDialogResolver.current
+    terminalDialogResolver.current = null
+    setTerminalTransitionDialog(null)
+    resolve?.(proceed)
   }, [])
 
   const invalidateExternalReload = useCallback((key: string): void => {
@@ -248,7 +275,7 @@ export function useEditorWorkspace(
     (event: UnsavedTransitionRequestEvent) => {
       void resolveTransition(event)
     },
-  ), [manager, requestChoice, saveAll])
+  ), [manager, requestChoice, requestTerminalConfirmation, saveAll])
 
   const resolveTransition = async (
     event: UnsavedTransitionRequestEvent,
@@ -261,24 +288,31 @@ export function useEditorWorkspace(
     const dirty = manager.getOpenDocuments().filter(
       (document) => document.projectId === currentProject.id && document.dirty,
     )
-    if (dirty.length === 0) {
-      await resolveMainTransition(event.transitionId, true)
-      return
+    if (dirty.length > 0) {
+      const choice = await requestChoice({
+        mode: dirty.length > 1 ? 'multiple' : 'single',
+        context: 'transition',
+        documents: dirty,
+      })
+      if (choice === 'cancel') {
+        await resolveMainTransition(event.transitionId, false)
+        return
+      }
+      if (choice === 'save' && !await saveAll(dirty)) {
+        await resolveMainTransition(event.transitionId, false)
+        return
+      }
     }
-    const choice = await requestChoice({
-      mode: dirty.length > 1 ? 'multiple' : 'single',
-      context: 'transition',
-      documents: dirty,
-    })
-    if (choice === 'cancel') {
-      await resolveMainTransition(event.transitionId, false)
-      return
+    if (event.terminalConfirmationRequired) {
+      const confirmed = await requestTerminalConfirmation({
+        reason: event.reason === 'project-close' ? 'project-close' : 'project-switch',
+        project: event.project,
+      })
+      if (!confirmed) {
+        await resolveMainTransition(event.transitionId, false)
+        return
+      }
     }
-    if (choice === 'save' && !await saveAll(dirty)) {
-      await resolveMainTransition(event.transitionId, false)
-      return
-    }
-    if (choice === 'discard') manager.closeProject(currentProject.id)
     await resolveMainTransition(event.transitionId, true)
   }
 
@@ -299,14 +333,18 @@ export function useEditorWorkspace(
     externalGenerations.current.clear()
     dialogResolver.current?.('cancel')
     dialogResolver.current = null
+    terminalDialogResolver.current?.(false)
+    terminalDialogResolver.current = null
   }, [])
 
   return {
     manager,
     dialog,
+    terminalTransitionDialog,
     error,
     navigation,
     choose,
+    chooseTerminalTransition,
     save,
     openFile,
     navigateToSearchMatch,

@@ -224,3 +224,330 @@ Settings UX, formatter, debugger, or extension-host work was added.
 
 No replace, regex/options UI, Terminal, Run, Git, Language Intelligence,
 Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
+
+## Phase 2E-B — Windows / Electron Native Compatibility Spike (`COMPLETE`)
+
+- Verified the approved `@xterm/xterm` 6.0.0, `@xterm/addon-fit` 0.11.0, and
+  `node-pty` 1.1.0 dependency state without installing or changing dependencies.
+- Loaded the shipped Windows x64 `node-pty` prebuild in Electron 44.0.0 with
+  bundled Node 24.18.1 and module ABI 149; no ABI error, rebuild, native toolchain,
+  or `@electron/rebuild` dependency was required.
+- Spawned a real Windows PowerShell PTY at the repository root because `pwsh` was
+  unavailable and Windows PowerShell was the first available approved fallback.
+  Deterministic input/output, ordered markers, resize, Ctrl+C, one clean exit
+  event with code 0, owned-PID release, and clean Electron exit all passed.
+- Confirmed a main-only electron-vite build leaves `node-pty` external and that
+  its emitted Electron Main entry resolves the repository dependency and repeats
+  the native smoke successfully.
+- Removed the isolated harness and generated bundles after recording evidence.
+  No production terminal service, IPC, preload API, Renderer UI, generic process
+  executor, or Phase 2E-C work was introduced.
+
+## Phase 2E-C — Terminal Contract Foundation (`COMPLETE`)
+
+- Added side-effect-free terminal request/response contracts with an opaque
+  branded session ID, strict exact-object validation, dimensions bounded to
+  1–1,000, and non-empty input bounded to 64 KiB by UTF-8 byte length.
+- Added `CREATING`, `RUNNING`, `CLOSING`, `EXITED`, and `FAILED` states with a
+  pure allowed-transition predicate. Successful create is the readiness boundary
+  and returns `RUNNING`, avoiding a redundant startup event.
+- Added exact `data`, `exit`, and serialized `error` events. Data uses a
+  non-negative safe-integer sequence; exit code and signal are explicitly
+  nullable for provider/platform variability; raw native errors are rejected.
+- Added documented terminal uses of existing AppError codes without introducing
+  terminal-specific codes.
+- Added a Main-only PTY port with explicit executable/args/cwd/environment spawn
+  options isolated from Renderer contracts and without importing `node-pty`.
+- Added a timer-free fake PTY supporting deterministic spawn failure, writes,
+  control bytes, resize, data, immediate/duplicate exit, late data after close,
+  idempotent close, listener disposal, and full disposal.
+- Added 26 focused tests. The full suite passes 183 tests across 23 files, along
+  with typecheck, lint, production build, security/dependency review, and
+  whitespace checks. No production TerminalService, native adapter, IPC,
+  preload API, Renderer terminal UI, or Phase 2E-D work was introduced.
+
+## Phase 2E-D — Production Main Terminal Backend (`COMPLETE`)
+
+- Added the sole production `node-pty` adapter behind the existing Main-only PTY
+  port. Native types remain inside the adapter; electron-vite keeps the package
+  external and no Renderer/shared module imports it.
+- Added deterministic Windows shell resolution for valid `pwsh`, Windows
+  PowerShell, then absolute `ComSpec`/system `cmd.exe`, with no configured custom
+  shell or discovery-command execution. Missing approved shells map to
+  `DEPENDENCY_MISSING`.
+- Added a Main-owned TerminalService with opaque random IDs, canonical active-
+  project cwd, immutable project/renderer ownership, authoritative states,
+  input/control-byte forwarding, resize deduplication, typed events, and safe
+  AppError normalization.
+- Added ordered per-session output batching with an 8 ms latency window, 64 KiB
+  UTF-8 queue bound, monotonically increasing sequence numbers, forced trailing
+  exit flush, and cross-session isolation. No output history or replay was added.
+- Registered every live PTY with ProcessManager and added bounded semantic close,
+  owner cleanup, project cleanup, shutdown cleanup, duplicate-exit suppression,
+  late-callback suppression, and 256 bounded exited/failed tombstones. No broad
+  process-tree kill primitive or generic executor was introduced.
+- Extended the deterministic fake PTY and manual scheduler for immediate exit,
+  late callbacks, adapter failures, close races, bounded timeouts, and aggregate
+  cleanup. The full suite passes 207 tests across 25 files.
+- A temporary Main-only Electron 44 smoke exercised the production adapter with
+  external `node-pty`, Windows PowerShell, output, resize, one clean exit, and no
+  remaining owned PID; all temporary artifacts were removed.
+- Typecheck, lint, production build, dependency/security review, and whitespace
+  checks pass. No terminal IPC, preload API, Renderer/xterm UI, project dialog,
+  or Phase 2E-E work was introduced.
+
+## Phase 2E-E — Production Terminal IPC and Preload Bridge (`COMPLETE`)
+
+- Added four strict terminal handlers through the centralized Main IPC registry.
+  Create, input, resize, and close reject unknown fields and malformed values;
+  renderer ownership is derived only from `event.sender.id`.
+- Connected handlers to TerminalService without moving shell, PTY, batching, or
+  session business logic into IPC. Later operations recover immutable project
+  identity from Main session state rather than accepting it from Renderer.
+- Added validated owner-only `terminal:event` delivery with no window broadcast,
+  safe destroyed-owner drops, preserved service ordering, and guarded send errors.
+- Added actual WebContents destruction and main-frame reload cleanup through
+  `closeSessionsForOwner`. Cleanup is idempotent and owner-scoped; React remounts
+  and same-document navigation do not close sessions.
+- Added the narrow typed `window.studentIde.terminal` API for create, input,
+  resize, close, and unsubscribe-returning events. Requests, responses, and
+  events are validated, and one underlying IPC listener fans out to local
+  subscribers without exposing raw `ipcRenderer` or generic channels.
+- Added 12 focused IPC/preload/routing/lifecycle tests. The full suite passes 219
+  tests across 27 files, with typecheck, lint, production build, dependency and
+  adversarial security review, and whitespace checks passing.
+- No dependency, Renderer terminal UI, xterm import, generic process API,
+  replay/reattach behavior, or Phase 2E-F work was added.
+
+## Phase 2E-F — Renderer Terminal UI (`COMPLETE`)
+
+- Added a Renderer-session `TerminalController` that owns stable xterm and
+  FitAddon instances independently of React mounts, subscribes to the typed
+  terminal event API once, rejects stale/out-of-order events, serializes bounded
+  writes, and disposes per-session resources exactly once.
+- Added exact xterm input forwarding, including control bytes and Unicode, plus
+  visible/non-zero-only fitting, coalesced/deduplicated resize propagation, and
+  stopped input/resize behavior for exited or failed sessions.
+- Added the initially closed, resizable Bottom Panel with project-aware empty
+  state, multiple session tabs, New/Close controls, user-initiated focus, and
+  restrained exit/error status while retaining scrollback.
+- Added 17 focused controller/panel/resizer tests. The full suite passes 236
+  tests across 29 files, together with typecheck, lint, production build, and
+  whitespace checks.
+- Verified the built Electron application with real Windows PowerShell and
+  ConPTY: prompt, input/output, project-root cwd, Vietnamese Unicode, Ctrl+C,
+  panel/window/sidebar resizing, multiple sessions, exit, close/reopen, and
+  Monaco coexistence all passed.
+- No dependency, IPC/preload contract, shell authority, persistence,
+  project-transition policy, split terminal, or Phase 2E-G work was added.
+
+## Phase 2E-G — Terminal Transition and Lifecycle Policy (`COMPLETE`)
+
+- Added a Main-owned project-transition lease that blocks new terminal creates,
+  drains creates already in flight, snapshots live project sessions, and releases
+  its project block idempotently.
+- Integrated the lease with the existing serialized ProjectService guard. Project
+  close/switch now warns only when the old project owns live PTYs, closes only
+  those sessions after approval, and commits new project authority only after
+  terminal cleanup succeeds.
+- Kept cancellation, renderer loss, timeout, and cleanup failure fail-closed.
+  Failed cleanup returns a concise structured error without exposing native
+  details or silently changing the current project.
+- Ordered Renderer decisions so dirty-buffer Save/Don't Save/Cancel completes
+  before the destructive terminal warning. Editor models remain intact until the
+  authoritative project-changed event, including when a later terminal decision
+  is cancelled.
+- Added focused coverage for in-flight create races, project-scoped transition
+  blocking, cancellation, cleanup failure, rapid serialized transitions, dialog
+  ordering, safe default focus, and clean transitions. Stabilized existing Search
+  debounce assertions for constrained parallel test workers without changing
+  production Search behavior.
+- The full suite passes 249 tests across 29 files. Typecheck, lint, production
+  build, and `git diff --check` pass. Phase 2E-F's real Electron/ConPTY smoke
+  remains applicable because 2E-G changes only project-transition coordination.
+- At Phase 2E-G completion, Phase 2E remained `IN_PROGRESS` because descendant-
+  process cleanup and later terminal verification/review work were not yet
+  scope-defined. Phase 2E-G did not silently absorb that work.
+
+## Phase 2E-H — Windows Terminal Behavior & Process Cleanup (`COMPLETE`)
+
+- Defined a documentation-only Windows x64 work package for ConPTY/shell
+  behavior, Unicode, Ctrl+C, exit/close semantics, controlled child/grandchild
+  cleanup, orphan checks, race coverage, and native Electron evidence.
+- Separated fake-based automated coverage, targeted Electron-native smoke, and
+  non-duplicative manual Windows smoke. Ubuntu CI remains pure-test evidence and
+  cannot validate Windows-native behavior.
+- Recorded ADR-020 as Proposed and left the minimum Windows/ConPTY baseline,
+  Windows CI timing, stronger cleanup strategy if needed, CJK/emoji depth, and
+  H/I evidence split as `USER DECISION REQUIRED`.
+- Bounded 2E-I to consolidated, non-duplicative terminal acceptance evidence;
+  bounded 2E-J to final security/lifecycle/adversarial review and Phase 2E
+  completion assessment; retained all packaging/installer work in Phase 7.
+- No production source, tests, dependencies, package files, CI workflow, commit,
+  or Phase 2E-H implementation was changed by this scope-definition task.
+- Reproduced the Windows descendant blocker under Electron 44: node-pty closed
+  shell 22796 and child 18376 but left grandchild 26396 alive after three
+  seconds; unrelated control 29916 survived while Main had already emitted exit
+  and removed ProcessManager ownership.
+- Accepted ADR-020 and added a narrow Main-only process-tree terminator. It
+  fingerprints the owned PTY root with PID/start time/executable/process name,
+  revalidates session ownership and OS identity immediately before absolute
+  System32 `taskkill.exe /PID <pid> /T /F`, and uses bounded `execFile` without a
+  shell, process name, wildcard, Renderer input, new dependency, or raw error
+  exposure. Exit remains pending until tree termination completes, preventing a
+  transient false-clean ProcessManager state.
+- Corrected and re-ran the controlled tree under actual Electron. The original
+  corrected run removed 19276 -> 30408 -> 31956 while control 30688 survived;
+  the final ordering run removed 9800 -> 31076 -> 25892 while control 15224
+  survived. Close-one, project cleanup, project switch/close, renderer loss, and
+  application shutdown also removed every recorded owned shell/child/grandchild
+  while common control 16700 survived.
+- Verified Windows PowerShell and cmd cwd-with-spaces, Vietnamese/common Unicode,
+  required emoji, supplemental CJK, Ctrl+C prompt recovery and reuse, resize,
+  clean/non-zero exit, trailing output, concurrent close/exit, close during
+  output, Ctrl+C then close, rapid create/close, close-after-exit, and one logical
+  exit. An output-active DesktopApplication shutdown stopped shell PID 16508 in
+  2,475 ms, emitted one exit, cleared ProcessManager, and reached `STOPPED`.
+  Production-build xterm smoke visibly retained scrollback after exit and closed
+  a tab with a harmless running process.
+- The full suite passes 265 tests across 30 files. Typecheck, lint, production
+  build, and `git diff --check` pass. Windows CI remains deferred to 2E-I. At
+  that Phase 2E-H checkpoint, Job Objects remained an optional unscheduled
+  future evaluation; ADR-020 and Phase 2E-J corrective Step 2 later superseded
+  that historical policy with primary Job ownership. Packaging and installer
+  claims remain Phase 7.
+
+## Phase 2E-I — Consolidated Terminal Verification Gate (`COMPLETE`)
+
+- Audited FR-019 through FR-021 and terminal security/lifecycle traceability
+  across contracts, Main service, IPC/preload, Renderer controller/UI,
+  project/application transitions, and Windows owned-process cleanup.
+- Reused the same-source 2E-H Windows matrix without ceremonial repetition and
+  ran a consolidated Electron 44 / Node 24.18.1 native smoke. Canonical cwd with
+  spaces, Vietnamese/common Unicode/emoji, Ctrl+C recovery, resize, trailing
+  output, exit code 7, post-exit rejection, multiple-session isolation, focused
+  close, and shutdown passed.
+- Verified owned trees 4212 -> 7968 -> 12332 and 30072 -> 6784 -> 26632 exited,
+  unrelated control PID 16612 survived, each session emitted one exit, and
+  ProcessManager reached zero only after cleanup. Temporary harness and fixture
+  artifacts were removed after evidence capture.
+- Completed a production Electron Bottom Panel smoke covering visible Vietnamese
+  and emoji output, two-session creation/switching, closing a session running a
+  harmless long process, and continued use of the unaffected session.
+- Evaluated Windows CI and selected no Phase 2 Windows job. Ubuntu CI remains the
+  portable automated gate; terminal-affecting work requires recorded actual-
+  Windows Electron evidence; Phase 7 retains packaged/installed Windows CI and
+  release acceptance.
+- The full suite passes 265 tests across 30 files. Typecheck, lint, production
+  build, and `git diff --check` pass. Non-fatal `node-pty` AttachConsole process-
+  list diagnostics are recorded as a limitation; no behavior, cleanup, or
+  isolation assertion failed.
+- No production feature, dependency, CI workflow, packaging policy, installer,
+  custom shell, Job Object, Phase 2E-J review, commit, or push was added.
+
+## Phase 2E-J Corrective Step 2 — Windows Job Object Production Integration (`COMPLETE`)
+
+- Reopened ADR-020 and made a Windows Job Object the primary Windows terminal
+  process-tree owner. Pinned `node-pty` exactly to 1.1.0 and added an inspectable,
+  deterministic repository patch plus loud patch/rebuild scripts; no dependency,
+  fork, vendor copy, Renderer API, preload API, IPC contract, or UI change was
+  introduced.
+- Extended node-pty's existing ConPTY `STARTUPINFOEX` path with
+  `PROC_THREAD_ATTRIBUTE_JOB_LIST`, so the shell is associated atomically at
+  `CreateProcessW`. Job/capability/attribute/process creation failures reject
+  terminal creation, and the Electron 44 x64 rebuild/load check prevents silent
+  use of an upstream unpatched prebuild.
+- Added a native opaque-token registry whose Job handle survives root exit.
+  Finalization explicitly terminates the Job, polls
+  `JobObjectBasicAccountingInformation.ActiveProcesses` to zero, releases the
+  handle, then releases ProcessManager/session ownership. `KILL_ON_JOB_CLOSE` is
+  disabled; failure retains ownership, and node-pty PID/console-list kill is
+  forbidden for established Jobs.
+- Unified natural root exit, explicit close, project cleanup, and renderer-owner
+  loss behind one in-flight TerminalService finalization task. Root exit no
+  longer means cleanup completion; duplicate triggers share work, trailing
+  output is flushed before exactly one exit event, and failed cleanup keeps the
+  session and ProcessManager entry available for retry.
+- Retained the Phase 2E-H fingerprinted `taskkill /PID <pid> /T /F` backend only
+  for explicit legacy/unestablished ownership. It still revalidates the OS
+  identity immediately before invocation and is forbidden after Job ownership
+  or Job termination failure.
+- Actual Electron 44 x64 evidence used shell 28332, child 24636, grandchild
+  16628, Job-owned conhost helpers 28792 and 25964, and unrelated control 2396.
+  The shell PID disappeared naturally while the Job retained four active
+  descendants. Job termination removed all descendants/helpers, preserved the
+  control process, confirmed zero active processes, and produced one exit event.
+- A second Electron smoke bundled and exercised the production `NodePtyPort`,
+  `TerminalService`, `WindowsProcessTreeTerminator`, and `ProcessManager` path.
+  With shell 33128, child 31128, grandchild 6332, and control 5888,
+  ProcessManager remained at one after natural root exit, reached zero only
+  after Job finalization, removed both descendants, preserved the control, and
+  emitted one terminal exit.
+- The full suite passes 285 tests across 31 files. Typecheck, lint,
+  electron-vite production build, patch apply/reverse verification, native
+  rebuild/capability load, native and production-service Windows natural-root
+  smoke, and `git diff --check` pass. At Step 2 completion, Phase 2E-J and Phase
+  2E remained `BLOCKED` because corrective Step 3 application-shutdown semantics
+  had not begun.
+
+## Phase 2E-J Corrective Step 3 — Application Shutdown Semantics (`COMPLETE`)
+
+- Corrected `DesktopApplication` so `STOPPED` is reached only after every
+  mandatory started service stops successfully. Cleanup rejection propagates,
+  retains `STOPPING`, and preserves the failed and not-yet-stopped services for
+  deterministic retry; concurrent calls share one in-flight shutdown and a
+  repeated call after success remains idempotent.
+- Preserved reverse dependency cleanup while changing service release from
+  pre-emptive list removal to removal after successful `stop()`. A failure now
+  stops that cleanup attempt before ProcessManager can duplicate a failed
+  TerminalService Job finalization. WindowManager is shutdown-last, leaving the
+  existing window close path available to initiate a later retry.
+- Added a Main-only Electron quit coordinator. Initial and repeated
+  `before-quit` events are prevented during approval/cleanup; success authorizes
+  one final `app.quit()` and lets its recursive event/window close pass; failure
+  logs through a redacted callback, does not finalize quit, and clears only the
+  rejected attempt. BrowserWindow close and non-macOS `window-all-closed` use
+  the same path without new Renderer, preload, or IPC authority.
+- Added focused DesktopApplication, quit coordinator, WindowManager, and
+  TerminalService integration tests for success, failure, retry, concurrency,
+  idempotence, final-quit cardinality, recursive-event protection, live Job
+  cleanup, natural-root cleanup, and retained Job/ProcessManager ownership.
+- Electron 44 Windows x64 production-service smoke passed a live-root shutdown
+  (`32972 -> 16304 -> 1756`, control `30836`) and a natural-root-first shutdown
+  (`8688 -> 23492 -> 31696`, control `8812`). Both reached `STOPPED` only after
+  Job finalization and ProcessManager release, requested one final quit, removed
+  every tested owned PID, emitted one terminal exit, and preserved the unrelated
+  control process. Failure/retry evidence uses test seams only.
+- The full suite passes 297 tests across 32 files. Typecheck, lint, production
+  build, and `git diff --check` pass. No dependency, Windows Job strategy,
+  node-pty patch policy, force-quit fallback, Renderer/preload/IPC capability,
+  packaging, installer, final 2E-J review, commit, or push was added. Corrective
+  Step 3 is complete; Phase 2E-J and Phase 2E remain `BLOCKED` until the final
+  review is explicitly authorized and rerun.
+
+## Phase 2E-J — Final Consolidated Terminal Review (`COMPLETE`)
+
+- Re-audited the complete terminal security boundary, creation path, shell/cwd
+  policy, Windows Job integration, natural-root ownership, ProcessManager,
+  explicit/project/renderer/application cleanup, output/exit ordering,
+  resize/input races, multiple-session isolation, taskkill gate, documentation,
+  and FR-019–FR-021 traceability. No material defect or architecture deviation
+  was found; production code was not changed during the review.
+- Verified the deterministic patch against pinned `node-pty` 1.1.0, rebuilt the
+  patched native module for Electron 44.0.0 x64, loaded its capability marker,
+  and passed the electron-vite production build.
+- Current native Job evidence used shell/child/grandchild
+  `16612 -> 26072 -> 5480`, Job helpers `19248` and `7760`, and unrelated
+  control PID `24160`. The root exited naturally while four Job members remained;
+  finalization removed the complete owned tree, preserved the control, emptied
+  and released the Job, and emitted one exit.
+- Current production-service evidence passed live-root application shutdown
+  `19452 -> 25648 -> 2672` with control `32508`, and natural-root-first shutdown
+  `17768 -> 22220 -> 18304` with control `2316`. Both reached `STOPPED` only
+  after Job finalization and ProcessManager release, requested one final quit,
+  and left no tested orphan.
+- The full suite passes 297 tests across 32 files. Typecheck, lint, production
+  build, and `git diff --check` pass. No Search regression was observed. Phase
+  2E-J and Phase 2E are complete and ready for user-authorized source-control
+  closure; no commit, push, PR, merge, branch deletion, or Phase 2F work was
+  performed.

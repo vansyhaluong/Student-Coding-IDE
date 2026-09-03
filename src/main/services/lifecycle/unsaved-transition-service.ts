@@ -22,7 +22,18 @@ export interface UnsavedTransitionRenderer {
 
 export interface UnsavedTransitionServiceOptions {
   getRenderer(): UnsavedTransitionRenderer | null
+  terminalLifecycle?: TerminalProjectLifecycle
   timeoutMs?: number
+}
+
+export interface TerminalProjectTransitionLease {
+  readonly hasLiveSessions: boolean
+  closeSessions(): Promise<void>
+  release(): void
+}
+
+export interface TerminalProjectLifecycle {
+  acquireProjectTransition(projectId: ProjectIdentity['id']): Promise<TerminalProjectTransitionLease>
 }
 
 interface PendingTransition {
@@ -74,7 +85,7 @@ export class UnsavedTransitionService implements ManagedService {
   requestApplicationClose(): Promise<boolean> {
     const project = this.projectService.getActiveProject()
     return project
-      ? this.request('application-close', project)
+      ? this.request('application-close', project, false)
       : Promise.resolve(true)
   }
 
@@ -90,18 +101,38 @@ export class UnsavedTransitionService implements ManagedService {
     }
   }
 
-  private requestProjectTransition(
+  private async requestProjectTransition(
     transition: ProjectTransition,
   ): Promise<boolean> {
-    return this.request(
-      transition.reason === 'close' ? 'project-close' : 'project-switch',
-      transition.currentProject,
-    )
+    const lease = await this.options.terminalLifecycle
+      ?.acquireProjectTransition(transition.currentProject.id)
+    try {
+      const approved = await this.request(
+        transition.reason === 'close' ? 'project-close' : 'project-switch',
+        transition.currentProject,
+        lease?.hasLiveSessions ?? false,
+      )
+      if (!approved) return false
+      try {
+        await lease?.closeSessions()
+      } catch (error) {
+        throw new DomainError({
+          code: 'PROCESS_FAILED',
+          message: 'Running terminals could not be closed. The project was not changed.',
+          operation: 'terminal:project-transition',
+          retryable: true,
+        }, { cause: error })
+      }
+      return true
+    } finally {
+      lease?.release()
+    }
   }
 
   private request(
     reason: UnsavedTransitionReason,
     project: ProjectIdentity,
+    terminalConfirmationRequired: boolean,
   ): Promise<boolean> {
     const renderer = this.options.getRenderer()
     if (!renderer) return Promise.resolve(false)
@@ -111,6 +142,7 @@ export class UnsavedTransitionService implements ManagedService {
       transitionId,
       reason,
       project,
+      terminalConfirmationRequired,
     }
     return new Promise<boolean>((resolve) => {
       const timeout = setTimeout(() => {
