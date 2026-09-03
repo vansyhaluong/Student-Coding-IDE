@@ -31,7 +31,13 @@ class FakeIpcRenderer implements IpcRendererLike {
 describe('lifecycle preload bridge', () => {
   it('exposes only the narrow lifecycle domain API', () => {
     const api = createPreloadApi(new FakeIpcRenderer())
-    expect(Object.keys(api).sort()).toEqual(['file', 'lifecycle', 'project', 'search'])
+    expect(Object.keys(api).sort()).toEqual([
+      'file',
+      'lifecycle',
+      'project',
+      'search',
+      'terminal',
+    ])
     expect(Object.keys(api.lifecycle).sort()).toEqual([
       'getStatus',
       'onStatusChanged',

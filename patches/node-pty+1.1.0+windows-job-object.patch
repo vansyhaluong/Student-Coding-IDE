@@ -1,0 +1,697 @@
+diff --git a/src/win/conpty.cc b/src/win/conpty.cc
+index 7b286d3..745b923 100644
+--- a/src/win/conpty.cc
++++ b/src/win/conpty.cc
+@@ -16,6 +16,8 @@
+ #include <Shlwapi.h> // PathCombine, PathIsRelative
+ #include <sstream>
+ #include <iostream>
++#include <memory>
++#include <mutex>
+ #include <string>
+ #include <thread>
+ #include <vector>
+@@ -38,31 +40,45 @@ typedef void (__stdcall *PFNRELEASEPSEUDOCONSOLE)(HPCON hpc);
+ 
+ #endif
+ 
++#ifndef PROC_THREAD_ATTRIBUTE_JOB_LIST
++#define PROC_THREAD_ATTRIBUTE_JOB_LIST \
++  ProcThreadAttributeValue(13, FALSE, TRUE, FALSE)
++#endif
++
++static constexpr const char* WINDOWS_JOB_CAPABILITY = "student-coding-ide-windows-job-v1";
++
+ struct pty_baton {
+   int id;
+   HANDLE hIn;
+   HANDLE hOut;
+   HPCON hpc;
+ 
+-  HANDLE hShell;
++  HANDLE hShell = nullptr;
++  HANDLE hJob = nullptr;
++  std::string jobToken;
++  bool useConptyDll = false;
++  std::mutex stateMutex;
+ 
+   pty_baton(int _id, HANDLE _hIn, HANDLE _hOut, HPCON _hpc) : id(_id), hIn(_hIn), hOut(_hOut), hpc(_hpc) {};
+ };
+ 
+-static std::vector<std::unique_ptr<pty_baton>> ptyHandles;
++static std::vector<std::shared_ptr<pty_baton>> ptyHandles;
++static std::mutex ptyHandlesMutex;
+ static volatile LONG ptyCounter;
+ 
+-static pty_baton* get_pty_baton(int id) {
++static std::shared_ptr<pty_baton> get_pty_baton(int id) {
++  std::lock_guard<std::mutex> lock(ptyHandlesMutex);
+   auto it = std::find_if(ptyHandles.begin(), ptyHandles.end(), [id](const auto& ptyHandle) {
+     return ptyHandle->id == id;
+   });
+   if (it != ptyHandles.end()) {
+-    return it->get();
++    return *it;
+   }
+   return nullptr;
+ }
+ 
+ static bool remove_pty_baton(int id) {
++  std::lock_guard<std::mutex> lock(ptyHandlesMutex);
+   auto it = std::remove_if(ptyHandles.begin(), ptyHandles.end(), [id](const auto& ptyHandle) {
+     return ptyHandle->id == id;
+   });
+@@ -73,11 +89,19 @@ static bool remove_pty_baton(int id) {
+   return false;
+ }
+ 
++static std::shared_ptr<pty_baton> get_job_baton(const std::string& token) {
++  std::lock_guard<std::mutex> lock(ptyHandlesMutex);
++  auto it = std::find_if(ptyHandles.begin(), ptyHandles.end(), [&token](const auto& ptyHandle) {
++    return ptyHandle->jobToken == token && ptyHandle->hJob != nullptr;
++  });
++  return it == ptyHandles.end() ? nullptr : *it;
++}
++
+ struct ExitEvent {
+   int exit_code = 0;
+ };
+ 
+-void SetupExitCallback(Napi::Env env, Napi::Function cb, pty_baton* baton) {
++void SetupExitCallback(Napi::Env env, Napi::Function cb, std::shared_ptr<pty_baton> baton) {
+   std::thread *th = new std::thread;
+   // Don't use Napi::AsyncWorker which is limited by UV_THREADPOOL_SIZE.
+   auto tsfn = Napi::ThreadSafeFunction::New(
+@@ -98,12 +122,23 @@ void SetupExitCallback(Napi::Env env, Napi::Function cb, pty_baton* baton) {
+ 
+     ExitEvent *exit_event = new ExitEvent;
+     // Wait for process to complete.
+-    WaitForSingleObject(baton->hShell, INFINITE);
+-    // Get process exit code.
+-    GetExitCodeProcess(baton->hShell, (LPDWORD)(&exit_event->exit_code));
+-    // Clean up handles
+-    CloseHandle(baton->hShell);
+-    assert(remove_pty_baton(baton->id));
++    HANDLE shell = nullptr;
++    {
++      std::lock_guard<std::mutex> lock(baton->stateMutex);
++      shell = baton->hShell;
++    }
++    if (shell == nullptr) {
++      exit_event->exit_code = -1;
++    } else {
++      WaitForSingleObject(shell, INFINITE);
++      // Get process exit code.
++      GetExitCodeProcess(shell, (LPDWORD)(&exit_event->exit_code));
++      CloseHandle(shell);
++      {
++        std::lock_guard<std::mutex> lock(baton->stateMutex);
++        if (baton->hShell == shell) baton->hShell = nullptr;
++      }
++    }
+ 
+     auto status = tsfn.BlockingCall(exit_event, callback); // In main thread
+     switch (status) {
+@@ -301,8 +336,11 @@ static Napi::Value PtyStartProcess(const Napi::CallbackInfo& info) {
+     // We were able to instantiate a conpty
+     const int ptyId = InterlockedIncrement(&ptyCounter);
+     marshal.Set("pty", Napi::Number::New(env, ptyId));
+-    ptyHandles.emplace_back(
+-        std::make_unique<pty_baton>(ptyId, hIn, hOut, hpc));
++    {
++      std::lock_guard<std::mutex> lock(ptyHandlesMutex);
++      ptyHandles.emplace_back(
++          std::make_shared<pty_baton>(ptyId, hIn, hOut, hpc));
++    }
+   } else {
+     throw Napi::Error::New(env, "Cannot launch conpty");
+   }
+@@ -351,7 +389,7 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
+   Napi::Function exitCallback = info[5].As<Napi::Function>();
+ 
+   // Fetch pty handle from ID and start process
+-  pty_baton* handle = get_pty_baton(id);
++  auto handle = get_pty_baton(id);
+   if (!handle) {
+     throw Napi::Error::New(env, "Invalid pty handle");
+   }
+@@ -390,11 +428,14 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
+   siEx.StartupInfo.hStdOutput = nullptr;
+ 
+   SIZE_T size = 0;
+-  InitializeProcThreadAttributeList(NULL, 1, 0, &size);
+-  BYTE *attrList = new BYTE[size];
+-  siEx.lpAttributeList = reinterpret_cast<PPROC_THREAD_ATTRIBUTE_LIST>(attrList);
++  InitializeProcThreadAttributeList(NULL, 2, 0, &size);
++  if (size == 0) {
++    throw errorWithCode(info, "Attribute list sizing failed");
++  }
++  std::unique_ptr<BYTE[]> attrList = std::make_unique<BYTE[]>(size);
++  siEx.lpAttributeList = reinterpret_cast<PPROC_THREAD_ATTRIBUTE_LIST>(attrList.get());
+ 
+-  fSuccess = InitializeProcThreadAttributeList(siEx.lpAttributeList, 1, 0, &size);
++  fSuccess = InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, &size);
+   if (!fSuccess) {
+     throw errorWithCode(info, "InitializeProcThreadAttributeList failed");
+   }
+@@ -406,9 +447,28 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
+                                        NULL,
+                                        NULL);
+   if (!fSuccess) {
++    DeleteProcThreadAttributeList(siEx.lpAttributeList);
+     throw errorWithCode(info, "UpdateProcThreadAttribute failed");
+   }
+ 
++  HANDLE hJob = CreateJobObjectW(nullptr, nullptr);
++  if (hJob == nullptr) {
++    DeleteProcThreadAttributeList(siEx.lpAttributeList);
++    throw errorWithCode(info, "CreateJobObjectW failed");
++  }
++  fSuccess = UpdateProcThreadAttribute(siEx.lpAttributeList,
++                                       0,
++                                       PROC_THREAD_ATTRIBUTE_JOB_LIST,
++                                       &hJob,
++                                       sizeof(hJob),
++                                       NULL,
++                                       NULL);
++  if (!fSuccess) {
++    CloseHandle(hJob);
++    DeleteProcThreadAttributeList(siEx.lpAttributeList);
++    throw errorWithCode(info, "Job list attribute failed");
++  }
++
+   PROCESS_INFORMATION piClient{};
+   fSuccess = !!CreateProcessW(
+       nullptr,
+@@ -422,7 +482,9 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
+       &siEx.StartupInfo,            // lpStartupInfo
+       &piClient                     // lpProcessInformation
+   );
++  DeleteProcThreadAttributeList(siEx.lpAttributeList);
+   if (!fSuccess) {
++    CloseHandle(hJob);
+     throw errorWithCode(info, "Cannot create process");
+   }
+ 
+@@ -439,7 +501,13 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
+   }
+ 
+   // Update handle
+-  handle->hShell = piClient.hProcess;
++  {
++    std::lock_guard<std::mutex> lock(handle->stateMutex);
++    handle->hShell = piClient.hProcess;
++    handle->hJob = hJob;
++    handle->jobToken = std::string("student-ide-job-") + std::to_string(id);
++    handle->useConptyDll = useConptyDll;
++  }
+ 
+   // Close the thread handle to avoid resource leak
+   CloseHandle(piClient.hThread);
+@@ -452,6 +520,7 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
+   // Return
+   auto marshal = Napi::Object::New(env);
+   marshal.Set("pid", Napi::Number::New(env, piClient.dwProcessId));
++  marshal.Set("jobToken", Napi::String::New(env, handle->jobToken));
+   return marshal;
+ }
+ 
+@@ -472,7 +541,7 @@ static Napi::Value PtyResize(const Napi::CallbackInfo& info) {
+   SHORT rows = static_cast<SHORT>(info[2].As<Napi::Number>().Uint32Value());
+   const bool useConptyDll = info[3].As<Napi::Boolean>().Value();
+ 
+-  const pty_baton* handle = get_pty_baton(id);
++  const auto handle = get_pty_baton(id);
+ 
+   if (handle != nullptr) {
+     HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
+@@ -513,7 +582,7 @@ static Napi::Value PtyClear(const Napi::CallbackInfo& info) {
+     return env.Undefined();
+   }
+ 
+-  const pty_baton* handle = get_pty_baton(id);
++  const auto handle = get_pty_baton(id);
+ 
+   if (handle != nullptr) {
+     HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
+@@ -531,6 +600,80 @@ static Napi::Value PtyClear(const Napi::CallbackInfo& info) {
+   return env.Undefined();
+ }
+ 
++static Napi::Value SupportsWindowsJobOwnership(const Napi::CallbackInfo& info) {
++  return Napi::String::New(info.Env(), WINDOWS_JOB_CAPABILITY);
++}
++
++static std::shared_ptr<pty_baton> RequireJobBaton(const Napi::CallbackInfo& info) {
++  if (info.Length() != 1 || !info[0].IsString()) {
++    throw Napi::Error::New(info.Env(), "Expected an opaque Windows Job token");
++  }
++  auto baton = get_job_baton(info[0].As<Napi::String>().Utf8Value());
++  if (!baton) {
++    throw Napi::Error::New(info.Env(), "Unknown or stale Windows Job token");
++  }
++  return baton;
++}
++
++static JOBOBJECT_BASIC_ACCOUNTING_INFORMATION QueryJobAccounting(
++    const Napi::CallbackInfo& info,
++    HANDLE job) {
++  JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting{};
++  if (!QueryInformationJobObject(job,
++                                 JobObjectBasicAccountingInformation,
++                                 &accounting,
++                                 sizeof(accounting),
++                                 nullptr)) {
++    throw errorWithCode(info, "QueryInformationJobObject failed");
++  }
++  return accounting;
++}
++
++static Napi::Value PtyJobActiveProcessCount(const Napi::CallbackInfo& info) {
++  auto baton = RequireJobBaton(info);
++  const auto accounting = QueryJobAccounting(info, baton->hJob);
++  return Napi::Number::New(info.Env(), accounting.ActiveProcesses);
++}
++
++static Napi::Value PtyTerminateJob(const Napi::CallbackInfo& info) {
++  auto baton = RequireJobBaton(info);
++  const auto accounting = QueryJobAccounting(info, baton->hJob);
++  if (accounting.ActiveProcesses > 0 && !TerminateJobObject(baton->hJob, 1)) {
++    throw errorWithCode(info, "TerminateJobObject failed");
++  }
++  return info.Env().Undefined();
++}
++
++static Napi::Value PtyReleaseJob(const Napi::CallbackInfo& info) {
++  auto baton = RequireJobBaton(info);
++  const auto accounting = QueryJobAccounting(info, baton->hJob);
++  if (accounting.ActiveProcesses != 0) {
++    throw Napi::Error::New(info.Env(), "Cannot release a non-empty Windows Job");
++  }
++
++  if (baton->hpc != nullptr) {
++    HANDLE hLibrary = LoadConptyDll(info, baton->useConptyDll);
++    PFNCLOSEPSEUDOCONSOLE const closePseudoConsole =
++        (PFNCLOSEPSEUDOCONSOLE)GetProcAddress(
++            (HMODULE)hLibrary,
++            baton->useConptyDll ? "ConptyClosePseudoConsole" : "ClosePseudoConsole");
++    if (closePseudoConsole) closePseudoConsole(baton->hpc);
++    baton->hpc = nullptr;
++  }
++
++  // KILL_ON_JOB_CLOSE is deliberately not configured. The handle is released
++  // only after explicit termination and an observed empty Job.
++  if (!CloseHandle(baton->hJob)) {
++    throw errorWithCode(info, "CloseHandle for Windows Job failed");
++  }
++  baton->hJob = nullptr;
++
++  if (!remove_pty_baton(baton->id)) {
++    throw Napi::Error::New(info.Env(), "Windows Job ownership was already released");
++  }
++  return info.Env().Undefined();
++}
++
+ static Napi::Value PtyKill(const Napi::CallbackInfo& info) {
+   Napi::Env env(info.Env());
+   Napi::HandleScope scope(env);
+@@ -544,9 +687,14 @@ static Napi::Value PtyKill(const Napi::CallbackInfo& info) {
+   int id = info[0].As<Napi::Number>().Int32Value();
+   const bool useConptyDll = info[1].As<Napi::Boolean>().Value();
+ 
+-  const pty_baton* handle = get_pty_baton(id);
++  const auto handle = get_pty_baton(id);
+ 
+   if (handle != nullptr) {
++    if (handle->hJob != nullptr) {
++      throw Napi::Error::New(
++          env,
++          "Windows Job ownership must be finalized before closing ConPTY");
++    }
+     HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
+     bool fLoadedDll = hLibrary != nullptr;
+     if (fLoadedDll)
+@@ -560,7 +708,8 @@ static Napi::Value PtyKill(const Napi::CallbackInfo& info) {
+       }
+     }
+     if (useConptyDll) {
+-      TerminateProcess(handle->hShell, 1);
++      std::lock_guard<std::mutex> lock(handle->stateMutex);
++      if (handle->hShell != nullptr) TerminateProcess(handle->hShell, 1);
+     }
+   }
+ 
+@@ -577,6 +726,10 @@ Napi::Object init(Napi::Env env, Napi::Object exports) {
+   exports.Set("resize", Napi::Function::New(env, PtyResize));
+   exports.Set("clear", Napi::Function::New(env, PtyClear));
+   exports.Set("kill", Napi::Function::New(env, PtyKill));
++  exports.Set("supportsWindowsJobOwnership", Napi::Function::New(env, SupportsWindowsJobOwnership));
++  exports.Set("jobActiveProcessCount", Napi::Function::New(env, PtyJobActiveProcessCount));
++  exports.Set("terminateJob", Napi::Function::New(env, PtyTerminateJob));
++  exports.Set("releaseJob", Napi::Function::New(env, PtyReleaseJob));
+   return exports;
+ };
+ 
+diff --git a/src/native.d.ts b/src/native.d.ts
+index c53e086..fb602fe 100644
+--- a/src/native.d.ts
++++ b/src/native.d.ts
+@@ -4,10 +4,14 @@
+ 
+ interface IConptyNative {
+   startProcess(file: string, cols: number, rows: number, debug: boolean, pipeName: string, conptyInheritCursor: boolean, useConptyDll: boolean): IConptyProcess;
+-  connect(ptyId: number, commandLine: string, cwd: string, env: string[], useConptyDll: boolean, onExitCallback: (exitCode: number) => void): { pid: number };
++  connect(ptyId: number, commandLine: string, cwd: string, env: string[], useConptyDll: boolean, onExitCallback: (exitCode: number) => void): { pid: number, jobToken: string };
+   resize(ptyId: number, cols: number, rows: number, useConptyDll: boolean): void;
+   clear(ptyId: number, useConptyDll: boolean): void;
+   kill(ptyId: number, useConptyDll: boolean): void;
++  supportsWindowsJobOwnership(): string;
++  jobActiveProcessCount(jobToken: string): number;
++  terminateJob(jobToken: string): void;
++  releaseJob(jobToken: string): void;
+ }
+ 
+ interface IWinptyNative {
+diff --git a/src/windowsPtyAgent.ts b/src/windowsPtyAgent.ts
+index d705444..88a6012 100644
+--- a/src/windowsPtyAgent.ts
++++ b/src/windowsPtyAgent.ts
+@@ -22,6 +22,7 @@ let winptyNative: IWinptyNative;
+  * has started.
+  */
+ const FLUSH_DATA_INTERVAL = 1000;
++const WINDOWS_JOB_CAPABILITY = 'student-coding-ide-windows-job-v1';
+ 
+ /**
+  * This agent sits between the WindowsTerminal class and provides a common interface for both conpty
+@@ -39,6 +40,15 @@ export class WindowsPtyAgent {
+   private _fd: any;
+   private _pty: number;
+   private _ptyNative: IConptyNative | IWinptyNative;
++  private _jobToken: string | undefined;
++
++  public static supportsWindowsJobOwnership(): string | undefined {
++    if (!conptyNative) {
++      conptyNative = loadNativeModule('conpty').module;
++    }
++    const capability = conptyNative.supportsWindowsJobOwnership?.();
++    return capability === WINDOWS_JOB_CAPABILITY ? capability : undefined;
++  }
+ 
+   public get inSocket(): Socket { return this._inSocket; }
+   public get outSocket(): Socket { return this._outSocket; }
+@@ -62,13 +72,11 @@ export class WindowsPtyAgent {
+       this._useConpty = this._getWindowsBuildNumber() >= 18309;
+     }
+     if (this._useConpty) {
+-      if (!conptyNative) {
+-        conptyNative = loadNativeModule('conpty').module;
++      if (WindowsPtyAgent.supportsWindowsJobOwnership() !== WINDOWS_JOB_CAPABILITY) {
++        throw new Error('Patched Windows Job ownership is unavailable');
+       }
+     } else {
+-      if (!winptyNative) {
+-        winptyNative = loadNativeModule('pty').module;
+-      }
++      throw new Error('Windows Job ownership requires ConPTY');
+     }
+     this._ptyNative = this._useConpty ? conptyNative : winptyNative;
+ 
+@@ -118,9 +126,31 @@ export class WindowsPtyAgent {
+     if (this._useConpty) {
+       const connect = (this._ptyNative as IConptyNative).connect(this._pty, commandLine, cwd, env, this._useConptyDll, c => this._$onProcessExit(c));
+       this._innerPid = connect.pid;
++      this._jobToken = connect.jobToken;
++      if (!this._jobToken) {
++        throw new Error('Windows Job ownership was not established');
++      }
+     }
+   }
+ 
++  public get windowsJobToken(): string {
++    if (!this._jobToken) throw new Error('Windows Job ownership is unavailable');
++    return this._jobToken;
++  }
++
++  public windowsJobActiveProcessCount(): number {
++    return (this._ptyNative as IConptyNative).jobActiveProcessCount(this.windowsJobToken);
++  }
++
++  public terminateWindowsJob(): void {
++    (this._ptyNative as IConptyNative).terminateJob(this.windowsJobToken);
++  }
++
++  public releaseWindowsJob(): void {
++    (this._ptyNative as IConptyNative).releaseJob(this.windowsJobToken);
++    this._jobToken = undefined;
++  }
++
+   public resize(cols: number, rows: number): void {
+     if (this._useConpty) {
+       if (this._exitCode !== undefined) {
+@@ -141,18 +171,12 @@ export class WindowsPtyAgent {
+   public kill(): void {
+     // Tell the agent to kill the pty, this releases handles to the process
+     if (this._useConpty) {
++      if (this._jobToken) {
++        throw new Error('Windows Job ownership must be finalized before closing ConPTY');
++      }
+       if (!this._useConptyDll) {
+         this._inSocket.readable = false;
+         this._outSocket.readable = false;
+-        this._getConsoleProcessList().then(consoleProcessList => {
+-          consoleProcessList.forEach((pid: number) => {
+-            try {
+-              process.kill(pid);
+-            } catch (e) {
+-              // Ignore if process cannot be found (kill ESRCH error)
+-            }
+-          });
+-        });
+         (this._ptyNative as IConptyNative).kill(this._pty, this._useConptyDll);
+         this._conoutSocketWorker.dispose();
+       } else {
+diff --git a/src/windowsTerminal.ts b/src/windowsTerminal.ts
+index 13f6c6d..576400a 100644
+--- a/src/windowsTerminal.ts
++++ b/src/windowsTerminal.ts
+@@ -19,6 +19,10 @@ export class WindowsTerminal extends Terminal {
+   private _deferreds: { run: () => void }[];
+   private _agent: WindowsPtyAgent;
+ 
++  public static supportsWindowsJobOwnership(): string | undefined {
++    return WindowsPtyAgent.supportsWindowsJobOwnership();
++  }
++
+   constructor(file?: string, args?: ArgvOrCommandLine, opt?: IWindowsPtyForkOptions) {
+     super(opt);
+ 
+@@ -171,6 +175,11 @@ export class WindowsTerminal extends Terminal {
+     });
+   }
+ 
++  public get windowsJobToken(): string { return this._agent.windowsJobToken; }
++  public windowsJobActiveProcessCount(): number { return this._agent.windowsJobActiveProcessCount(); }
++  public terminateWindowsJob(): void { this._agent.terminateWindowsJob(); }
++  public releaseWindowsJob(): void { this._agent.releaseWindowsJob(); }
++
+   private _deferNoArgs<A>(deferredFn: () => void): void {
+     // If the terminal is ready, execute.
+     if (this._isReady) {
+diff --git a/src/index.ts b/src/index.ts
+index 8a7e950..3692aca 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -45,6 +45,12 @@ export function open(options: IPtyOpenOptions): ITerminal {
+   return terminalCtor.open(options);
+ }
+ 
++export function supportsWindowsJobOwnership(): string | undefined {
++  return process.platform === 'win32'
++    ? terminalCtor.supportsWindowsJobOwnership()
++    : undefined;
++}
++
+ /**
+  * Expose the native API when not Windows, note that this is not public API and
+  * could be removed at any time.
+diff --git a/lib/windowsPtyAgent.js b/lib/windowsPtyAgent.js
+index a358ffb..3d63717 100644
+--- a/lib/windowsPtyAgent.js
++++ b/lib/windowsPtyAgent.js
+@@ -21,6 +21,7 @@ var winptyNative;
+  * has started.
+  */
+ var FLUSH_DATA_INTERVAL = 1000;
++var WINDOWS_JOB_CAPABILITY = 'student-coding-ide-windows-job-v1';
+ /**
+  * This agent sits between the WindowsTerminal class and provides a common interface for both conpty
+  * and winpty.
+@@ -38,14 +39,12 @@ var WindowsPtyAgent = /** @class */ (function () {
+             this._useConpty = this._getWindowsBuildNumber() >= 18309;
+         }
+         if (this._useConpty) {
+-            if (!conptyNative) {
+-                conptyNative = utils_1.loadNativeModule('conpty').module;
++            if (WindowsPtyAgent.supportsWindowsJobOwnership() !== WINDOWS_JOB_CAPABILITY) {
++                throw new Error('Patched Windows Job ownership is unavailable');
+             }
+         }
+         else {
+-            if (!winptyNative) {
+-                winptyNative = utils_1.loadNativeModule('pty').module;
+-            }
++            throw new Error('Windows Job ownership requires ConPTY');
+         }
+         this._ptyNative = this._useConpty ? conptyNative : winptyNative;
+         // Sanitize input variable.
+@@ -88,8 +87,38 @@ var WindowsPtyAgent = /** @class */ (function () {
+         if (this._useConpty) {
+             var connect = this._ptyNative.connect(this._pty, commandLine, cwd, env, this._useConptyDll, function (c) { return _this._$onProcessExit(c); });
+             this._innerPid = connect.pid;
++            this._jobToken = connect.jobToken;
++            if (!this._jobToken) {
++                throw new Error('Windows Job ownership was not established');
++            }
+         }
+     }
++    WindowsPtyAgent.supportsWindowsJobOwnership = function () {
++        if (!conptyNative) {
++            conptyNative = utils_1.loadNativeModule('conpty').module;
++        }
++        var capability = conptyNative.supportsWindowsJobOwnership && conptyNative.supportsWindowsJobOwnership();
++        return capability === WINDOWS_JOB_CAPABILITY ? capability : undefined;
++    };
++    Object.defineProperty(WindowsPtyAgent.prototype, "windowsJobToken", {
++        get: function () {
++            if (!this._jobToken)
++                throw new Error('Windows Job ownership is unavailable');
++            return this._jobToken;
++        },
++        enumerable: false,
++        configurable: true
++    });
++    WindowsPtyAgent.prototype.windowsJobActiveProcessCount = function () {
++        return this._ptyNative.jobActiveProcessCount(this.windowsJobToken);
++    };
++    WindowsPtyAgent.prototype.terminateWindowsJob = function () {
++        this._ptyNative.terminateJob(this.windowsJobToken);
++    };
++    WindowsPtyAgent.prototype.releaseWindowsJob = function () {
++        this._ptyNative.releaseJob(this.windowsJobToken);
++        this._jobToken = undefined;
++    };
+     Object.defineProperty(WindowsPtyAgent.prototype, "inSocket", {
+         get: function () { return this._inSocket; },
+         enumerable: false,
+@@ -134,19 +163,12 @@ var WindowsPtyAgent = /** @class */ (function () {
+         var _this = this;
+         // Tell the agent to kill the pty, this releases handles to the process
+         if (this._useConpty) {
++            if (this._jobToken) {
++                throw new Error('Windows Job ownership must be finalized before closing ConPTY');
++            }
+             if (!this._useConptyDll) {
+                 this._inSocket.readable = false;
+                 this._outSocket.readable = false;
+-                this._getConsoleProcessList().then(function (consoleProcessList) {
+-                    consoleProcessList.forEach(function (pid) {
+-                        try {
+-                            process.kill(pid);
+-                        }
+-                        catch (e) {
+-                            // Ignore if process cannot be found (kill ESRCH error)
+-                        }
+-                    });
+-                });
+                 this._ptyNative.kill(this._pty, this._useConptyDll);
+                 this._conoutSocketWorker.dispose();
+             }
+@@ -317,4 +339,4 @@ function repeatText(text, count) {
+ function xOr(arg1, arg2) {
+     return ((arg1 && !arg2) || (!arg1 && arg2));
+ }
+-//# sourceMappingURL=windowsPtyAgent.js.map
+\ No newline at end of file
++//# sourceMappingURL=windowsPtyAgent.js.map
+diff --git a/lib/windowsTerminal.js b/lib/windowsTerminal.js
+index 3c38f89..2270f35 100644
+--- a/lib/windowsTerminal.js
++++ b/lib/windowsTerminal.js
+@@ -118,6 +118,9 @@ var WindowsTerminal = /** @class */ (function (_super) {
+     WindowsTerminal.open = function (options) {
+         throw new Error('open() not supported on windows, use Fork() instead.');
+     };
++    WindowsTerminal.supportsWindowsJobOwnership = function () {
++        return windowsPtyAgent_1.WindowsPtyAgent.supportsWindowsJobOwnership();
++    };
+     /**
+      * TTY
+      */
+@@ -154,6 +157,14 @@ var WindowsTerminal = /** @class */ (function (_super) {
+             _this._agent.kill();
+         });
+     };
++    Object.defineProperty(WindowsTerminal.prototype, "windowsJobToken", {
++        get: function () { return this._agent.windowsJobToken; },
++        enumerable: false,
++        configurable: true
++    });
++    WindowsTerminal.prototype.windowsJobActiveProcessCount = function () { return this._agent.windowsJobActiveProcessCount(); };
++    WindowsTerminal.prototype.terminateWindowsJob = function () { this._agent.terminateWindowsJob(); };
++    WindowsTerminal.prototype.releaseWindowsJob = function () { this._agent.releaseWindowsJob(); };
+     WindowsTerminal.prototype._deferNoArgs = function (deferredFn) {
+         var _this = this;
+         // If the terminal is ready, execute.
+@@ -196,4 +207,4 @@ var WindowsTerminal = /** @class */ (function (_super) {
+     return WindowsTerminal;
+ }(terminal_1.Terminal));
+ exports.WindowsTerminal = WindowsTerminal;
+-//# sourceMappingURL=windowsTerminal.js.map
+\ No newline at end of file
++//# sourceMappingURL=windowsTerminal.js.map
+diff --git a/lib/index.js b/lib/index.js
+index 1527069..e682d32 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -5,7 +5,7 @@
+  * Copyright (c) 2018, Microsoft Corporation (MIT License).
+  */
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.native = exports.open = exports.createTerminal = exports.fork = exports.spawn = void 0;
++exports.native = exports.supportsWindowsJobOwnership = exports.open = exports.createTerminal = exports.fork = exports.spawn = void 0;
+ var utils_1 = require("./utils");
+ var terminalCtor;
+ if (process.platform === 'win32') {
+@@ -44,9 +44,15 @@ function open(options) {
+     return terminalCtor.open(options);
+ }
+ exports.open = open;
++function supportsWindowsJobOwnership() {
++    return process.platform === 'win32'
++        ? terminalCtor.supportsWindowsJobOwnership()
++        : undefined;
++}
++exports.supportsWindowsJobOwnership = supportsWindowsJobOwnership;
+ /**
+  * Expose the native API when not Windows, note that this is not public API and
+  * could be removed at any time.
+  */
+ exports.native = (process.platform !== 'win32' ? utils_1.loadNativeModule('pty').module : null);
+-//# sourceMappingURL=index.js.map
+\ No newline at end of file
++//# sourceMappingURL=index.js.map
+diff --git a/typings/node-pty.d.ts b/typings/node-pty.d.ts
+index 6f050ff..b0f4dc8 100644
+--- a/typings/node-pty.d.ts
++++ b/typings/node-pty.d.ts
+@@ -17,6 +17,9 @@ declare module 'node-pty' {
+    */
+   export function spawn(file: string, args: string[] | string, options: IPtyForkOptions | IWindowsPtyForkOptions): IPty;
+ 
++  /** Main-process capability marker for the Student Coding IDE Windows Job patch. */
++  export function supportsWindowsJobOwnership(): string | undefined;
++
+   export interface IBasePtyForkOptions {
+ 
+     /**

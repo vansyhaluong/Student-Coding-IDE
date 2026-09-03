@@ -171,4 +171,6 @@ function isUnsavedTransitionRequestEvent(
     && typeof value.project.id === 'string'
     && 'name' in value.project
     && typeof value.project.name === 'string'
+    && 'terminalConfirmationRequired' in value
+    && typeof value.terminalConfirmationRequired === 'boolean'
 }

@@ -1,4 +1,4 @@
-import { Folder, FolderOpen, FolderPlus, Search, X } from 'lucide-react'
+import { Folder, FolderOpen, FolderPlus, Search, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import type { ProjectIdentity } from '../../shared/contracts'
@@ -10,15 +10,19 @@ import { EditorWorkbench } from './features/editor/EditorWorkbench'
 import { editorModelManager } from './features/editor/editor-session'
 import {
   useEditorWorkspace,
+  type TerminalTransitionDialogState,
   type UnsavedChoice,
 } from './features/editor/use-editor-workspace'
 import { ProjectExplorer } from './features/explorer/ProjectExplorer'
 import { SearchPanel } from './features/search/SearchPanel'
+import { TerminalPanel } from './features/terminal/TerminalPanel'
+import { terminalController } from './features/terminal/terminal-session'
 
 const DEFAULT_SIDEBAR_WIDTH = 280
 const MIN_SIDEBAR_WIDTH = 220
 const MAX_LEFT_SIDEBAR_WIDTH = 500
 const MIN_EDITOR_WIDTH = 360
+const DEFAULT_TERMINAL_HEIGHT = 260
 
 export default function App() {
   const [project, setProject] = useState<ProjectIdentity | null>(null)
@@ -28,6 +32,9 @@ export default function App() {
   const [leftWidth, setLeftWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [rightWidth, setRightWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [terminalOpen, setTerminalOpen] = useState(false)
+  const [terminalOpenRequest, setTerminalOpenRequest] = useState(0)
+  const [terminalHeight, setTerminalHeight] = useState(DEFAULT_TERMINAL_HEIGHT)
   const projectGeneration = useRef(0)
   const sidebarWidths = useRef({ left: leftWidth, right: rightWidth })
   sidebarWidths.current = { left: leftWidth, right: rightWidth }
@@ -44,6 +51,7 @@ export default function App() {
     })
     const unsubscribe = window.studentIde.project.onChanged(({ activeProject }) => {
       projectGeneration.current += 1
+      terminalController.reconcileProject(activeProject?.id ?? null)
       setProject(activeProject)
       setError(null)
       setLoading(false)
@@ -128,6 +136,12 @@ export default function App() {
     setSidebarTab(tab)
     requestAnimationFrame(() => document.getElementById(`${tab}-sidebar-tab`)?.focus())
   }
+  const toggleTerminal = (): void => {
+    setTerminalOpen((currentlyOpen) => {
+      if (!currentlyOpen) setTerminalOpenRequest((request) => request + 1)
+      return !currentlyOpen
+    })
+  }
 
   return (
     <main className="ide-shell" style={shellStyle}>
@@ -202,27 +216,38 @@ export default function App() {
         </aside>
 
         <section className="preview-surface" aria-label="Editor area">
-          {project ? (
-            <EditorWorkbench
-              manager={editor.manager}
-              onSave={editor.save}
-              navigation={editor.navigation}
-            />
-          ) : (
-            <div className="preview-empty">
-              <FolderOpen className="workspace-empty-icon" />
-              <p>Open a project to start coding</p>
-              <span>Your files and editor tabs will appear here.</span>
-              <div className="workspace-empty-actions">
-                <Button variant="primary" size="small" onClick={() => void openProject()} disabled={loading}>
-                  Open project
-                </Button>
-                <Button size="small" onClick={() => setCreateDialogOpen(true)} disabled={loading}>
-                  Create project
-                </Button>
+          <div className="editor-region">
+            {project ? (
+              <EditorWorkbench
+                manager={editor.manager}
+                onSave={editor.save}
+                navigation={editor.navigation}
+              />
+            ) : (
+              <div className="preview-empty">
+                <FolderOpen className="workspace-empty-icon" />
+                <p>Open a project to start coding</p>
+                <span>Your files and editor tabs will appear here.</span>
+                <div className="workspace-empty-actions">
+                  <Button variant="primary" size="small" onClick={() => void openProject()} disabled={loading}>
+                    Open project
+                  </Button>
+                  <Button size="small" onClick={() => setCreateDialogOpen(true)} disabled={loading}>
+                    Create project
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <TerminalPanel
+            controller={terminalController}
+            project={project}
+            open={terminalOpen}
+            openRequest={terminalOpenRequest}
+            height={terminalHeight}
+            onHeightChange={setTerminalHeight}
+            onClosePanel={() => setTerminalOpen(false)}
+          />
         </section>
 
         <aside className="explorer-sidebar" aria-label="Project tools">
@@ -298,7 +323,16 @@ export default function App() {
           <span className={`status-dot${project ? ' active' : ''}`} aria-hidden="true" />
           {loading ? 'Loading…' : project ? project.name : 'No project open'}
         </span>
-        <span>{error || editor.error ? 'Action failed' : 'Ready'}</span>
+        <span className="status-actions">
+          <span>{error || editor.error ? 'Action failed' : 'Ready'}</span>
+          <button
+            type="button"
+            className="status-terminal-toggle"
+            aria-label={terminalOpen ? 'Hide Terminal' : 'Open Terminal'}
+            aria-expanded={terminalOpen}
+            onClick={toggleTerminal}
+          ><SquareTerminal /><span>Terminal</span></button>
+        </span>
       </footer>
 
       {createDialogOpen && (
@@ -312,8 +346,42 @@ export default function App() {
         />
       )}
       {editor.dialog && <UnsavedDialog state={editor.dialog} onChoose={editor.choose} />}
+      {editor.terminalTransitionDialog && (
+        <TerminalTransitionDialog
+          state={editor.terminalTransitionDialog}
+          onChoose={editor.chooseTerminalTransition}
+        />
+      )}
       {editor.error && <div className="editor-error" role="alert">{editor.error}</div>}
     </main>
+  )
+}
+
+function TerminalTransitionDialog({
+  state,
+  onChoose,
+}: {
+  state: TerminalTransitionDialogState
+  onChoose(proceed: boolean): void
+}) {
+  const cancel = useCallback(() => onChoose(false), [onChoose])
+  return (
+    <Dialog
+      title="Close running terminals?"
+      label="Close running terminals?"
+      description={state.reason === 'project-close'
+        ? 'This project has running terminal sessions. They must be closed before closing the project.'
+        : 'This project has running terminal sessions. They must be closed before switching projects.'}
+      onCancel={cancel}
+      actions={(
+        <>
+          <Button data-dialog-primary="true" onClick={cancel}>Cancel</Button>
+          <Button variant="destructive" onClick={() => onChoose(true)}>
+            Close Terminals &amp; Continue
+          </Button>
+        </>
+      )}
+    />
   )
 }
 

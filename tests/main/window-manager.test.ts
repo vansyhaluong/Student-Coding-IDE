@@ -85,6 +85,26 @@ describe('WindowManager security', () => {
     expect(requestClose).toHaveBeenCalledOnce()
   })
 
+  it('allows Electron final quit to close the window without reopening coordination', async () => {
+    const window = new FakeWindow()
+    const requestClose = vi.fn(async () => false)
+    const manager = new WindowManager({
+      createWindow: () => window,
+      openExternal: async () => undefined,
+      preloadPath: 'preload.js',
+      rendererFile: 'index.html',
+      requestClose,
+      isApplicationQuitAuthorized: () => true,
+    })
+    await manager.start()
+    const preventDefault = vi.fn()
+
+    window.closeListener?.({ preventDefault })
+
+    expect(preventDefault).not.toHaveBeenCalled()
+    expect(requestClose).not.toHaveBeenCalled()
+  })
+
   it.each([
     ['https://example.com/docs', true],
     ['http://example.com', false],

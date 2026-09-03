@@ -260,6 +260,14 @@ input:focus-visible,
   min-height: 0;
 }
 
+.editor-region {
+  display: flex;
+  min-width: 0;
+  min-height: 180px;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
 .preview-surface,
 .editor-workbench {
   display: flex;
@@ -764,6 +772,252 @@ input:focus-visible,
 .status-primary { display: flex; min-width: 0; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .status-dot { width: 6px; height: 6px; flex: 0 0 auto; border: 1px solid var(--muted-foreground); border-radius: 50%; }
 .status-dot.active { border-color: var(--foreground); background: var(--foreground); }
+
+.status-actions,
+.status-terminal-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.status-actions { gap: 10px; }
+
+.status-terminal-toggle {
+  height: 22px;
+  gap: 5px;
+  margin-right: -6px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: default;
+  font-size: 11px;
+}
+
+.status-terminal-toggle svg { width: 12px; height: 12px; }
+.status-terminal-toggle:hover,
+.status-terminal-toggle[aria-expanded="true"] { background: var(--accent); color: var(--foreground); }
+
+.terminal-panel {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 160px;
+  flex: 0 0 auto;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  background: var(--editor-surface);
+}
+
+.terminal-panel[hidden] { display: none; }
+
+.panel-resizer {
+  position: absolute;
+  z-index: 12;
+  top: -4px;
+  right: 0;
+  left: 0;
+  height: 7px;
+  cursor: row-resize;
+}
+
+.panel-resizer::after {
+  position: absolute;
+  top: 3px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: transparent;
+  content: "";
+  transition: background-color 120ms ease;
+}
+
+.panel-resizer:hover::after,
+.panel-resizer:focus-visible::after,
+.is-resizing-panel .panel-resizer::after { background: var(--ring); }
+.is-resizing-panel { cursor: row-resize; user-select: none; }
+
+.terminal-panel-header {
+  display: flex;
+  height: 32px;
+  min-height: 32px;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 84%, var(--editor-surface));
+  user-select: none;
+}
+
+.terminal-panel-label {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.terminal-panel-label svg { width: 13px; height: 13px; }
+
+.terminal-tabs {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.terminal-tabs::-webkit-scrollbar { display: none; }
+
+.terminal-tab {
+  position: relative;
+  display: flex;
+  min-width: 104px;
+  max-width: 190px;
+  align-items: center;
+  border-right: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font: 12px/1 var(--font-mono);
+}
+
+.terminal-tab:hover { background: var(--muted); color: var(--foreground); }
+.terminal-tab[data-active="true"] { background: var(--editor-surface); color: var(--foreground); }
+.terminal-tab[data-active="true"]::after {
+  position: absolute;
+  right: 8px;
+  bottom: 0;
+  left: 8px;
+  height: 1px;
+  background: color-mix(in srgb, var(--foreground) 72%, transparent);
+  content: "";
+}
+
+.terminal-tab > button:first-child {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  padding: 0 3px 0 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: default;
+  font: inherit;
+}
+
+.terminal-tab > button:first-child span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.terminal-tab > button:first-child small { color: var(--muted-foreground); font: 10px/1 "Geist Variable", sans-serif; }
+.terminal-tab[data-state="failed"] > button:first-child small { color: var(--destructive); }
+
+.terminal-tab-close {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin-right: 4px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: transparent;
+}
+
+.terminal-tab-close svg { width: 12px; height: 12px; }
+.terminal-tab:hover .terminal-tab-close,
+.terminal-tab[data-active="true"] .terminal-tab-close,
+.terminal-tab:focus-within .terminal-tab-close { color: var(--muted-foreground); }
+.terminal-tab-close:hover:not(:disabled) { background: var(--accent); color: var(--foreground); }
+.terminal-tab-close:disabled { opacity: 0.45; }
+
+.terminal-panel-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+}
+
+.terminal-surface {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  background: var(--editor-surface);
+}
+
+.terminal-xterm-host {
+  width: 100%;
+  height: 100%;
+  padding: 5px 6px 3px;
+  overflow: hidden;
+}
+
+.terminal-xterm-host .xterm { width: 100%; height: 100%; }
+.terminal-xterm-host .xterm-viewport {
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 45%, transparent) transparent;
+  scrollbar-width: thin;
+}
+.terminal-xterm-host .xterm-viewport::-webkit-scrollbar { width: 12px; }
+.terminal-xterm-host .xterm-viewport::-webkit-scrollbar-track { background: transparent; }
+.terminal-xterm-host .xterm-viewport::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted-foreground) 45%, transparent);
+  background-clip: padding-box;
+}
+
+.terminal-empty {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--editor-surface);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-align: center;
+}
+
+.terminal-empty svg { width: 20px; height: 20px; stroke-width: 1.5; }
+.terminal-empty p { margin: 0; }
+
+.terminal-state-line {
+  position: absolute;
+  right: 10px;
+  bottom: 7px;
+  z-index: 4;
+  max-width: min(420px, calc(100% - 20px));
+  overflow: hidden;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-state-line.error {
+  border-color: color-mix(in srgb, var(--destructive) 28%, transparent);
+  color: color-mix(in srgb, var(--destructive) 65%, var(--foreground));
+}
 
 .tree-scroll,
 .search-results,

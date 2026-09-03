@@ -7,7 +7,11 @@ import {
   IpcHandlerRegistry,
   type IpcMainLike,
 } from '../../src/main/ipc/ipc-handler-registry'
-import { UnsavedTransitionService } from '../../src/main/services/lifecycle/unsaved-transition-service'
+import {
+  UnsavedTransitionService,
+  type TerminalProjectLifecycle,
+  type TerminalProjectTransitionLease,
+} from '../../src/main/services/lifecycle/unsaved-transition-service'
 import { ProjectService } from '../../src/main/services/project/project-service'
 import {
   LIFECYCLE_CHANNELS,
@@ -48,7 +52,20 @@ afterEach(async () => {
   })))
 })
 
-async function setup(rendererId = 7) {
+class FakeTerminalLifecycle implements TerminalProjectLifecycle {
+  live = false
+  readonly closeSessions = vi.fn<() => Promise<void>>(async () => undefined)
+  readonly release = vi.fn()
+  readonly acquireProjectTransition = vi.fn(async (): Promise<
+    TerminalProjectTransitionLease
+  > => ({
+    hasLiveSessions: this.live,
+    closeSessions: () => this.closeSessions(),
+    release: () => this.release(),
+  }))
+}
+
+async function setup(rendererId = 7, terminalLifecycle?: FakeTerminalLifecycle) {
   const root = await mkdtemp(join(tmpdir(), 'student-ide-unsaved-'))
   roots.push(root)
   const projectService = new ProjectService()
@@ -63,6 +80,7 @@ async function setup(rendererId = 7) {
         senderId: rendererId,
         send: (event) => events.push(event),
       }),
+      terminalLifecycle,
       timeoutMs: 1_000,
     },
   )
@@ -78,6 +96,7 @@ describe('UnsavedTransitionService', () => {
     const request = context.events[0]!
     expect(request.reason).toBe('project-close')
     expect(request.project).toEqual(context.project)
+    expect(request.terminalConfirmationRequired).toBe(false)
     expect(context.projectService.getActiveProject()).toEqual(context.project)
 
     await expect(context.ipcMain.invoke(
@@ -87,6 +106,96 @@ describe('UnsavedTransitionService', () => {
     )).resolves.toEqual({ ok: true, value: null })
     await expect(closing).resolves.toBeUndefined()
     expect(context.projectService.getActiveProject()).toBeNull()
+  })
+
+  it('keeps live terminals and the current project when terminal confirmation is cancelled', async () => {
+    const terminal = new FakeTerminalLifecycle()
+    terminal.live = true
+    const context = await setup(7, terminal)
+    const closing = context.projectService.closeProject()
+    await vi.waitFor(() => expect(context.events).toHaveLength(1))
+    expect(context.events[0]?.terminalConfirmationRequired).toBe(true)
+
+    await context.ipcMain.invoke(
+      context.rendererId,
+      LIFECYCLE_CHANNELS.resolveUnsavedTransition,
+      { transitionId: context.events[0]!.transitionId, proceed: false },
+    )
+    await expect(closing).rejects.toMatchObject({ code: 'PROCESS_CANCELLED' })
+    expect(terminal.closeSessions).not.toHaveBeenCalled()
+    expect(terminal.release).toHaveBeenCalledOnce()
+    expect(context.projectService.getActiveProject()).toEqual(context.project)
+  })
+
+  it('waits for confirmed terminal cleanup before changing project authority', async () => {
+    const terminal = new FakeTerminalLifecycle()
+    terminal.live = true
+    const cleanup = deferred<void>()
+    terminal.closeSessions.mockImplementationOnce(() => cleanup.promise)
+    const context = await setup(7, terminal)
+    const closing = context.projectService.closeProject()
+    await vi.waitFor(() => expect(context.events).toHaveLength(1))
+
+    await context.ipcMain.invoke(
+      context.rendererId,
+      LIFECYCLE_CHANNELS.resolveUnsavedTransition,
+      { transitionId: context.events[0]!.transitionId, proceed: true },
+    )
+    await vi.waitFor(() => expect(terminal.closeSessions).toHaveBeenCalledOnce())
+    expect(context.projectService.getActiveProject()).toEqual(context.project)
+    cleanup.resolve()
+    await expect(closing).resolves.toBeUndefined()
+    expect(context.projectService.getActiveProject()).toBeNull()
+    expect(terminal.release).toHaveBeenCalledOnce()
+  })
+
+  it('fails closed with a concise error when terminal cleanup fails', async () => {
+    const terminal = new FakeTerminalLifecycle()
+    terminal.live = true
+    terminal.closeSessions.mockRejectedValueOnce(new AggregateError([
+      new Error('native terminal detail'),
+    ]))
+    const context = await setup(7, terminal)
+    const closing = context.projectService.closeProject()
+    await vi.waitFor(() => expect(context.events).toHaveLength(1))
+    await context.ipcMain.invoke(
+      context.rendererId,
+      LIFECYCLE_CHANNELS.resolveUnsavedTransition,
+      { transitionId: context.events[0]!.transitionId, proceed: true },
+    )
+
+    await expect(closing).rejects.toMatchObject({
+      code: 'PROCESS_FAILED',
+      message: 'Running terminals could not be closed. The project was not changed.',
+    })
+    expect(context.projectService.getActiveProject()).toEqual(context.project)
+    expect(terminal.release).toHaveBeenCalledOnce()
+  })
+
+  it('serializes rapid transitions without overlapping terminal confirmation or cleanup', async () => {
+    const terminal = new FakeTerminalLifecycle()
+    terminal.live = true
+    const context = await setup(7, terminal)
+    const first = context.projectService.closeProject()
+    const second = context.projectService.closeProject()
+    await vi.waitFor(() => expect(context.events).toHaveLength(1))
+    expect(terminal.acquireProjectTransition).toHaveBeenCalledTimes(1)
+
+    await context.ipcMain.invoke(
+      context.rendererId,
+      LIFECYCLE_CHANNELS.resolveUnsavedTransition,
+      { transitionId: context.events[0]!.transitionId, proceed: false },
+    )
+    await expect(first).rejects.toMatchObject({ code: 'PROCESS_CANCELLED' })
+    await vi.waitFor(() => expect(context.events).toHaveLength(2))
+    expect(terminal.acquireProjectTransition).toHaveBeenCalledTimes(2)
+    await context.ipcMain.invoke(
+      context.rendererId,
+      LIFECYCLE_CHANNELS.resolveUnsavedTransition,
+      { transitionId: context.events[1]!.transitionId, proceed: true },
+    )
+    await expect(second).resolves.toBeUndefined()
+    expect(terminal.closeSessions).toHaveBeenCalledOnce()
   })
 
   it('rejects mismatched and stale transition IDs without releasing the guard', async () => {
@@ -149,9 +258,13 @@ describe('UnsavedTransitionService', () => {
   })
 
   it('uses the same coordinator for application close', async () => {
-    const context = await setup()
+    const terminal = new FakeTerminalLifecycle()
+    terminal.live = true
+    const context = await setup(7, terminal)
     const closing = context.service.requestApplicationClose()
     expect(context.events[0]?.reason).toBe('application-close')
+    expect(context.events[0]?.terminalConfirmationRequired).toBe(false)
+    expect(terminal.acquireProjectTransition).not.toHaveBeenCalled()
     await context.ipcMain.invoke(
       context.rendererId,
       LIFECYCLE_CHANNELS.resolveUnsavedTransition,
@@ -160,3 +273,9 @@ describe('UnsavedTransitionService', () => {
     await expect(closing).resolves.toBe(true)
   })
 })
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  const promise = new Promise<T>((resolvePromise) => { resolve = resolvePromise })
+  return { promise, resolve }
+}
