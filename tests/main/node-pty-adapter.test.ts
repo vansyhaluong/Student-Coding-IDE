@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const nodePtyMock = vi.hoisted(() => ({
   capability: 'student-coding-ide-windows-job-v1' as string | undefined,
@@ -25,8 +25,13 @@ const SPAWN_OPTIONS: PtySpawnOptions = {
 
 describe('Phase 2E-J patched node-pty adapter', () => {
   beforeEach(() => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
     nodePtyMock.capability = 'student-coding-ide-windows-job-v1'
     nodePtyMock.spawn.mockReset()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('fails before spawn when the patched native capability is unavailable', () => {
@@ -69,6 +74,34 @@ describe('Phase 2E-J patched node-pty adapter', () => {
     process.processTreeOwnership.job.release()
     process.close()
 
+    expect(native.kill).toHaveBeenCalledOnce()
+  })
+})
+
+describe('NodePtyPort portable process ownership', () => {
+  beforeEach(() => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')
+    nodePtyMock.capability = undefined
+    nodePtyMock.spawn.mockReset()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('uses legacy root ownership without requiring the Windows capability', () => {
+    const native = fakeNativePty()
+    nodePtyMock.spawn.mockReturnValue(native)
+
+    const process = new NodePtyPort().spawn(SPAWN_OPTIONS)
+
+    expect(process.processTreeOwnership).toEqual({
+      mode: 'LEGACY_ROOT_OWNED',
+      rootPid: native.pid,
+    })
+    expect(nodePtyMock.spawn).toHaveBeenCalledOnce()
+
+    process.close()
     expect(native.kill).toHaveBeenCalledOnce()
   })
 })
