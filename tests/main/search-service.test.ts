@@ -216,6 +216,31 @@ describe('SearchService', () => {
     })
   })
 
+  it('keeps a representative large-project disk search bounded', async () => {
+    const root = await temporaryDirectory()
+    const directoryCount = 20
+    const filesPerDirectory = 25
+    await Promise.all(Array.from({ length: directoryCount }, async (_, directoryIndex) => {
+      const directory = join(root, `area-${directoryIndex}`)
+      await mkdir(directory)
+      await Promise.all(Array.from({ length: filesPerDirectory }, (_, fileIndex) => (
+        writeFile(
+          join(directory, `file-${fileIndex}.txt`),
+          'needle first\nneedle second\nneedle third',
+          'utf8',
+        )
+      )))
+    }))
+
+    const { events } = await runSearch(root, 'needle')
+
+    expect(collectMatches(events)).toHaveLength(SEARCH_LIMITS.maximumMatches)
+    expect(events.at(-1)).toMatchObject({
+      type: 'complete',
+      limitReached: true,
+    })
+  })
+
   it('cooperatively suppresses late batches when a newer search supersedes it', async () => {
     const root = await temporaryDirectory()
     const projectService = new ProjectService()

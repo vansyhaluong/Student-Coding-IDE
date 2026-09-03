@@ -42,6 +42,7 @@ console.log(`Verified Student Coding IDE node-pty ${EXPECTED_VERSION} Windows Jo
 function gitApply(args) {
   return spawnSync('git', [
     'apply',
+    '--ignore-space-change',
     '--directory=node_modules/node-pty',
     ...args,
   ], {

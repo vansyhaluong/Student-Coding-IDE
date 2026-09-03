@@ -151,4 +151,21 @@ describe('Phase 2E-E terminal preload bridge', () => {
     removeSecond()
     expect(ipcRenderer.removeListener).toHaveBeenCalledOnce()
   })
+
+  it('normalizes terminal transport rejection', async () => {
+    const { api, ipcRenderer } = setup()
+    ipcRenderer.invoke.mockRejectedValueOnce(new Error('raw terminal transport failure'))
+
+    const result = await api.terminal.create({ projectId, cols: 80, rows: 24 })
+    expect(result).toMatchObject({
+        ok: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'The application request could not be completed.',
+          details: { boundaryFailure: 'transport' },
+          retryable: true,
+        },
+      })
+    expect(JSON.stringify(result)).not.toContain('raw terminal')
+  })
 })

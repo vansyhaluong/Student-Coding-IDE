@@ -122,6 +122,7 @@ interface PromptDialogProps {
   label: string
   initialValue?: string
   submitLabel: string
+  submitDisabled?: boolean
   onSubmit(value: string): void
   onCancel(): void
 }
@@ -132,12 +133,14 @@ export function PromptDialog({
   label,
   initialValue = '',
   submitLabel,
+  submitDisabled = false,
   onSubmit,
   onCancel,
 }: PromptDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const submit = (event: FormEvent): void => {
     event.preventDefault()
+    if (submitDisabled) return
     const value = inputRef.current?.value.trim() ?? ''
     if (value) onSubmit(value)
   }
@@ -151,7 +154,12 @@ export function PromptDialog({
         actions={(
           <>
             <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-            <Button type="submit" variant="primary" data-dialog-primary="true">
+            <Button
+              type="submit"
+              variant="primary"
+              data-dialog-primary="true"
+              disabled={submitDisabled}
+            >
               {submitLabel}
             </Button>
           </>

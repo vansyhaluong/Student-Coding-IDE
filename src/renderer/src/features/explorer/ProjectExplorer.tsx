@@ -37,7 +37,9 @@ interface ProjectExplorerProps {
   project: ProjectIdentity
   onOpenFile?(path: string): void
   onRenamed?(previous: FileEntry, renamed: FileEntry): void
-  onRequestDelete?(entry: FileEntry): Promise<boolean>
+  onRequestDelete?(entry: FileEntry): Promise<(() => void) | null>
+  interactionLocked?: boolean
+  unavailable?: boolean
   /** Phase 2B compatibility only; no longer called. */
   onPreview?(path: string, content: string): void
   /** Phase 2B compatibility only; no longer called. */
@@ -53,6 +55,8 @@ export function ProjectExplorer({
   onOpenFile,
   onRenamed,
   onRequestDelete,
+  interactionLocked = false,
+  unavailable = false,
 }: ProjectExplorerProps) {
   const [state, dispatch] = useReducer(explorerReducer, initialExplorerModel)
   const [operationError, setOperationError] = useState<string | null>(null)
@@ -117,18 +121,19 @@ export function ProjectExplorer({
   const selectEntry = (entry: FileEntry): void => {
     dispatch({ type: 'select', path: entry.relativePath })
     setOperationError(null)
-    if (entry.kind === 'file') onOpenFile?.(entry.relativePath)
+    if (entry.kind === 'file' && !interactionLocked) onOpenFile?.(entry.relativePath)
   }
 
   const toggleDirectory = (entry: FileEntry): void => {
     dispatch({ type: 'select', path: entry.relativePath })
     dispatch({ type: 'toggle-directory', path: entry.relativePath })
-    if (!state.directories[entry.relativePath]) {
+    if (!interactionLocked && !state.directories[entry.relativePath]) {
       void loadDirectory(entry.relativePath)
     }
   }
 
   const submitEntryName = async (name: string): Promise<void> => {
+    if (interactionLocked) return
     const request = entryDialog
     if (!request) return
     setEntryDialog(null)
@@ -153,10 +158,12 @@ export function ProjectExplorer({
   }
 
   const confirmDelete = async (): Promise<void> => {
+    if (interactionLocked) return
     const entry = deleteCandidate
     if (!entry) return
     setDeleteCandidate(null)
-    if (onRequestDelete && !await onRequestDelete(entry)) return
+    const commitEditorDelete = onRequestDelete ? await onRequestDelete(entry) : null
+    if (onRequestDelete && !commitEditorDelete) return
     const parent = parentDirectory(entry.relativePath)
     const result = await window.studentIde.file.delete(project.id, entry.relativePath)
     if (!mounted.current) return
@@ -164,6 +171,7 @@ export function ProjectExplorer({
       setOperationError(result.error.message)
       return
     }
+    commitEditorDelete?.()
     dispatch({ type: 'select', path: null })
     setOperationError(null)
     await loadDirectory(parent)
@@ -196,15 +204,20 @@ export function ProjectExplorer({
           <span>{project.name}</span>
         </div>
         <div className="explorer-actions" aria-label="File actions">
-          <Button variant="ghost" size="iconSmall" onClick={() => setEntryDialog({ mode: 'create', kind: 'file' })} title="New file" aria-label="New file"><FilePlus2 /></Button>
-          <Button variant="ghost" size="iconSmall" onClick={() => setEntryDialog({ mode: 'create', kind: 'directory' })} title="New folder" aria-label="New folder"><FolderPlus /></Button>
-          <Button variant="ghost" size="iconSmall" onClick={() => void refresh()} title="Refresh Explorer" aria-label="Refresh Explorer"><RefreshCw /></Button>
-          <Button variant="ghost" size="iconSmall" disabled={!selectedEntry} onClick={() => selectedEntry && setEntryDialog({ mode: 'rename', entry: selectedEntry })} title="Rename selected item" aria-label="Rename selected item"><Pencil /></Button>
-          <Button variant="ghost" size="iconSmall" className="danger-action" disabled={!selectedEntry} onClick={() => setDeleteCandidate(selectedEntry)} title="Move selected item to Recycle Bin" aria-label="Move selected item to Recycle Bin"><Trash2 /></Button>
+          <Button variant="ghost" size="iconSmall" disabled={interactionLocked} onClick={() => setEntryDialog({ mode: 'create', kind: 'file' })} title="New file" aria-label="New file"><FilePlus2 /></Button>
+          <Button variant="ghost" size="iconSmall" disabled={interactionLocked} onClick={() => setEntryDialog({ mode: 'create', kind: 'directory' })} title="New folder" aria-label="New folder"><FolderPlus /></Button>
+          <Button variant="ghost" size="iconSmall" disabled={interactionLocked} onClick={() => void refresh()} title="Refresh Explorer" aria-label="Refresh Explorer"><RefreshCw /></Button>
+          <Button variant="ghost" size="iconSmall" disabled={interactionLocked || !selectedEntry} onClick={() => selectedEntry && setEntryDialog({ mode: 'rename', entry: selectedEntry })} title="Rename selected item" aria-label="Rename selected item"><Pencil /></Button>
+          <Button variant="ghost" size="iconSmall" className="danger-action" disabled={interactionLocked || !selectedEntry} onClick={() => setDeleteCandidate(selectedEntry)} title="Move selected item to Recycle Bin" aria-label="Move selected item to Recycle Bin"><Trash2 /></Button>
         </div>
       </div>
 
       {operationError && <div className="inline-error" role="alert">{operationError}</div>}
+      {unavailable && (
+        <div className="inline-error" role="alert">
+          This project is unavailable or file monitoring stopped. Close and reopen it to retry.
+        </div>
+      )}
 
       <div className="tree-scroll">
         <DirectoryContents
@@ -231,6 +244,7 @@ export function ProjectExplorer({
           submitLabel={entryDialog.mode === 'create' ? 'Create' : 'Rename'}
           onSubmit={(name) => void submitEntryName(name)}
           onCancel={() => setEntryDialog(null)}
+          submitDisabled={interactionLocked}
         />
       )}
       {deleteCandidate && (
@@ -241,7 +255,7 @@ export function ProjectExplorer({
           actions={(
             <>
               <Button variant="ghost" onClick={() => setDeleteCandidate(null)}>Cancel</Button>
-              <Button variant="destructive" data-dialog-primary="true" onClick={() => void confirmDelete()}>
+              <Button variant="destructive" data-dialog-primary="true" disabled={interactionLocked} onClick={() => void confirmDelete()}>
                 Move to Recycle Bin
               </Button>
             </>

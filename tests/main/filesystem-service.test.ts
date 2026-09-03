@@ -326,11 +326,63 @@ describe('FileSystemService', () => {
       },
       onWatcherError,
     })
+    const statuses: Array<{ projectId: ProjectId; state: string }> = []
+    service.subscribeStatus((status) => statuses.push(status))
     service.start()
 
-    await expect(projectService.openRoot(root)).resolves.toMatchObject({ name: expect.any(String) })
+    const project = await projectService.openRoot(root)
     expect(onWatcherError).toHaveBeenCalledOnce()
     expect(projectService.getActiveProject()).not.toBeNull()
+    expect(service.getStatus(project.id)).toEqual({
+      projectId: project.id,
+      state: 'UNAVAILABLE',
+    })
+    expect(statuses).toContainEqual({ projectId: project.id, state: 'UNAVAILABLE' })
+  })
+
+  it('marks filesystem authority unavailable when the active root disappears', async () => {
+    const root = await temporaryDirectory()
+    const projectService = new ProjectService()
+    const project = await projectService.openRoot(root)
+    const service = new FileSystemService(projectService, {
+      trashItem: vi.fn(),
+      watchFactory: noWatch,
+    })
+    service.start()
+    await rm(root, { recursive: true, force: true })
+
+    await expect(service.listDirectory(project.id, '')).rejects.toMatchObject({
+      code: 'ENOENT',
+    })
+    expect(service.getStatus(project.id).state).toBe('UNAVAILABLE')
+  })
+
+  it('publishes an unavailable status and closes the watcher after a runtime error', async () => {
+    const root = await temporaryDirectory()
+    const projectService = new ProjectService()
+    const project = await projectService.openRoot(root)
+    let reportError: ((error: unknown) => void) | undefined
+    const close = vi.fn()
+    const service = new FileSystemService(projectService, {
+      trashItem: vi.fn(),
+      watchFactory: () => ({
+        close,
+        onError: (listener) => { reportError = listener },
+      }),
+    })
+    const statuses: Array<{ projectId: ProjectId; state: string }> = []
+    service.subscribeStatus((status) => statuses.push(status))
+    service.start()
+    expect(service.getStatus(project.id).state).toBe('AVAILABLE')
+
+    reportError?.(Object.assign(new Error('watch root lost'), { code: 'ENOENT' }))
+
+    expect(close).toHaveBeenCalledOnce()
+    expect(service.getStatus(project.id).state).toBe('UNAVAILABLE')
+    expect(statuses).toEqual([
+      { projectId: project.id, state: 'AVAILABLE' },
+      { projectId: project.id, state: 'UNAVAILABLE' },
+    ])
   })
 })
 

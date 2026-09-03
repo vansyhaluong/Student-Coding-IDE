@@ -551,3 +551,43 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   2E-J and Phase 2E are complete and ready for user-authorized source-control
   closure; no commit, push, PR, merge, branch deletion, or Phase 2F work was
   performed.
+
+## Phase 2F — Core IDE Stabilization (`COMPLETE`)
+
+- Audited findings 2F-A-001 through 2F-A-011. Corrective packages B–D closed
+  the post-approval edit race, preload invoke rejection handling, delete commit
+  ordering, unavailable project-root/watcher state, externally deleted-file
+  state, expected project-cancellation presentation, renderer subscription and
+  terminal resource cleanup, and pointer-resizer unmount cleanup.
+- File deletion now retains affected clean or dirty Monaco models until the
+  Recycle Bin operation succeeds. Failure preserves the exact buffer and allows
+  retry; successful deletion commits Editor disposal before Explorer refresh.
+- Added project-scoped filesystem `AVAILABLE`/`UNAVAILABLE` status through the
+  validated Main/preload boundary. Watcher startup/runtime failure and active
+  root loss visibly disable stale filesystem mutations while existing
+  close/reopen or project-switch recovery remains available.
+- Externally deleted open files retain their in-memory buffer in an explicit
+  disk-missing state. Normal save is blocked, stale reload responses are
+  rejected, and no file is silently recreated or discarded.
+- Stabilized Search integration tests by separating operation-authority tests
+  from debounce timing and checking the 180 ms debounce boundary with fake
+  time. Both previously flaky scenarios passed 10 consecutive process-isolated
+  runs (20 assertions total). Production Search authority logic was unchanged.
+- Verified the integrated project, Explorer, Editor, Search, Terminal, and
+  application-lifecycle scenario matrix using focused Renderer, service, IPC,
+  cleanup, shutdown, and ownership tests. A 500-file/20-directory disk Search
+  emitted exactly the 1,000-match bound and completed with `limitReached`.
+- Corrected the node-pty patch verifier to tolerate CRLF/LF checkout differences
+  through Git's whitespace-aware patch check without changing the patch or
+  Windows Job architecture. The patched Electron 44 x64 capability rebuild,
+  native Job smoke, and production TerminalService live-root/natural-root
+  shutdown smokes passed. Owned descendants were removed, unrelated controls
+  survived, ProcessManager ownership was released only after Job finalization,
+  and application state reached `STOPPED` with one final quit.
+- Final verification passes 328 tests across 33 files, typecheck, lint,
+  electron-vite production build, and `git diff --check`. The test-only jsdom
+  canvas diagnostic remains non-blocking; no dependency, Phase 3 feature,
+  native architecture change, commit, or push was introduced.
+- Recent-project metadata remains the minimal Phase 2 persistence foundation.
+  User-facing list management and any product limit policy remain deferred to
+  Phase 6 Settings/Recent Projects UX.

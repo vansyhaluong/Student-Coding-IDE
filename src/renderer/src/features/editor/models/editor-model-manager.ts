@@ -26,6 +26,7 @@ export interface EditorDocument {
   readonly model: EditorTextModel
   readonly dirty: boolean
   readonly externalConflict: boolean
+  readonly diskState: 'available' | 'missing'
 }
 
 interface ManagedDocument {
@@ -37,6 +38,7 @@ interface ManagedDocument {
   savedContent: string
   dirty: boolean
   externalConflict: boolean
+  diskState: 'available' | 'missing'
   viewState: editor.ICodeEditorViewState | null
   changeSubscription: Disposable
 }
@@ -106,6 +108,7 @@ export class EditorModelManager {
       savedContent: content,
       dirty: false,
       externalConflict: false,
+      diskState: 'available',
       viewState: null,
       changeSubscription: { dispose: () => undefined },
     }
@@ -148,6 +151,7 @@ export class EditorModelManager {
     document.savedContent = snapshot.content
     document.dirty = document.model.getValue() !== document.savedContent
     document.externalConflict = false
+    document.diskState = 'available'
     this.emit()
     return document.model.getVersionId() === snapshot.modelVersion
       && !document.dirty
@@ -193,8 +197,18 @@ export class EditorModelManager {
 
   markExternalConflict(key: string): void {
     const document = this.documents.get(key)
-    if (!document || document.externalConflict) return
+    if (!document) return
+    const changed = !document.externalConflict || document.diskState !== 'available'
     document.externalConflict = true
+    document.diskState = 'available'
+    if (changed) this.emit()
+  }
+
+  markDiskMissing(key: string): void {
+    const document = this.documents.get(key)
+    if (!document || document.diskState === 'missing') return
+    document.diskState = 'missing'
+    document.externalConflict = false
     this.emit()
   }
 
@@ -203,6 +217,7 @@ export class EditorModelManager {
     if (!document || document.dirty) return false
     document.savedContent = content
     document.externalConflict = false
+    document.diskState = 'available'
     if (document.model.getValue() !== content) document.model.setValue(content)
     document.dirty = false
     this.emit()

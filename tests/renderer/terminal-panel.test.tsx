@@ -46,6 +46,7 @@ class FakePanelController {
   private snapshot: TerminalControllerSnapshot = {
     sessions: [], creating: false, createError: null,
   }
+  readonly setInteractionLocked = vi.fn()
 
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener)
@@ -99,6 +100,20 @@ describe('Phase 2E-F Terminal Bottom Panel', () => {
       'aria-selected',
     )).toBe('true')
     expect(document.querySelector('[data-terminal-host="terminal_1"]')).not.toBeNull()
+  })
+
+  it('does not create a terminal for an open request while interaction is locked', () => {
+    const controller = new FakePanelController()
+    renderPanel(controller, {
+      open: true,
+      openRequest: 1,
+      project,
+      interactionLocked: true,
+    })
+
+    expect(controller.setInteractionLocked).toHaveBeenCalledWith(true)
+    expect(controller.createSession).not.toHaveBeenCalled()
+    expect((screen.getByLabelText('New Terminal') as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('does not duplicate an existing session across a React remount', async () => {
@@ -197,6 +212,7 @@ function renderPanel(
     project: ProjectIdentity | null
     open: boolean
     openRequest: number
+    interactionLocked: boolean
   }> = {},
 ) {
   return render(
@@ -208,6 +224,7 @@ function renderPanel(
       height={260}
       onHeightChange={vi.fn()}
       onClosePanel={vi.fn()}
+      interactionLocked={overrides.interactionLocked ?? false}
     />,
   )
 }

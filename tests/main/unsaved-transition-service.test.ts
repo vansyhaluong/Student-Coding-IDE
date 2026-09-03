@@ -156,6 +156,8 @@ describe('UnsavedTransitionService', () => {
       new Error('native terminal detail'),
     ]))
     const context = await setup(7, terminal)
+    const settled = vi.fn()
+    context.projectService.subscribeTransitionSettled(settled)
     const closing = context.projectService.closeProject()
     await vi.waitFor(() => expect(context.events).toHaveLength(1))
     await context.ipcMain.invoke(
@@ -169,6 +171,7 @@ describe('UnsavedTransitionService', () => {
       message: 'Running terminals could not be closed. The project was not changed.',
     })
     expect(context.projectService.getActiveProject()).toEqual(context.project)
+    expect(settled).toHaveBeenCalledWith(context.events[0]!.transitionId)
     expect(terminal.release).toHaveBeenCalledOnce()
   })
 

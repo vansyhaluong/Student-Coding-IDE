@@ -5,34 +5,35 @@ import type {
 } from '../../shared/contracts'
 import { PROJECT_CHANNELS } from '../../shared/contracts'
 import type { IpcRendererLike } from './lifecycle'
+import { invokeSafely } from './invoke'
 import { isRecord, parseAppResult } from './result'
 
 export function createProjectBridge(ipcRenderer: IpcRendererLike): ProjectApi {
   return {
     async getActive() {
       return parseAppResult(
-        await ipcRenderer.invoke(PROJECT_CHANNELS.getActive, {}),
+        await invokeSafely(ipcRenderer, PROJECT_CHANNELS.getActive, {}),
         isNullableProjectIdentity,
         PROJECT_CHANNELS.getActive,
       )
     },
     async open() {
       return parseAppResult(
-        await ipcRenderer.invoke(PROJECT_CHANNELS.open, {}),
+        await invokeSafely(ipcRenderer, PROJECT_CHANNELS.open, {}),
         isNullableProjectIdentity,
         PROJECT_CHANNELS.open,
       )
     },
     async create(name) {
       return parseAppResult(
-        await ipcRenderer.invoke(PROJECT_CHANNELS.create, { name }),
+        await invokeSafely(ipcRenderer, PROJECT_CHANNELS.create, { name }),
         isNullableProjectIdentity,
         PROJECT_CHANNELS.create,
       )
     },
     async close() {
       return parseAppResult(
-        await ipcRenderer.invoke(PROJECT_CHANNELS.close, {}),
+        await invokeSafely(ipcRenderer, PROJECT_CHANNELS.close, {}),
         (value): value is null => value === null,
         PROJECT_CHANNELS.close,
       )

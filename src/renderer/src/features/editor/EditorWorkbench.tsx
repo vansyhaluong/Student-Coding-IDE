@@ -10,12 +10,14 @@ interface EditorWorkbenchProps {
   manager: EditorModelManager
   onSave(key: string): Promise<boolean>
   navigation: EditorNavigationRequest | null
+  readOnly: boolean
 }
 
 export function EditorWorkbench({
   manager,
   onSave,
   navigation,
+  readOnly,
 }: EditorWorkbenchProps) {
   const [, setRevision] = useState(0)
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
@@ -94,7 +96,12 @@ export function EditorWorkbench({
 
   return (
     <section className="editor-workbench" aria-label="Code editor">
-      {active?.externalConflict && (
+      {active?.diskState === 'missing' ? (
+        <div className="editor-conflict" role="alert">
+          This file was deleted outside the IDE. Its in-memory content is preserved, but normal
+          saving is unavailable. Close the tab or restore the file outside the IDE.
+        </div>
+      ) : active?.externalConflict && (
         <div className="editor-conflict" role="alert">
           This file changed on disk. Your unsaved editor content was preserved.
         </div>
@@ -112,6 +119,7 @@ export function EditorWorkbench({
             keepCurrentModel
             onMount={onMount}
             options={{
+              readOnly,
               automaticLayout: true,
               fontSize: 13,
               lineNumbers: 'on',
