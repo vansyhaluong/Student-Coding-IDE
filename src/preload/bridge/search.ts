@@ -9,13 +9,14 @@ import {
   SEARCH_CHANNELS,
 } from '../../shared/contracts'
 import type { IpcRendererLike } from './lifecycle'
+import { invokeSafely } from './invoke'
 import { isRecord, parseAppResult } from './result'
 
 export function createSearchBridge(ipcRenderer: IpcRendererLike): SearchApi {
   return {
     async start(projectId, operationId, query) {
       return parseAppResult(
-        await ipcRenderer.invoke(SEARCH_CHANNELS.start, {
+        await invokeSafely(ipcRenderer, SEARCH_CHANNELS.start, {
           projectId,
           operationId,
           query,
@@ -26,7 +27,7 @@ export function createSearchBridge(ipcRenderer: IpcRendererLike): SearchApi {
     },
     async cancel(operationId) {
       return parseAppResult(
-        await ipcRenderer.invoke(SEARCH_CHANNELS.cancel, { operationId }),
+        await invokeSafely(ipcRenderer, SEARCH_CHANNELS.cancel, { operationId }),
         (value): value is null => value === null,
         SEARCH_CHANNELS.cancel,
       )

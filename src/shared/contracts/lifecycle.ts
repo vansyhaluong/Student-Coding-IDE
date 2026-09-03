@@ -10,6 +10,7 @@ export const LIFECYCLE_CHANNELS = {
   getStatus: 'lifecycle:get-status',
   statusChanged: 'lifecycle:status-changed',
   unsavedTransitionRequested: 'lifecycle:unsaved-transition-requested',
+  projectTransitionSettled: 'lifecycle:project-transition-settled',
   resolveUnsavedTransition: 'lifecycle:resolve-unsaved-transition',
 } as const
 
@@ -47,6 +48,11 @@ export interface ResolveUnsavedTransitionRequest {
   proceed: boolean
 }
 
+export interface ProjectTransitionSettledEvent {
+  transitionId: string
+  outcome: 'failed'
+}
+
 export interface LifecycleApi {
   getStatus(): Promise<AppResult<LifecycleStatus>>
   onStatusChanged(listener: (status: LifecycleStatus) => void): () => void
@@ -56,6 +62,9 @@ export interface LifecycleApi {
   ): Promise<AppResult<null>>
   onUnsavedTransitionRequested(
     listener: (event: UnsavedTransitionRequestEvent) => void,
+  ): () => void
+  onProjectTransitionSettled(
+    listener: (event: ProjectTransitionSettledEvent) => void,
   ): () => void
 }
 

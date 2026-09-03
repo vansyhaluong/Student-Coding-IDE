@@ -111,6 +111,7 @@ export class UnsavedTransitionService implements ManagedService {
         transition.reason === 'close' ? 'project-close' : 'project-switch',
         transition.currentProject,
         lease?.hasLiveSessions ?? false,
+        transition.transitionId,
       )
       if (!approved) return false
       try {
@@ -133,11 +134,12 @@ export class UnsavedTransitionService implements ManagedService {
     reason: UnsavedTransitionReason,
     project: ProjectIdentity,
     terminalConfirmationRequired: boolean,
+    requestedTransitionId?: string,
   ): Promise<boolean> {
     const renderer = this.options.getRenderer()
     if (!renderer) return Promise.resolve(false)
 
-    const transitionId = randomUUID()
+    const transitionId = requestedTransitionId ?? randomUUID()
     const event: UnsavedTransitionRequestEvent = {
       transitionId,
       reason,

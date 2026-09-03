@@ -1,7 +1,7 @@
 import { Folder, FolderOpen, FolderPlus, Search, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
-import type { ProjectIdentity } from '../../shared/contracts'
+import type { AppResult, ProjectIdentity } from '../../shared/contracts'
 import { SidebarResizer } from './components/SidebarResizer'
 import { Button } from './components/ui/Button'
 import { Dialog, PromptDialog } from './components/ui/Dialog'
@@ -48,6 +48,10 @@ export default function App() {
       if (result.ok) setProject(result.value)
       else setError(result.error.message)
       setLoading(false)
+    }).catch(() => {
+      if (!active || initialGeneration !== projectGeneration.current) return
+      setError('The application request could not be completed.')
+      setLoading(false)
     })
     const unsubscribe = window.studentIde.project.onChanged(({ activeProject }) => {
       projectGeneration.current += 1
@@ -87,37 +91,73 @@ export default function App() {
   }, [])
 
   const openProject = async (): Promise<void> => {
+    if (editor.interactionLocked) return
     const requestGeneration = projectGeneration.current
     setLoading(true)
     setError(null)
-    const result = await window.studentIde.project.open()
-    if (requestGeneration !== projectGeneration.current) return
-    if (!result.ok) setError(result.error.message)
-    else if (result.value) setProject(result.value)
-    setLoading(false)
+    let completedAuthoritatively = false
+    try {
+      const result = await window.studentIde.project.open()
+      completedAuthoritatively = !isAmbiguousBoundaryFailure(result)
+      if (requestGeneration !== projectGeneration.current) return
+      if (!result.ok) {
+        if (!isExpectedProjectTransitionCancellation(result)) setError(result.error.message)
+      } else if (result.value) setProject(result.value)
+    } catch {
+      if (requestGeneration === projectGeneration.current) {
+        setError('The application request could not be completed.')
+      }
+    } finally {
+      if (completedAuthoritatively) editor.releaseProjectTransitionLock()
+      if (requestGeneration === projectGeneration.current) setLoading(false)
+    }
   }
 
   const createProject = async (name: string): Promise<void> => {
+    if (editor.interactionLocked) return
     setCreateDialogOpen(false)
     const requestGeneration = projectGeneration.current
     setLoading(true)
     setError(null)
-    const result = await window.studentIde.project.create(name)
-    if (requestGeneration !== projectGeneration.current) return
-    if (!result.ok) setError(result.error.message)
-    else if (result.value) setProject(result.value)
-    setLoading(false)
+    let completedAuthoritatively = false
+    try {
+      const result = await window.studentIde.project.create(name)
+      completedAuthoritatively = !isAmbiguousBoundaryFailure(result)
+      if (requestGeneration !== projectGeneration.current) return
+      if (!result.ok) {
+        if (!isExpectedProjectTransitionCancellation(result)) setError(result.error.message)
+      } else if (result.value) setProject(result.value)
+    } catch {
+      if (requestGeneration === projectGeneration.current) {
+        setError('The application request could not be completed.')
+      }
+    } finally {
+      if (completedAuthoritatively) editor.releaseProjectTransitionLock()
+      if (requestGeneration === projectGeneration.current) setLoading(false)
+    }
   }
 
   const closeProject = async (): Promise<void> => {
+    if (editor.interactionLocked) return
     const requestGeneration = projectGeneration.current
     setLoading(true)
     setError(null)
-    const result = await window.studentIde.project.close()
-    if (requestGeneration !== projectGeneration.current) return
-    if (!result.ok) setError(result.error.message)
-    else setProject(null)
-    setLoading(false)
+    let completedAuthoritatively = false
+    try {
+      const result = await window.studentIde.project.close()
+      completedAuthoritatively = !isAmbiguousBoundaryFailure(result)
+      if (requestGeneration !== projectGeneration.current) return
+      if (!result.ok) {
+        if (!isExpectedProjectTransitionCancellation(result)) setError(result.error.message)
+      } else setProject(null)
+    } catch {
+      if (requestGeneration === projectGeneration.current) {
+        setError('The application request could not be completed.')
+      }
+    } finally {
+      if (completedAuthoritatively) editor.releaseProjectTransitionLock()
+      if (requestGeneration === projectGeneration.current) setLoading(false)
+    }
   }
 
   const leftMaximum = useCallback(() => Math.max(
@@ -174,15 +214,17 @@ export default function App() {
                 variant="ghost"
                 size="iconSmall"
                 onClick={() => void openProject()}
-                disabled={loading}
+                disabled={loading || editor.interactionLocked}
                 title={project ? 'Switch project' : 'Open project'}
                 aria-label={project ? 'Switch project' : 'Open project'}
               ><FolderOpen /></Button>
               <Button
                 variant="ghost"
                 size="iconSmall"
-                onClick={() => setCreateDialogOpen(true)}
-                disabled={loading}
+                onClick={() => {
+                  if (!editor.interactionLocked) setCreateDialogOpen(true)
+                }}
+                disabled={loading || editor.interactionLocked}
                 title="Create project"
                 aria-label="Create project"
               ><FolderPlus /></Button>
@@ -198,13 +240,13 @@ export default function App() {
               <Folder className="project-icon" />
               <span className="active-project-copy" title={project.name}>
                 <strong>{project.name}</strong>
-                <small>Active workspace</small>
+                <small>{editor.fileSystemUnavailable ? 'Project unavailable' : 'Active workspace'}</small>
               </span>
               <Button
                 variant="ghost"
                 size="iconSmall"
                 onClick={() => void closeProject()}
-                disabled={loading}
+                disabled={loading || editor.interactionLocked}
                 title="Close project"
                 aria-label="Close project"
               ><X /></Button>
@@ -222,6 +264,7 @@ export default function App() {
                 manager={editor.manager}
                 onSave={editor.save}
                 navigation={editor.navigation}
+                readOnly={editor.interactionLocked || editor.fileSystemUnavailable}
               />
             ) : (
               <div className="preview-empty">
@@ -229,10 +272,10 @@ export default function App() {
                 <p>Open a project to start coding</p>
                 <span>Your files and editor tabs will appear here.</span>
                 <div className="workspace-empty-actions">
-                  <Button variant="primary" size="small" onClick={() => void openProject()} disabled={loading}>
+                  <Button variant="primary" size="small" onClick={() => void openProject()} disabled={loading || editor.interactionLocked}>
                     Open project
                   </Button>
-                  <Button size="small" onClick={() => setCreateDialogOpen(true)} disabled={loading}>
+                  <Button size="small" onClick={() => setCreateDialogOpen(true)} disabled={loading || editor.interactionLocked}>
                     Create project
                   </Button>
                 </div>
@@ -247,6 +290,7 @@ export default function App() {
             height={terminalHeight}
             onHeightChange={setTerminalHeight}
             onClosePanel={() => setTerminalOpen(false)}
+            interactionLocked={editor.interactionLocked}
           />
         </section>
 
@@ -290,6 +334,8 @@ export default function App() {
                 onOpenFile={(path) => void editor.openFile(path)}
                 onRenamed={editor.renamed}
                 onRequestDelete={editor.requestDelete}
+                interactionLocked={editor.interactionLocked || editor.fileSystemUnavailable}
+                unavailable={editor.fileSystemUnavailable}
               />
             ) : (
               <section className="explorer-panel" aria-label="Project Explorer">
@@ -313,6 +359,7 @@ export default function App() {
             <SearchPanel
               project={project}
               onNavigate={(match) => void editor.navigateToSearchMatch(match)}
+              interactionLocked={editor.interactionLocked || editor.fileSystemUnavailable}
             />
           </div>
         </aside>
@@ -321,7 +368,13 @@ export default function App() {
       <footer className="status-bar">
         <span className="status-primary">
           <span className={`status-dot${project ? ' active' : ''}`} aria-hidden="true" />
-          {loading ? 'Loading…' : project ? project.name : 'No project open'}
+          {editor.applicationState === 'STOPPING'
+            ? 'Stopping…'
+            : loading
+              ? 'Loading…'
+              : project
+                ? editor.fileSystemUnavailable ? `${project.name} — unavailable` : project.name
+                : 'No project open'}
         </span>
         <span className="status-actions">
           <span>{error || editor.error ? 'Action failed' : 'Ready'}</span>
@@ -343,6 +396,7 @@ export default function App() {
           submitLabel="Create project"
           onSubmit={(name) => void createProject(name)}
           onCancel={() => setCreateDialogOpen(false)}
+          submitDisabled={editor.interactionLocked}
         />
       )}
       {editor.dialog && <UnsavedDialog state={editor.dialog} onChoose={editor.choose} />}
@@ -355,6 +409,20 @@ export default function App() {
       {editor.error && <div className="editor-error" role="alert">{editor.error}</div>}
     </main>
   )
+}
+
+function isAmbiguousBoundaryFailure<T>(result: AppResult<T>): boolean {
+  return !result.ok && (
+    result.error.details?.boundaryFailure === 'transport'
+    || result.error.details?.boundaryFailure === 'response-validation'
+  )
+}
+
+function isExpectedProjectTransitionCancellation<T>(result: AppResult<T>): boolean {
+  return !result.ok
+    && result.error.code === 'PROCESS_CANCELLED'
+    && result.error.message === 'The project transition was cancelled.'
+    && (result.error.operation === 'project:close' || result.error.operation === 'project:switch')
 }
 
 function TerminalTransitionDialog({
@@ -422,4 +490,3 @@ function UnsavedDialog({
     </Dialog>
   )
 }
-// test fast refresh

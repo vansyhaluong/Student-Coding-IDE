@@ -98,6 +98,52 @@ describe('ProjectService', () => {
     expect(guard).toHaveBeenCalledWith(expect.objectContaining({ reason: 'close' }))
   })
 
+  it('reports a correlated failed transition only after authority is retained', async () => {
+    const first = await temporaryDirectory()
+    const unavailable = await temporaryDirectory()
+    const fileSystem = nodeProjectFileSystem({
+      realpath: async (path) => {
+        if (path === unavailable) throw new Error('unavailable')
+        return realpath(path)
+      },
+    })
+    const service = new ProjectService(fileSystem)
+    const project = await service.openRoot(first)
+    let guardedTransitionId = ''
+    service.registerTransitionGuard((transition) => {
+      guardedTransitionId = transition.transitionId
+      return true
+    })
+    const settled = vi.fn((transitionId: string) => {
+      expect(service.getActiveProject()).toEqual(project)
+      expect(transitionId).toBe(guardedTransitionId)
+    })
+    service.subscribeTransitionSettled(settled)
+
+    await expect(service.openRoot(unavailable)).rejects.toThrow('unavailable')
+
+    expect(guardedTransitionId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    )
+    expect(settled).toHaveBeenCalledOnce()
+  })
+
+  it('uses project change, not failed settlement, for successful transitions', async () => {
+    const first = await temporaryDirectory()
+    const second = await temporaryDirectory()
+    const service = new ProjectService()
+    await service.openRoot(first)
+    service.registerTransitionGuard(() => true)
+    const settled = vi.fn()
+    service.subscribeTransitionSettled(settled)
+
+    await expect(service.openRoot(second)).resolves.toMatchObject({
+      name: second.split(/[\\/]/).at(-1),
+    })
+
+    expect(settled).not.toHaveBeenCalled()
+  })
+
   it('notifies project switch and close after an approving guard', async () => {
     const first = await temporaryDirectory()
     const second = await temporaryDirectory()

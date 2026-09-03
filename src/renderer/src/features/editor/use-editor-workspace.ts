@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type {
+  ApplicationState,
   FileEntry,
   ProjectIdentity,
   SearchMatch,
@@ -35,6 +36,9 @@ export function useEditorWorkspace(
     TerminalTransitionDialogState | null
   >(null)
   const [navigation, setNavigation] = useState<EditorNavigationRequest | null>(null)
+  const [applicationState, setApplicationState] = useState<ApplicationState | null>(null)
+  const [transitionFinalizing, setTransitionFinalizing] = useState(false)
+  const [fileSystemUnavailable, setFileSystemUnavailable] = useState(false)
   const dialogResolver = useRef<((choice: UnsavedChoice) => void) | null>(null)
   const terminalDialogResolver = useRef<((proceed: boolean) => void) | null>(null)
   const projectRef = useRef(project)
@@ -42,8 +46,96 @@ export function useEditorWorkspace(
   const openGeneration = useRef(0)
   const externalGenerations = useRef(new Map<string, number>())
   const navigationGeneration = useRef(0)
+  const interactionLockedRef = useRef(false)
+  const activeTransitionIdRef = useRef<string | null>(null)
+  const transitionFinalizingRef = useRef(false)
+  const applicationStateRef = useRef<ApplicationState | null>(null)
+  const fileSystemUnavailableRef = useRef(false)
 
   projectRef.current = project
+  applicationStateRef.current = applicationState
+
+  const lifecycleLocked = applicationState === 'STOPPING'
+    || applicationState === 'STOPPED'
+  const interactionLocked = lifecycleLocked || transitionFinalizing
+  interactionLockedRef.current = interactionLocked
+  fileSystemUnavailableRef.current = fileSystemUnavailable
+
+  const setTransitionLock = useCallback((locked: boolean, transitionId?: string): void => {
+    activeTransitionIdRef.current = locked ? transitionId ?? null : null
+    transitionFinalizingRef.current = locked
+    interactionLockedRef.current = locked
+      || applicationStateRef.current === 'STOPPING'
+      || applicationStateRef.current === 'STOPPED'
+    setTransitionFinalizing(locked)
+  }, [])
+
+  const releaseProjectTransitionLock = useCallback((transitionId?: string): void => {
+    if (
+      transitionId !== undefined
+      && activeTransitionIdRef.current !== transitionId
+    ) return
+    setTransitionLock(false)
+  }, [setTransitionLock])
+
+  useEffect(() => {
+    let active = true
+    let statusRevision = 0
+    const unsubscribe = window.studentIde.lifecycle.onStatusChanged((status) => {
+      statusRevision += 1
+      applicationStateRef.current = status.state
+      interactionLockedRef.current = transitionFinalizingRef.current
+        || status.state === 'STOPPING'
+        || status.state === 'STOPPED'
+      setApplicationState(status.state)
+    })
+    const requestedRevision = statusRevision
+    void window.studentIde.lifecycle.getStatus().then((result) => {
+      if (!active || statusRevision !== requestedRevision || !result.ok) return
+      applicationStateRef.current = result.value.state
+      interactionLockedRef.current = transitionFinalizingRef.current
+        || result.value.state === 'STOPPING'
+        || result.value.state === 'STOPPED'
+      setApplicationState(result.value.state)
+    }).catch(() => undefined)
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    let statusRevision = 0
+    fileSystemUnavailableRef.current = false
+    setFileSystemUnavailable(false)
+    if (!project) return () => { active = false }
+
+    const applyStatus = (state: 'AVAILABLE' | 'UNAVAILABLE'): void => {
+      const unavailable = state === 'UNAVAILABLE'
+      fileSystemUnavailableRef.current = unavailable
+      setFileSystemUnavailable(unavailable)
+      if (unavailable) {
+        openGeneration.current += 1
+        navigationGeneration.current += 1
+        externalGenerations.current.clear()
+      }
+    }
+    const unsubscribe = window.studentIde.file.onStatusChanged((status) => {
+      if (status.projectId !== project.id) return
+      statusRevision += 1
+      applyStatus(status.state)
+    })
+    const requestedRevision = statusRevision
+    void window.studentIde.file.getStatus(project.id).then((result) => {
+      if (!active || statusRevision !== requestedRevision || !result.ok) return
+      applyStatus(result.value.state)
+    }).catch(() => undefined)
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [project?.id])
 
   const requestChoice = useCallback((state: UnsavedDialogState) => (
     new Promise<UnsavedChoice>((resolve) => {
@@ -89,6 +181,12 @@ export function useEditorWorkspace(
   }, [])
 
   const save = useCallback(async (key: string): Promise<boolean> => {
+    if (interactionLockedRef.current || fileSystemUnavailableRef.current) return false
+    const document = manager.getOpenDocuments().find((item) => item.key === key)
+    if (document?.diskState === 'missing') {
+      setError('This file no longer exists on disk. Close the buffer or restore the file outside the IDE.')
+      return false
+    }
     const snapshot = manager.createSaveSnapshot(key)
     if (!snapshot) return false
     setError(null)
@@ -121,6 +219,7 @@ export function useEditorWorkspace(
   const openFile = useCallback(async (
     relativePath: string,
   ): Promise<EditorDocument | null> => {
+    if (interactionLockedRef.current || fileSystemUnavailableRef.current) return null
     const activeProject = projectRef.current
     if (!activeProject) return null
     const existing = manager.findDocument(activeProject.id, relativePath)
@@ -171,6 +270,7 @@ export function useEditorWorkspace(
   }, [openFile])
 
   const closeDocument = useCallback(async (key: string): Promise<void> => {
+    if (interactionLockedRef.current) return
     const document = manager.getOpenDocuments().find((item) => item.key === key)
     if (!document) return
     if (document.dirty) {
@@ -179,16 +279,19 @@ export function useEditorWorkspace(
         context: 'close-tab',
         documents: [document],
       })
+      if (interactionLockedRef.current) return
       if (choice === 'cancel') return
       if (choice === 'save' && !await save(document.key)) return
     }
+    if (interactionLockedRef.current) return
     invalidateExternalReload(key)
     manager.close(key)
   }, [invalidateExternalReload, manager, requestChoice, save])
 
-  const requestDelete = useCallback(async (entry: FileEntry): Promise<boolean> => {
+  const requestDelete = useCallback(async (entry: FileEntry): Promise<(() => void) | null> => {
+    if (interactionLockedRef.current || fileSystemUnavailableRef.current) return null
     const activeProject = projectRef.current
-    if (!activeProject) return false
+    if (!activeProject) return null
     const affected = manager.findAffectedDocuments(
       activeProject.id,
       entry.relativePath,
@@ -201,18 +304,25 @@ export function useEditorWorkspace(
         context: 'delete',
         documents: dirty,
       })
-      if (choice === 'cancel') return false
-      if (choice === 'save' && !await saveAll(dirty)) return false
+      if (choice === 'cancel') return null
+      if (choice === 'save' && !await saveAll(dirty)) return null
     }
-    if (projectRef.current?.id !== activeProject.id) return false
-    for (const document of affected) {
-      invalidateExternalReload(document.key)
-      manager.close(document.key)
+    if (
+      projectRef.current?.id !== activeProject.id
+      || fileSystemUnavailableRef.current
+    ) return null
+    return () => {
+      if (projectRef.current?.id !== activeProject.id) return
+      for (const document of affected) {
+        if (manager.findDocument(document.projectId, document.relativePath) !== document) continue
+        invalidateExternalReload(document.key)
+        manager.close(document.key)
+      }
     }
-    return true
   }, [invalidateExternalReload, manager, requestChoice, saveAll])
 
   const renamed = useCallback((previous: FileEntry, next: FileEntry) => {
+    if (interactionLockedRef.current || fileSystemUnavailableRef.current) return
     const activeProject = projectRef.current
     if (!activeProject) return
     for (const document of manager.findAffectedDocuments(
@@ -238,18 +348,15 @@ export function useEditorWorkspace(
       setNavigation(null)
       externalGenerations.current.clear()
       manager.closeProject(oldProject.id)
+      setTransitionLock(false)
     }
     previousProject.current = project
-  }, [manager, project])
+  }, [manager, project, setTransitionLock])
 
   useEffect(() => window.studentIde.file.onChanged((event) => {
     if (event.projectId !== projectRef.current?.id) return
     const document = manager.findDocument(event.projectId, event.relativePath)
     if (!document) return
-    if (document.dirty) {
-      manager.markExternalConflict(document.key)
-      return
-    }
     const generation = (externalGenerations.current.get(document.key) ?? 0) + 1
     externalGenerations.current.set(document.key, generation)
     void window.studentIde.file.read(event.projectId, event.relativePath).then((result) => {
@@ -257,12 +364,16 @@ export function useEditorWorkspace(
         externalGenerations.current.get(document.key) !== generation
         || projectRef.current?.id !== event.projectId
       ) return
+      const current = manager.findDocument(event.projectId, event.relativePath)
+      if (!current || current.model !== document.model) return
       if (!result.ok) {
+        if (result.error.code === 'NOT_FOUND') {
+          manager.markDiskMissing(current.key)
+          return
+        }
         setError(result.error.message)
         return
       }
-      const current = manager.findDocument(event.projectId, event.relativePath)
-      if (!current || current.model !== document.model) return
       if (current.dirty) {
         manager.markExternalConflict(current.key)
         return
@@ -276,6 +387,10 @@ export function useEditorWorkspace(
       void resolveTransition(event)
     },
   ), [manager, requestChoice, requestTerminalConfirmation, saveAll])
+
+  useEffect(() => window.studentIde.lifecycle.onProjectTransitionSettled(
+    (event) => releaseProjectTransitionLock(event.transitionId),
+  ), [releaseProjectTransitionLock])
 
   const resolveTransition = async (
     event: UnsavedTransitionRequestEvent,
@@ -320,11 +435,21 @@ export function useEditorWorkspace(
     transitionId: string,
     proceed: boolean,
   ): Promise<void> => {
-    const result = await window.studentIde.lifecycle.resolveUnsavedTransition(
-      transitionId,
-      proceed,
-    )
-    if (!result.ok) setError(result.error.message)
+    if (proceed) setTransitionLock(true, transitionId)
+    try {
+      const result = await window.studentIde.lifecycle.resolveUnsavedTransition(
+        transitionId,
+        proceed,
+      )
+      if (!result.ok) {
+        if (proceed && !isAmbiguousBoundaryFailure(result.error.details)) {
+          releaseProjectTransitionLock(transitionId)
+        }
+        setError(result.error.message)
+      }
+    } catch {
+      setError('The application request could not be completed.')
+    }
   }
 
   useEffect(() => () => {
@@ -343,6 +468,9 @@ export function useEditorWorkspace(
     terminalTransitionDialog,
     error,
     navigation,
+    applicationState,
+    interactionLocked,
+    fileSystemUnavailable,
     choose,
     chooseTerminalTransition,
     save,
@@ -351,5 +479,13 @@ export function useEditorWorkspace(
     closeDocument,
     requestDelete,
     renamed,
+    releaseProjectTransitionLock,
   }
+}
+
+function isAmbiguousBoundaryFailure(
+  details: Record<string, string | number | boolean | null> | undefined,
+): boolean {
+  return details?.boundaryFailure === 'transport'
+    || details?.boundaryFailure === 'response-validation'
 }

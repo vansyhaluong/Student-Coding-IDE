@@ -3,16 +3,18 @@ import type {
   FileChangedEvent,
   FileEntry,
   FileStat,
+  ProjectFileSystemStatus,
 } from '../../shared/contracts'
 import { FILE_CHANNELS } from '../../shared/contracts'
 import type { IpcRendererLike } from './lifecycle'
+import { invokeSafely } from './invoke'
 import { isRecord, parseAppResult } from './result'
 
 export function createFileBridge(ipcRenderer: IpcRendererLike): FileApi {
   return {
     async listDirectory(projectId, relativePath) {
       return parseAppResult(
-        await ipcRenderer.invoke(FILE_CHANNELS.listDirectory, {
+        await invokeSafely(ipcRenderer, FILE_CHANNELS.listDirectory, {
           projectId,
           relativePath,
         }),
@@ -22,7 +24,7 @@ export function createFileBridge(ipcRenderer: IpcRendererLike): FileApi {
     },
     async stat(projectId, relativePath) {
       return parseAppResult(
-        await ipcRenderer.invoke(FILE_CHANNELS.stat, {
+        await invokeSafely(ipcRenderer, FILE_CHANNELS.stat, {
           projectId,
           relativePath,
         }),
@@ -32,7 +34,7 @@ export function createFileBridge(ipcRenderer: IpcRendererLike): FileApi {
     },
     async read(projectId, relativePath) {
       return parseAppResult(
-        await ipcRenderer.invoke(FILE_CHANNELS.read, {
+        await invokeSafely(ipcRenderer, FILE_CHANNELS.read, {
           projectId,
           relativePath,
         }),
@@ -42,7 +44,7 @@ export function createFileBridge(ipcRenderer: IpcRendererLike): FileApi {
     },
     async write(projectId, relativePath, content) {
       return parseAppResult(
-        await ipcRenderer.invoke(FILE_CHANNELS.write, {
+        await invokeSafely(ipcRenderer, FILE_CHANNELS.write, {
           projectId,
           relativePath,
           content,
@@ -74,12 +76,19 @@ export function createFileBridge(ipcRenderer: IpcRendererLike): FileApi {
     },
     async delete(projectId, relativePath) {
       return parseAppResult(
-        await ipcRenderer.invoke(FILE_CHANNELS.delete, {
+        await invokeSafely(ipcRenderer, FILE_CHANNELS.delete, {
           projectId,
           relativePath,
         }),
         (value): value is null => value === null,
         FILE_CHANNELS.delete,
+      )
+    },
+    async getStatus(projectId) {
+      return parseAppResult(
+        await invokeSafely(ipcRenderer, FILE_CHANNELS.getStatus, { projectId }),
+        isProjectFileSystemStatus,
+        FILE_CHANNELS.getStatus,
       )
     },
     onChanged(listener): () => void {
@@ -93,6 +102,13 @@ export function createFileBridge(ipcRenderer: IpcRendererLike): FileApi {
         ipcRenderer.removeListener(FILE_CHANNELS.changed, wrapped)
       }
     },
+    onStatusChanged(listener): () => void {
+      const wrapped = (_event: unknown, payload: unknown): void => {
+        if (isProjectFileSystemStatus(payload)) listener(payload)
+      }
+      ipcRenderer.on(FILE_CHANNELS.statusChanged, wrapped)
+      return () => ipcRenderer.removeListener(FILE_CHANNELS.statusChanged, wrapped)
+    },
   }
 }
 
@@ -102,7 +118,7 @@ async function invokeEntry(
   payload: Record<string, string>,
 ) {
   return parseAppResult(
-    await ipcRenderer.invoke(channel, payload),
+    await invokeSafely(ipcRenderer, channel, payload),
     isFileEntry,
     channel,
   )
@@ -133,4 +149,12 @@ function isFileChangedEvent(value: unknown): value is FileChangedEvent {
     && typeof value.projectId === 'string'
     && typeof value.relativePath === 'string'
     && (value.kind === 'changed' || value.kind === 'renamed')
+}
+
+function isProjectFileSystemStatus(value: unknown): value is ProjectFileSystemStatus {
+  return isRecord(value)
+    && Object.keys(value).length === 2
+    && typeof value.projectId === 'string'
+    && /^project_[a-f0-9]{24}$/.test(value.projectId)
+    && (value.state === 'AVAILABLE' || value.state === 'UNAVAILABLE')
 }

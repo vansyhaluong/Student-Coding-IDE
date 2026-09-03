@@ -14,7 +14,9 @@ import {
   PROJECT_CHANNELS,
   SEARCH_CHANNELS,
   type FileChangedEvent,
+  type ProjectFileSystemStatus,
   type ProjectChangedEvent,
+  type ProjectTransitionSettledEvent,
   type RecentProjectMetadata,
   type SearchEvent,
   type UnsavedTransitionRequestEvent,
@@ -168,10 +170,21 @@ void app.whenReady().then(async () => {
       ),
     },
   )
+  projectService.subscribeTransitionSettled((transitionId) => {
+    const event: ProjectTransitionSettledEvent = {
+      transitionId,
+      outcome: 'failed',
+    }
+    publishLifecycleToWindows(
+      LIFECYCLE_CHANNELS.projectTransitionSettled,
+      event,
+    )
+  })
   const fileIpc = new FileIpcService(
     ipcRegistry,
     fileSystemService,
     (event) => publishToWindows(FILE_CHANNELS.changed, event),
+    (status) => publishToWindows(FILE_CHANNELS.statusChanged, status),
   )
   const searchIpc = new SearchIpcService(
     ipcRegistry,
@@ -267,10 +280,21 @@ void app.whenReady().then(async () => {
 
 function publishToWindows(
   channel: string,
-  event: ProjectChangedEvent | FileChangedEvent,
+  event: ProjectChangedEvent | FileChangedEvent | ProjectFileSystemStatus,
 ): void {
   for (const window of BrowserWindow.getAllWindows()) {
     if (!window.isDestroyed()) {
+      window.webContents.send(channel, event)
+    }
+  }
+}
+
+function publishLifecycleToWindows(
+  channel: string,
+  event: ProjectTransitionSettledEvent,
+): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
       window.webContents.send(channel, event)
     }
   }

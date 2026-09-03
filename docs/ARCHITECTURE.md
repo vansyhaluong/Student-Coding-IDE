@@ -106,7 +106,7 @@ The renderer modules are:
 | Module | Responsibility | Explicit non-responsibility |
 |---|---|---|
 | ProjectService | Open/create/close/switch one local folder project; validate root; persist minimal recent-project metadata needed by project lifecycle | User-facing Recent Projects UX/management, file content, editor tabs, Git behavior |
-| FileSystemService | Scoped list/read/write/create/rename/delete/stat/watch operations | UI state and Monaco models |
+| FileSystemService | Scoped list/read/write/create/rename/delete/stat/watch operations plus authoritative active-project filesystem availability | UI state and Monaco models |
 | SearchService | Async project search with exclusions, progress, cancellation token | Renderer traversal of project files |
 | EditorModelManager | File-to-Monaco-model mapping, dirty status, view state, language id, disposal | Direct disk access |
 | TerminalService | Interactive PTY sessions, input, resize, shell profiles, terminal exit | Run-button output semantics |
@@ -138,6 +138,7 @@ project:open            file:list-directory
 project:close           file:read
 search:start            file:write
 search:cancel           file:changed
+file:get-status         file:status-changed
 terminal:create         terminal:event
 terminal:input          terminal:resize
 terminal:close
@@ -181,7 +182,7 @@ Messages are safe for users; developer details and stack traces remain in logs. 
 |---|---|---|
 | Persistent app state | recent projects, theme, editor preferences, configured executable paths | Settings/Persistence in main |
 | Workspace state | open tabs, active tab, panel visibility, optional cursor/view snapshots | Versioned state keyed by canonical project path |
-| Editor state | Monaco models, dirty buffers, selections, undo stack | EditorModelManager in renderer; never blindly overwritten by disk |
+| Editor state | Monaco models, dirty buffers, disk-missing/conflict state, selections, undo stack | EditorModelManager in renderer; never blindly overwritten by disk |
 | Ephemeral UI state | dialogs, hover/loading state, menu state | React component/feature store only |
 | Process state | terminal/run/language session IDs and lifecycle | Owning main-process service |
 
@@ -193,7 +194,7 @@ V1 has one active local folder project. Opening a project canonicalizes and vali
 
 Explorer directories load lazily. The service returns typed entries with stable relative paths and file kind. Default exclusions for project search are `.git/`, `node_modules/`, `dist/`, `build/`, and `out/`. Search runs outside the renderer, streams bounded results/progress, and supports cancellation.
 
-V1 watcher support is minimal and only required where necessary for Explorer refresh or external-file detection.
+V1 watcher support is minimal and only required where necessary for Explorer refresh or external-file detection. FileSystemService publishes a project-scoped `AVAILABLE` or `UNAVAILABLE` state when watcher startup/runtime monitoring or the active root becomes unusable. Renderer mutations are disabled while that authority is unavailable; close and reopen/switch remain the recovery path.
 
 Advanced watcher recovery, overflow handling, and complex external-conflict reconciliation are not Phase 2 acceptance criteria. Any watcher created for V1 is scoped to the active project and disposed on project switch or shutdown.
 
@@ -210,7 +211,7 @@ Symlinks are represented explicitly and are not traversed outside the project ro
 - selection, cursor, and scroll state;
 - external-change/conflict state.
 
-`FileSystemService` alone reads and writes disk data. Opening creates or reuses a model after an async file read. Saving captures the intended buffer version, writes through IPC, and only marks clean if the model has not changed during the write. Closing the final tab disposes its model unless retained by a deliberate workspace-cache policy. Project close disposes all models for that project.
+`FileSystemService` alone reads and writes disk data. Opening creates or reuses a model after an async file read. Saving captures the intended buffer version, writes through IPC, and only marks clean if the model has not changed during the write. If an external watcher read authoritatively returns `NOT_FOUND`, the model retains its in-memory content and enters an explicit disk-missing state; normal save is blocked rather than silently recreating the path. Closing the final tab disposes its model unless retained by a deliberate workspace-cache policy. Project close disposes all models for that project.
 
 Language services consume model/document change events through provider adapters. Problems navigation opens the target model and reveals the exact line/column. Theme and editor preferences are applied from settings. Large files may disable expensive language features while preserving edit/save; thresholds remain a Phase 2/3 decision.
 
