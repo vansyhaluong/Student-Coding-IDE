@@ -21,6 +21,7 @@ export function parseAppResult<T>(
       code: 'INTERNAL_ERROR',
       message: 'The application returned an invalid response.',
       operation,
+      details: { boundaryFailure: 'response-validation' },
       retryable: false,
     },
   }

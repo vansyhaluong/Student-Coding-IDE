@@ -16,6 +16,7 @@ import type {
   FileEntry,
   FileStat,
   ProjectId,
+  ProjectFileSystemStatus,
 } from '../../../shared/contracts'
 import type { ManagedService } from '../../app/desktop-application'
 import { DomainError } from '../../errors/app-error'
@@ -108,9 +109,11 @@ export class FileSystemService implements ManagedService {
   private readonly watchFactory: WatchFactory
   private readonly platform: NodeJS.Platform
   private readonly listeners = new Set<(event: FileChangedEvent) => void>()
+  private readonly statusListeners = new Set<(status: ProjectFileSystemStatus) => void>()
   private removeProjectListener: (() => void) | undefined
   private watcher: WatcherLike | undefined
   private watcherGeneration = 0
+  private status: ProjectFileSystemStatus | null = null
 
   constructor(
     private readonly projectService: ProjectService,
@@ -133,13 +136,23 @@ export class FileSystemService implements ManagedService {
     relativePath: string,
   ): Promise<FileEntry[]> {
     const project = this.projectService.getAuthorizedProject(projectId)
-    const target = await this.resolveExisting(project, relativePath, true)
+    const target = await this.resolveExisting(project, relativePath, true).catch((error) => {
+      if (relativePath.length === 0 && isRootUnavailableError(error)) {
+        this.setStatus(project.id, 'UNAVAILABLE')
+      }
+      throw error
+    })
     if (!target.stats.isDirectory()) {
       throw invalidPath('The requested path is not a directory.', 'file:list-directory')
     }
 
     this.projectService.getAuthorizedProject(project.id)
-    const entries = await this.fileSystem.readdir(target.canonicalPath)
+    const entries = await this.fileSystem.readdir(target.canonicalPath).catch((error) => {
+      if (relativePath.length === 0 && isRootUnavailableError(error)) {
+        this.setStatus(project.id, 'UNAVAILABLE')
+      }
+      throw error
+    })
     return entries
       .map((entry) => toFileEntry(entry, relativePath))
       .sort(compareEntries)
@@ -253,11 +266,27 @@ export class FileSystemService implements ManagedService {
     }
   }
 
+  getStatus(projectId: ProjectId): ProjectFileSystemStatus {
+    this.projectService.getAuthorizedProject(projectId)
+    return this.status?.projectId === projectId
+      ? this.status
+      : { projectId, state: 'UNAVAILABLE' }
+  }
+
+  subscribeStatus(listener: (status: ProjectFileSystemStatus) => void): () => void {
+    this.statusListeners.add(listener)
+    return () => {
+      this.statusListeners.delete(listener)
+    }
+  }
+
   stop(): void {
     this.removeProjectListener?.()
     this.removeProjectListener = undefined
     this.closeWatcher()
     this.listeners.clear()
+    this.statusListeners.clear()
+    this.status = null
   }
 
   private async createEntry(
@@ -345,6 +374,7 @@ export class FileSystemService implements ManagedService {
     this.closeWatcher()
     const project = this.projectService.getActiveProject()
     if (!project) {
+      this.status = null
       return
     }
     const active = this.projectService.getAuthorizedProject(project.id)
@@ -376,12 +406,25 @@ export class FileSystemService implements ManagedService {
       this.watcher.onError?.((error) => {
         if (generation !== this.watcherGeneration) return
         this.closeWatcher()
+        this.setStatus(project.id, 'UNAVAILABLE')
         this.options.onWatcherError?.(error)
       })
+      this.setStatus(project.id, 'AVAILABLE')
     } catch (error) {
       this.watcher = undefined
+      this.setStatus(project.id, 'UNAVAILABLE')
       this.options.onWatcherError?.(error)
     }
+  }
+
+  private setStatus(
+    projectId: ProjectId,
+    state: ProjectFileSystemStatus['state'],
+  ): void {
+    if (this.projectService.getActiveProject()?.id !== projectId) return
+    if (this.status?.projectId === projectId && this.status.state === state) return
+    this.status = { projectId, state }
+    for (const listener of this.statusListeners) listener(this.status)
   }
 
   private closeWatcher(): void {
@@ -496,4 +539,8 @@ function invalidPath(message: string, operation: string): DomainError {
 
 function isNodeErrorCode(error: unknown, code: string): boolean {
   return error instanceof Error && 'code' in error && error.code === code
+}
+
+function isRootUnavailableError(error: unknown): boolean {
+  return ['ENOENT', 'EACCES', 'EPERM', 'ENOTDIR'].some((code) => isNodeErrorCode(error, code))
 }

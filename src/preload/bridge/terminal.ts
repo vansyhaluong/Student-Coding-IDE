@@ -12,6 +12,7 @@ import {
   type TerminalEvent,
 } from '../../shared/contracts'
 import type { IpcRendererLike } from './lifecycle'
+import { invokeSafely } from './invoke'
 import { parseAppResult } from './result'
 
 export type TerminalApi = TerminalContractApi
@@ -32,7 +33,7 @@ export function createTerminalBridge(
       const validation = validateCreateTerminalRequest(request)
       if (!validation.ok) return invalidRequest(TERMINAL_CHANNELS.create)
       return parseAppResult(
-        await ipcRenderer.invoke(TERMINAL_CHANNELS.create, validation.value),
+        await invokeSafely(ipcRenderer, TERMINAL_CHANNELS.create, validation.value),
         (value): value is Awaited<ReturnType<TerminalApi['create']>> extends AppResult<infer T>
           ? T
           : never => validateCreateTerminalResponse(value).ok,
@@ -43,7 +44,7 @@ export function createTerminalBridge(
       const validation = validateTerminalInputRequest(request)
       if (!validation.ok) return invalidRequest(TERMINAL_CHANNELS.input)
       return parseAppResult(
-        await ipcRenderer.invoke(TERMINAL_CHANNELS.input, validation.value),
+        await invokeSafely(ipcRenderer, TERMINAL_CHANNELS.input, validation.value),
         (value): value is null => value === null,
         TERMINAL_CHANNELS.input,
       )
@@ -52,7 +53,7 @@ export function createTerminalBridge(
       const validation = validateResizeTerminalRequest(request)
       if (!validation.ok) return invalidRequest(TERMINAL_CHANNELS.resize)
       return parseAppResult(
-        await ipcRenderer.invoke(TERMINAL_CHANNELS.resize, validation.value),
+        await invokeSafely(ipcRenderer, TERMINAL_CHANNELS.resize, validation.value),
         (value): value is null => value === null,
         TERMINAL_CHANNELS.resize,
       )
@@ -61,7 +62,7 @@ export function createTerminalBridge(
       const validation = validateCloseTerminalRequest(request)
       if (!validation.ok) return invalidRequest(TERMINAL_CHANNELS.close)
       return parseAppResult(
-        await ipcRenderer.invoke(TERMINAL_CHANNELS.close, validation.value),
+        await invokeSafely(ipcRenderer, TERMINAL_CHANNELS.close, validation.value),
         (value): value is Awaited<ReturnType<TerminalApi['close']>> extends AppResult<infer T>
           ? T
           : never => validateCloseTerminalResponse(value).ok,

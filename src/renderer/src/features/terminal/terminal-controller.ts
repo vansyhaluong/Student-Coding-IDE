@@ -108,6 +108,7 @@ export class TerminalController {
     createError: null,
   }
   private shutdownComplete = false
+  private interactionLocked = false
 
   constructor(private readonly options: TerminalControllerOptions) {
     this.maximumQueuedWriteBytes = options.maximumQueuedWriteBytes
@@ -127,8 +128,12 @@ export class TerminalController {
     return this.records.get(sessionId)?.host ?? null
   }
 
+  setInteractionLocked(locked: boolean): void {
+    this.interactionLocked = locked
+  }
+
   async createSession(projectId: ProjectId, mount: HTMLElement): Promise<TerminalSessionId | null> {
-    if (this.shutdownComplete || this.pending) return null
+    if (this.shutdownComplete || this.interactionLocked || this.pending) return null
     this.ensureEventSubscription()
     this.updateSnapshot(true, null)
 
@@ -159,11 +164,19 @@ export class TerminalController {
     pending.resizeObserver.observe(host)
     this.fitPending(pending)
 
-    const result = await this.options.getApi().create({
-      projectId,
-      cols: terminal.cols,
-      rows: terminal.rows,
-    })
+    let result: Awaited<ReturnType<TerminalContractApi['create']>>
+    try {
+      result = await this.options.getApi().create({
+        projectId,
+        cols: terminal.cols,
+        rows: terminal.rows,
+      })
+    } catch {
+      this.disposePending(pending)
+      if (this.pending === pending) this.pending = null
+      this.updateSnapshot(false, 'The application request could not be completed.')
+      return null
+    }
     if (pending.disposed || this.pending !== pending) return null
     if (!result.ok) {
       this.disposePending(pending)
@@ -239,11 +252,20 @@ export class TerminalController {
   }
 
   async closeSession(sessionId: TerminalSessionId): Promise<boolean> {
+    if (this.interactionLocked) return false
     const record = this.records.get(sessionId)
     if (!record || record.disposed || record.state === 'CLOSING') return false
     record.state = 'CLOSING'
     this.updateSnapshot()
-    const result = await this.options.getApi().close({ sessionId })
+    let result: Awaited<ReturnType<TerminalContractApi['close']>>
+    try {
+      result = await this.options.getApi().close({ sessionId })
+    } catch {
+      record.state = 'FAILED'
+      record.error = 'The application request could not be completed.'
+      this.updateSnapshot()
+      return false
+    }
     if (!result.ok) {
       record.state = 'FAILED'
       record.error = result.error.message
@@ -257,6 +279,7 @@ export class TerminalController {
   }
 
   fitSession(sessionId: TerminalSessionId): void {
+    if (this.interactionLocked) return
     const record = this.records.get(sessionId)
     if (!this.canFit(record)) return
     try {
@@ -275,6 +298,11 @@ export class TerminalController {
     void this.options.getApi().resize({ sessionId, cols, rows }).then((result) => {
       if (!result.ok && !record.disposed && record.state === 'RUNNING') {
         record.error = result.error.message
+        this.updateSnapshot()
+      }
+    }).catch(() => {
+      if (!record.disposed && record.state === 'RUNNING') {
+        record.error = 'The application request could not be completed.'
         this.updateSnapshot()
       }
     })
@@ -323,11 +351,17 @@ export class TerminalController {
   }
 
   private forwardInput(sessionId: TerminalSessionId, data: string): void {
+    if (this.interactionLocked) return
     const record = this.records.get(sessionId)
     if (!record || record.disposed || record.state !== 'RUNNING') return
     void this.options.getApi().input({ sessionId, data }).then((result) => {
       if (!result.ok && !record.disposed && record.state === 'RUNNING') {
         record.error = result.error.message
+        this.updateSnapshot()
+      }
+    }).catch(() => {
+      if (!record.disposed && record.state === 'RUNNING') {
+        record.error = 'The application request could not be completed.'
         this.updateSnapshot()
       }
     })
@@ -382,6 +416,7 @@ export class TerminalController {
   ): record is TerminalSessionRecord {
     return Boolean(
       record
+      && !this.interactionLocked
       && !record.disposed
       && record.visible
       && record.state === 'RUNNING'

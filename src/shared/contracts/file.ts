@@ -15,7 +15,9 @@ export const FILE_CHANNELS = {
   createDirectory: 'file:create-directory',
   rename: 'file:rename',
   delete: 'file:delete',
+  getStatus: 'file:get-status',
   changed: 'file:changed',
+  statusChanged: 'file:status-changed',
 } as const
 
 export type FileEntryKind = 'file' | 'directory' | 'other'
@@ -57,6 +59,11 @@ export interface FileChangedEvent {
   kind: 'changed' | 'renamed'
 }
 
+export interface ProjectFileSystemStatus {
+  projectId: ProjectId
+  state: 'AVAILABLE' | 'UNAVAILABLE'
+}
+
 export interface FileApi {
   listDirectory(
     projectId: ProjectId,
@@ -94,7 +101,15 @@ export interface FileApi {
     projectId: ProjectId,
     relativePath: string,
   ): Promise<AppResult<null>>
+  getStatus(projectId: ProjectId): Promise<AppResult<ProjectFileSystemStatus>>
   onChanged(listener: (event: FileChangedEvent) => void): () => void
+  onStatusChanged(listener: (status: ProjectFileSystemStatus) => void): () => void
+}
+
+export function validateProjectFileSystemStatusRequest(
+  value: unknown,
+): ValidationResult<{ projectId: ProjectId }> {
+  return validateStrings<{ projectId: ProjectId }>(value, ['projectId'])
 }
 
 export function validateProjectPathRequest(

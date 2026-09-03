@@ -23,6 +23,7 @@ interface TerminalPanelProps {
   height: number
   onHeightChange(height: number): void
   onClosePanel(): void
+  interactionLocked: boolean
 }
 
 export function TerminalPanel({
@@ -33,6 +34,7 @@ export function TerminalPanel({
   height,
   onHeightChange,
   onClosePanel,
+  interactionLocked,
 }: TerminalPanelProps) {
   const snapshot = useSyncExternalStore(
     (listener) => controller.subscribe(listener),
@@ -45,6 +47,10 @@ export function TerminalPanel({
   const pendingFocus = useRef<TerminalSessionId | null>(null)
   const sessions = snapshot.sessions
   const active = sessions.find((session) => session.sessionId === activeId) ?? null
+
+  useLayoutEffect(() => {
+    controller.setInteractionLocked(interactionLocked)
+  }, [controller, interactionLocked])
 
   useEffect(() => {
     if (active && sessions.some((session) => session.sessionId === active.sessionId)) return
@@ -62,14 +68,14 @@ export function TerminalPanel({
       if (!activeId) setActiveId(existingSessionId)
       return
     }
-    if (!project || snapshot.creating) return
+    if (interactionLocked || !project || snapshot.creating) return
     void controller.createSession(project.id, surface).then((sessionId) => {
       if (sessionId) {
         pendingFocus.current = sessionId
         setActiveId(sessionId)
       }
     })
-  }, [activeId, controller, open, openRequest, project, sessions, snapshot.creating])
+  }, [activeId, controller, interactionLocked, open, openRequest, project, sessions, snapshot.creating])
 
   useLayoutEffect(() => {
     if (!open || !activeId || !surfaceRef.current) return
@@ -85,6 +91,7 @@ export function TerminalPanel({
   }, [activeId, controller, open])
 
   const createTerminal = (): void => {
+    if (interactionLocked) return
     const surface = surfaceRef.current
     if (!project || !surface || snapshot.creating) return
     void controller.createSession(project.id, surface).then((sessionId) => {
@@ -99,6 +106,7 @@ export function TerminalPanel({
     setActiveId(sessionId)
   }
   const closeTerminal = async (sessionId: TerminalSessionId): Promise<void> => {
+    if (interactionLocked) return
     const index = sessions.findIndex((session) => session.sessionId === sessionId)
     const closed = await controller.closeSession(sessionId)
     if (!closed || activeId !== sessionId) return
@@ -155,7 +163,7 @@ export function TerminalPanel({
                 className="terminal-tab-close"
                 aria-label={`Close ${session.label}`}
                 title={`Close ${session.label}`}
-                disabled={session.state === 'CLOSING'}
+                disabled={interactionLocked || session.state === 'CLOSING'}
                 onClick={() => void closeTerminal(session.sessionId)}
               ><X /></button>
             </div>
@@ -166,7 +174,7 @@ export function TerminalPanel({
             variant="ghost"
             size="iconSmall"
             onClick={createTerminal}
-            disabled={!project || snapshot.creating}
+            disabled={interactionLocked || !project || snapshot.creating}
             title="New Terminal"
             aria-label="New Terminal"
           ><Plus /></Button>
@@ -186,7 +194,7 @@ export function TerminalPanel({
           <SquareTerminal aria-hidden="true" />
           <p>{project ? 'No terminal is open.' : 'Open a project to start a terminal.'}</p>
           {project && (
-            <Button size="small" onClick={createTerminal}>New Terminal</Button>
+            <Button size="small" onClick={createTerminal} disabled={interactionLocked}>New Terminal</Button>
           )}
         </div>
       )}

@@ -11,6 +11,7 @@ import type {
 interface SearchPanelProps {
   project: ProjectIdentity | null
   onNavigate(match: SearchMatch): void
+  interactionLocked?: boolean
 }
 
 type SearchStatus = 'idle' | 'debouncing' | 'searching' | 'complete' | 'cancelled' | 'error'
@@ -20,7 +21,11 @@ const LOADING_INDICATOR_DELAY_MS = 200
 
 let operationSequence = 0
 
-export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
+export function SearchPanel({
+  project,
+  onNavigate,
+  interactionLocked = false,
+}: SearchPanelProps) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<SearchStatus>('idle')
   const [matches, setMatches] = useState<SearchMatch[]>([])
@@ -33,7 +38,9 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const projectRef = useRef(project)
+  const interactionLockedRef = useRef(interactionLocked)
   projectRef.current = project
+  interactionLockedRef.current = interactionLocked
 
   const clearDebounceTimer = (): void => clearTimer(debounceTimer)
   const clearLoadingTimer = (): void => clearTimer(loadingTimer)
@@ -65,7 +72,9 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
     clearLoadingTimer()
     const operationId = activeOperation.current
     activeOperation.current = null
-    if (operationId) void window.studentIde.search.cancel(operationId)
+    if (operationId) {
+      void window.studentIde.search.cancel(operationId).catch(() => undefined)
+    }
     setQuery('')
     setMatches([])
     setSummary(null)
@@ -81,7 +90,9 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
     clearLoadingTimer()
     const operationId = activeOperation.current
     activeOperation.current = null
-    if (operationId) void window.studentIde.search.cancel(operationId)
+    if (operationId) {
+      void window.studentIde.search.cancel(operationId).catch(() => undefined)
+    }
   }, [])
 
   const groups = useMemo(() => {
@@ -95,6 +106,7 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
   }, [matches])
 
   const runSearch = async (nextQuery: string): Promise<void> => {
+    if (interactionLockedRef.current) return
     if (!project || nextQuery.trim().length === 0) {
       cancelActive()
       setMatches([])
@@ -108,7 +120,9 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
     const previous = activeOperation.current
     const operationId = createOperationId()
     activeOperation.current = operationId
-    if (previous) void window.studentIde.search.cancel(previous)
+    if (previous) {
+      void window.studentIde.search.cancel(previous).catch(() => undefined)
+    }
     setMatches([])
     setSummary(null)
     setError(null)
@@ -120,27 +134,37 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
     }, LOADING_INDICATOR_DELAY_MS)
     setCollapsedGroups(new Set())
     setSelectedMatch(null)
-    const result = await window.studentIde.search.start(
-      project.id,
-      operationId,
-      nextQuery,
-    )
-    if (!result.ok && activeOperation.current === operationId) {
+    try {
+      const result = await window.studentIde.search.start(
+        project.id,
+        operationId,
+        nextQuery,
+      )
+      if (result.ok || activeOperation.current !== operationId) return
       clearLoadingTimer()
       setLoadingVisible(false)
       activeOperation.current = null
       setError(result.error.message)
+      setStatus('error')
+    } catch {
+      if (activeOperation.current !== operationId) return
+      clearLoadingTimer()
+      setLoadingVisible(false)
+      activeOperation.current = null
+      setError('The application request could not be completed.')
       setStatus('error')
     }
   }
 
   const submit = async (event: FormEvent): Promise<void> => {
     event.preventDefault()
+    if (interactionLockedRef.current) return
     clearDebounceTimer()
     await runSearch(query)
   }
 
   const changeQuery = (nextQuery: string): void => {
+    if (interactionLockedRef.current) return
     setQuery(nextQuery)
     clearDebounceTimer()
     cancelActive()
@@ -165,7 +189,9 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
   const cancelActive = (): void => {
     const operationId = activeOperation.current
     activeOperation.current = null
-    if (operationId) void window.studentIde.search.cancel(operationId)
+    if (operationId) {
+      void window.studentIde.search.cancel(operationId).catch(() => undefined)
+    }
   }
 
   const clear = (): void => {
@@ -208,7 +234,7 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
             onKeyDown={(event) => {
               if (event.key === 'Escape' && query) clear()
             }}
-            disabled={!project}
+            disabled={!project || interactionLocked}
             maxLength={256}
             placeholder="Search"
             autoComplete="off"
@@ -265,6 +291,7 @@ export function SearchPanel({ project, onNavigate }: SearchPanelProps) {
                       type="button"
                       className={selectedMatch === matchKey(match, index) ? 'current' : undefined}
                       aria-current={selectedMatch === matchKey(match, index) ? 'true' : undefined}
+                      disabled={interactionLocked}
                       onClick={() => {
                         setSelectedMatch(matchKey(match, index))
                         onNavigate(match)

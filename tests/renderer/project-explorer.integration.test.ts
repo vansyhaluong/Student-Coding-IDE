@@ -30,6 +30,7 @@ const editorSelections = vi.hoisted(() => [] as Array<{
   endColumn: number
 }>)
 const editorReveals = vi.hoisted(() => [] as typeof editorSelections)
+const editorReadOnlyStates = vi.hoisted(() => [] as boolean[])
 
 vi.mock('../../src/renderer/src/features/editor/monaco', () => ({
   monaco: { KeyMod: { CtrlCmd: 1 }, KeyCode: { KeyS: 2 } },
@@ -64,7 +65,14 @@ vi.mock('@monaco-editor/react', async () => {
   const React = await import('react')
   return {
     loader: { config: vi.fn() },
-    default: function MockMonacoEditor({ onMount }: { onMount?: (editor: unknown) => void }) {
+    default: function MockMonacoEditor({
+      onMount,
+      options,
+    }: {
+      onMount?: (editor: unknown) => void
+      options?: { readOnly?: boolean }
+    }) {
+      editorReadOnlyStates.push(Boolean(options?.readOnly))
       React.useEffect(() => {
         onMount?.({
           addCommand: vi.fn((_binding: number, command: () => void) => {
@@ -90,13 +98,17 @@ import { editorModelManager } from '../../src/renderer/src/features/editor/edito
 import { ProjectExplorer } from '../../src/renderer/src/features/explorer/ProjectExplorer'
 import type {
   AppResult,
+  CreateTerminalResponse,
   FileApi,
   FileChangedEvent,
   LifecycleApi,
+  LifecycleStatus,
   FileEntry,
   ProjectApi,
   ProjectIdentity,
   ProjectChangedEvent,
+  ProjectFileSystemStatus,
+  ProjectTransitionSettledEvent,
   SearchApi,
   SearchEvent,
   SearchMatch,
@@ -109,15 +121,15 @@ const project = {
   name: 'Demo',
 } as ProjectIdentity
 
-const SEARCH_DEBOUNCE_TEST_TIMEOUT_MS = 3_000
-
 afterEach(() => {
+  vi.useRealTimers()
   cleanup()
   editorModelManager.dispose()
   monacoModels.splice(0)
   editorCommands.splice(0)
   editorSelections.splice(0)
   editorReveals.splice(0)
+  editorReadOnlyStates.splice(0)
   vi.restoreAllMocks()
 })
 
@@ -340,14 +352,15 @@ describe('Project Search integration', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
+    vi.useFakeTimers()
     fireEvent.change(input, { target: { value: 'save' } })
+    fireEvent.submit(input.closest('form')!)
 
-    await waitFor(
-      () => expect(start).toHaveBeenCalledOnce(),
-      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
-    )
+    expect(start).toHaveBeenCalledOnce()
     expect(screen.queryByText('Searching…')).toBeNull()
-    expect(await screen.findByText('Searching…')).not.toBeNull()
+    await act(async () => vi.advanceTimersByTimeAsync(200))
+    expect(screen.getByText('Searching…')).not.toBeNull()
+    vi.useRealTimers()
     const operationId = start.mock.calls[0]![1]
     act(() => searchEvents.publish(batchEvent(operationId, [
       searchMatch('src/main.ts', 2, 4, 8, 'const save = true'),
@@ -391,18 +404,14 @@ describe('Project Search integration', () => {
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'missing' } })
-    await waitFor(
-      () => expect(start).toHaveBeenCalledOnce(),
-      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
-    )
+    fireEvent.submit(input.closest('form')!)
+    expect(start).toHaveBeenCalledOnce()
     act(() => searchEvents.publish(completeEvent(start.mock.calls[0]![1])))
     expect(await screen.findByText('No results found.')).not.toBeNull()
 
     fireEvent.change(input, { target: { value: 'locked' } })
-    await waitFor(
-      () => expect(start).toHaveBeenCalledTimes(2),
-      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
-    )
+    fireEvent.submit(input.closest('form')!)
+    expect(start).toHaveBeenCalledTimes(2)
     act(() => searchEvents.publish({
       type: 'error',
       projectId: project.id,
@@ -431,15 +440,11 @@ describe('Project Search integration', () => {
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'alpha' } })
-    await waitFor(
-      () => expect(start).toHaveBeenCalledTimes(1),
-      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
-    )
+    fireEvent.submit(input.closest('form')!)
+    expect(start).toHaveBeenCalledTimes(1)
     fireEvent.change(input, { target: { value: 'beta' } })
-    await waitFor(
-      () => expect(start).toHaveBeenCalledTimes(2),
-      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
-    )
+    fireEvent.submit(input.closest('form')!)
+    expect(start).toHaveBeenCalledTimes(2)
     const firstId = start.mock.calls[0]![1]
     const secondId = start.mock.calls[1]![1]
 
@@ -469,15 +474,17 @@ describe('Project Search integration', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
+    vi.useFakeTimers()
 
     fireEvent.change(input, { target: { value: 'sa' } })
     fireEvent.change(input, { target: { value: 'save' } })
 
-    await waitFor(
-      () => expect(start).toHaveBeenCalledOnce(),
-      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
-    )
+    await act(async () => vi.advanceTimersByTimeAsync(179))
+    expect(start).not.toHaveBeenCalled()
+    await act(async () => vi.advanceTimersByTimeAsync(1))
+    expect(start).toHaveBeenCalledOnce()
     expect(start.mock.calls[0]?.[2]).toBe('save')
+    vi.useRealTimers()
   })
 
   it('clears results on project switch and ignores late old-project events', async () => {
@@ -502,10 +509,8 @@ describe('Project Search integration', () => {
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'alpha' } })
-    await waitFor(
-      () => expect(start).toHaveBeenCalledOnce(),
-      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
-    )
+    fireEvent.submit(input.closest('form')!)
+    expect(start).toHaveBeenCalledOnce()
     const operationId = start.mock.calls[0]![1]
     act(() => searchEvents.publish(batchEvent(operationId, [
       searchMatch('old.ts', 1, 1, 6, 'alpha'),
@@ -546,10 +551,8 @@ describe('Project Search integration', () => {
     fireEvent.change(input, {
       target: { value: 'save' },
     })
-    await waitFor(
-      () => expect(start).toHaveBeenCalledOnce(),
-      { timeout: SEARCH_DEBOUNCE_TEST_TIMEOUT_MS },
-    )
+    fireEvent.submit(input.closest('form')!)
+    expect(start).toHaveBeenCalledOnce()
     const operationId = start.mock.calls[0]![1]
     act(() => searchEvents.publish(batchEvent(operationId, [
       searchMatch('main.ts', 1, 6, 10, 'disk save'),
@@ -619,6 +622,26 @@ describe('App project integration', () => {
     expect(screen.queryByRole('dialog', { name: 'Create project' })).toBeNull()
   })
 
+  it('settles project loading state when a transport promise rejects', async () => {
+    installApi({
+      project: {
+        getActive: async () => success(null),
+        open: async () => Promise.reject(new Error('raw transport rejection')),
+      },
+    })
+    render(createElement(App))
+    await screen.findByText('No folder is currently open.')
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open project' })[0]!)
+
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'The application request could not be completed.',
+    )
+    expect(screen.queryByText('Loading…')).toBeNull()
+    expect(screen.getAllByRole('button', { name: 'Open project' })[0]!
+      .hasAttribute('disabled')).toBe(false)
+  })
+
   it('retains the active canonical model across an App remount in the same renderer session', async () => {
     installApi({
       file: {
@@ -683,7 +706,7 @@ describe('App project integration', () => {
     let publishProjectChanged: ((event: ProjectChangedEvent) => void) | undefined
     const read = vi.fn()
       .mockResolvedValueOnce(success('A'))
-      .mockResolvedValueOnce(success('disk B'))
+      .mockResolvedValue(success('disk B'))
     installApi({
       file: {
         listDirectory: async () => success([file('main.ts')]),
@@ -889,6 +912,7 @@ describe('App project integration', () => {
       '11111111-1111-4111-8111-111111111111',
       false,
     ))
+    expect(editorReadOnlyStates.at(-1)).toBe(false)
     expect(screen.getByRole('button', { name: 'Close main.ts' })).not.toBeNull()
 
     act(() => requestUnsaved?.(transitionEvent('22222222-2222-4222-8222-222222222222')))
@@ -1047,11 +1071,336 @@ describe('App project integration', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
+  it('treats an expected user-cancelled project transition as neutral', async () => {
+    installApi({
+      project: {
+        getActive: async () => success(project),
+        close: async () => expectedProjectCancellation(),
+      },
+    })
+    render(createElement(App))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Close project' }))
+
+    await waitFor(() => expect(screen.getByText('Ready')).not.toBeNull())
+    expect(screen.queryByText('Action failed')).toBeNull()
+    expect(screen.queryByText('The project transition was cancelled.')).toBeNull()
+    expect(screen.getAllByText('Demo').length).toBeGreaterThan(0)
+  })
+
+  it('continues to report unrelated PROCESS_CANCELLED failures', async () => {
+    installApi({
+      project: {
+        getActive: async () => success(project),
+        close: async () => ({
+          ok: false,
+          error: {
+            code: 'PROCESS_CANCELLED',
+            message: 'An unrelated operation was cancelled.',
+            operation: 'terminal:create',
+            retryable: false,
+          },
+        }),
+      },
+    })
+    render(createElement(App))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Close project' }))
+
+    expect(await screen.findByText('An unrelated operation was cancelled.')).not.toBeNull()
+    expect(screen.getByText('Action failed')).not.toBeNull()
+  })
+
+  it('blocks editor and feature mutations after approval, then restores the old project after cleanup failure', async () => {
+    let requestUnsaved: ((event: UnsavedTransitionRequestEvent) => void) | undefined
+    const openResult = deferred<AppResult<ProjectIdentity | null>>()
+    const resolveUnsavedTransition = vi.fn(async () => success(null))
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('A'),
+      },
+      lifecycle: {
+        onUnsavedTransitionRequested: (listener) => {
+          requestUnsaved = listener
+          return () => undefined
+        },
+        resolveUnsavedTransition,
+      },
+      project: {
+        getActive: async () => success(project),
+        open: async () => openResult.promise,
+      },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    act(() => monacoModels[0]!.setValue('dirty before approval'))
+    fireEvent.click(screen.getByRole('button', { name: 'Switch project' }))
+
+    act(() => requestUnsaved?.(transitionEvent(
+      '88888888-8888-4888-8888-888888888888',
+      true,
+      'project-switch',
+    )))
+    fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
+    fireEvent.click(await screen.findByRole('button', {
+      name: 'Close Terminals & Continue',
+    }))
+    await waitFor(() => expect(resolveUnsavedTransition).toHaveBeenCalledWith(
+      '88888888-8888-4888-8888-888888888888',
+      true,
+    ))
+    await waitFor(() => expect(editorReadOnlyStates.at(-1)).toBe(true))
+    expect(screen.getByTitle('New file').hasAttribute('disabled')).toBe(true)
+    expect(screen.getByTitle('New folder').hasAttribute('disabled')).toBe(true)
+    expect(screen.getByTitle('New Terminal').hasAttribute('disabled')).toBe(true)
+
+    const model = monacoModels[0]!
+    const valueBeforeAttempt = model.getValue()
+    const versionBeforeAttempt = model.getVersionId()
+    fireEvent.click(screen.getByRole('button', { name: 'Close main.ts' }))
+    expect(screen.queryByRole('dialog', { name: 'Unsaved changes' })).toBeNull()
+    expect(model.disposed).toBe(false)
+    if (!editorReadOnlyStates.at(-1)) model.setValue('edit after approval')
+    expect(model.getValue()).toBe(valueBeforeAttempt)
+    expect(model.getVersionId()).toBe(versionBeforeAttempt)
+
+    await act(async () => openResult.resolve(failure('Terminal cleanup failed')))
+    await waitFor(() => expect(editorReadOnlyStates.at(-1)).toBe(false))
+    expect(model.disposed).toBe(false)
+    expect(model.getValue()).toBe('dirty before approval')
+    expect(screen.getByRole('button', { name: 'Switch project' }).hasAttribute('disabled')).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Close main.ts' }))
+    expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  })
+
+  it('keeps an ambiguous transport transition locked until its matching settlement', async () => {
+    let requestUnsaved: ((event: UnsavedTransitionRequestEvent) => void) | undefined
+    let settleProjectTransition: (
+      (event: ProjectTransitionSettledEvent) => void
+    ) | undefined
+    const openResult = deferred<AppResult<ProjectIdentity | null>>()
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('A'),
+      },
+      lifecycle: {
+        resolveUnsavedTransition: async () => transportFailure<null>(),
+        onUnsavedTransitionRequested: (listener) => {
+          requestUnsaved = listener
+          return () => undefined
+        },
+        onProjectTransitionSettled: (listener) => {
+          settleProjectTransition = listener
+          return () => undefined
+        },
+      },
+      project: {
+        getActive: async () => success(project),
+        open: async () => openResult.promise,
+      },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    act(() => monacoModels[0]!.setValue('dirty'))
+    fireEvent.click(screen.getByRole('button', { name: 'Switch project' }))
+    const transitionId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    act(() => requestUnsaved?.(transitionEvent(
+      transitionId,
+      false,
+      'project-switch',
+    )))
+    fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
+    await waitFor(() => expect(editorReadOnlyStates.at(-1)).toBe(true))
+
+    await act(async () => openResult.resolve(transportFailure<ProjectIdentity | null>()))
+    expect(editorReadOnlyStates.at(-1)).toBe(true)
+    expect(monacoModels[0]!.disposed).toBe(false)
+
+    act(() => settleProjectTransition?.({
+      transitionId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      outcome: 'failed',
+    }))
+    expect(editorReadOnlyStates.at(-1)).toBe(true)
+
+    act(() => settleProjectTransition?.({ transitionId, outcome: 'failed' }))
+    await waitFor(() => expect(editorReadOnlyStates.at(-1)).toBe(false))
+    expect(monacoModels[0]!.disposed).toBe(false)
+    expect(monacoModels[0]!.getValue()).toBe('dirty')
+
+    act(() => settleProjectTransition?.({ transitionId, outcome: 'failed' }))
+    expect(editorReadOnlyStates.at(-1)).toBe(false)
+  })
+
+  it('finishes the existing Save path before entering the committed transition lock', async () => {
+    let requestUnsaved: ((event: UnsavedTransitionRequestEvent) => void) | undefined
+    const openResult = deferred<AppResult<ProjectIdentity | null>>()
+    const write = vi.fn(async () => success(null))
+    const resolveUnsavedTransition = vi.fn(async () => success(null))
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('A'),
+        write,
+      },
+      lifecycle: {
+        onUnsavedTransitionRequested: (listener) => {
+          requestUnsaved = listener
+          return () => undefined
+        },
+        resolveUnsavedTransition,
+      },
+      project: {
+        getActive: async () => success(project),
+        open: async () => openResult.promise,
+      },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    act(() => monacoModels[0]!.setValue('saved before approval'))
+    fireEvent.click(screen.getByRole('button', { name: 'Switch project' }))
+    act(() => requestUnsaved?.(transitionEvent(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      false,
+      'project-switch',
+    )))
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(write).toHaveBeenCalledWith(
+      project.id,
+      'main.ts',
+      'saved before approval',
+    ))
+    await waitFor(() => expect(resolveUnsavedTransition).toHaveBeenCalledWith(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      true,
+    ))
+    expect(write.mock.invocationCallOrder[0]).toBeLessThan(
+      resolveUnsavedTransition.mock.invocationCallOrder[0]!,
+    )
+    expect(editorReadOnlyStates.at(-1)).toBe(true)
+
+    await act(async () => openResult.resolve(failure('Terminal cleanup failed')))
+    await waitFor(() => expect(editorReadOnlyStates.at(-1)).toBe(false))
+  })
+
+  it('keeps the transition lock through success and disposes old project models on commit', async () => {
+    let requestUnsaved: ((event: UnsavedTransitionRequestEvent) => void) | undefined
+    let publishProjectChanged: ((event: ProjectChangedEvent) => void) | undefined
+    const openResult = deferred<AppResult<ProjectIdentity | null>>()
+    const nextProject = {
+      id: 'project_aaaaaaaaaaaaaaaaaaaaaaaa',
+      name: 'Next',
+    } as ProjectIdentity
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('A'),
+      },
+      lifecycle: {
+        onUnsavedTransitionRequested: (listener) => {
+          requestUnsaved = listener
+          return () => undefined
+        },
+      },
+      project: {
+        getActive: async () => success(project),
+        open: async () => openResult.promise,
+        onChanged: (listener) => {
+          publishProjectChanged = listener
+          return () => undefined
+        },
+      },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    act(() => monacoModels[0]!.setValue('dirty'))
+    fireEvent.click(screen.getByRole('button', { name: 'Switch project' }))
+    act(() => requestUnsaved?.(transitionEvent(
+      '99999999-9999-4999-8999-999999999999',
+      false,
+      'project-switch',
+    )))
+    fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
+    await waitFor(() => expect(editorReadOnlyStates.at(-1)).toBe(true))
+
+    act(() => publishProjectChanged?.({ activeProject: nextProject }))
+    await act(async () => openResult.resolve(transportFailure<ProjectIdentity | null>()))
+    await waitFor(() => expect(monacoModels[0]!.disposed).toBe(true))
+    expect((await screen.findAllByText('Next')).length).toBeGreaterThan(0)
+  })
+
+  it('reflects STOPPING, rejects new work, and cleans up lifecycle subscriptions on remount', async () => {
+    const statusListeners = new Set<(status: LifecycleStatus) => void>()
+    const settlementListeners = new Set<(
+      event: ProjectTransitionSettledEvent,
+    ) => void>()
+    const unsubscribe = vi.fn<(listener: (status: LifecycleStatus) => void) => void>(
+      (listener) => statusListeners.delete(listener),
+    )
+    const onStatusChanged = vi.fn((listener: (status: LifecycleStatus) => void) => {
+      statusListeners.add(listener)
+      return () => unsubscribe(listener)
+    })
+    const unsubscribeSettlement = vi.fn((
+      listener: (event: ProjectTransitionSettledEvent) => void,
+    ) => settlementListeners.delete(listener))
+    const onProjectTransitionSettled = vi.fn((
+      listener: (event: ProjectTransitionSettledEvent) => void,
+    ) => {
+      settlementListeners.add(listener)
+      return () => unsubscribeSettlement(listener)
+    })
+    const terminalCreate = vi.fn(async () => failure<CreateTerminalResponse>('must not be called'))
+    const api = installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('A'),
+        createFile: async () => failure('must not be called'),
+      },
+      lifecycle: { onStatusChanged, onProjectTransitionSettled },
+      project: { getActive: async () => success(project) },
+    })
+    api.terminal.create = terminalCreate
+    const view = render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+
+    act(() => {
+      for (const listener of statusListeners) listener({ state: 'STOPPING' })
+    })
+    await waitFor(() => expect(editorReadOnlyStates.at(-1)).toBe(true))
+    expect(screen.getByRole('button', { name: 'Switch project' }).hasAttribute('disabled')).toBe(true)
+    expect(screen.getByTitle('New file').hasAttribute('disabled')).toBe(true)
+    expect(screen.getByTitle('New Terminal').hasAttribute('disabled')).toBe(true)
+    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    expect(screen.getByLabelText('Search project').hasAttribute('disabled')).toBe(true)
+    expect(terminalCreate).not.toHaveBeenCalled()
+
+    view.unmount()
+    expect(unsubscribe).toHaveBeenCalledOnce()
+    expect(unsubscribeSettlement).toHaveBeenCalledOnce()
+    expect(statusListeners.size).toBe(0)
+    expect(settlementListeners.size).toBe(0)
+    render(createElement(App))
+    await screen.findByRole('button', { name: 'Close project' })
+    expect(onStatusChanged).toHaveBeenCalledTimes(2)
+    expect(onProjectTransitionSettled).toHaveBeenCalledTimes(2)
+    expect(statusListeners.size).toBe(1)
+    expect(settlementListeners.size).toBe(1)
+  })
+
   it('reloads a clean external change and preserves dirty content with a warning', async () => {
     const changedEvents = createFileChangedEventBus()
     const read = vi.fn()
       .mockResolvedValueOnce(success('A'))
-      .mockResolvedValueOnce(success('disk B'))
+      .mockResolvedValue(success('disk B'))
     installApi({
       file: {
         listDirectory: async () => success([file('main.ts')]),
@@ -1083,7 +1432,92 @@ describe('App project integration', () => {
     }))
     expect((await screen.findByRole('alert')).textContent).toContain('changed on disk')
     expect(monacoModels[0]?.getValue()).toBe('mine')
-    expect(read).toHaveBeenCalledTimes(2)
+    expect(read).toHaveBeenCalledTimes(3)
+  })
+
+  it('marks an externally deleted clean file missing without discarding its buffer', async () => {
+    const changedEvents = createFileChangedEventBus()
+    const read = vi.fn()
+      .mockResolvedValueOnce(success('retained content'))
+      .mockResolvedValueOnce(notFound<string>())
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read,
+        onChanged: changedEvents.subscribe,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    const retainedModel = monacoModels[0]!
+
+    act(() => changedEvents.publish(fileChanged('main.ts')))
+
+    expect((await screen.findByRole('alert')).textContent).toContain('deleted outside the IDE')
+    expect(retainedModel.getValue()).toBe('retained content')
+    expect(retainedModel.disposed).toBe(false)
+    expect(screen.queryByLabelText('Unsaved changes')).toBeNull()
+  })
+
+  it('preserves a dirty externally deleted buffer and blocks normal save', async () => {
+    const changedEvents = createFileChangedEventBus()
+    const write = vi.fn(async () => success(null))
+    const read = vi.fn()
+      .mockResolvedValueOnce(success('disk content'))
+      .mockResolvedValueOnce(notFound<string>())
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read,
+        write,
+        onChanged: changedEvents.subscribe,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    act(() => monacoModels[0]!.setValue('my unsaved work'))
+
+    act(() => changedEvents.publish(fileChanged('main.ts')))
+    await screen.findByText(/deleted outside the IDE/)
+    await act(async () => editorCommands[0]?.())
+
+    expect(monacoModels[0]!.getValue()).toBe('my unsaved work')
+    expect(monacoModels[0]!.disposed).toBe(false)
+    expect(screen.getByLabelText('Unsaved changes')).not.toBeNull()
+    expect(write).not.toHaveBeenCalled()
+    expect(screen.getByText(/no longer exists on disk/)).not.toBeNull()
+  })
+
+  it('ignores a stale missing-file response after a newer external reload succeeds', async () => {
+    const changedEvents = createFileChangedEventBus()
+    const staleMissing = deferred<AppResult<string>>()
+    const read = vi.fn()
+      .mockResolvedValueOnce(success('A'))
+      .mockReturnValueOnce(staleMissing.promise)
+      .mockResolvedValueOnce(success('new disk content'))
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read,
+        onChanged: changedEvents.subscribe,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+
+    act(() => changedEvents.publish(fileChanged('main.ts')))
+    act(() => changedEvents.publish(fileChanged('main.ts')))
+    await waitFor(() => expect(monacoModels[0]!.getValue()).toBe('new disk content'))
+    await act(async () => staleMissing.resolve(notFound<string>()))
+
+    expect(screen.queryByText(/deleted outside the IDE/)).toBeNull()
+    expect(monacoModels[0]!.getValue()).toBe('new disk content')
   })
 
   it('applies a pending clean reload after another document is opened', async () => {
@@ -1370,6 +1804,105 @@ describe('App project integration', () => {
     expect(screen.queryByRole('button', { name: 'Close a.ts' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Close b.ts' })).toBeNull()
   })
+
+  it('disposes a dirty model only after a confirmed delete succeeds', async () => {
+    const deleteResult = deferred<AppResult<null>>()
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('original'),
+        delete: async () => deleteResult.promise,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    act(() => monacoModels[0]!.setValue('discard after success'))
+    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
+    fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
+
+    expect(monacoModels[0]!.disposed).toBe(false)
+    expect(monacoModels[0]!.getValue()).toBe('discard after success')
+    await act(async () => deleteResult.resolve(success(null)))
+    await waitFor(() => expect(monacoModels[0]!.disposed).toBe(true))
+  })
+
+  it('preserves a dirty model and content when confirmed deletion fails', async () => {
+    const deleteEntry = vi.fn()
+      .mockResolvedValueOnce(failure<null>('Recycle Bin unavailable'))
+      .mockResolvedValueOnce(success(null))
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('original'),
+        delete: deleteEntry,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    act(() => monacoModels[0]!.setValue('must survive'))
+    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
+    fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
+
+    expect(await screen.findByText('Recycle Bin unavailable')).not.toBeNull()
+    expect(monacoModels[0]!.disposed).toBe(false)
+    expect(monacoModels[0]!.getValue()).toBe('must survive')
+    expect(screen.getByLabelText('Unsaved changes')).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Close main.ts' })).not.toBeNull()
+    expect(deleteEntry).toHaveBeenCalledOnce()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
+    fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
+    await waitFor(() => expect(deleteEntry).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(monacoModels[0]!.disposed).toBe(true))
+  })
+
+  it('preserves a clean model when confirmed deletion fails', async () => {
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        read: async () => success('clean content'),
+        delete: async () => failure('Recycle Bin unavailable'),
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    await screen.findByTestId('monaco-editor')
+    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
+
+    expect(await screen.findByText('Recycle Bin unavailable')).not.toBeNull()
+    expect(monacoModels[0]!.disposed).toBe(false)
+    expect(monacoModels[0]!.getValue()).toBe('clean content')
+  })
+
+  it('locks stale filesystem interactions and leaves Close project available', async () => {
+    const statuses = createFileSystemStatusEventBus()
+    installApi({
+      file: {
+        listDirectory: async () => success([file('main.ts')]),
+        onStatusChanged: statuses.subscribe,
+      },
+      project: { getActive: async () => success(project) },
+    })
+    render(createElement(App))
+    await screen.findByTitle('main.ts')
+
+    act(() => statuses.publish({ projectId: project.id, state: 'UNAVAILABLE' }))
+
+    expect(await screen.findByText('Project unavailable')).not.toBeNull()
+    expect(screen.getByText(/file monitoring stopped/)).not.toBeNull()
+    expect(screen.getByTitle('New file').hasAttribute('disabled')).toBe(true)
+    expect(screen.getByTitle('New folder').hasAttribute('disabled')).toBe(true)
+    expect(screen.getByRole('button', { name: 'Close project' }).hasAttribute('disabled')).toBe(false)
+  })
 })
 
 function renderExplorer(): void {
@@ -1381,7 +1914,7 @@ function explorerProps() {
     project,
     onOpenFile: vi.fn(),
     onRenamed: vi.fn(),
-    onRequestDelete: vi.fn(async () => true),
+    onRequestDelete: vi.fn(async () => () => undefined),
   }
 }
 
@@ -1402,6 +1935,8 @@ function installApi(overrides: {
       rename: async () => failure('Not configured'),
       delete: async () => failure('Not configured'),
       onChanged: () => () => undefined,
+      getStatus: async (projectId) => success({ projectId, state: 'AVAILABLE' }),
+      onStatusChanged: () => () => undefined,
       ...overrides.file,
     },
     lifecycle: {
@@ -1409,6 +1944,7 @@ function installApi(overrides: {
       onStatusChanged: () => () => undefined,
       resolveUnsavedTransition: async () => success(null),
       onUnsavedTransitionRequested: () => () => undefined,
+      onProjectTransitionSettled: () => () => undefined,
       ...overrides.lifecycle,
     },
     project: {
@@ -1470,6 +2006,41 @@ function failure<T>(message: string): AppResult<T> {
   }
 }
 
+function notFound<T>(): AppResult<T> {
+  return {
+    ok: false,
+    error: {
+      code: 'NOT_FOUND',
+      message: 'The file no longer exists.',
+      retryable: false,
+    },
+  }
+}
+
+function expectedProjectCancellation<T>(): AppResult<T> {
+  return {
+    ok: false,
+    error: {
+      code: 'PROCESS_CANCELLED',
+      message: 'The project transition was cancelled.',
+      operation: 'project:close',
+      retryable: false,
+    },
+  }
+}
+
+function transportFailure<T>(): AppResult<T> {
+  return {
+    ok: false,
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'The application request could not be completed.',
+      details: { boundaryFailure: 'transport' },
+      retryable: true,
+    },
+  }
+}
+
 function transitionEvent(
   transitionId: string,
   terminalConfirmationRequired = false,
@@ -1503,6 +2074,22 @@ function createFileChangedEventBus(): {
     },
     publish(event) {
       for (const listener of [...listeners]) listener(event)
+    },
+  }
+}
+
+function createFileSystemStatusEventBus(): {
+  subscribe: FileApi['onStatusChanged']
+  publish(status: ProjectFileSystemStatus): void
+} {
+  const listeners = new Set<(status: ProjectFileSystemStatus) => void>()
+  return {
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    publish(status) {
+      for (const listener of [...listeners]) listener(status)
     },
   }
 }

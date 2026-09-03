@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 
 interface SidebarResizerProps {
   side: 'left' | 'right'
@@ -8,20 +8,30 @@ interface SidebarResizerProps {
 }
 
 export function SidebarResizer({ side, width, onResize, getMaximum }: SidebarResizerProps) {
+  const activeCleanup = useRef<(() => void) | null>(null)
+
+  useEffect(() => () => activeCleanup.current?.(), [])
+
   const startResize = (event: ReactPointerEvent<HTMLDivElement>): void => {
     event.preventDefault()
+    activeCleanup.current?.()
     const resize = (pointerEvent: PointerEvent): void => {
       const requested = side === 'left'
         ? pointerEvent.clientX
         : window.innerWidth - pointerEvent.clientX
       onResize(Math.min(getMaximum(), Math.max(220, requested)))
     }
+    let stopped = false
     const stop = (): void => {
+      if (stopped) return
+      stopped = true
       document.body.classList.remove('is-resizing-sidebar')
       window.removeEventListener('pointermove', resize)
       window.removeEventListener('pointerup', stop)
       window.removeEventListener('pointercancel', stop)
+      if (activeCleanup.current === stop) activeCleanup.current = null
     }
+    activeCleanup.current = stop
     document.body.classList.add('is-resizing-sidebar')
     window.addEventListener('pointermove', resize)
     window.addEventListener('pointerup', stop)

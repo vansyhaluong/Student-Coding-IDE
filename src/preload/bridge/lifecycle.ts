@@ -2,12 +2,14 @@ import type {
   AppResult,
   LifecycleApi,
   LifecycleStatus,
+  ProjectTransitionSettledEvent,
   UnsavedTransitionRequestEvent,
 } from '../../shared/contracts'
 import {
   APPLICATION_STATES,
   LIFECYCLE_CHANNELS,
 } from '../../shared/contracts'
+import { invokeSafely } from './invoke'
 
 interface IpcEventLike {
   readonly sender?: unknown
@@ -30,7 +32,8 @@ export function createLifecycleBridge(
 ): LifecycleApi {
   return {
     async getStatus(): Promise<AppResult<LifecycleStatus>> {
-      const response = await ipcRenderer.invoke(
+      const response = await invokeSafely(
+        ipcRenderer,
         LIFECYCLE_CHANNELS.getStatus,
         {},
       )
@@ -43,6 +46,7 @@ export function createLifecycleBridge(
           code: 'INTERNAL_ERROR',
           message: 'The application returned an invalid response.',
           operation: LIFECYCLE_CHANNELS.getStatus,
+          details: { boundaryFailure: 'response-validation' },
           retryable: false,
         },
       }
@@ -64,7 +68,8 @@ export function createLifecycleBridge(
     },
 
     async resolveUnsavedTransition(transitionId, proceed) {
-      const response = await ipcRenderer.invoke(
+      const response = await invokeSafely(
+        ipcRenderer,
         LIFECYCLE_CHANNELS.resolveUnsavedTransition,
         { transitionId, proceed },
       )
@@ -78,6 +83,17 @@ export function createLifecycleBridge(
       ipcRenderer.on(LIFECYCLE_CHANNELS.unsavedTransitionRequested, wrapped)
       return () => ipcRenderer.removeListener(
         LIFECYCLE_CHANNELS.unsavedTransitionRequested,
+        wrapped,
+      )
+    },
+
+    onProjectTransitionSettled(listener): () => void {
+      const wrapped = (_event: IpcEventLike, payload: unknown): void => {
+        if (isProjectTransitionSettledEvent(payload)) listener(payload)
+      }
+      ipcRenderer.on(LIFECYCLE_CHANNELS.projectTransitionSettled, wrapped)
+      return () => ipcRenderer.removeListener(
+        LIFECYCLE_CHANNELS.projectTransitionSettled,
         wrapped,
       )
     },
@@ -114,6 +130,7 @@ function parseNullResult(value: unknown, operation: string): AppResult<null> {
       code: 'INTERNAL_ERROR',
       message: 'The application returned an invalid response.',
       operation,
+      details: { boundaryFailure: 'response-validation' },
       retryable: false,
     },
   }
@@ -173,4 +190,19 @@ function isUnsavedTransitionRequestEvent(
     && typeof value.project.name === 'string'
     && 'terminalConfirmationRequired' in value
     && typeof value.terminalConfirmationRequired === 'boolean'
+}
+
+function isProjectTransitionSettledEvent(
+  value: unknown,
+): value is ProjectTransitionSettledEvent {
+  return typeof value === 'object'
+    && value !== null
+    && Object.keys(value).length === 2
+    && 'transitionId' in value
+    && typeof value.transitionId === 'string'
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value.transitionId,
+    )
+    && 'outcome' in value
+    && value.outcome === 'failed'
 }
