@@ -54,6 +54,11 @@ reference evidence, not source or runtime dependencies.
   no language provider, Run service, Git service, or Settings UX has been
   implemented.
 - No Orca source, module, submodule, or runtime dependency is present.
+- Phase 2F packages A–E are complete. The audit and corrective passes closed
+  the Phase 2 data-loss, boundary-error, unavailable-root, deleted-file,
+  cancellation, cleanup, integration, Search-test timing, native-verification,
+  and documentation findings. Recent-project list management remains Phase 6
+  scope, and the jsdom canvas diagnostic remains non-blocking test noise.
 - Existing quality commands are `npm run typecheck`, `npm run lint`, and
   `npm run build`.
 - Vitest is the Phase 2A unit/main/service/adapter integration test runner.
@@ -106,7 +111,7 @@ before affected work continues.
 | Phase 2C — Monaco Editor, Tabs & Save | `COMPLETE` | Safe multi-tab editing and unsaved protection |
 | Phase 2D — Project Search | `COMPLETE` | Responsive, cancellable project search |
 | Phase 2E — Integrated Terminal | `COMPLETE` | 2E-J corrective Steps 1–3 and final consolidated review passed |
-| Phase 2F — Core IDE Stabilization | `NOT_STARTED` | Integrated Core IDE workflow and cleanup |
+| Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `NOT_STARTED` | Tier 1/2 intelligence, diagnostics, and Problems |
 | Phase 4 — Run & Output | `NOT_STARTED` | Trusted Run strategies, output, stop, and cleanup |
 | Phase 5 — Git Integration | `NOT_STARTED` | Basic local Git workflow through typed GitService |
@@ -145,7 +150,9 @@ bounded search, navigation, Orca/STYLEGUIDE corrective UI pass, automated gates,
 adversarial review, and manual Electron smoke passed before it moved to
 `COMPLETE`. Phase 2E-A through Phase 2E-J are `COMPLETE`; corrective Steps 1–3
 and the explicitly authorized final consolidated review passed. Phase 2E is
-`COMPLETE`; Phase 2F and later work remain `NOT_STARTED`.
+`COMPLETE`. Phase 2F completed its A–E audit, corrective, resource, integration,
+native, performance, security, and documentation gates. Phase 3 and later work
+remain `NOT_STARTED`.
 
 ## 7. Dependency graph
 
@@ -1438,6 +1445,31 @@ Phase 2E acceptance/exit gate passes; Phase 2E is `COMPLETE`.
 - Update the codebase map and thesis changelog after verification.
 
 ### 8.6 Phase 2F — Core IDE Stabilization
+
+**Status:** `COMPLETE`
+
+Phase 2F-A recorded findings 001–011. Phase 2F-B corrected boundary/lifecycle
+handling, Phase 2F-C corrected renderer resource cleanup and deferred
+Recent Projects policy to Phase 6, Phase 2F-D corrected delete commit safety,
+filesystem unavailability, external deletion state, and expected-cancellation
+presentation, and Phase 2F-E completed the integrated verification. Final
+evidence passed 328 tests across 33 files, typecheck, lint, production build,
+patch/rebuild capability checks, Windows Job and production-service smokes,
+bounded 500-file Search smoke, and `git diff --check`.
+
+| Audit finding | Final status | Resolution |
+|---|---|---|
+| 2F-A-001 | `CLOSED` | Post-approval interaction lock and authoritative transition settlement prevent edit-loss races. |
+| 2F-A-002 | `CLOSED` | Cross-feature workflow, transition, reload, shutdown, and stale-event scenarios have layered integration coverage. |
+| 2F-A-003 | `CLOSED` | STOPPING locks new work and preload invoke rejection/response failures normalize safely. |
+| 2F-A-004 | `CLOSED` | Editor disposal commits only after successful Recycle Bin deletion. |
+| 2F-A-005 | `CLOSED` | Active filesystem authority publishes project-scoped `AVAILABLE`/`UNAVAILABLE` state. |
+| 2F-A-006 | `CLOSED` | External deletion retains the buffer in an explicit disk-missing state and blocks normal save. |
+| 2F-A-007 | `CLOSED` | Known user-cancelled project transitions are neutral; unrelated failures remain visible. |
+| 2F-A-008 | `CLOSED` | Pointer resize listeners and body state are removed idempotently on unmount. |
+| 2F-A-009 | `DEFERRED` | Phase 2 metadata remains minimal; Recent Projects management/limit policy belongs to Phase 6. |
+| 2F-A-010 | `CLOSED` | Phase 2 status, implemented behavior, and final verification counts match current evidence. |
+| 2F-A-011 | `POLISH` | Stray test comment removed; unsupported jsdom canvas diagnostic retained as non-blocking noise without a dependency. |
 
 #### Goal
 

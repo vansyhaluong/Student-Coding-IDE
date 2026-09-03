@@ -1,5 +1,6 @@
 import { mkdir, realpath, rmdir, stat } from 'node:fs/promises'
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import { join as joinWindows } from 'node:path/win32'
 
@@ -26,6 +27,7 @@ export interface RecentProjectStore {
 }
 
 export interface ProjectTransition {
+  transitionId: string
   reason: 'close' | 'switch'
   currentProject: ProjectIdentity
 }
@@ -48,6 +50,9 @@ export class ProjectService implements ManagedService {
   private readonly listeners = new Set<(
     project: ProjectIdentity | null,
   ) => void>()
+  private readonly transitionSettledListeners = new Set<(
+    transitionId: string,
+  ) => void>()
   private transitionQueue: Promise<void> = Promise.resolve()
   private acceptingTransitions = true
   private readonly transitionContext = new AsyncLocalStorage<boolean>()
@@ -61,16 +66,22 @@ export class ProjectService implements ManagedService {
 
   openRoot(rootPath: string): Promise<ProjectIdentity> {
     return this.runTransition('project:open', async () => {
-      await this.approveTransition('switch')
-      const project = await createProjectIdentity(
-        rootPath,
-        this.fileSystem,
-        this.platform,
-      )
-      await this.recordRecentProject(project)
-      this.activeProject = project
-      this.notifyProjectChanged()
-      return toPublicIdentity(project)
+      const transition = this.createTransition('switch')
+      try {
+        await this.approveTransition(transition)
+        const project = await createProjectIdentity(
+          rootPath,
+          this.fileSystem,
+          this.platform,
+        )
+        await this.recordRecentProject(project)
+        this.activeProject = project
+        this.notifyProjectChanged()
+        return toPublicIdentity(project)
+      } catch (error) {
+        this.notifyTransitionFailed(transition)
+        throw error
+      }
     })
   }
 
@@ -80,35 +91,41 @@ export class ProjectService implements ManagedService {
   ): Promise<ProjectIdentity> {
     return this.runTransition('project:create', async () => {
       validateProjectName(projectName, this.platform)
-      await this.approveTransition('switch')
-
-      const parent = await createProjectIdentity(
-        parentPath,
-        this.fileSystem,
-        this.platform,
-      )
-      const targetPath = this.platform === 'win32'
-        ? joinWindows(parent.canonicalRoot, projectName)
-        : join(parent.canonicalRoot, projectName)
-
+      const transition = this.createTransition('switch')
       try {
-        await this.fileSystem.mkdir(targetPath)
-      } catch (error) {
-        if (isNodeErrorCode(error, 'EEXIST')) {
-          throw new DomainError({
-            code: 'INVALID_INPUT',
-            message: 'A file or folder with that project name already exists.',
-            operation: 'project:create',
-            retryable: false,
-          })
+        await this.approveTransition(transition)
+
+        const parent = await createProjectIdentity(
+          parentPath,
+          this.fileSystem,
+          this.platform,
+        )
+        const targetPath = this.platform === 'win32'
+          ? joinWindows(parent.canonicalRoot, projectName)
+          : join(parent.canonicalRoot, projectName)
+
+        try {
+          await this.fileSystem.mkdir(targetPath)
+        } catch (error) {
+          if (isNodeErrorCode(error, 'EEXIST')) {
+            throw new DomainError({
+              code: 'INVALID_INPUT',
+              message: 'A file or folder with that project name already exists.',
+              operation: 'project:create',
+              retryable: false,
+            })
+          }
+          throw error
         }
-        throw error
-      }
 
-      try {
-        return await this.activateCreatedRoot(targetPath)
+        try {
+          return await this.activateCreatedRoot(targetPath)
+        } catch (error) {
+          await this.rollbackCreatedDirectory(targetPath, error)
+          throw error
+        }
       } catch (error) {
-        await this.rollbackCreatedDirectory(targetPath, error)
+        this.notifyTransitionFailed(transition)
         throw error
       }
     })
@@ -135,9 +152,15 @@ export class ProjectService implements ManagedService {
       if (!this.activeProject) {
         return
       }
-      await this.approveTransition('close')
-      this.activeProject = undefined
-      this.notifyProjectChanged()
+      const transition = this.createTransition('close')
+      try {
+        await this.approveTransition(transition)
+        this.activeProject = undefined
+        this.notifyProjectChanged()
+      } catch (error) {
+        this.notifyTransitionFailed(transition)
+        throw error
+      }
     })
   }
 
@@ -155,12 +178,20 @@ export class ProjectService implements ManagedService {
     }
   }
 
+  subscribeTransitionSettled(listener: (transitionId: string) => void): () => void {
+    this.transitionSettledListeners.add(listener)
+    return () => {
+      this.transitionSettledListeners.delete(listener)
+    }
+  }
+
   stop(): Promise<void> {
     this.acceptingTransitions = false
     return this.enqueueTransition(async () => {
       this.activeProject = undefined
       this.transitionGuards.clear()
       this.listeners.clear()
+      this.transitionSettledListeners.clear()
     })
   }
 
@@ -176,20 +207,25 @@ export class ProjectService implements ManagedService {
     return toPublicIdentity(project)
   }
 
-  private async approveTransition(reason: 'close' | 'switch'): Promise<void> {
+  private createTransition(reason: 'close' | 'switch'): ProjectTransition | null {
     if (!this.activeProject) {
-      return
+      return null
     }
-    const transition: ProjectTransition = {
+    return {
+      transitionId: randomUUID(),
       reason,
       currentProject: toPublicIdentity(this.activeProject),
     }
+  }
+
+  private async approveTransition(transition: ProjectTransition | null): Promise<void> {
+    if (!transition) return
     for (const guard of this.transitionGuards) {
       if (!await guard(transition)) {
         throw new DomainError({
           code: 'PROCESS_CANCELLED',
           message: 'The project transition was cancelled.',
-          operation: `project:${reason}`,
+          operation: `project:${transition.reason}`,
           retryable: false,
         })
       }
@@ -273,6 +309,17 @@ export class ProjectService implements ManagedService {
     for (const listener of this.listeners) {
       try {
         listener(project)
+      } catch (error) {
+        this.onListenerError(error)
+      }
+    }
+  }
+
+  private notifyTransitionFailed(transition: ProjectTransition | null): void {
+    if (!transition) return
+    for (const listener of this.transitionSettledListeners) {
+      try {
+        listener(transition.transitionId)
       } catch (error) {
         this.onListenerError(error)
       }

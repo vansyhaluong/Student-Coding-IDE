@@ -174,6 +174,25 @@ function createHarness(options: {
 }
 
 describe('Phase 2E-F TerminalController', () => {
+  it('does not start terminal work while renderer interaction is locked', async () => {
+    const harness = createHarness()
+    harness.controller.setInteractionLocked(true)
+
+    await expect(harness.controller.createSession(projectId, harness.mount))
+      .resolves.toBeNull()
+    expect(harness.api.create).not.toHaveBeenCalled()
+    expect(harness.terminals).toHaveLength(0)
+
+    harness.controller.setInteractionLocked(false)
+    const sessionId = await harness.controller.createSession(projectId, harness.mount)
+    expect(sessionId).not.toBeNull()
+    harness.controller.setInteractionLocked(true)
+    harness.terminals[0]!.emitInput('blocked input')
+    await expect(harness.controller.closeSession(sessionId!)).resolves.toBe(false)
+    expect(harness.api.input).not.toHaveBeenCalled()
+    expect(harness.api.close).not.toHaveBeenCalled()
+  })
+
   it('subscribes before first create and does not duplicate on UI remounts', async () => {
     const harness = createHarness()
     const firstUi = harness.controller.subscribe(vi.fn())

@@ -2,9 +2,11 @@ import {
   FILE_CHANNELS,
   validateCreateEntryRequest,
   validateProjectPathRequest,
+  validateProjectFileSystemStatusRequest,
   validateRenameEntryRequest,
   validateWriteFileRequest,
   type FileChangedEvent,
+  type ProjectFileSystemStatus,
 } from '../../shared/contracts'
 import type { ManagedService } from '../app/desktop-application'
 import { FileSystemService } from '../services/filesystem/filesystem-service'
@@ -18,10 +20,16 @@ export class FileIpcService implements ManagedService {
     private readonly registry: IpcHandlerRegistry,
     private readonly fileSystemService: FileSystemService,
     private readonly publishChanged: (event: FileChangedEvent) => void,
+    private readonly publishStatusChanged: (status: ProjectFileSystemStatus) => void = () => undefined,
   ) {}
 
   start(): void {
     this.cleanup.push(
+      this.registry.register({
+        channel: FILE_CHANNELS.getStatus,
+        validate: validateProjectFileSystemStatusRequest,
+        handle: ({ projectId }) => this.fileSystemService.getStatus(projectId),
+      }),
       this.registry.register({
         channel: FILE_CHANNELS.listDirectory,
         validate: validateProjectPathRequest,
@@ -81,6 +89,7 @@ export class FileIpcService implements ManagedService {
         },
       }),
       this.fileSystemService.subscribe(this.publishChanged),
+      this.fileSystemService.subscribeStatus(this.publishStatusChanged),
     )
   }
 

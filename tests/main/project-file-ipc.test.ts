@@ -63,8 +63,15 @@ describe('Phase 2B IPC adapters', () => {
       trashItem: vi.fn(),
       watchFactory: () => ({ close: () => undefined }),
     })
-    const fileIpc = new FileIpcService(registry, fileSystemService, vi.fn())
+    const publishStatusChanged = vi.fn()
+    const fileIpc = new FileIpcService(
+      registry,
+      fileSystemService,
+      vi.fn(),
+      publishStatusChanged,
+    )
     projectIpc.start()
+    fileSystemService.start()
     fileIpc.start()
 
     await expect(ipcMain.invoke(PROJECT_CHANNELS.open, { unexpected: true }))
@@ -77,6 +84,19 @@ describe('Phase 2B IPC adapters', () => {
     }
     expect(opened.ok).toBe(true)
     expect(selectDirectory).toHaveBeenCalledOnce()
+    await expect(ipcMain.invoke(FILE_CHANNELS.getStatus, {
+      projectId: opened.value.id,
+    })).resolves.toEqual({
+      ok: true,
+      value: { projectId: opened.value.id, state: 'AVAILABLE' },
+    })
+    await expect(ipcMain.invoke(FILE_CHANNELS.getStatus, {
+      projectId: 7,
+    })).resolves.toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
+    expect(publishStatusChanged).toHaveBeenCalledWith({
+      projectId: opened.value.id,
+      state: 'AVAILABLE',
+    })
 
     await expect(ipcMain.invoke(FILE_CHANNELS.read, {
       projectId: opened.value.id,
@@ -121,6 +141,7 @@ describe('Phase 2B IPC adapters', () => {
     expect(read).not.toHaveBeenCalled()
 
     fileIpc.stop()
+    fileSystemService.stop()
     projectIpc.stop()
     expect(ipcMain.handlers.size).toBe(0)
   })

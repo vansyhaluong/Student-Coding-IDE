@@ -49,7 +49,7 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 - **Options:** Renderer Node access; unrestricted absolute-path API; main-owned project-scoped API.
 - **Selected option:** Main-owned async filesystem/search services using project IDs and validated relative paths.
 - **Rationale:** This preserves authorization and supports lazy traversal, watchers, exclusions, progress, and cancellation.
-- **Consequences:** Default search exclusions are `.git`, `node_modules`, `dist`, `build`, and `out`; symlinks are not followed outside root by default.
+- **Consequences:** Default search exclusions are `.git`, `node_modules`, `dist`, `build`, and `out`; symlinks are not followed outside root by default. Phase 2 filesystem monitoring exposes only project-scoped `AVAILABLE`/`UNAVAILABLE` authority, with close/reopen recovery rather than a new workspace-recovery system.
 - **Phase:** 1.
 
 ## ADR-006 — Editor model ownership
@@ -59,7 +59,7 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 - **Options:** Component-local models; one global text blob per tab; renderer EditorModelManager.
 - **Selected option:** Renderer-owned EditorModelManager with one Monaco model per canonical file identity; disk I/O remains in FileSystemService.
 - **Rationale:** It preserves undo/model identity across tab switches and separates UI, model, and disk responsibilities.
-- **Consequences:** Saves are version-aware; closing/switching invokes unsaved protection; models and subscriptions have explicit disposal.
+- **Consequences:** Saves are version-aware; closing/switching invokes unsaved protection; models and subscriptions have explicit disposal. Externally deleted open files retain their buffer in an explicit disk-missing state and are not silently recreated by normal save.
 - **Phase:** 1.
 
 ## ADR-007 — Terminal implementation
@@ -101,7 +101,7 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 - **Options:** Browser localStorage; one unversioned JSON blob; server/database; versioned main-owned JSON documents.
 - **Selected option:** Versioned JSON in Electron user data, split into app settings/recent projects and per-workspace state.
 - **Rationale:** It is local-first, inspectable, small, and controllable at the privileged boundary.
-- **Consequences:** Use serialized atomic replacement, last-known-good backup, schema migrations, defaults, and corruption recovery. Exact helper package is not selected; a package is unnecessary unless Phase 2 analysis proves value.
+- **Consequences:** Use serialized atomic replacement, last-known-good backup, schema migrations, defaults, and corruption recovery. Exact helper package is not selected; a package is unnecessary unless Phase 2 analysis proves value. Phase 2 retains only minimal recent-project metadata; list-management and any product limit policy remain part of the Phase 6 Recent Projects UX rather than an invented Phase 2 setting.
 - **Phase:** 1.
 
 ## ADR-011 — Renderer state management
