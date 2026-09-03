@@ -56,7 +56,13 @@ describe('Phase 2B preload bridges', () => {
     ipcRenderer.responses.set(SEARCH_CHANNELS.cancel, { ok: true, value: null })
     const api = createPreloadApi(ipcRenderer)
 
-    expect(Object.keys(api).sort()).toEqual(['file', 'lifecycle', 'project', 'search'])
+    expect(Object.keys(api).sort()).toEqual([
+      'file',
+      'lifecycle',
+      'project',
+      'search',
+      'terminal',
+    ])
     expect(api).not.toHaveProperty('ipcRenderer')
     expect(api).not.toHaveProperty('execute')
     expect(api).not.toHaveProperty('fs')

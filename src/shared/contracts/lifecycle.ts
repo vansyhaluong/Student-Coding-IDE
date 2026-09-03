@@ -39,6 +39,7 @@ export interface UnsavedTransitionRequestEvent {
   transitionId: string
   reason: UnsavedTransitionReason
   project: ProjectIdentity
+  terminalConfirmationRequired: boolean
 }
 
 export interface ResolveUnsavedTransitionRequest {

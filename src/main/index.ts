@@ -4,6 +4,7 @@ import {
   dialog,
   ipcMain,
   shell,
+  webContents,
 } from 'electron'
 import { join } from 'node:path'
 
@@ -19,17 +20,23 @@ import {
   type UnsavedTransitionRequestEvent,
 } from '../shared/contracts'
 import { DesktopApplication } from './app/desktop-application'
+import { ApplicationQuitCoordinator } from './app/application-quit-coordinator'
 import { FoundationIpcService } from './ipc/foundation-ipc-service'
 import { FileIpcService } from './ipc/file-ipc-service'
 import { IpcHandlerRegistry } from './ipc/ipc-handler-registry'
 import { ProjectIpcService } from './ipc/project-ipc-service'
 import { SearchIpcService } from './ipc/search-ipc-service'
+import { TerminalIpcService } from './ipc/terminal-ipc-service'
 import { FileSystemService } from './services/filesystem/filesystem-service'
 import { PersistenceService } from './services/persistence/persistence-service'
 import { ProcessManager } from './services/process/process-manager'
+import { WindowsProcessTreeTerminator } from './services/process/windows-process-tree-terminator'
 import { UnsavedTransitionService } from './services/lifecycle/unsaved-transition-service'
 import { ProjectService } from './services/project/project-service'
 import { SearchService } from './services/search/search-service'
+import { NodePtyPort } from './services/terminal/node-pty-adapter'
+import { WindowsShellResolver } from './services/terminal/shell-resolver'
+import { TerminalService } from './services/terminal/terminal-service'
 import { WindowManager } from './window/window-manager'
 
 interface AppMetadata {
@@ -39,8 +46,7 @@ interface AppMetadata {
 let desktopApplication: DesktopApplication | undefined
 let windowManager: WindowManager | undefined
 let unsavedTransitionService: UnsavedTransitionService | undefined
-let shutdownRequested = false
-let applicationCloseApproved = false
+let quitCoordinator: ApplicationQuitCoordinator | undefined
 let removeLifecyclePublisher: (() => void) | undefined
 
 void app.whenReady().then(async () => {
@@ -78,12 +84,25 @@ void app.whenReady().then(async () => {
         && window.webContents.id === ownerId,
     ),
   })
+  const terminalIpcReference: { current?: TerminalIpcService } = {}
+  const terminalService = new TerminalService({
+    ptyPort: new NodePtyPort(),
+    projectService,
+    processManager,
+    processTreeTerminator: new WindowsProcessTreeTerminator(),
+    shellResolver: new WindowsShellResolver(),
+    publish: (ownerId, event) => terminalIpcReference.current?.publish(ownerId, event),
+    onEventSinkError: () => {
+      console.error('A terminal event listener failed unexpectedly.')
+    },
+  })
 
   const ipcRegistry = new IpcHandlerRegistry(ipcMain)
   unsavedTransitionService = new UnsavedTransitionService(
     ipcRegistry,
     projectService,
     {
+      terminalLifecycle: terminalService,
       getRenderer: () => {
         const window = BrowserWindow.getAllWindows().find(
           (candidate) => !candidate.isDestroyed(),
@@ -115,10 +134,12 @@ void app.whenReady().then(async () => {
       console.error('Failed to open an approved external URL.')
     },
     requestClose: async () => {
-      const approved = await unsavedTransitionService?.requestApplicationClose() ?? false
-      if (approved) applicationCloseApproved = true
-      return approved
+      app.quit()
+      return false
     },
+    isApplicationQuitAuthorized: () => (
+      quitCoordinator?.isFinalQuitAuthorized() ?? false
+    ),
     onCloseRequestError: () => {
       console.error('Application close coordination failed.')
     },
@@ -161,6 +182,37 @@ void app.whenReady().then(async () => {
       event,
     ),
   )
+  const terminalIpc = new TerminalIpcService(
+    ipcRegistry,
+    terminalService,
+    {
+      getWebContents: (ownerId) => {
+        const owner = webContents.fromId(ownerId)
+        return owner
+          ? {
+              id: owner.id,
+              isDestroyed: () => owner.isDestroyed(),
+              send: (channel, event) => owner.send(channel, event),
+              on: (_event, listener) => owner.on('did-start-navigation', listener),
+              once: (_event, listener) => owner.once('destroyed', listener),
+              removeNavigationListener: (listener) => {
+                owner.removeListener('did-start-navigation', listener)
+              },
+              removeDestroyedListener: (listener) => {
+                owner.removeListener('destroyed', listener)
+              },
+            }
+          : null
+      },
+      onCleanupError: () => {
+        console.error('Terminal owner cleanup did not finish cleanly.')
+      },
+      onEventRoutingError: () => {
+        console.error('A terminal event could not be delivered.')
+      },
+    },
+  )
+  terminalIpcReference.current = terminalIpc
 
   desktopApplication = new DesktopApplication([
     persistenceService,
@@ -168,13 +220,19 @@ void app.whenReady().then(async () => {
     projectService,
     fileSystemService,
     searchService,
+    terminalService,
     foundationIpc,
     unsavedTransitionService,
     projectIpc,
     fileIpc,
     searchIpc,
+    terminalIpc,
     windowManager,
-  ])
+  ], {
+    // Keep the close/retry surface alive until every mandatory service cleanup
+    // has succeeded. Electron performs the final window close afterward.
+    shutdownLast: [windowManager],
+  })
 
   removeLifecyclePublisher = desktopApplication.subscribe((status) => {
     for (const window of BrowserWindow.getAllWindows()) {
@@ -182,6 +240,23 @@ void app.whenReady().then(async () => {
         window.webContents.send(LIFECYCLE_CHANNELS.statusChanged, status)
       }
     }
+  })
+
+  quitCoordinator = new ApplicationQuitCoordinator({
+    getApplication: () => desktopApplication,
+    requestApproval: () => (
+      BrowserWindow.getAllWindows().some((window) => !window.isDestroyed())
+        ? unsavedTransitionService?.requestApplicationClose() ?? Promise.resolve(false)
+        : Promise.resolve(false)
+    ),
+    quit: () => app.quit(),
+    onCleanupError: () => {
+      console.error('Student Coding IDE cleanup did not finish cleanly.')
+    },
+    onShutdownSucceeded: () => {
+      removeLifecyclePublisher?.()
+      removeLifecyclePublisher = undefined
+    },
   })
 
   await desktopApplication.start()
@@ -215,45 +290,14 @@ function publishToRenderer(
 }
 
 app.on('activate', () => {
+  if (desktopApplication?.getStatus().state !== 'RUNNING') return
   void windowManager?.ensureMainWindow().catch(() => {
     console.error('Student Coding IDE failed to create its main window.')
   })
 })
 
 app.on('before-quit', (event) => {
-  if (!desktopApplication || desktopApplication.getStatus().state === 'STOPPED') {
-    return
-  }
-
-  event.preventDefault()
-  if (shutdownRequested) {
-    return
-  }
-  shutdownRequested = true
-
-  const requestApproval = applicationCloseApproved
-    ? Promise.resolve(true)
-    : BrowserWindow.getAllWindows().some((window) => !window.isDestroyed())
-      ? unsavedTransitionService?.requestApplicationClose() ?? Promise.resolve(false)
-      : Promise.resolve(false)
-
-  void requestApproval.then((approved) => {
-    if (!approved) {
-      shutdownRequested = false
-      return
-    }
-    applicationCloseApproved = true
-    return desktopApplication?.shutdown()
-  })
-    .catch(() => {
-      console.error('Student Coding IDE cleanup did not finish cleanly.')
-    })
-    .finally(() => {
-      if (!applicationCloseApproved) return
-      removeLifecyclePublisher?.()
-      removeLifecyclePublisher = undefined
-      app.quit()
-    })
+  quitCoordinator?.handleBeforeQuit(event)
 })
 
 app.on('window-all-closed', () => {

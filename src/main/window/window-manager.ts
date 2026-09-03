@@ -43,6 +43,7 @@ export interface WindowManagerOptions {
   developmentRendererUrl?: string
   onExternalOpenError?(error: unknown): void
   requestClose?(): Promise<boolean>
+  isApplicationQuitAuthorized?(): boolean
   onCloseRequestError?(error: unknown): void
 }
 
@@ -107,7 +108,11 @@ export class WindowManager implements ManagedService {
 
   private configureClose(window: BrowserWindowLike): void {
     window.on('close', (event) => {
-      if (this.closeApproved || !this.options.requestClose) return
+      if (
+        this.closeApproved
+        || this.options.isApplicationQuitAuthorized?.()
+        || !this.options.requestClose
+      ) return
       event.preventDefault()
       if (this.closeRequestPending) return
       this.closeRequestPending = true

@@ -9,13 +9,33 @@ export interface ManagedService {
   stop(): Promise<void> | void
 }
 
+export interface DesktopApplicationOptions {
+  /**
+   * Services that keep the application recoverable while mandatory cleanup is
+   * incomplete. They stop only after every other started service has stopped.
+   */
+  shutdownLast?: readonly ManagedService[]
+}
+
 export class DesktopApplication {
   private state: ApplicationState = 'CREATED'
   private readonly startedServices: ManagedService[] = []
   private readonly listeners = new Set<(status: LifecycleStatus) => void>()
   private shutdownPromise: Promise<void> | undefined
 
-  constructor(private readonly services: readonly ManagedService[]) {}
+  private readonly shutdownLast: ReadonlySet<ManagedService>
+
+  constructor(
+    private readonly services: readonly ManagedService[],
+    options: DesktopApplicationOptions = {},
+  ) {
+    this.shutdownLast = new Set(options.shutdownLast)
+    for (const service of this.shutdownLast) {
+      if (!services.includes(service)) {
+        throw new Error(`Shutdown-last service is not managed: ${service.name}`)
+      }
+    }
+  }
 
   getStatus(): LifecycleStatus {
     return { state: this.state }
@@ -45,7 +65,8 @@ export class DesktopApplication {
     } catch (startupError) {
       let cleanupError: unknown
       try {
-        await this.stopStartedServices()
+        await this.stopStartedServices(false)
+        await this.stopStartedServices(true)
       } catch (error) {
         cleanupError = error
       }
@@ -69,30 +90,39 @@ export class DesktopApplication {
       return this.shutdownPromise
     }
 
-    this.transition('STOPPING')
-    this.shutdownPromise = (async () => {
-      try {
-        await this.stopStartedServices()
-      } finally {
-        this.transition('STOPPED')
-      }
-    })()
-    return this.shutdownPromise
-  }
-
-  private async stopStartedServices(): Promise<void> {
-    const errors: unknown[] = []
-
-    for (const service of this.startedServices.splice(0).reverse()) {
-      try {
-        await service.stop()
-      } catch (error) {
-        errors.push(error)
-      }
+    if (this.state !== 'STOPPING') {
+      this.transition('STOPPING')
     }
 
-    if (errors.length > 0) {
-      throw new AggregateError(errors, 'Application cleanup failed')
+    const shutdownPromise = (async () => {
+      await this.stopStartedServices(false)
+      await this.stopStartedServices(true)
+      this.transition('STOPPED')
+    })()
+    this.shutdownPromise = shutdownPromise
+    void shutdownPromise.finally(() => {
+      if (this.shutdownPromise === shutdownPromise) {
+        this.shutdownPromise = undefined
+      }
+    }).catch(() => undefined)
+    return shutdownPromise
+  }
+
+  private async stopStartedServices(shutdownLastOnly = false): Promise<void> {
+    const services = this.startedServices
+      .filter((service) => this.shutdownLast.has(service) === shutdownLastOnly)
+      .reverse()
+
+    for (const service of services) {
+      try {
+        await service.stop()
+        const index = this.startedServices.lastIndexOf(service)
+        if (index >= 0) this.startedServices.splice(index, 1)
+      } catch (error) {
+        throw new AggregateError([error], 'Application cleanup failed', {
+          cause: error,
+        })
+      }
     }
   }
 
