@@ -1,4 +1,4 @@
-import { Folder, FolderOpen, FolderPlus, Search, SquareTerminal, X } from 'lucide-react'
+import { Folder, FolderOpen, FolderPlus, ListChecks, Search, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import type { AppResult, ProjectIdentity } from '../../shared/contracts'
@@ -14,6 +14,10 @@ import {
   type UnsavedChoice,
 } from './features/editor/use-editor-workspace'
 import { ProjectExplorer } from './features/explorer/ProjectExplorer'
+import { useProjectLanguage } from './features/language/use-project-language'
+import { ProblemsPanel } from './features/problems/ProblemsPanel'
+import { problemsStore } from './features/problems/problems-session'
+import { useProjectProblems } from './features/problems/use-project-problems'
 import { SearchPanel } from './features/search/SearchPanel'
 import { TerminalPanel } from './features/terminal/TerminalPanel'
 import { terminalController } from './features/terminal/terminal-session'
@@ -32,13 +36,15 @@ export default function App() {
   const [leftWidth, setLeftWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [rightWidth, setRightWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
-  const [terminalOpen, setTerminalOpen] = useState(false)
+  const [bottomPanel, setBottomPanel] = useState<'terminal' | 'problems' | null>(null)
   const [terminalOpenRequest, setTerminalOpenRequest] = useState(0)
   const [terminalHeight, setTerminalHeight] = useState(DEFAULT_TERMINAL_HEIGHT)
   const projectGeneration = useRef(0)
   const sidebarWidths = useRef({ left: leftWidth, right: rightWidth })
   sidebarWidths.current = { left: leftWidth, right: rightWidth }
   const editor = useEditorWorkspace(project, editorModelManager)
+  useProjectLanguage(project, editorModelManager)
+  useProjectProblems(project)
 
   useEffect(() => {
     let active = true
@@ -177,10 +183,13 @@ export default function App() {
     requestAnimationFrame(() => document.getElementById(`${tab}-sidebar-tab`)?.focus())
   }
   const toggleTerminal = (): void => {
-    setTerminalOpen((currentlyOpen) => {
-      if (!currentlyOpen) setTerminalOpenRequest((request) => request + 1)
-      return !currentlyOpen
+    setBottomPanel((current) => {
+      if (current !== 'terminal') setTerminalOpenRequest((request) => request + 1)
+      return current === 'terminal' ? null : 'terminal'
     })
+  }
+  const toggleProblems = (): void => {
+    setBottomPanel((current) => current === 'problems' ? null : 'problems')
   }
 
   return (
@@ -282,16 +291,37 @@ export default function App() {
               </div>
             )}
           </div>
-          <TerminalPanel
-            controller={terminalController}
-            project={project}
-            open={terminalOpen}
-            openRequest={terminalOpenRequest}
-            height={terminalHeight}
-            onHeightChange={setTerminalHeight}
-            onClosePanel={() => setTerminalOpen(false)}
-            interactionLocked={editor.interactionLocked}
-          />
+          {bottomPanel === 'problems' ? (
+            <ProblemsPanel
+              store={problemsStore}
+              project={project}
+              height={terminalHeight}
+              onHeightChange={setTerminalHeight}
+              onSelectTerminal={() => {
+                setTerminalOpenRequest((request) => request + 1)
+                setBottomPanel('terminal')
+              }}
+              onClosePanel={() => setBottomPanel(null)}
+              interactionLocked={editor.interactionLocked}
+              onNavigate={(problem) => void editor.navigateToLocation({
+                projectId: problem.projectId,
+                relativePath: problem.relativePath,
+                ...problem.range,
+              })}
+            />
+          ) : (
+            <TerminalPanel
+              controller={terminalController}
+              project={project}
+              open={bottomPanel === 'terminal'}
+              openRequest={terminalOpenRequest}
+              height={terminalHeight}
+              onHeightChange={setTerminalHeight}
+              onSelectProblems={() => setBottomPanel('problems')}
+              onClosePanel={() => setBottomPanel(null)}
+              interactionLocked={editor.interactionLocked}
+            />
+          )}
         </section>
 
         <aside className="explorer-sidebar" aria-label="Project tools">
@@ -381,8 +411,15 @@ export default function App() {
           <button
             type="button"
             className="status-terminal-toggle"
-            aria-label={terminalOpen ? 'Hide Terminal' : 'Open Terminal'}
-            aria-expanded={terminalOpen}
+            aria-label={bottomPanel === 'problems' ? 'Hide Problems' : 'Open Problems'}
+            aria-expanded={bottomPanel === 'problems'}
+            onClick={toggleProblems}
+          ><ListChecks /><span>Problems</span></button>
+          <button
+            type="button"
+            className="status-terminal-toggle"
+            aria-label={bottomPanel === 'terminal' ? 'Hide Terminal' : 'Open Terminal'}
+            aria-expanded={bottomPanel === 'terminal'}
             onClick={toggleTerminal}
           ><SquareTerminal /><span>Terminal</span></button>
         </span>
