@@ -1,8 +1,8 @@
 # Student Coding IDE Codebase Map
 
-This map describes the current independent source tree and planned module locations. Phase 2A established the application and security foundations, Phase 2B added the authorized project/filesystem Explorer, Phase 2C added retained Monaco editing and data-safety behavior, Phase 2D completed bounded project search and the Orca/STYLEGUIDE corrective UI pass, Phase 2E completed the integrated terminal and Windows Job-owned cleanup path, and Phase 2F completed cross-feature stabilization, boundary-error handling, resource cleanup, filesystem-availability state, deleted-file safety, and final Phase 2 verification. Phase 3 and later features remain assigned to subsequent authorized work packages.
+This map describes the current independent source tree and planned module locations. Phase 2A established the application and security foundations, Phase 2B added the authorized project/filesystem Explorer, Phase 2C added retained Monaco editing and data-safety behavior, Phase 2D completed bounded project search and the Orca/STYLEGUIDE corrective UI pass, Phase 2E completed the integrated terminal and Windows Job-owned cleanup path, Phase 2F completed cross-feature stabilization, and Phase 3B established the current Monaco-native language foundation and bounded JS/TS feasibility. Phase 3C and later work remain assigned to subsequent authorized work packages.
 
-## Current source tree through Phase 2F final verification
+## Current source tree through Phase 3B foundation
 
 | Current path | Role | Status |
 |---|---|---|
@@ -18,7 +18,7 @@ This map describes the current independent source tree and planned module locati
 | `src/main/services/persistence/` | Versioned JSON, serialized writes, backup, and recovery foundation | Implemented Phase 2A foundation |
 | `src/main/services/process/` | Internal owned-resource registry plus narrow Main-only Job-owned/legacy-root process-tree abstraction, primary Windows Job finalizer, and gated fingerprinted taskkill legacy backend | Implemented through Phase 2E-J corrective Step 2; no public process executor |
 | `src/main/services/terminal/` | Main-owned TerminalService registry/ownership/lifecycle/batching, project-transition leases, Windows shell resolution, environment policy, native-independent PTY port, sole production patched-node-pty adapter, retained natural-root ownership, and unified Job finalization | Implemented through Phase 2E-J corrective Step 2 |
-| `patches/` and `scripts/` | Inspectable node-pty 1.1.0 Windows Job patch, loud deterministic apply/rebuild verification, Electron 44 capability load check, native Job-tree smoke, and production-service live-root/natural-root application-shutdown smoke | Implemented through Phase 2E-J corrective Step 3 |
+| `patches/` and `scripts/` | Inspectable node-pty Windows Job tooling plus the production-build Monaco worker discovery smoke | Implemented through Phase 3B |
 | `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, project, file/filesystem-status, search, and terminal request/event/state contracts | Implemented through Phase 2F |
 | `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed lifecycle/project/file/search/terminal bridges with normalized transport errors, request/response/event validation, and subscription cleanup | Implemented through Phase 2F |
 | `src/renderer/src/main.tsx` | React renderer bootstrap, packaged Geist/xterm styles, and renderer-session editor/terminal disposal on real page unload | Implemented through Phase 2E-F |
@@ -26,10 +26,11 @@ This map describes the current independent source tree and planned module locati
 | `src/renderer/src/components/` | Shared semantic buttons, focus-managed dialogs, and keyboard/pointer sidebar and Bottom Panel resizing | Implemented through Phase 2E-F |
 | `src/renderer/src/features/explorer/` | Lazy Explorer tree, local feature state, refresh, mutation controls, errors, and confirmation | Implemented Phase 2B |
 | `src/renderer/src/features/editor/` | Renderer-session model owner, Monaco lifecycle/data safety, search navigation, deleted-file state, and fail-closed dirty/terminal transition presentation | Implemented through Phase 2F |
+| `src/renderer/src/features/language/` | Current capability/provider/status contracts, safe virtual URI identity, diagnostic ownership/generation rules, worker routing/defaults, and bounded JS/TS snapshot feasibility state | Implemented Phase 3B foundation; full provider synchronization remains Phase 3C |
 | `src/renderer/src/features/search/` | Search query/state, grouped bounded results, cancellation, stale-event guards, and navigation requests | Implemented Phase 2D |
 | `src/renderer/src/features/terminal/` | Renderer-session TerminalController, xterm/FitAddon factory, stable session hosts, ordered writes, fitting/resizing, Bottom Panel, and multiple-session controls | Implemented Phase 2E-F |
 | `src/renderer/src/styles.css` | Semantic dark tokens and Orca-aligned shell, typography, controls, Explorer/Search, editor, terminal Bottom Panel, dialogs, interaction states, and scrollbars | Implemented through Phase 2E-F |
-| `tests/` | Vitest contract, service, IPC, preload, security/lifecycle, path/model, cross-feature Renderer, resizer, bounded Search performance, terminal backend/boundary/controller/UI/transition, Windows Job/legacy process-tree termination, natural-root/race, and fail-closed application quit/retry coverage | Implemented through Phase 2F |
+| `tests/` | Vitest contract, service, IPC, preload, security/lifecycle, Phase 2 feature coverage, Monaco capability/worker/URI/diagnostic tests, and bounded JS/TS feasibility/performance smokes | Implemented through Phase 3B |
 | `electron.vite.config.ts` | main/preload/renderer build configuration | Existing foundation |
 | `docs/` | Requirements, reference, architecture, decisions, and thesis record | Existing and Phase 1 output |
 
@@ -55,10 +56,10 @@ There is no Orca source tree, submodule, runtime dependency, or copied Orca modu
 | Terminal backend | TerminalService | `src/main/services/terminal/` | PTY sessions, shell profiles, resize, cleanup | 2 |
 | Terminal UI | Terminal UI | `src/renderer/src/features/terminal/` | xterm views and session controls | 2 |
 | Common process internals | ProcessManager | `src/main/services/process/` | Owned-process registry and safe cleanup primitives | 2/4 |
-| Language intelligence | LanguageServiceManager | `src/main/services/language/` | Provider registry/lifecycle/status/logs | 3 |
-| Monaco language adapters | Language adapters | `src/renderer/src/features/language/` | Monaco/provider request and diagnostics integration | 3 |
+| Current language intelligence | LanguageProviderManager and Monaco adapters | `src/renderer/src/features/language/` | Phase 3 provider registry/capabilities, bounded source sync, Monaco workers, diagnostics, status, and cleanup | 3 |
+| Future external language services | LanguageServiceManager | `src/main/services/language/` | Deferred Main-owned external provider executable/lifecycle/validated routing; no current Phase 3 module required | Future |
 | Problems | Problems UI/model | `src/renderer/src/features/problems/` | Normalized problems and file/range navigation | 3 |
-| Dependency detection | DependencyDetectionService | `src/main/services/dependencies/` | Runtime, Git, and language executable state | 3–6 |
+| Dependency detection | DependencyDetectionService | `src/main/services/dependencies/` | Runtime, Git, and future external-language executable state; current Phase 3 Monaco workers need no executable detection | 4–6/Future |
 | Run | RunService | `src/main/services/run/` | Trusted strategies, output, exit, stop/tree cleanup | 4 |
 | Output | Output UI | `src/renderer/src/features/output/` | stdout/stderr/exit presentation | 4 |
 | Git | GitService | `src/main/services/git/` | Detection, status, stage, commit, branch, history | 5 |

@@ -591,3 +591,58 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
 - Recent-project metadata remains the minimal Phase 2 persistence foundation.
   User-facing list management and any product limit policy remain deferred to
   Phase 6 Settings/Recent Projects UX.
+
+## Phase 3A — Language Intelligence Architecture & Feasibility (`COMPLETE`)
+
+- Audited the Phase 2 Monaco/editor baseline, built-in worker capabilities,
+  project/model integration, diagnostics ownership, security/resource risks,
+  dependency options, and locked Orca reference applicability without changing
+  production code or dependencies.
+- Approved the current Phase 3 V1 scope as Monaco-native intelligence for
+  JavaScript/TypeScript and HTML/CSS/JSON, plus syntax-only C#/PHP. Python and
+  Java language support are intentionally deferred to a future authorized phase,
+  not permanently removed.
+- Selected bounded JavaScript/TypeScript project snapshots/source synchronization;
+  rejected wholesale `node_modules` mirroring and canonical project-root exposure
+  to Renderer for TypeScript resolution.
+- Selected root-`UNAVAILABLE` behavior: stop project intelligence and clear stale
+  diagnostics while preserving editor buffers, syntax highlighting, and the open
+  project.
+- Recorded that current Phase 3 adds no external language-server process,
+  Pyright/basedpyright/python-lsp-server, `vscode-jsonrpc`, Python intelligence
+  detection/synchronization, or Java-specific provider infrastructure. Future
+  external providers remain Main-owned behind a narrow validated bridge and
+  independent from `RunService`.
+- Reduced the implementation plan to packages 3B–3F. Phase 3 implementation has
+  not started; this entry records architecture, feasibility, and approved scope
+  documentation only.
+
+## Phase 3B — Language Foundation / Provider Contracts (`COMPLETE`)
+
+- Added the renderer-owned current-provider and capability contracts for
+  Monaco-native JS/TS, HTML, CSS, and JSON workers, including documented status
+  values. C#/PHP remain syntax-only; Python/Java remain deferred with no provider.
+- Centralized safe project-relative URI identity, current language mapping,
+  worker routing, deliberate JS/TS defaults, normalized diagnostic identity,
+  provider-specific marker ownership, and independent project/provider generation
+  checks.
+- Added a bounded JS/TS snapshot feasibility state that excludes `node_modules`,
+  unsupported languages, and file/count/byte overflow; open Monaco models take
+  precedence, stale generations are rejected, and switch/close/root-unavailable/
+  renderer-disposal paths clear only the TypeScript provider's project state and
+  diagnostics.
+- Verified safe virtual-URI same-file completion, TS-to-TS, JS-to-JS, and mixed
+  JS/TS relative imports/definitions, JSX/TSX parsing, JS/TS diagnostics, C#/PHP
+  tokenizer registration, and marker-owner isolation.
+- Measured 1,000 files/8,219,780 UTF-8 bytes through the planner/state in 59 ms
+  with a 7,116,248-byte observed heap delta, a 501-file/4,111,341-byte TypeScript
+  definition query in 1,184 ms, and a 262,170-byte individual source in 393 ms.
+  Recorded initial 3C ceilings of 500 files, 5 MiB total, and 256 KiB per file.
+- Added a repeatable Electron production-renderer smoke. The `file://` build loaded
+  editor, TypeScript/JavaScript, HTML, CSS, and JSON workers from local hashed
+  assets with `contextIsolation: true`, `nodeIntegration: false`, and
+  `sandbox: true`.
+- Full verification passed 353 tests across 37 files, typecheck, lint, production
+  build, Electron worker smoke, and `git diff --check`. No dependency, external
+  language server, generic language IPC, canonical-root exposure, commit, push,
+  or Phase 3C–3F implementation was introduced.

@@ -19,8 +19,10 @@ The architecture is requirement-driven. It deliberately omits Orca's agent, work
 
 ```text
 Renderer (sandboxed React UI)
+  |-- Monaco models and editor UI
+  `-- Phase 3 Monaco-native language providers/workers
         |
-        | typed, validated preload API
+        | typed, validated preload API for privileged domains only
         v
 Preload Bridge
         |
@@ -29,9 +31,10 @@ Preload Bridge
 Main Process
   |-- Project / Filesystem / Search
   |-- Settings / Persistence / Git
-  |-- Terminal / Run / Process Manager
-  `-- Language Service Manager
-          `-- managed language-server child processes
+  `-- Terminal / Run / Process Manager
+
+Future external language providers, if authorized:
+Main-owned LanguageServiceManager -> managed language-server child processes
 ```
 
 The application starts as one main window in V1. The main process owns application readiness, window creation, dependency/service initialization, shutdown coordination, and cleanup of IDE-owned processes. Multi-window, deep links, custom protocols, and background/tray behavior are not V1 requirements.
@@ -47,7 +50,8 @@ The application starts as one main window in V1. The main process owns applicati
 | Git CLI | Main | External executable and repository path validation |
 | Settings and persistence | Main | Controlled local storage and atomic writes |
 | Runtime/dependency detection | Main | PATH and configured executable validation |
-| Language-server processes | Main child processes | Isolation, lifecycle, logging, restart |
+| Current Phase 3 Monaco language providers | Renderer browser workers | No external process or privileged authority required |
+| Future language-server processes | Main child processes | Isolation, lifecycle, logging, restart |
 | Monaco and its browser workers | Renderer | Editor is a browser UI concern |
 | Tabs, dirty state, view state | Renderer | Interactive editor state |
 | Explorer, Problems, Terminal, Output, Git UI | Renderer | Presentation and user interaction |
@@ -61,10 +65,10 @@ The main process may access Node and Electron privileged APIs. It:
 
 - creates and secures application windows;
 - validates project roots and all filesystem paths;
-- owns ProjectService, FileSystemService, SearchService, SettingsService, PersistenceService, TerminalService, RunService, GitService, LanguageServiceManager, DependencyDetectionService, and ProcessManager;
+- owns ProjectService, FileSystemService, SearchService, SettingsService, PersistenceService, TerminalService, RunService, GitService, DependencyDetectionService, ProcessManager, and any future external-language-service lifecycle;
 - serializes domain errors across IPC;
 - forwards scoped events only to live renderer subscribers;
-- coordinates shutdown and cleans up PTYs, run processes, watchers, and language servers.
+- coordinates shutdown and cleans up PTYs, run processes, watchers, and any future language servers.
 
 The main process must not expose a generic shell runner to the renderer. Long operations must be asynchronous and cancellable where required.
 
@@ -95,6 +99,7 @@ The renderer modules are:
 - Application Shell;
 - Project and Explorer UI;
 - Editor UI and EditorModelManager;
+- current Phase 3 language provider orchestration and Monaco workers;
 - Problems UI;
 - Terminal UI;
 - Output UI;
@@ -113,8 +118,9 @@ The renderer modules are:
 | RunService | Bounded non-interactive run sessions, stdout/stderr/exit/stop | Interactive shell sessions |
 | ProcessManager | Internal registry and common child-process cleanup primitives | Generic renderer command execution |
 | GitService | Typed local Git operations and error mapping | Hosted PRs, credentials UI, arbitrary Git command bridge |
-| LanguageServiceManager | Provider registry, lifecycle, capabilities, routing, diagnostics, status | Runtime execution and Problems presentation |
-| DependencyDetectionService | Detect runtimes, Git, and language-service executables independently | Starting those services/processes |
+| Renderer LanguageProviderManager | Current Monaco provider registry, capabilities, bounded source synchronization, diagnostics, status | Disk access, runtime execution, external process ownership, Problems presentation |
+| Future Main LanguageServiceManager | External provider registry, lifecycle, validated routing, diagnostics, status | Runtime execution and Problems presentation |
+| DependencyDetectionService | Detect runtimes, Git, and future language-service executables independently | Starting those services/processes |
 | SettingsService | Validate/default/update user and workspace settings | Renderer-only transient state |
 | PersistenceService | Versioned local serialization, atomic writes, recovery | Feature-specific policy |
 
@@ -305,21 +311,66 @@ Git status is independent of editor, runtime, and language-service availability.
 ## 12. Language-service architecture
 
 ```text
-LanguageServiceManager
+Renderer LanguageProviderManager (Phase 3 V1)
   |-- Provider Registry
-  |-- Process Lifecycle
   |-- Capability Detection
-  |-- Document Synchronization
+  |-- Bounded Project Snapshot / Document Synchronization
   |-- Completion / Hover / Signature / Definition Routing
   |-- Diagnostics Routing
-  `-- Status and Logs
+  `-- Worker Status and Cleanup
 ```
 
-Each provider declares supported language IDs, capabilities, dependency requirements, start/stop/restart behavior, and document synchronization. One provider crash does not stop the editor or another provider. Diagnostics are normalized with document URI, range, severity, message, source, and optional code, then routed to model markers and Problems UI.
+Phase 3 V1 selects Monaco-native workers/providers for JavaScript, TypeScript,
+HTML, CSS, and JSON. C# and PHP use Monaco tokenization only. Each current
+provider declares supported language IDs, capabilities, worker availability, and
+document synchronization. Provider failure must not stop the editor or another
+provider. Diagnostics are normalized with document URI, range, severity,
+message, source, and optional code, then routed to model markers and Problems
+UI.
 
-Language-service states are `NOT_CONFIGURED`, `MISSING`, `STARTING`, `RUNNING`, `STOPPED`, `CRASHED`, and `INVALID_CONFIGURATION`. Provider/package choices are deferred to the Phase 3 gate in `LANGUAGE-SUPPORT.md`; no server is installed in Phase 1.
+JavaScript/TypeScript project visibility uses a bounded snapshot/source
+synchronization strategy. It does not mirror all of `node_modules`, and it does
+not expose the real canonical project root to Renderer merely for module
+resolution. Dirty Monaco content takes precedence over an older project
+snapshot. Phase 3B measurements support an initial 3C safety ceiling of 500
+source files, 5 MiB total UTF-8 content, and 256 KiB per file. These are bounded
+implementation defaults, not a promise to load every project file; 3C must keep
+edit/save available when a source is excluded and may lower the bounds if live
+responsiveness evidence requires it.
 
-Runtime detection is independent. Runtime dependency states are `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`, and `INVALID_CONFIGURATION`. Thus Python Run may work while Pyright is missing, or Python intelligence may work while the Python runtime is missing.
+Candidate discovery reuses the existing validated, project-ID plus relative-path
+FileSystemService capabilities. It traverses deterministically, excludes
+`node_modules` and unsupported paths before content reads, checks file metadata
+before reading, and stops at the count/byte bounds. Main remains disk authority;
+the Renderer receives neither a canonical root nor arbitrary read capability.
+
+When the active project root becomes `UNAVAILABLE`, project intelligence stops
+and stale diagnostics are cleared. Editor buffers, syntax highlighting, and the
+open project state remain intact. Project switch/close and renderer reload must
+dispose synchronized sources, worker subscriptions, and stale markers scoped to
+the prior project.
+
+No external language-server process, Python dependency detection, or
+process-control language IPC is required in current Phase 3. If bounded project
+snapshot data cannot reuse an existing project/file capability, it must use a
+narrow project-scoped and runtime-validated Main/Preload contract; it grants no
+canonical-root or arbitrary filesystem access. Python and Java intelligence are
+deferred, not permanently removed. If a future phase adds an external provider,
+Main owns `LanguageServiceManager`, executable selection, process lifecycle,
+workspace scoping, restart, and cleanup; Preload exposes only a narrow typed and
+runtime-validated domain bridge. Renderer never receives raw filesystem,
+canonical-root, IPC, or process authority.
+
+JSON schema resolution is offline and deny-by-default in current Phase 3. Phase
+3D may register only explicitly bundled or application-trusted schemas; network
+schema fetching is not enabled implicitly and requires a future recorded trust
+decision.
+
+Language-service states remain `NOT_CONFIGURED`, `MISSING`, `STARTING`,
+`RUNNING`, `STOPPED`, `CRASHED`, and `INVALID_CONFIGURATION` for providers where
+those states apply. Runtime detection remains independent, with dependency
+states `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`, and `INVALID_CONFIGURATION`.
+`RunService` and Phase 4 have no lifecycle coupling to language providers.
 
 ## 13. Persistence
 
@@ -403,7 +454,10 @@ Formatter integrates through an editor command/provider boundary; debugger throu
 ## 19. Phase boundaries
 
 - Phase 2 implements project, explorer, editor, unsaved protection, search, and terminal against these contracts. ProjectService may persist the minimal recent-project metadata required for project lifecycle; it does not implement the user-facing Recent Projects management experience.
-- Phase 3 implements provider selection and language intelligence without changing privileged boundaries.
+- Phase 3 implements Monaco-native intelligence for JavaScript, TypeScript,
+  HTML, CSS, and JSON; syntax-only C#/PHP; and Problems integration without
+  changing privileged boundaries. Python and Java language intelligence are
+  deferred to a future authorized phase.
 - Phase 4 implements trusted run strategies and Windows process-tree cleanup.
 - Phase 5 implements GitService.
 - Phase 6 completes settings, dependency configuration UX, and the user-facing Recent Projects UX and management experience.

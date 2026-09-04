@@ -15,6 +15,7 @@
     "postinstall": "npm run node-pty:patch && npm run node-pty:rebuild",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "smoke:monaco-workers": "electron scripts/smoke-monaco-workers.mjs",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint ."

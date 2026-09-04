@@ -126,12 +126,12 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 
 ## ADR-013 — Language intelligence boundary
 
-- **Status:** Accepted boundary; provider selections Proposed
+- **Status:** Accepted
 - **Context:** Tier 1/2 capabilities must survive missing/crashed services and remain independent of runtimes.
 - **Options:** Feature code talks directly to individual workers/servers; one LanguageServiceManager with provider adapters.
 - **Selected option:** Main-owned manager for external server lifecycle plus provider adapters; Monaco/browser-worker providers may remain renderer-side behind the same conceptual capability/status boundary.
 - **Rationale:** Providers differ, but diagnostics, capability checks, status UX, and isolation must be consistent.
-- **Consequences:** Runtime/dependency detection uses `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`, and `INVALID_CONFIGURATION`. Language-service lifecycle uses `NOT_CONFIGURED`, `MISSING`, `STARTING`, `RUNNING`, `STOPPED`, `CRASHED`, and `INVALID_CONFIGURATION`. Provider registry, document sync, normalized diagnostics, restart/logging, and these explicit states are required. Final JS/TS/HTML/CSS/JSON and Python providers are decided after Phase 2 and before Phase 3 implementation.
+- **Consequences:** Runtime/dependency detection uses `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`, and `INVALID_CONFIGURATION`. Language-service lifecycle uses `NOT_CONFIGURED`, `MISSING`, `STARTING`, `RUNNING`, `STOPPED`, `CRASHED`, and `INVALID_CONFIGURATION` where applicable to the provider. Provider registry, document sync, normalized diagnostics, status, and cleanup are required. Current Monaco providers are resolved by ADR-015; future external providers remain Main-owned and independent of runtime execution.
 - **Phase:** 1 boundary; Phase 3 provider gate.
 
 ## ADR-014 — TypeScript execution strategy
@@ -148,15 +148,29 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 - **Consequences:** Before Phase 4, test Windows paths, ESM/CommonJS, source maps/error locations, `tsconfig`, cancellation/tree cleanup, single-file and project behavior. Record the final selection here.
 - **Phase:** 4 decision gate.
 
-## ADR-015 — Language provider candidates
+## ADR-015 — Phase 3 V1 language scope and providers
 
-- **Status:** Proposed — decide before Phase 3 implementation
-- **Context:** Required capabilities vary by language and runtime installation.
-- **Options:** Monaco built-in workers; external LSP/language services; mixed provider architecture.
-- **Selected option:** Mixed architecture is the leading direction: Monaco language workers are candidates for JS/TS/HTML/CSS/JSON, and Pyright is the Python candidate. Exact packages/process placement remain `TBD`.
-- **Rationale:** Browser workers may cover web languages with lower process overhead; Python needs a dedicated service. Capability and status behavior must remain uniform.
-- **Consequences:** A Phase 3 spike must verify Signature Help, Definition, diagnostics, cross-file behavior, cancellation, worker/server packaging, logs, and independent failure states before selection.
-- **Phase:** 3 decision gate.
+- **Status:** Accepted for current Phase 3 V1 scope; Python and Java provider decisions Deferred
+- **Context:** The original candidate scope included Python intelligence and Java syntax. Phase 3A confirmed that the web-language requirements can use Monaco-native providers while Python would introduce a materially different external-service dependency and lifecycle. The approved V1 scope is JavaScript/TypeScript, HTML/CSS/JSON, and syntax-only C#/PHP; Python and Java are intentionally deferred rather than permanently removed.
+- **Options:** Monaco built-in workers; external LSP/language services; a mixed architecture; reduce current scope while preserving the provider boundary for future languages.
+- **Selected option:**
+  - Use Monaco-native workers/providers for JavaScript, TypeScript, HTML, CSS, and JSON.
+  - Give JavaScript/TypeScript bounded project visibility through a bounded project snapshot/source synchronization strategy. Do not mirror all of `node_modules`, and do not expose the real canonical project root to Renderer merely for TypeScript resolution.
+  - Use Monaco tokenization only for C# and PHP.
+  - Use measured initial JS/TS snapshot ceilings of 500 source files, 5 MiB total
+    UTF-8 content, and 256 KiB per file for the 3C implementation baseline. Keep
+    editing/saving available for excluded sources and revisit only with measured
+    evidence.
+  - Keep JSON schema resolution offline and deny-by-default. Phase 3D may use
+    explicitly bundled or application-trusted schemas, but may not enable
+    implicit network fetching.
+  - When the active project root becomes `UNAVAILABLE`, stop project intelligence and clear stale diagnostics while preserving editor buffers, syntax highlighting, and the open project.
+  - Defer Python provider selection and all Python LSP lifecycle work. No Pyright, basedpyright, python-lsp-server, `vscode-jsonrpc`, Python interpreter detection for intelligence, or Python document synchronization is approved in current Phase 3.
+  - Defer Java language intelligence and Java-specific provider/runtime infrastructure.
+- **Rationale:** This is the smallest architecture that meets the approved current capabilities without adding an external process, new privileged bridge, or language-runtime coupling. The provider boundary keeps later Python and Java additions possible without redesigning Editor, Project, or Language ownership.
+- **Consequences:** Phase 3B sets snapshot thresholds, exclusions, safe virtual URI mapping, dirty-model precedence, trusted/offline JSON schema policy, provider status contracts, and cleanup rules before feature implementation. Current providers stay Renderer/Monaco-worker based. Any future external Python or Java provider must be Main-owned, project-scoped, exposed only through a narrow typed and runtime-validated Preload bridge, and remain independent from `RunService`. Python and Java are not Phase 3 V1 acceptance criteria.
+- **Rejected for current Phase 3:** Wholesale `node_modules` mirroring; canonical project-root exposure to Renderer for TypeScript resolution; Renderer-owned filesystem/process authority; Python/Java external servers.
+- **Phase:** Phase 3A decision gate resolved for current scope; deferred-language provider gate belongs to a future authorized phase.
 
 ## ADR-016 — IPC runtime validation
 
@@ -271,8 +285,9 @@ No package is installed by this analysis.
 | PTY | `node-pty` | Real PTY/ConPTY semantics | Native rebuild and release maintenance | High: Electron ABI and installer test | SELECTED with gate |
 | Persistence | Small internal JSON adapter | Minimal dependency and explicit schema | Must correctly implement atomic/recovery behavior | Windows file locks/rename tests | SELECTED direction |
 | Git | Direct CLI behind internal wrapper | Transparent, predictable, easy to diagnose | Must parse output and map failures | External Git detection required | SELECTED |
-| JS/TS intelligence | Monaco TS worker or external TypeScript service | Monaco worker is lightweight; external service may improve project fidelity | Capability/project behavior must be measured | Worker/process packaging | TBD Phase 3 |
-| HTML/CSS/JSON intelligence | Monaco workers | Built for editor integration | Confirm diagnostics/capability coverage | Worker packaging | TBD Phase 3 |
-| Python intelligence | Pyright provider | Strong completion/diagnostics | Distribution and executable/package lifecycle | PATH/config and child-process packaging | TBD Phase 3 |
+| JS/TS intelligence | Existing Monaco TypeScript worker with bounded project snapshot | Meets accepted capability scope without external process | Snapshot thresholds, exclusions, and project fidelity require verification | Browser-worker packaging only | SELECTED Phase 3A; no new dependency |
+| HTML/CSS/JSON intelligence | Existing Monaco workers | Built for editor integration | Confirm worker configuration, diagnostics, and trusted/offline schema behavior | Browser-worker packaging only | SELECTED Phase 3A; no new dependency |
+| Python intelligence | Future provider decision; Pyright/basedpyright/python-lsp-server remain unselected candidates | Deferred evaluation can use future requirements and packaging evidence | Would add external-service distribution, IPC, lifecycle, and security cost | Future Windows/process gate required | DEFERRED; no current Phase 3 dependency |
+| Java intelligence | Future provider decision | Preserves future extensibility | Would add provider/runtime/process complexity if an external server is selected | Future Windows/process gate required | DEFERRED; no current Phase 3 dependency |
 | TypeScript Run | `tsx`, `ts-node`, `tsc` + Node, native Node TS | Multiple viable UX choices | Semantics/version/config trade-offs | Must test Windows invocation/stop | TBD Phase 4 |
 | Automated tests | `vitest` | Reuses Vite/TypeScript transform; unit, service, and adapter integration support | Keep Electron E2E separate until required | No native ABI; CI Node 22 compatible | SELECTED Phase 2A |

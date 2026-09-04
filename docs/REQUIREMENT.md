@@ -75,11 +75,11 @@ Stack đã được xác lập qua Phase 0 và các ADR được chấp nhận t
 | Styling | Tailwind CSS |
 | Local persistence | Versioned JSON dưới Electron user data, với atomic write, backup và recovery |
 | Git | Local Git CLI phía sau typed GitService |
-| Language Intelligence | Language Service / Language Server architecture; provider selection vẫn TBD trước Phase 3 |
+| Language Intelligence | Monaco-native providers cho JavaScript/TypeScript/HTML/CSS/JSON trong Phase 3 V1; external language servers được defer cho future language scope |
 
 Student Coding IDE là Electron desktop application, không phải Next.js web
 application. Các lựa chọn còn TBD hợp lệ, bao gồm renderer shared state library,
-language provider, Python/Pyright distribution và TypeScript Run strategy, phải
+provider cho các ngôn ngữ deferred và TypeScript Run strategy, phải
 được ghi quyết định trong `docs/DECISIONS.md` trước khi subsystem tương ứng được
 implementation.
 
@@ -329,11 +329,10 @@ Mức hỗ trợ ngôn ngữ của phiên bản đầu được chia thành các
 
 #### Tier 1 — Language Intelligence và Run
 
-Các ngôn ngữ cần được ưu tiên triển khai đầy đủ:
+Các ngôn ngữ thuộc Phase 3 V1 cần được ưu tiên triển khai đầy đủ:
 
 * JavaScript.
 * TypeScript.
-* Python.
 
 Acceptance criteria tối thiểu cho mỗi ngôn ngữ Tier 1:
 
@@ -364,15 +363,31 @@ Acceptance criteria tối thiểu cho mỗi ngôn ngữ Tier 2:
 
 Tier 2 không bắt buộc hỗ trợ Run trong V1.
 
-#### Tier 3 — Mở rộng sau khi Tier 1 và Tier 2 ổn định
+#### Tier 3 — Syntax-only trong Phase 3 V1
 
-Trong phiên bản đầu, các ngôn ngữ sau có thể chỉ hỗ trợ syntax highlighting:
+Trong Phase 3 V1, các ngôn ngữ sau chỉ có acceptance criteria về syntax
+highlighting:
 
-* Java.
 * C#.
 * PHP.
 
 Language Intelligence và Run cho Tier 3 không phải acceptance criteria của V1.
+
+#### Deferred — Future language support
+
+Python và Java được defer khỏi Phase 3 V1 acceptance scope. Monaco có thể tiếp
+tục nhận diện extension và tokenize `.py` hoặc `.java` như behavior incidental,
+nhưng Phase 3 không implement hoặc claim completion, hover, signature help,
+definition, diagnostics, Problems integration hoặc language-server lifecycle cho
+hai ngôn ngữ này.
+
+Đây không phải permanent removal. Future phase có thể bổ sung Python và Java mà
+không thay đổi ownership boundary hiện tại: Monaco/editor state ở Renderer,
+project/filesystem authority ở Main, typed narrow Preload bridge khi cần, và mọi
+external language-server process phải do Main sở hữu.
+
+Quyết định defer này áp dụng cho Phase 3 Language Intelligence. Các commitment
+Run của Phase 4 chỉ thay đổi khi có một scope decision riêng.
 
 Khái niệm hỗ trợ ngôn ngữ trong phiên bản đầu không bao gồm formatter,
 debugger, refactoring nâng cao, Rename Symbol toàn project, Call Hierarchy hoặc
@@ -504,12 +519,13 @@ Runtime và language service là hai dependency độc lập:
 Runtime != Language Service
 ```
 
-Ví dụ với Python, Python runtime dùng để chạy chương trình; Python language
-service dùng cho IntelliSense và diagnostics. Khi runtime AVAILABLE nhưng
+Ví dụ kiến trúc cho future Python support: Python runtime dùng để chạy chương
+trình; Python language service dùng cho IntelliSense và diagnostics. Khi runtime AVAILABLE nhưng
 language service MISSING, Run vẫn phải hoạt động và IDE phải báo lý do Language
 Intelligence không hoạt động. Khi runtime MISSING nhưng language service
 RUNNING, Language Intelligence vẫn có thể hoạt động và Run phải báo thiếu
-runtime.
+runtime. Phase 3 V1 hiện tại không implement Python language service hoặc Python
+dependency detection cho Language Intelligence.
 
 ---
 
@@ -1220,17 +1236,26 @@ hoạt động ổn định.
 
 Triển khai hoặc chỉnh sửa:
 
-* Syntax highlighting.
-* Language detection.
-* Language Service Manager.
-* Completion, Hover, Signature Help và Go to Definition cho Tier 1.
-* Completion và Hover theo capability đã cam kết cho Tier 2.
+* Syntax highlighting và language detection cho JavaScript, TypeScript, HTML,
+  CSS, JSON, C# và PHP theo capability matrix.
+* Renderer-side provider contracts/registry cho Monaco-native workers; không có
+  external language-server process trong Phase 3 V1.
+* Completion, Hover, Signature Help và Go to Definition cho Tier 1 JavaScript và
+  TypeScript.
+* Completion và Hover theo capability đã cam kết cho Tier 2 HTML, CSS và JSON.
 * Diagnostics trong editor.
 * Problems panel.
-* Runtime detection độc lập với language service detection.
-* Language service lifecycle: start, stop và restart.
-* Crash handling.
-* Missing dependency và invalid configuration status.
+* Bounded JS/TS project snapshot/source synchronization; không mirror toàn bộ
+  `node_modules` và không expose canonical project root cho Renderer.
+* Provider lifecycle/status, crash/failure handling và cleanup phù hợp với
+  Monaco workers.
+* Khi active project root `UNAVAILABLE`, dừng project intelligence và clear stale
+  diagnostics nhưng giữ editor buffers, syntax highlighting và project mở.
+
+Python và Java được defer cho future language-support phase và không thuộc Phase
+3 V1 acceptance. Phase này không thêm Pyright, basedpyright,
+python-lsp-server, Python LSP/IPC transport, Python interpreter detection cho
+Language Intelligence hoặc Java-specific provider/runtime infrastructure.
 
 Formatter và debugger không thuộc phase này.
 
@@ -1497,20 +1522,24 @@ Completion
 Status
 ```
 
-Matrix phải bao phủ JavaScript, TypeScript, Python, HTML, CSS và JSON. Mọi `TBD`
-liên quan Phase 3 phải được chốt sau Phase 1 và trước khi implement Language
-Intelligence.
+Matrix phải bao phủ JavaScript, TypeScript, HTML, CSS, JSON, C#, PHP và ghi rõ
+Python/Java là deferred future support. Mọi `TBD` thuộc current Phase 3 scope phải
+được chốt trước khi implement Language Intelligence; provider selection cho
+ngôn ngữ deferred chỉ được chốt khi future scope tương ứng được authorize.
 
 Matrix khởi tạo có thể dùng cấu trúc:
 
 | Language | Editor | Language service | Runtime | Run | Diagnostics | Completion | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| JavaScript | Monaco | TBD | Node.js | V1 | V1 | V1 | TBD |
-| TypeScript | Monaco | TBD | Strategy TBD | V1 | V1 | V1 | TBD |
-| Python | Monaco | TBD | Python | V1 | V1 | V1 | TBD |
-| HTML | Monaco | TBD | N/A | No | V1 | V1 | TBD |
-| CSS | Monaco | TBD | N/A | No | V1 | V1 | TBD |
-| JSON | Monaco | TBD | N/A | No | V1 | V1 | TBD |
+| JavaScript | Monaco | Monaco-native worker | Node.js | V1 | V1 | V1 | Current Phase 3 V1 |
+| TypeScript | Monaco | Monaco-native worker | Strategy TBD | V1 | V1 | V1 | Current Phase 3 V1; Run strategy TBD Phase 4 |
+| HTML | Monaco | Monaco-native worker | N/A | No | V1 | V1 | Current Phase 3 V1 |
+| CSS | Monaco | Monaco-native worker | N/A | No | V1 | V1 | Current Phase 3 V1 |
+| JSON | Monaco | Monaco-native worker | N/A | No | V1 | V1 | Current Phase 3 V1 |
+| C# | Monaco | None in Phase 3 V1 | Future | Future | Future | Future | Syntax only |
+| PHP | Monaco | None in Phase 3 V1 | Future | Future | Future | Future | Syntax only |
+| Python | Incidental Monaco recognition only | Deferred | Python | Phase 4 scope unchanged | Deferred | Deferred | Future language-support phase |
+| Java | Incidental Monaco recognition only | Deferred | Future | Future | Deferred | Deferred | Future language-support phase |
 
 ### DECISIONS.md
 
@@ -1545,11 +1574,12 @@ Một feature được xem là hoàn thành khi:
 7. Đã commit vào feature branch.
 8. Documentation được cập nhật nếu cần.
 
-Đối với language intelligence, feature chỉ được xem là hoàn thành khi:
+Đối với các ngôn ngữ thuộc current Phase 3 V1 scope, language intelligence chỉ
+được xem là hoàn thành khi:
 
-1. Language service start đúng.
-2. Language service stop đúng.
-3. Có thể restart language service.
+1. Monaco provider/worker khởi tạo đúng.
+2. Provider subscriptions, synchronized sources và diagnostics được dispose đúng.
+3. Provider recovery/restart hoạt động khi worker tương ứng hỗ trợ.
 4. Completion hoạt động.
 5. Hover hoạt động cho Tier 1 và hoạt động cho Tier 2 nếu language service hỗ trợ.
 6. Signature Help hoạt động cho Tier 1.
@@ -1557,11 +1587,11 @@ Một feature được xem là hoàn thành khi:
 8. Diagnostics hoạt động.
 9. Problems panel hiển thị đúng.
 10. Chọn một Problem chuyển đúng đến file và dòng tương ứng.
-11. Editor vẫn edit và save được khi language service ở trạng thái `MISSING`,
-    `STARTING`, `CRASHED` hoặc `STOPPED`.
+11. Editor vẫn edit và save được trong mọi provider failure/status state áp dụng
+    cho current Monaco providers.
 12. Language service không block UI.
 13. Lỗi language service của một ngôn ngữ không làm hỏng ngôn ngữ khác.
-14. Missing dependency hoặc invalid configuration không fail silent.
+14. Missing provider resource hoặc invalid configuration không fail silent.
 
 ---
 

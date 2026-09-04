@@ -1,6 +1,11 @@
 import type { editor } from 'monaco-editor'
 
 import type { ProjectId } from '../../../../../shared/contracts'
+import { phase3LanguageIdForPath } from '../../language/language-capabilities'
+import {
+  normalizeProjectRelativePath,
+  projectDocumentUri,
+} from '../../language/project-uri'
 
 export interface Disposable {
   dispose(): void
@@ -301,18 +306,7 @@ export class EditorModelManager {
 }
 
 export function normalizeRelativePath(relativePath: string): string {
-  const replaced = relativePath.replaceAll('\\', '/')
-  if (replaced.startsWith('/') || /^[a-z]:/i.test(replaced)) {
-    throw new Error('Expected a project-relative path.')
-  }
-  const parts: string[] = []
-  for (const part of replaced.split('/')) {
-    if (!part || part === '.') continue
-    if (part === '..') throw new Error('Parent traversal is not allowed.')
-    parts.push(part)
-  }
-  if (parts.length === 0) throw new Error('Expected a file path.')
-  return parts.join('/')
+  return normalizeProjectRelativePath(relativePath)
 }
 
 export function isSameOrDescendant(path: string, ancestor: string): boolean {
@@ -326,21 +320,14 @@ export function documentKey(projectId: ProjectId, relativePath: string): string 
 }
 
 export function documentUri(projectId: ProjectId, relativePath: string): string {
-  const encodedPath = normalizeRelativePath(relativePath)
-    .split('/')
-    .map(encodeURIComponent)
-    .join('/')
-  return `student-ide://project/${encodeURIComponent(projectId)}/${encodedPath}`
+  return projectDocumentUri(projectId, relativePath)
 }
 
 export function languageIdForPath(relativePath: string): string {
   const extension = relativePath.split('.').at(-1)?.toLowerCase()
-  return ({
-    js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript',
-    ts: 'typescript', tsx: 'typescript', mts: 'typescript', cts: 'typescript',
-    py: 'python', html: 'html', htm: 'html', css: 'css', scss: 'scss', less: 'less',
-    json: 'json', java: 'java', cs: 'csharp', php: 'php',
-  } as Record<string, string>)[extension ?? ''] ?? 'plaintext'
+  if (extension === 'mts' || extension === 'cts') return 'typescript'
+  if (extension === 'scss' || extension === 'less') return extension
+  return phase3LanguageIdForPath(relativePath) ?? 'plaintext'
 }
 
 function normalizeIdentityPath(path: string): string {

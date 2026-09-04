@@ -112,7 +112,7 @@ before affected work continues.
 | Phase 2D — Project Search | `COMPLETE` | Responsive, cancellable project search |
 | Phase 2E — Integrated Terminal | `COMPLETE` | 2E-J corrective Steps 1–3 and final consolidated review passed |
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
-| Phase 3 — Language Intelligence | `NOT_STARTED` | Tier 1/2 intelligence, diagnostics, and Problems |
+| Phase 3 — Language Intelligence | `IN_PROGRESS` | 3A audit and 3B foundation `COMPLETE`; 3C–3F not started |
 | Phase 4 — Run & Output | `NOT_STARTED` | Trusted Run strategies, output, stop, and cleanup |
 | Phase 5 — Git Integration | `NOT_STARTED` | Basic local Git workflow through typed GitService |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
@@ -151,8 +151,9 @@ adversarial review, and manual Electron smoke passed before it moved to
 `COMPLETE`. Phase 2E-A through Phase 2E-J are `COMPLETE`; corrective Steps 1–3
 and the explicitly authorized final consolidated review passed. Phase 2E is
 `COMPLETE`. Phase 2F completed its A–E audit, corrective, resource, integration,
-native, performance, security, and documentation gates. Phase 3 and later work
-remain `NOT_STARTED`.
+native, performance, security, and documentation gates. Phase 3A architecture
+and feasibility audit and Phase 3B language foundation are `COMPLETE`; Phase 3C–3F
+and all later phases remain `NOT_STARTED`.
 
 ## 7. Dependency graph
 
@@ -1574,7 +1575,9 @@ Open project -> Explorer -> Open file -> Edit -> Save -> Search -> Terminal
 
 Implement FR-011, FR-017, and FR-018 according to
 `docs/LANGUAGE-SUPPORT.md`, without coupling editor availability to a runtime or
-provider process.
+external provider process. Current Phase 3 V1 covers JavaScript/TypeScript,
+HTML/CSS/JSON, and syntax-only C#/PHP. Python and Java language support are
+deferred to a future authorized phase, not permanently removed.
 
 ### Dependencies
 
@@ -1584,52 +1587,153 @@ provider process.
 
 ### Decision gates
 
-- Select and record JS/TS/HTML/CSS/JSON provider(s) before implementation.
-- Select and record the Python provider, distribution, executable discovery, and
-  lifecycle strategy before Python implementation.
+- ADR-015 has selected Monaco-native providers for JS/TS/HTML/CSS/JSON, bounded
+  JS/TS project snapshots, and the project-root `UNAVAILABLE` behavior.
 - Decide large-file language-intelligence thresholds using measured responsiveness
   while preserving edit/save.
+- Before project-aware JS/TS implementation, record bounded snapshot thresholds,
+  exclusions, safe virtual URI mapping, dirty-model precedence, and stale-result
+  protection. Wholesale `node_modules` mirroring and canonical-root exposure to
+  Renderer are prohibited.
+- Before JSON provider implementation, record a trusted/offline schema policy.
 - Verify capability coverage, multi-file behavior, document synchronization,
-  Windows URI/path handling, lifecycle, cancellation, logs, cleanup, development
-  and production-build behavior, worker/server resource discovery,
-  bundling/distribution assumptions, child-process/provider executable discovery,
-  required assets, license, and maintenance risk.
-- If feasibility cannot otherwise be established, run only a
-  minimal provider packaging feasibility spike. Full application packaging,
-  installer creation,
-  release artifacts, and installed-app acceptance remain Phase 7 responsibilities.
+  Windows virtual URI/path handling, cancellation, cleanup, worker recovery,
+  development behavior, and production-build worker/resource discovery.
+- Full application packaging, installer creation, release artifacts, and
+  installed-app acceptance remain Phase 7 responsibilities.
 
 ### Key deliverables
 
-- LanguageServiceManager, Provider Registry, capability routing, document sync,
-  normalized diagnostics, lifecycle/status/logs, crash handling, and restart.
+- Renderer-side LanguageProviderManager/provider contracts, capability routing,
+  bounded document synchronization, normalized diagnostics, worker status, and
+  cleanup.
 - Completion, Hover, Signature Help, and Go to Definition for Tier 1 JavaScript,
-  TypeScript, and Python.
+  and TypeScript.
 - Tier 2 HTML/CSS/JSON capabilities exactly as committed in the matrix.
 - Diagnostics markers and Problems UI/navigation.
-- Tier 3 Java/C#/PHP syntax-only V1 support where available; no Tier 3
-  intelligence/run commitment.
+- Tier 3 C#/PHP syntax-only V1 support; no Tier 3 intelligence/run commitment.
 - Language-service states: `NOT_CONFIGURED`, `MISSING`, `STARTING`, `RUNNING`,
-  `STOPPED`, `CRASHED`, `INVALID_CONFIGURATION`.
-- Runtime/dependency states: `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`,
-  `INVALID_CONFIGURATION`.
-- Independent runtime and language-service detection/UX.
+  `STOPPED`, `CRASHED`, `INVALID_CONFIGURATION` where applicable to a current
+  worker provider.
+- Explicit project-scoped cleanup. Root `UNAVAILABLE` stops project intelligence
+  and clears stale diagnostics while preserving buffers, syntax, and project
+  state.
+- No external language-server process or Python/Java provider dependency.
 
 ### Acceptance criteria
 
 - Capability matrix acceptance passes per language/tier.
-- Missing, starting, stopped, crashed, or invalid service never prevents editing
-  and saving.
+- Missing, starting, stopped, crashed, or invalid provider states that apply to a
+  current provider never prevent editing and saving.
 - One provider failure does not break another language.
 - Diagnostics update without blocking Renderer and Problems navigation reaches the
   correct file/range.
-- Lifecycle, restart, logs, dependency UX, and cleanup pass on Windows.
-- Provider distribution feasibility is demonstrated for development and
+- Project switch/close, root `UNAVAILABLE`, renderer reload, worker recovery, and
+  stale diagnostics cleanup pass on Windows.
+- Provider/worker resource discovery is demonstrated for development and
   production builds without claiming full packaged/installed acceptance.
+
+### Work packages
+
+#### 3A — Architecture and feasibility audit — `COMPLETE`
+
+- Audited the Phase 2 Monaco/editor baseline, provider options, project and
+  diagnostics ownership, security, resources, and Orca reference applicability.
+- Resolved ADR-015 for the approved current scope. No production code or
+  dependencies were changed.
+
+#### 3B — Language foundation and provider contracts — `COMPLETE`
+
+- Configure the Monaco provider foundation and current extension/language map.
+- Add capability, provider-status, normalized-diagnostic, ownership, and cleanup
+  contracts without adding external process control.
+- Define safe virtual URI mapping and the narrow project-scoped data flow needed
+  for bounded snapshots; Renderer receives no canonical root or arbitrary
+  filesystem access.
+- Fix bounded snapshot file/count/byte thresholds, exclusions, and behavior when
+  the active root is `UNAVAILABLE`.
+- Dependencies: existing `monaco-editor`, Phase 2 project/filesystem and editor
+  contracts; no new package or external runtime expected.
+- Complexity: MEDIUM.
+- STOP if bounded project data cannot be supplied through existing or narrow
+  validated project-scoped capabilities, if a new dependency becomes necessary,
+  or if security boundaries would change.
+
+Completion evidence:
+
+- The renderer-owned Monaco worker map covers editor, JS/TS, HTML, CSS, and JSON
+  using local build assets. A production renderer `file://` Electron smoke loaded
+  every worker with the required BrowserWindow security flags.
+- Capability/provider/status contracts cover only the approved current matrix;
+  C#/PHP remain tokenization-only and Python/Java remain deferred.
+- Safe project-scoped virtual URIs resolve same-file and TS/JS/mixed cross-file
+  definitions without exposing a canonical root. JSX/TSX and deliberate JS/TS
+  diagnostics/defaults passed focused worker tests.
+- The bounded snapshot prototype excludes `node_modules`, non-JS/TS sources,
+  over-limit files/count/bytes, gives open models (including dirty models)
+  precedence, and rejects stale project/provider generations. Project switch,
+  close, root `UNAVAILABLE`, and renderer disposal clear only owned state and
+  diagnostics.
+- Measurements: the snapshot planner/state processed 1,000 files and 8,219,780
+  UTF-8 bytes in 59 ms with a 7,116,248-byte observed heap delta; the TypeScript
+  worker resolved a 501-file, 4,111,341-byte virtual project in 1,184 ms and
+  parsed a 262,170-byte individual source in 393 ms. The initial 3C ceilings are
+  500 files, 5 MiB total, and 256 KiB per file.
+- Candidate discovery can reuse current validated FileSystemService list/stat/read
+  operations with project IDs and relative paths. No new IPC, raw filesystem,
+  canonical-root exposure, process authority, dependency, or external provider
+  is required.
+- Full verification passed 353 tests across 37 files, typecheck, lint, production
+  build, Electron worker smoke, and `git diff --check`.
+
+#### 3C — JavaScript/TypeScript intelligence — `NOT_STARTED`
+
+- Enable required completion, diagnostics, hover, signature help, and definition
+  through Monaco's TypeScript worker.
+- Implement bounded project-aware source synchronization, dirty-model precedence,
+  stale-result protection, project switching/close cleanup, and root-unavailable
+  degradation.
+- Dependencies: 3B; no new package or external runtime expected.
+- Complexity: LARGE.
+- STOP if required multi-file behavior cannot fit the approved bounded snapshot,
+  would require wholesale `node_modules` mirroring/canonical-root exposure, or
+  needs an external TypeScript service.
+
+#### 3D — HTML/CSS/JSON intelligence — `NOT_STARTED`
+
+- Enable Monaco-native completion and diagnostics, plus hover only where the
+  accepted capability matrix requires provider-supported behavior.
+- Apply the trusted/offline JSON schema policy and verify provider cleanup and
+  stale-diagnostic removal.
+- Dependencies: 3B; no new package or external runtime expected.
+- Complexity: MEDIUM.
+- STOP if schema behavior requires unapproved network trust, a new dependency,
+  or privileged Renderer authority.
+
+#### 3E — Problems and diagnostics integration — `NOT_STARTED`
+
+- Add the normalized Problems store, marker aggregation, project/file scoping,
+  stale cleanup, severity/source display, and navigation to file/range.
+- Dependencies: 3C and 3D.
+- Complexity: MEDIUM.
+- STOP if diagnostics ownership conflicts with Monaco/model lifecycle or if
+  Problems behavior requires an unapproved product decision.
+
+#### 3F — Stabilization and final verification — `NOT_STARTED`
+
+- Run integration, lifecycle, performance/resource, security, Windows,
+  development/production-build, and documentation gates for current languages.
+- Verify C#/PHP syntax assignment and confirm Python/Java remain outside current
+  acceptance without weakening future extensibility.
+- Dependencies: 3B–3E.
+- Complexity: MEDIUM.
+- STOP on failed current-scope acceptance, resource leaks, stale diagnostics,
+  boundary violations, or undocumented scope/dependency changes.
 
 ### Exit gate
 
-- All provider decisions are recorded; no provider remains implicitly selected.
+- All current-scope provider decisions are recorded; deferred Python/Java
+  provider decisions are not an exit blocker.
 - Required provider feasibility evidence passes; full packaged/installed provider
   verification remains a Phase 7 exit condition.
 - Phase 3 Definition of Done in Section 19 passes.
@@ -1822,9 +1926,9 @@ dependency packaging, application packaging, installer, and documentation review
 | Renderer state management | ADR-011 | Shared Phase 2 shell/project/editor state expands | Proposed; unresolved | Actual cross-feature update needs, lifecycle ownership, complexity, bundle/dependency cost |
 | IPC runtime validation mechanism | ADR-016, ADR-003 | Production IPC handlers multiply in early Phase 2 | RESOLVED Phase 2A — explicit validators | Current contracts are small; validators provide normalized issues and audited narrowing without schema runtime cost |
 | React Monaco integration | ADR-006, ADR-019 | Phase 2C Editor implementation | RESOLVED Phase 2C — thin `@monaco-editor/react` mount over local `monaco-editor` | Model/view ownership remains with EditorModelManager; local workers, development/build behavior, and disposal must pass the Phase 2C gate |
-| JS/TS/HTML/CSS/JSON providers | ADR-013, ADR-015 | Phase 3 implementation | Proposed; unresolved | Matrix capabilities, cross-file behavior, sync, lifecycle, development/production-build behavior, provider distribution feasibility, license/maintenance; full packaged/installed verification is Phase 7 |
-| Python/Pyright strategy | ADR-013, ADR-015 | Python Phase 3 implementation | Candidate only; unresolved | Distribution, executable/config discovery, lifecycle, development/production-build behavior, minimal packaging feasibility if needed, logs, Windows behavior, license; full packaged/installed verification is Phase 7 |
-| Large-file language thresholds | Architecture §8 | Phase 3 acceptance for expensive features | TBD | Measured responsiveness/memory while edit/save remains available |
+| JS/TS/HTML/CSS/JSON providers | ADR-013, ADR-015 | Phase 3B implementation | RESOLVED Phase 3A — Monaco-native workers/providers | Matrix capabilities, bounded cross-file behavior, sync, worker lifecycle, development/production-build behavior, resource discovery; full packaged/installed verification is Phase 7 |
+| Python/Java providers | ADR-013, ADR-015 | Future explicitly authorized language phase | DEFERRED — no provider selected | Re-evaluate capabilities, distribution, executable/config discovery, Main-owned lifecycle, narrow IPC, Windows behavior, license, and packaging only when future scope is authorized |
+| Large-file language thresholds | Architecture §8 | Phase 3 acceptance for expensive features | RESOLVED Phase 3B — initial 500 files / 5 MiB total / 256 KiB per file | Re-measure during 3C integration while edit/save remains available; lower bounds if live responsiveness requires it |
 | TypeScript Run strategy | ADR-014 | TypeScript Phase 4 implementation | Proposed; unresolved | Node versions, ESM/CJS, `tsconfig`, errors/maps, startup, Windows paths, stop/tree cleanup |
 | Test infrastructure and command | ADR-018 / Requirement Phase 7 | Phase 2A acceptance, before Phase 2A automated tests are considered complete | RESOLVED Phase 2A — Vitest; `npm test` | Node-environment unit/main/service/IPC adapter coverage, Vite/TypeScript compatibility, CI Node 22, and later opt-in renderer/Electron E2E tooling only when required |
 | Windows terminal cleanup strategy | ADR-007, ADR-008, ADR-020 | Phase 2E-J corrective Step 2 | RESOLVED — Windows Job Object primary | Atomic `PROC_THREAD_ATTRIBUTE_JOB_LIST`, fail-closed capability/spawn, retained natural-root ownership, explicit terminate/empty/release; taskkill legacy-only |
@@ -1846,7 +1950,7 @@ decision register. This plan does not select any unresolved option.
 | IPC privilege boundary | 2A onward | Arbitrary privileged access | ADR-016 validation, narrow preload, ownership checks, security regression |
 | Process-tree cleanup | 2E, 4, 7 | Orphans or unrelated process termination | Owned registry, bounded escalation, Windows descendant tests |
 | Language-provider packaging | 3, 7 | Intelligence works only in development or fails after distribution | Phase 3 provider distribution-feasibility gate and minimal spike if needed; Phase 7 full packaged/installed provider/resource verification |
-| Python/Pyright distribution | 3, 7 | Missing/broken Python intelligence | Explicit provider/distribution decision and Windows dependency UX tests |
+| Future Python/Java provider distribution | Future language phase, 7 | Future intelligence may require external process/distribution work | Deferred provider decision; preserve Main ownership, narrow validated IPC, Windows lifecycle, and packaged verification gates |
 | TypeScript Run strategy | 4 | Inconsistent execution/config behavior | ADR-014 spike before implementation |
 | Large-project search responsiveness | 2D, 2F | Frozen UI or memory growth | Async bounded batches, exclusions, cancellation, representative performance smoke |
 | JSON corruption/recovery | 2A, 6, 7 | Lost settings/workspace convenience state | Atomic serialized writes, backup, schema migration, corruption tests |
@@ -1950,12 +2054,16 @@ acceptance work is not a V1 exit requirement.
 
 ### Phase 3 Definition of Done
 
-- Provider decisions are recorded and Tier 1/2 matrix capabilities pass.
+- Current provider decisions are recorded and the current Tier 1/2 matrix
+  capabilities plus Tier 3 C#/PHP syntax assignment pass.
 - Completion, hover, required signature/definition behavior, diagnostics, and
   Problems/navigation pass.
-- Provider start/stop/restart/crash/log/status and missing/invalid UX pass.
+- Provider status/recovery and project switch/close, root `UNAVAILABLE`, renderer
+  reload, worker cleanup, and stale-diagnostic behavior pass.
 - Runtime and Language Service remain independent; editor/save survive all
   required service failure states.
+- Python and Java intelligence remain deferred and introduce no current
+  dependency, process, IPC, or acceptance requirement.
 - Defined tests, Windows smoke, typecheck, lint, and build pass.
 
 ### Phase 4 Definition of Done
