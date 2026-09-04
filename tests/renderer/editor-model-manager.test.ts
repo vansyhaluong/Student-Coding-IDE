@@ -155,6 +155,31 @@ describe('EditorModelManager', () => {
     expect(nested.relativePath).toBe('lib/nested/b.ts')
   })
 
+  it('adopts an existing target model during rename and preserves dirty content', () => {
+    const models = new Map<string, FakeModel>()
+    const createModel = vi.fn((value: string, _language: string, uri: string) => {
+      const model = new FakeModel(value)
+      models.set(uri, model)
+      return model
+    })
+    const manager = new EditorModelManager({
+      createModel,
+      getModel: (uri) => models.get(uri) ?? null,
+    })
+    const document = manager.openDocument(projectId, 'src/old.ts', 'disk')
+    document.model.setValue('dirty buffer')
+    const targetUri = 'student-ide://project/project_1234567890abcdef12345678/src/new.ts'
+    const targetModel = createModel('new disk snapshot', 'typescript', targetUri)
+
+    manager.renamePath(projectId, 'src/old.ts', 'src/new.ts', false)
+
+    const renamed = manager.findDocument(projectId, 'src/new.ts')
+    expect(renamed?.model).toBe(targetModel)
+    expect(renamed?.model.getValue()).toBe('dirty buffer')
+    expect(renamed?.dirty).toBe(true)
+    expect(createModel).toHaveBeenCalledTimes(2)
+  })
+
   it('matches normalized ancestry without matching sibling prefixes', () => {
     expect(isSameOrDescendant('src/foo/a.ts', 'src/foo')).toBe(true)
     expect(isSameOrDescendant('src/foo', 'src/foo')).toBe(true)

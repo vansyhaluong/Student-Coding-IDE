@@ -1,9 +1,13 @@
 import { loader } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
+import * as monacoCss from 'monaco-editor/languages/features/css/register'
+import * as monacoHtml from 'monaco-editor/languages/features/html/register'
+import * as monacoJson from 'monaco-editor/languages/features/json/register'
 import * as monacoTypeScript from 'monaco-editor/languages/features/typescript/register'
 
 import type { MonacoModelHost } from './models/editor-model-manager'
 import { configureMonacoTypeScriptDefaults } from '../language/monaco-typescript-defaults'
+import { configureMonacoWebLanguageDefaults } from '../language/monaco-web-language-defaults'
 import { workerKindForLabel } from '../language/worker-routing'
 
 globalThis.MonacoEnvironment = {
@@ -27,10 +31,14 @@ globalThis.MonacoEnvironment = {
 
 loader.config({ monaco })
 configureMonacoTypeScriptDefaults(monacoTypeScript)
+configureMonacoWebLanguageDefaults(monacoHtml, monacoCss, monacoJson)
 
 export const monacoModelHost: MonacoModelHost = {
   createModel(value, languageId, uri) {
     return monaco.editor.createModel(value, languageId, monaco.Uri.parse(uri))
+  },
+  getModel(uri) {
+    return monaco.editor.getModel(monaco.Uri.parse(uri))
   },
 }
 

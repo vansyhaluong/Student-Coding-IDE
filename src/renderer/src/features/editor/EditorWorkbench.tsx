@@ -64,10 +64,10 @@ export function EditorWorkbench({
       || active.relativePath !== navigation.relativePath
     ) return
     const range = {
-      startLineNumber: navigation.lineNumber,
-      startColumn: navigation.columnStart,
-      endLineNumber: navigation.lineNumber,
-      endColumn: navigation.columnEnd,
+      startLineNumber: navigation.startLineNumber,
+      startColumn: navigation.startColumn,
+      endLineNumber: navigation.endLineNumber,
+      endColumn: navigation.endColumn,
     }
     editorInstance.setSelection(range)
     editorInstance.revealRangeInCenter(range)

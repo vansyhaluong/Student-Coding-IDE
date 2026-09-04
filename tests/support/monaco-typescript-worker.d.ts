@@ -24,11 +24,18 @@ declare module 'monaco-editor/languages/features/typescript/tsWorker' {
   interface CompletionInfo { readonly entries: readonly CompletionEntry[] }
   interface DefinitionInfo { readonly fileName: string }
   interface Diagnostic { readonly messageText: string | { readonly messageText: string } }
+  interface DisplayPart { readonly text: string }
+  interface QuickInfo { readonly displayParts?: readonly DisplayPart[] }
+  interface SignatureParameter { readonly displayParts: readonly DisplayPart[] }
+  interface SignatureItem { readonly parameters: readonly SignatureParameter[] }
+  interface SignatureHelpItems { readonly items: readonly SignatureItem[] }
 
   export class TypeScriptWorker {
     constructor(context: WorkerContext, createData: WorkerCreateData)
     getCompletionsAtPosition(fileName: string, position: number): Promise<CompletionInfo | undefined>
     getDefinitionAtPosition(fileName: string, position: number): Promise<readonly DefinitionInfo[] | undefined>
+    getQuickInfoAtPosition(fileName: string, position: number): Promise<QuickInfo | undefined>
+    getSignatureHelpItems(fileName: string, position: number, options: unknown): Promise<SignatureHelpItems | undefined>
     getSyntacticDiagnostics(fileName: string): Promise<readonly Diagnostic[]>
     getSemanticDiagnostics(fileName: string): Promise<readonly Diagnostic[]>
   }

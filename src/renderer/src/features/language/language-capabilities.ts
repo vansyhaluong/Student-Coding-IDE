@@ -40,13 +40,18 @@ const fullIntelligence: LanguageCapabilities = {
   definition: true,
 }
 
-const webIntelligence: LanguageCapabilities = {
+const htmlIntelligence: LanguageCapabilities = {
   syntax: true,
   completion: true,
-  diagnostics: true,
+  diagnostics: false,
   hover: true,
   signatureHelp: false,
   definition: false,
+}
+
+const webIntelligence: LanguageCapabilities = {
+  ...htmlIntelligence,
+  diagnostics: true,
 }
 
 const syntaxOnly: LanguageCapabilities = {
@@ -84,7 +89,7 @@ export const phase3LanguageCapabilities = {
     languageId: 'html',
     scope: 'tier-2',
     provider: 'monaco-html',
-    capabilities: webIntelligence,
+    capabilities: htmlIntelligence,
   },
   css: {
     languageId: 'css',

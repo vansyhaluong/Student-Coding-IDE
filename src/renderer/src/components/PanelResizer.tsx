@@ -5,6 +5,7 @@ interface PanelResizerProps {
   minimum: number
   getMaximum(): number
   onResize(height: number): void
+  label?: string
 }
 
 export function PanelResizer({
@@ -12,6 +13,7 @@ export function PanelResizer({
   minimum,
   getMaximum,
   onResize,
+  label = 'Resize Terminal panel',
 }: PanelResizerProps) {
   const activeCleanup = useRef<(() => void) | null>(null)
 
@@ -50,7 +52,7 @@ export function PanelResizer({
     <div
       className="panel-resizer"
       role="separator"
-      aria-label="Resize Terminal panel"
+      aria-label={label}
       aria-orientation="horizontal"
       aria-valuemin={minimum}
       aria-valuemax={getMaximum()}

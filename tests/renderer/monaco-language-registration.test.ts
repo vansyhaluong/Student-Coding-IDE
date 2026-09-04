@@ -3,8 +3,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { configureMonacoTypeScriptDefaults } from '../../src/renderer/src/features/language/monaco-typescript-defaults'
+import { configureMonacoWebLanguageDefaults } from '../../src/renderer/src/features/language/monaco-web-language-defaults'
 
 describe('Monaco language registration and defaults', () => {
+  it('registers the exact Tier 2 syntax language IDs', async () => {
+    const { monaco } = await loadMonaco()
+    const languageIds = monaco.languages.getLanguages().map(({ id }) => id)
+    expect(languageIds).toEqual(expect.arrayContaining(['html', 'css', 'json']))
+  }, 30_000)
+
   it('registers and ships tokenizers for C# and PHP without Student IDE providers', async () => {
     const { monaco } = await loadMonaco()
     const languageIds = monaco.languages.getLanguages().map(({ id }) => id)
@@ -72,6 +79,36 @@ describe('Monaco language registration and defaults', () => {
       model.dispose()
     }
   }, 30_000)
+
+  it('configures Tier 2 providers with offline JSON and deferred HTML diagnostics', async () => {
+    const { monacoCss, monacoHtml, monacoJson } = await loadMonaco()
+    configureMonacoWebLanguageDefaults(monacoHtml, monacoCss, monacoJson)
+
+    expect(monacoHtml.htmlDefaults.modeConfiguration).toMatchObject({
+      completionItems: true,
+      hovers: true,
+      diagnostics: false,
+    })
+    expect(monacoCss.cssDefaults.options).toMatchObject({
+      validate: true,
+      data: { useDefaultDataProvider: true },
+    })
+    expect(monacoCss.cssDefaults.modeConfiguration).toMatchObject({
+      completionItems: true,
+      hovers: true,
+      diagnostics: true,
+    })
+    expect(monacoJson.jsonDefaults.diagnosticsOptions).toMatchObject({
+      validate: true,
+      schemas: [],
+      enableSchemaRequest: false,
+    })
+    expect(monacoJson.jsonDefaults.modeConfiguration).toMatchObject({
+      completionItems: true,
+      hovers: true,
+      diagnostics: true,
+    })
+  }, 30_000)
 })
 
 let monacoPromise: ReturnType<typeof importMonaco> | undefined
@@ -94,10 +131,13 @@ async function importMonaco() {
       removeEventListener: () => undefined,
     }),
   })
-  const [monaco, , monacoTypeScript] = await Promise.all([
+  const [monaco, , monacoTypeScript, monacoHtml, monacoCss, monacoJson] = await Promise.all([
     import('monaco-editor/editor/editor.api'),
     import('monaco-editor/basic-languages/monaco.contribution'),
     import('monaco-editor/languages/features/typescript/register'),
+    import('monaco-editor/languages/features/html/register'),
+    import('monaco-editor/languages/features/css/register'),
+    import('monaco-editor/languages/features/json/register'),
   ])
-  return { monaco, monacoTypeScript }
+  return { monaco, monacoTypeScript, monacoHtml, monacoCss, monacoJson }
 }

@@ -53,7 +53,15 @@ describe('Phase 3 language foundation', () => {
     })
     expect(phase3LanguageCapabilities.typescript.capabilities)
       .toEqual(phase3LanguageCapabilities.javascript.capabilities)
-    for (const language of ['html', 'css', 'json'] as const) {
+    expect(phase3LanguageCapabilities.html.capabilities).toMatchObject({
+      syntax: true,
+      completion: true,
+      diagnostics: false,
+      hover: true,
+      signatureHelp: false,
+      definition: false,
+    })
+    for (const language of ['css', 'json'] as const) {
       expect(phase3LanguageCapabilities[language].capabilities).toMatchObject({
         syntax: true,
         completion: true,

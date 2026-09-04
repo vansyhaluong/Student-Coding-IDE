@@ -4,7 +4,8 @@ export interface EditorNavigationRequest {
   id: number
   projectId: ProjectId
   relativePath: string
-  lineNumber: number
-  columnStart: number
-  columnEnd: number
+  startLineNumber: number
+  startColumn: number
+  endLineNumber: number
+  endColumn: number
 }
