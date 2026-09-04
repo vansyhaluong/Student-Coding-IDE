@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=4",
     "node-pty:patch": "node scripts/apply-node-pty-job-patch.mjs",
     "node-pty:rebuild": "node scripts/rebuild-node-pty-for-electron.mjs",
     "node-pty:smoke": "node scripts/run-windows-terminal-job-smoke.mjs",
@@ -15,6 +15,7 @@
     "postinstall": "npm run node-pty:patch && npm run node-pty:rebuild",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "smoke:monaco-workers": "electron scripts/smoke-monaco-workers.mjs",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint ."

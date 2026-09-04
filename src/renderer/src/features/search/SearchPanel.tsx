@@ -1,5 +1,5 @@
 import { ChevronRight, File, Folder, LoaderCircle, Search, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
 import type {
@@ -34,6 +34,7 @@ export function SearchPanel({
   const [loadingVisible, setLoadingVisible] = useState(false)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null)
+  const queryRef = useRef('')
   const activeOperation = useRef<string | null>(null)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -67,7 +68,7 @@ export function SearchPanel({
     }
   }), [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     clearDebounceTimer()
     clearLoadingTimer()
     const operationId = activeOperation.current
@@ -75,6 +76,7 @@ export function SearchPanel({
     if (operationId) {
       void window.studentIde.search.cancel(operationId).catch(() => undefined)
     }
+    queryRef.current = ''
     setQuery('')
     setMatches([])
     setSummary(null)
@@ -160,11 +162,12 @@ export function SearchPanel({
     event.preventDefault()
     if (interactionLockedRef.current) return
     clearDebounceTimer()
-    await runSearch(query)
+    await runSearch(queryRef.current)
   }
 
   const changeQuery = (nextQuery: string): void => {
     if (interactionLockedRef.current) return
+    queryRef.current = nextQuery
     setQuery(nextQuery)
     clearDebounceTimer()
     cancelActive()
@@ -198,6 +201,7 @@ export function SearchPanel({
     clearDebounceTimer()
     clearLoadingTimer()
     cancelActive()
+    queryRef.current = ''
     setQuery('')
     setMatches([])
     setSummary(null)

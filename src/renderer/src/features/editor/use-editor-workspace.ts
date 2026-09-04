@@ -247,27 +247,44 @@ export function useEditorWorkspace(
     )
   }, [manager])
 
-  const navigateToSearchMatch = useCallback(async (
-    match: SearchMatch,
-  ): Promise<void> => {
+  const navigateToLocation = useCallback(async (location: {
+    projectId: ProjectIdentity['id']
+    relativePath: string
+    startLineNumber: number
+    startColumn: number
+    endLineNumber: number
+    endColumn: number
+  }): Promise<void> => {
     const activeProject = projectRef.current
-    if (!activeProject || activeProject.id !== match.projectId) return
+    if (!activeProject || activeProject.id !== location.projectId) return
     const generation = ++navigationGeneration.current
-    const document = await openFile(match.relativePath)
+    const document = await openFile(location.relativePath)
     if (
       !document
       || generation !== navigationGeneration.current
-      || projectRef.current?.id !== match.projectId
+      || projectRef.current?.id !== location.projectId
     ) return
     setNavigation({
       id: generation,
-      projectId: match.projectId,
+      projectId: location.projectId,
       relativePath: document.relativePath,
-      lineNumber: match.lineNumber,
-      columnStart: match.columnStart,
-      columnEnd: match.columnEnd,
+      startLineNumber: location.startLineNumber,
+      startColumn: location.startColumn,
+      endLineNumber: location.endLineNumber,
+      endColumn: location.endColumn,
     })
   }, [openFile])
+
+  const navigateToSearchMatch = useCallback(async (
+    match: SearchMatch,
+  ): Promise<void> => navigateToLocation({
+    projectId: match.projectId,
+    relativePath: match.relativePath,
+    startLineNumber: match.lineNumber,
+    startColumn: match.columnStart,
+    endLineNumber: match.lineNumber,
+    endColumn: match.columnEnd,
+  }), [navigateToLocation])
 
   const closeDocument = useCallback(async (key: string): Promise<void> => {
     if (interactionLockedRef.current) return
@@ -475,6 +492,7 @@ export function useEditorWorkspace(
     chooseTerminalTransition,
     save,
     openFile,
+    navigateToLocation,
     navigateToSearchMatch,
     closeDocument,
     requestDelete,

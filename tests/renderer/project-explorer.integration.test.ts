@@ -386,7 +386,10 @@ describe('Project Search integration', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
     expect(screen.getByText('3 matches in 2 files')).not.toBeNull()
     expect((input as HTMLInputElement).value).toBe('save')
-    expect(listDirectory).toHaveBeenCalledTimes(1)
+    expect(listDirectory.mock.calls).toEqual([
+      [project.id, ''],
+      [project.id, ''],
+    ])
   })
 
   it('shows no-results and structured search error states', async () => {
@@ -511,6 +514,7 @@ describe('Project Search integration', () => {
     fireEvent.change(input, { target: { value: 'alpha' } })
     fireEvent.submit(input.closest('form')!)
     expect(start).toHaveBeenCalledOnce()
+    expect(start.mock.calls[0]?.[2]).toBe('alpha')
     const operationId = start.mock.calls[0]![1]
     act(() => searchEvents.publish(batchEvent(operationId, [
       searchMatch('old.ts', 1, 1, 6, 'alpha'),
@@ -548,11 +552,12 @@ describe('Project Search integration', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
-    fireEvent.change(input, {
-      target: { value: 'save' },
+    act(() => {
+      fireEvent.change(input, { target: { value: 'save' } })
+      fireEvent.submit(input.closest('form')!)
     })
-    fireEvent.submit(input.closest('form')!)
     expect(start).toHaveBeenCalledOnce()
+    expect(start.mock.calls[0]?.[2]).toBe('save')
     const operationId = start.mock.calls[0]![1]
     act(() => searchEvents.publish(batchEvent(operationId, [
       searchMatch('main.ts', 1, 6, 10, 'disk save'),

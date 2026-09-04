@@ -1,6 +1,11 @@
 import type { editor } from 'monaco-editor'
 
 import type { ProjectId } from '../../../../../shared/contracts'
+import { phase3LanguageIdForPath } from '../../language/language-capabilities'
+import {
+  normalizeProjectRelativePath,
+  projectDocumentUri,
+} from '../../language/project-uri'
 
 export interface Disposable {
   dispose(): void
@@ -16,7 +21,28 @@ export interface EditorTextModel {
 
 export interface MonacoModelHost {
   createModel(value: string, languageId: string, uri: string): EditorTextModel
+  getModel?(uri: string): EditorTextModel | null
 }
+
+export type EditorDocumentLifecycleEvent =
+  | {
+      readonly type: 'opened' | 'content-changed' | 'saved' | 'reloaded'
+      readonly projectId: ProjectId
+      readonly relativePath: string
+      readonly content: string
+      readonly dirty: boolean
+    }
+  | {
+      readonly type: 'closed'
+      readonly projectId: ProjectId
+      readonly relativePath: string
+    }
+  | {
+      readonly type: 'renamed'
+      readonly projectId: ProjectId
+      readonly previousRelativePath: string
+      readonly relativePath: string
+    }
 
 export interface EditorDocument {
   readonly key: string
@@ -55,6 +81,9 @@ export class EditorModelManager {
   private readonly documents = new Map<string, ManagedDocument>()
   private readonly tabOrder: string[] = []
   private readonly listeners = new Set<() => void>()
+  private readonly documentLifecycleListeners = new Set<(
+    event: EditorDocumentLifecycleEvent,
+  ) => void>()
   private activeKey: string | null = null
 
   constructor(private readonly modelHost: MonacoModelHost) {}
@@ -62,6 +91,13 @@ export class EditorModelManager {
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
+  }
+
+  subscribeDocumentLifecycle(
+    listener: (event: EditorDocumentLifecycleEvent) => void,
+  ): () => void {
+    this.documentLifecycleListeners.add(listener)
+    return () => this.documentLifecycleListeners.delete(listener)
   }
 
   getOpenDocuments(): readonly EditorDocument[] {
@@ -94,11 +130,12 @@ export class EditorModelManager {
     }
 
     const languageId = languageIdForPath(normalizedPath)
-    const model = this.modelHost.createModel(
-      content,
-      languageId,
-      documentUri(projectId, normalizedPath),
-    )
+    const uri = documentUri(projectId, normalizedPath)
+    const existingModel = this.modelHost.getModel?.(uri) ?? null
+    const model = existingModel ?? this.modelHost.createModel(content, languageId, uri)
+    if (existingModel && existingModel.getValue() !== content) {
+      existingModel.setValue(content)
+    }
     const document: ManagedDocument = {
       key,
       projectId,
@@ -118,11 +155,25 @@ export class EditorModelManager {
         document.dirty = dirty
       }
       this.emit()
+      this.emitDocumentLifecycle({
+        type: 'content-changed',
+        projectId: document.projectId,
+        relativePath: document.relativePath,
+        content: model.getValue(),
+        dirty: document.dirty,
+      })
     })
     this.documents.set(key, document)
     this.tabOrder.push(key)
     if (activate) this.activeKey = key
     this.emit()
+    this.emitDocumentLifecycle({
+      type: 'opened',
+      projectId,
+      relativePath: normalizedPath,
+      content: model.getValue(),
+      dirty: false,
+    })
     return document
   }
 
@@ -153,6 +204,13 @@ export class EditorModelManager {
     document.externalConflict = false
     document.diskState = 'available'
     this.emit()
+    this.emitDocumentLifecycle({
+      type: 'saved',
+      projectId: document.projectId,
+      relativePath: document.relativePath,
+      content: snapshot.content,
+      dirty: document.dirty,
+    })
     return document.model.getVersionId() === snapshot.modelVersion
       && !document.dirty
   }
@@ -169,6 +227,11 @@ export class EditorModelManager {
       this.activeKey = this.tabOrder[index] ?? this.tabOrder[index - 1] ?? null
     }
     this.emit()
+    this.emitDocumentLifecycle({
+      type: 'closed',
+      projectId: document.projectId,
+      relativePath: document.relativePath,
+    })
     return true
   }
 
@@ -181,6 +244,7 @@ export class EditorModelManager {
   dispose(): void {
     for (const document of [...this.documents.values()]) this.close(document.key)
     this.listeners.clear()
+    this.documentLifecycleListeners.clear()
   }
 
   setViewState(
@@ -221,6 +285,13 @@ export class EditorModelManager {
     if (document.model.getValue() !== content) document.model.setValue(content)
     document.dirty = false
     this.emit()
+    this.emitDocumentLifecycle({
+      type: 'reloaded',
+      projectId: document.projectId,
+      relativePath: document.relativePath,
+      content,
+      dirty: false,
+    })
     return true
   }
 
@@ -265,17 +336,23 @@ export class EditorModelManager {
 
     for (const document of affected) {
       const oldKey = document.key
+      const previousRelativePath = document.relativePath
       const suffix = includeDescendants
         ? document.relativePath.slice(oldNormalized.length).replace(/^\//, '')
         : ''
       const targetPath = suffix ? `${newNormalized}/${suffix}` : newNormalized
       const targetKey = documentKey(projectId, targetPath)
       const content = document.model.getValue()
-      const replacement = this.modelHost.createModel(
+      const targetUri = documentUri(projectId, targetPath)
+      const existingModel = this.modelHost.getModel?.(targetUri) ?? null
+      const replacement = existingModel ?? this.modelHost.createModel(
         content,
         languageIdForPath(targetPath),
-        documentUri(projectId, targetPath),
+        targetUri,
       )
+      if (existingModel && existingModel.getValue() !== content) {
+        existingModel.setValue(content)
+      }
       document.changeSubscription.dispose()
       document.model.dispose()
       document.model = replacement
@@ -285,12 +362,25 @@ export class EditorModelManager {
       document.changeSubscription = replacement.onDidChangeContent(() => {
         document.dirty = replacement.getValue() !== document.savedContent
         this.emit()
+        this.emitDocumentLifecycle({
+          type: 'content-changed',
+          projectId: document.projectId,
+          relativePath: document.relativePath,
+          content: replacement.getValue(),
+          dirty: document.dirty,
+        })
       })
       this.documents.delete(oldKey)
       this.documents.set(targetKey, document)
       const index = this.tabOrder.indexOf(oldKey)
       if (index >= 0) this.tabOrder[index] = targetKey
       if (this.activeKey === oldKey) this.activeKey = targetKey
+      this.emitDocumentLifecycle({
+        type: 'renamed',
+        projectId,
+        previousRelativePath,
+        relativePath: targetPath,
+      })
     }
     if (affected.length > 0) this.emit()
   }
@@ -298,21 +388,14 @@ export class EditorModelManager {
   private emit(): void {
     for (const listener of this.listeners) listener()
   }
+
+  private emitDocumentLifecycle(event: EditorDocumentLifecycleEvent): void {
+    for (const listener of this.documentLifecycleListeners) listener(event)
+  }
 }
 
 export function normalizeRelativePath(relativePath: string): string {
-  const replaced = relativePath.replaceAll('\\', '/')
-  if (replaced.startsWith('/') || /^[a-z]:/i.test(replaced)) {
-    throw new Error('Expected a project-relative path.')
-  }
-  const parts: string[] = []
-  for (const part of replaced.split('/')) {
-    if (!part || part === '.') continue
-    if (part === '..') throw new Error('Parent traversal is not allowed.')
-    parts.push(part)
-  }
-  if (parts.length === 0) throw new Error('Expected a file path.')
-  return parts.join('/')
+  return normalizeProjectRelativePath(relativePath)
 }
 
 export function isSameOrDescendant(path: string, ancestor: string): boolean {
@@ -326,21 +409,14 @@ export function documentKey(projectId: ProjectId, relativePath: string): string 
 }
 
 export function documentUri(projectId: ProjectId, relativePath: string): string {
-  const encodedPath = normalizeRelativePath(relativePath)
-    .split('/')
-    .map(encodeURIComponent)
-    .join('/')
-  return `student-ide://project/${encodeURIComponent(projectId)}/${encodedPath}`
+  return projectDocumentUri(projectId, relativePath)
 }
 
 export function languageIdForPath(relativePath: string): string {
   const extension = relativePath.split('.').at(-1)?.toLowerCase()
-  return ({
-    js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript',
-    ts: 'typescript', tsx: 'typescript', mts: 'typescript', cts: 'typescript',
-    py: 'python', html: 'html', htm: 'html', css: 'css', scss: 'scss', less: 'less',
-    json: 'json', java: 'java', cs: 'csharp', php: 'php',
-  } as Record<string, string>)[extension ?? ''] ?? 'plaintext'
+  if (extension === 'mts' || extension === 'cts') return 'typescript'
+  if (extension === 'scss' || extension === 'less') return extension
+  return phase3LanguageIdForPath(relativePath) ?? 'plaintext'
 }
 
 function normalizeIdentityPath(path: string): string {
