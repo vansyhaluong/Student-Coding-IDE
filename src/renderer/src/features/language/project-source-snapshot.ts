@@ -14,6 +14,12 @@ export interface ProjectSourceSnapshotLimits {
   readonly maximumFileBytes: number
 }
 
+export const PHASE_3C_PROJECT_SOURCE_LIMITS: ProjectSourceSnapshotLimits = {
+  maximumFiles: 500,
+  maximumTotalBytes: 5 * 1024 * 1024,
+  maximumFileBytes: 256 * 1024,
+}
+
 export type SnapshotExclusionReason =
   | 'unsupported-language'
   | 'node-modules'
@@ -32,8 +38,16 @@ export interface ProjectSourceSnapshotPlan {
   readonly selectedBytes: number
 }
 
-const synchronizedLanguageIds = new Set(['javascript', 'typescript'])
 const snapshotProviderId: Phase3ProviderId = 'monaco-typescript'
+
+export function isPhase3cProjectSourcePath(relativePath: string): boolean {
+  const normalized = normalizeProjectRelativePath(relativePath)
+  const extension = normalized.split('.').at(-1)?.toLowerCase()
+  return extension === 'js'
+    || extension === 'jsx'
+    || extension === 'ts'
+    || extension === 'tsx'
+}
 
 export function planProjectSourceSnapshot(
   candidates: readonly ProjectSourceCandidate[],
@@ -49,11 +63,10 @@ export function planProjectSourceSnapshot(
     const relativePath = normalizeProjectRelativePath(candidate.relativePath)
     const bytes = new TextEncoder().encode(candidate.content).byteLength
     measuredBytes += bytes
-    const languageId = phase3LanguageIdForPath(relativePath)
     let reason: SnapshotExclusionReason | null = null
     if (relativePath.split('/').some((part) => part.toLowerCase() === 'node_modules')) {
       reason = 'node-modules'
-    } else if (!languageId || !synchronizedLanguageIds.has(languageId)) {
+    } else if (!isPhase3cProjectSourcePath(relativePath)) {
       reason = 'unsupported-language'
     } else if (bytes > limits.maximumFileBytes) {
       reason = 'file-too-large'

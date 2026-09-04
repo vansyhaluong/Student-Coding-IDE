@@ -10,7 +10,7 @@ V1 architecture prioritizes:
 - a narrow Electron security boundary;
 - explicit ownership of files, processes, state, and cleanup;
 - responsive renderer behavior for I/O and long-running operations;
-- graceful degradation when Git, runtimes, or language services are unavailable;
+- graceful degradation when Git, runtimes, or current Monaco providers are unavailable;
 - simple module boundaries that can support future formatter, debugger, and AI work without implementing them now.
 
 The architecture is requirement-driven. It deliberately omits Orca's agent, worktree orchestration, remote execution, cloud, mobile, and hosted-review complexity.
@@ -85,10 +85,13 @@ window.studentIde.search
 window.studentIde.terminal
 window.studentIde.run
 window.studentIde.git
-window.studentIde.language
 window.studentIde.settings
 window.studentIde.lifecycle
 ```
+
+Current Phase 3 does not expose a language IPC domain. A future external
+provider may add a narrow `window.studentIde.language` surface only after its
+scope, contracts, and runtime validation are authorized.
 
 ### Renderer
 
@@ -132,7 +135,7 @@ IPC contracts live in a shared, side-effect-free contract layer. Each domain def
 
 - **Request/response:** finite operations such as `file:read`, `file:write`, `git:status`, or `settings:get`.
 - **Event stream:** repeated output such as `terminal:data`, `run:stdout`, diagnostics, and watcher changes.
-- **Lifecycle event:** service/session transitions such as `terminal:exit`, `run:exit`, and `language:status-changed`.
+- **Lifecycle event:** service/session transitions such as `terminal:exit` and `run:exit`; a future external provider may add a scoped language-status event.
 - **Cancellation:** an operation starts with an opaque operation/session ID and is cancelled through a domain-specific endpoint.
 
 ### Naming convention
@@ -151,9 +154,11 @@ terminal:close
 run:start               run:stdout
 run:stop                run:stderr
 run:exit                git:status
-language:start          language:restart
-language:status-changed settings:update
+settings:update
 ```
+
+No `language:start`, `language:restart`, or external-provider process channel is
+part of Phase 3 V1.
 
 Event subscriptions return an unsubscribe function. Main removes listeners when a WebContents or session is destroyed. Event payloads include a session/operation ID so stale output cannot update a replacement session.
 
@@ -190,7 +195,7 @@ Messages are safe for users; developer details and stack traces remain in logs. 
 | Workspace state | open tabs, active tab, panel visibility, optional cursor/view snapshots | Versioned state keyed by canonical project path |
 | Editor state | Monaco models, dirty buffers, disk-missing/conflict state, selections, undo stack | EditorModelManager in renderer; never blindly overwritten by disk |
 | Ephemeral UI state | dialogs, hover/loading state, menu state | React component/feature store only |
-| Process state | terminal/run/language session IDs and lifecycle | Owning main-process service |
+| Process state | terminal/run session IDs and lifecycle; future external-language sessions only if authorized | Owning main-process service |
 
 React local state and focused feature stores are sufficient initially. Selection of a renderer store library is `TBD` until Phase 2 demonstrates cross-feature needs; Redux/Zustand is not selected solely because Orca uses Zustand.
 
@@ -219,7 +224,11 @@ Symlinks are represented explicitly and are not traversed outside the project ro
 
 `FileSystemService` alone reads and writes disk data. Opening creates or reuses a model after an async file read. Saving captures the intended buffer version, writes through IPC, and only marks clean if the model has not changed during the write. If an external watcher read authoritatively returns `NOT_FOUND`, the model retains its in-memory content and enters an explicit disk-missing state; normal save is blocked rather than silently recreating the path. Closing the final tab disposes its model unless retained by a deliberate workspace-cache policy. Project close disposes all models for that project.
 
-Language services consume model/document change events through provider adapters. Problems navigation opens the target model and reveals the exact line/column. Theme and editor preferences are applied from settings. Large files may disable expensive language features while preserving edit/save; thresholds remain a Phase 2/3 decision.
+Current Monaco providers consume model/document change events through renderer
+adapters. Problems navigation opens the target model and reveals the exact
+line/column. Theme and editor preferences are applied from settings. Large files
+may disable expensive language features while preserving edit/save; Phase 3B
+established the initial bounded thresholds recorded in Section 12.
 
 ## 9. Terminal architecture
 
@@ -298,9 +307,11 @@ RunService is separate from TerminalService. A run session represents a command 
 
 The main process starts it with an explicit executable, argument array, cwd, controlled environment additions, and `shell: false` when possible. Concurrent policy is one active run per run target in V1; starting a replacement asks or stops explicitly rather than orphaning the old process.
 
-Stop terminates the IDE-owned process tree on Windows, waits for exit, then escalates within a bounded timeout. Application shutdown performs the same cleanup. The low-level ProcessManager may share process tracking and tree-termination utilities, but cannot erase semantic differences among run, PTY, and language-server processes.
+Stop terminates the IDE-owned process tree on Windows, waits for exit, then escalates within a bounded timeout. Application shutdown performs the same cleanup. The low-level ProcessManager may share process tracking and tree-termination utilities, but cannot erase semantic differences among run and PTY processes or any future external language-server process.
 
-V1 built-in project run targets are Node.js and configured Python projects. Framework auto-detection and Tier 3 built-in runners are future work. TypeScript execution remains a decision gate described in `DECISIONS.md`.
+V1 built-in project run targets are Node.js projects. TypeScript execution remains
+a decision gate described in `DECISIONS.md`. Python Run, framework auto-detection,
+and Tier 3 built-in runners are future work.
 
 ## 11. Git architecture
 
@@ -324,9 +335,12 @@ Phase 3 V1 selects Monaco-native workers/providers for JavaScript, TypeScript,
 HTML, CSS, and JSON. C# and PHP use Monaco tokenization only. Each current
 provider declares supported language IDs, capabilities, worker availability, and
 document synchronization. Provider failure must not stop the editor or another
-provider. Diagnostics are normalized with document URI, range, severity,
-message, source, and optional code, then routed to model markers and Problems
-UI.
+provider. Diagnostics from JavaScript, TypeScript, CSS, and JSON are normalized
+with document URI, range, severity, message, source, and optional code, then
+routed to model markers and Problems UI. HTML completion and hover use the
+current Monaco HTML provider, but HTML diagnostics and Problems contribution are
+deferred because that provider has no validation support. No alternate HTML
+validator/provider is added in current V1.
 
 JavaScript/TypeScript project visibility uses a bounded snapshot/source
 synchronization strategy. It does not mirror all of `node_modules`, and it does
@@ -344,6 +358,23 @@ FileSystemService capabilities. It traverses deterministically, excludes
 before reading, and stops at the count/byte bounds. Main remains disk authority;
 the Renderer receives neither a canonical root nor arbitrary read capability.
 
+Phase 3C implements this flow in the Renderer language feature. Initial project
+activation builds background Monaco models for eligible `.js`, `.jsx`, `.ts`,
+and `.tsx` sources. `EditorModelManager` adopts an existing URI model when a
+file opens or is renamed, so one canonical model identity is retained and its
+dirty buffer remains authoritative. Existing project-scoped file events update a
+changed source incrementally; the existing coarse `renamed` watcher event causes
+a bounded rescan/diff for create, delete, and filesystem rename awareness. No
+polling, second watcher, new IPC, or disk authority is introduced.
+
+The production controller serializes synchronization work and captures both
+project and provider generations before asynchronous discovery/read operations.
+Project switch, close, root unavailability, and renderer disposal invalidate
+those tokens and dispose only provider-owned background models. Late work cannot
+populate a newer project generation. Provider failure records a safe status but
+does not change editor/save ownership; a later ordinary project initialization
+can recover without manual restart UX or loss of dirty buffers.
+
 When the active project root becomes `UNAVAILABLE`, project intelligence stops
 and stale diagnostics are cleared. Editor buffers, syntax highlighting, and the
 open project state remain intact. Project switch/close and renderer reload must
@@ -351,10 +382,10 @@ dispose synchronized sources, worker subscriptions, and stale markers scoped to
 the prior project.
 
 No external language-server process, Python dependency detection, or
-process-control language IPC is required in current Phase 3. If bounded project
+process-control language IPC is authorized in current V1. If bounded project
 snapshot data cannot reuse an existing project/file capability, it must use a
 narrow project-scoped and runtime-validated Main/Preload contract; it grants no
-canonical-root or arbitrary filesystem access. Python and Java intelligence are
+canonical-root or arbitrary filesystem access. All Python and Java support is
 deferred, not permanently removed. If a future phase adds an external provider,
 Main owns `LanguageServiceManager`, executable selection, process lifecycle,
 workspace scoping, restart, and cleanup; Preload exposes only a narrow typed and
@@ -362,15 +393,57 @@ runtime-validated domain bridge. Renderer never receives raw filesystem,
 canonical-root, IPC, or process authority.
 
 JSON schema resolution is offline and deny-by-default in current Phase 3. Phase
-3D may register only explicitly bundled or application-trusted schemas; network
-schema fetching is not enabled implicitly and requires a future recorded trust
-decision.
+3D configures no schemas and disables schema requests. A later package may
+register only explicitly bundled or application-trusted schemas; network schema
+fetching requires a future recorded trust decision.
 
-Language-service states remain `NOT_CONFIGURED`, `MISSING`, `STARTING`,
-`RUNNING`, `STOPPED`, `CRASHED`, and `INVALID_CONFIGURATION` for providers where
-those states apply. Runtime detection remains independent, with dependency
-states `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`, and `INVALID_CONFIGURATION`.
-`RunService` and Phase 4 have no lifecycle coupling to language providers.
+HTML, CSS, and JSON remain model-local Monaco providers rather than project
+indexes. HTML supplies syntax, completion, and provider-supported hover. CSS and
+JSON additionally supply diagnostics from current in-memory Monaco content;
+their marker lifecycle follows model/provider disposal and feeds the renderer-
+owned Phase 3E aggregation boundary. HTML has no current diagnostic source.
+
+Phase 3D verifies this model-local path against the actual Monaco workers. HTML
+completion (tags and attributes) and hover use the dirty in-memory model. CSS
+completion, hover, validation, diagnostic updates, and diagnostic clearing use
+the current model. JSON provides local schema-free completion where the worker
+can infer peer properties, plus syntax diagnostics that update and clear after
+edits; useful JSON hover is unavailable without a configured local schema.
+Explicit remote `$schema` values do not trigger network access. Model removal
+ends the worker mirror and diagnostic lifetime, while project switch/close keep
+using the existing editor-owned disposal path.
+
+Phase 3E consumes existing JavaScript, TypeScript, CSS, and JSON Monaco markers
+without producing or rescanning diagnostics. A renderer-owned Problems store
+normalizes provider/file replacement scopes, rejects stale project/provider
+generations and model versions, groups by project-relative file identity, and
+sorts deterministically by file and range. Project switch/close, root
+unavailability, provider disposal, and renderer disposal remove their owned
+state. HTML, C#, PHP, Python, and Java contribute no Problems diagnostics.
+
+The existing Bottom Panel hosts Terminal and Problems as sibling tabs. Selecting
+a problem uses the existing editor workspace flow to open or reuse the canonical
+Monaco model, activate its tab, and reveal the diagnostic range. An already-open
+dirty model remains authoritative and is never replaced by a disk read. Stale,
+deleted, or old-project targets fail safely without recreating a file or exposing
+canonical project-root data.
+
+Current renderer providers expose only capability/status states that apply to
+Monaco workers. The broader language-service state vocabulary
+`NOT_CONFIGURED`, `MISSING`, `STARTING`, `RUNNING`, `STOPPED`, `CRASHED`, and
+`INVALID_CONFIGURATION` is retained for providers where those states genuinely
+apply, including a future external provider; external process discovery,
+start/stop/restart/crash handling is not a Phase 3 V1 gate. Runtime detection
+remains independent, with dependency states `NOT_CONFIGURED`, `MISSING`,
+`AVAILABLE`, and `INVALID_CONFIGURATION`. `RunService` and Phase 4 have no
+lifecycle coupling to language providers.
+
+Current V1 has no user-facing language-service restart button, command, menu,
+IPC endpoint, or new lifecycle UX. Renderer-owned providers may be disposed and
+reinitialized when Monaco's existing architecture naturally supports recovery.
+Recovery must preserve authoritative dirty EditorModelManager buffers and reject
+stale project/provider generations. Manual external-server
+start/stop/restart/crash UX remains future scope.
 
 ## 13. Persistence
 
@@ -387,7 +460,7 @@ Writes use temporary-file plus replace semantics, are serialized per document, a
 - Run stop is a lifecycle transition with process-tree termination and final exit event.
 - Terminal close terminates one PTY session; application shutdown closes all sessions.
 - Git reads accept cancellation/timeout; mutating Git operations are not reported cancelled unless process exit and repository outcome are known.
-- Language requests may be cancelled when the provider protocol supports it; provider stop/restart is a separate lifecycle action.
+- Current language requests may be cancelled when the Monaco provider supports it; worker recovery remains renderer-owned. External-provider stop/restart is a future lifecycle action.
 
 Cancellation is domain-specific. There is no public generic cancellation or command API.
 
@@ -417,7 +490,12 @@ fallback.
 
 ## 15. Logging
 
-Main, renderer, run/terminal, and language-service logs have separate sources and session IDs. Main owns persistent diagnostic logs and rotation policy; renderer forwards structured diagnostics through a narrow logging method if needed. Terminal content and run output remain user-visible session data rather than general application logs.
+Main, renderer, run/terminal, and current provider diagnostics have separate
+sources and relevant operation IDs. Main owns persistent diagnostic logs and
+rotation policy; renderer forwards structured diagnostics through a narrow
+logging method if needed. External language-server process logs are a future
+concern. Terminal content and run output remain user-visible session data rather
+than general application logs.
 
 User-facing errors explain action and recovery. Developer diagnostics include timestamps, component, operation/session ID, state transition, and redacted technical cause. Do not log secrets, environment dumps, file contents, Git credentials, or access tokens.
 
@@ -456,7 +534,7 @@ Formatter integrates through an editor command/provider boundary; debugger throu
 - Phase 2 implements project, explorer, editor, unsaved protection, search, and terminal against these contracts. ProjectService may persist the minimal recent-project metadata required for project lifecycle; it does not implement the user-facing Recent Projects management experience.
 - Phase 3 implements Monaco-native intelligence for JavaScript, TypeScript,
   HTML, CSS, and JSON; syntax-only C#/PHP; and Problems integration without
-  changing privileged boundaries. Python and Java language intelligence are
+  changing privileged boundaries. All Python support and Java support are
   deferred to a future authorized phase.
 - Phase 4 implements trusted run strategies and Windows process-tree cleanup.
 - Phase 5 implements GitService.

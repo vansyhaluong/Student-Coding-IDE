@@ -84,6 +84,33 @@ describe('Monaco TypeScript worker safe-URI feasibility', () => {
     expect(definitions?.[0]?.fileName).toBe(provider.uri)
   })
 
+  it('provides cross-file hover and signature help', async () => {
+    const provider = source(
+      'src/math.ts',
+      'export function add(left: number, right: number): number { return left + right }',
+    )
+    const consumer = source(
+      'src/main.ts',
+      "import { add } from './math'\nadd(1, ",
+    )
+    const worker = createWorker([consumer, provider])
+    const quickInfo = await worker.getQuickInfoAtPosition(
+      consumer.uri,
+      consumer.content.lastIndexOf('add'),
+    )
+    const signatureHelp = await worker.getSignatureHelpItems(
+      consumer.uri,
+      consumer.content.length,
+      undefined,
+    )
+
+    expect(quickInfo?.displayParts?.map(({ text }) => text).join(''))
+      .toContain('add(left: number, right: number): number')
+    expect(signatureHelp?.items[0]?.parameters.map((parameter) => (
+      parameter.displayParts.map(({ text }) => text).join('')
+    ))).toEqual(['left: number', 'right: number'])
+  })
+
   it.each([
     ['JSX', 'src/view.jsx'],
     ['TSX', 'src/view.tsx'],

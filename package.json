@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=4",
     "node-pty:patch": "node scripts/apply-node-pty-job-patch.mjs",
     "node-pty:rebuild": "node scripts/rebuild-node-pty-for-electron.mjs",
     "node-pty:smoke": "node scripts/run-windows-terminal-job-smoke.mjs",

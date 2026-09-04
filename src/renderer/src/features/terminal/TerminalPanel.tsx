@@ -23,6 +23,7 @@ interface TerminalPanelProps {
   height: number
   onHeightChange(height: number): void
   onClosePanel(): void
+  onSelectProblems?(): void
   interactionLocked: boolean
 }
 
@@ -34,6 +35,7 @@ export function TerminalPanel({
   height,
   onHeightChange,
   onClosePanel,
+  onSelectProblems,
   interactionLocked,
 }: TerminalPanelProps) {
   const snapshot = useSyncExternalStore(
@@ -135,9 +137,15 @@ export function TerminalPanel({
         onResize={onHeightChange}
       />
       <header className="terminal-panel-header">
-        <div className="terminal-panel-label">
-          <SquareTerminal aria-hidden="true" />
-          <span>Terminal</span>
+        <div className="bottom-panel-tabs" role="tablist" aria-label="Bottom panel">
+          <button type="button" role="tab" aria-selected="true">
+            <SquareTerminal aria-hidden="true" /><span>Terminal</span>
+          </button>
+          {onSelectProblems && (
+            <button type="button" role="tab" aria-selected="false" onClick={onSelectProblems}>
+              <span>Problems</span>
+            </button>
+          )}
         </div>
         <div className="terminal-tabs" role="tablist" aria-label="Terminal sessions">
           {sessions.map((session) => (

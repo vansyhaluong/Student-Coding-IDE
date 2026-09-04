@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 
 import App from './App'
 import { editorModelManager } from './features/editor/editor-session'
+import { typeScriptProjectController } from './features/language/language-session'
+import { disposeProblemsSession } from './features/problems/problems-session'
 import { terminalController } from './features/terminal/terminal-session'
 import '@fontsource-variable/geist'
 import '@xterm/xterm/css/xterm.css'
@@ -16,6 +18,8 @@ if (!root) {
 
 window.addEventListener('pagehide', () => {
   terminalController.shutdown()
+  typeScriptProjectController.dispose()
+  disposeProblemsSession()
   editorModelManager.dispose()
 }, { once: true })
 

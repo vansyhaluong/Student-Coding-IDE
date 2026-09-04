@@ -78,8 +78,8 @@ does not reopen those choices.
 3. Keep preload narrow, typed, capability-scoped, and free of business state.
 4. Runtime-validate every renderer-to-main request before domain services receive
    it. Type assertions are not validation (ADR-003 and ADR-016).
-5. Keep Terminal, Run, and Language Server processes as separate lifecycle
-   domains (ADR-008).
+5. Keep Terminal and Run as separate lifecycle domains; any future authorized
+   external Language Server process remains a third separate domain (ADR-008).
 6. Use one active local folder project in V1 (ADR-004).
 7. Preserve version-aware editor state and main-owned disk access (ADR-006).
 8. Treat Windows 10 and Windows 11 as V1 acceptance platforms.
@@ -112,7 +112,7 @@ before affected work continues.
 | Phase 2D — Project Search | `COMPLETE` | Responsive, cancellable project search |
 | Phase 2E — Integrated Terminal | `COMPLETE` | 2E-J corrective Steps 1–3 and final consolidated review passed |
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
-| Phase 3 — Language Intelligence | `IN_PROGRESS` | 3A audit and 3B foundation `COMPLETE`; 3C–3F not started |
+| Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `NOT_STARTED` | Trusted Run strategies, output, stop, and cleanup |
 | Phase 5 — Git Integration | `NOT_STARTED` | Basic local Git workflow through typed GitService |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
@@ -152,8 +152,10 @@ adversarial review, and manual Electron smoke passed before it moved to
 and the explicitly authorized final consolidated review passed. Phase 2E is
 `COMPLETE`. Phase 2F completed its A–E audit, corrective, resource, integration,
 native, performance, security, and documentation gates. Phase 3A architecture
-and feasibility audit and Phase 3B language foundation are `COMPLETE`; Phase 3C–3F
-and all later phases remain `NOT_STARTED`.
+and feasibility audit, Phase 3B language foundation, Phase 3C production JS/TS
+synchronization, Phase 3D HTML/CSS/JSON intelligence, Phase 3E Problems
+aggregation/navigation, and Phase 3F final verification are `COMPLETE`; all
+later phases remain `NOT_STARTED`.
 
 ## 7. Dependency graph
 
@@ -1589,13 +1591,14 @@ deferred to a future authorized phase, not permanently removed.
 
 - ADR-015 has selected Monaco-native providers for JS/TS/HTML/CSS/JSON, bounded
   JS/TS project snapshots, and the project-root `UNAVAILABLE` behavior.
-- Decide large-file language-intelligence thresholds using measured responsiveness
-  while preserving edit/save.
-- Before project-aware JS/TS implementation, record bounded snapshot thresholds,
-  exclusions, safe virtual URI mapping, dirty-model precedence, and stale-result
-  protection. Wholesale `node_modules` mirroring and canonical-root exposure to
-  Renderer are prohibited.
-- Before JSON provider implementation, record a trusted/offline schema policy.
+- Phase 3B resolved the initial large-project bounds at 500 JS/TS source files,
+  5 MiB total UTF-8 content, and 256 KiB per file. Re-measure during 3C while
+  preserving edit/save.
+- Phase 3B recorded bounded snapshot exclusions, safe virtual URI mapping,
+  dirty-model precedence, and stale project/provider generation protection.
+  Wholesale `node_modules` mirroring and canonical-root exposure to Renderer are
+  prohibited.
+- Phase 3B recorded an offline, deny-by-default JSON schema policy.
 - Verify capability coverage, multi-file behavior, document synchronization,
   Windows virtual URI/path handling, cancellation, cleanup, worker recovery,
   development behavior, and production-build worker/resource discovery.
@@ -1610,7 +1613,8 @@ deferred to a future authorized phase, not permanently removed.
 - Completion, Hover, Signature Help, and Go to Definition for Tier 1 JavaScript,
   and TypeScript.
 - Tier 2 HTML/CSS/JSON capabilities exactly as committed in the matrix.
-- Diagnostics markers and Problems UI/navigation.
+- Diagnostics markers for JavaScript, TypeScript, CSS, and JSON plus
+  Problems UI/navigation; HTML has no current diagnostic source.
 - Tier 3 C#/PHP syntax-only V1 support; no Tier 3 intelligence/run commitment.
 - Language-service states: `NOT_CONFIGURED`, `MISSING`, `STARTING`, `RUNNING`,
   `STOPPED`, `CRASHED`, `INVALID_CONFIGURATION` where applicable to a current
@@ -1625,9 +1629,16 @@ deferred to a future authorized phase, not permanently removed.
 - Capability matrix acceptance passes per language/tier.
 - Missing, starting, stopped, crashed, or invalid provider states that apply to a
   current provider never prevent editing and saving.
+- Current provider recovery uses safe disposal and renderer-owned
+  reinitialization where Monaco naturally supports it. No manual restart button,
+  command, menu item, IPC endpoint, or new lifecycle UX is required. Dirty
+  buffers remain authoritative and stale project/provider generations remain
+  rejected during recovery.
 - One provider failure does not break another language.
-- Diagnostics update without blocking Renderer and Problems navigation reaches the
-  correct file/range.
+- JavaScript, TypeScript, CSS, and JSON diagnostics update without blocking
+  Renderer, and their Problems navigation reaches the correct file/range.
+  HTML diagnostics/Problems contribution are deferred because the current
+  Monaco HTML provider has no validation support.
 - Project switch/close, root `UNAVAILABLE`, renderer reload, worker recovery, and
   stale diagnostics cleanup pass on Windows.
 - Provider/worker resource discovery is demonstrated for development and
@@ -1686,23 +1697,65 @@ Completion evidence:
 - Full verification passed 353 tests across 37 files, typecheck, lint, production
   build, Electron worker smoke, and `git diff --check`.
 
-#### 3C — JavaScript/TypeScript intelligence — `NOT_STARTED`
+#### 3C — JavaScript/TypeScript intelligence — `COMPLETE`
 
-- Enable required completion, diagnostics, hover, signature help, and definition
-  through Monaco's TypeScript worker.
-- Implement bounded project-aware source synchronization, dirty-model precedence,
-  stale-result protection, project switching/close cleanup, and root-unavailable
-  degradation.
+- Implement production bounded JS/TS source discovery and the production project
+  snapshot using the initial 500-file, 5-MiB-total, and 256-KiB-per-file ceilings.
+- Synchronize JavaScript/TypeScript sources with Monaco's TypeScript worker,
+  including live updates and existing-scope file create/delete/rename/change
+  handling. Dirty Monaco models take precedence over disk snapshot content.
+- Handle project open/switch/close cleanup, root-`UNAVAILABLE` degradation, and
+  rejection of stale project/provider generations.
+- Deliver same-file and cross-file JS/TS intelligence, mixed JS/TS, JSX and TSX:
+  completion, hover, signature help, Go to Definition, and diagnostics.
+- Keep declaration/configuration behavior bounded to evidence-backed behavior.
+  Full `tsconfig` support, full `node_modules` mirroring, arbitrary package
+  discovery, unrestricted external type loading, arbitrary filesystem access,
+  canonical project-root exposure, and generic language IPC are not authorized.
 - Dependencies: 3B; no new package or external runtime expected.
 - Complexity: LARGE.
 - STOP if required multi-file behavior cannot fit the approved bounded snapshot,
   would require wholesale `node_modules` mirroring/canonical-root exposure, or
   needs an external TypeScript service.
 
-#### 3D — HTML/CSS/JSON intelligence — `NOT_STARTED`
+Completion evidence:
 
-- Enable Monaco-native completion and diagnostics, plus hover only where the
-  accepted capability matrix requires provider-supported behavior.
+- Production discovery traverses through existing project-ID plus relative-path
+  list/stat/read capabilities, selects exact `.js`, `.jsx`, `.ts`, and `.tsx`
+  sources, excludes `node_modules`, and enforces 500 files, 5 MiB total UTF-8
+  content, and 256 KiB per individual file without adding IPC or disk authority.
+- A renderer-owned TypeScript project controller creates provider-owned
+  background Monaco models, lets `EditorModelManager` adopt canonical URI models,
+  preserves dirty/open buffer precedence, and incrementally refreshes changed
+  sources. Existing coarse watcher rename events trigger bounded rescan/diff for
+  create, delete, and filesystem rename synchronization; no polling or second
+  watcher was added.
+- Project open/switch/close, root unavailability, renderer disposal, model
+  open/change/save/reload/close/rename, provider failure/reinitialization, and
+  stale project/provider generations have focused deterministic coverage. Late
+  old-project reads cannot populate the active provider, and deleted dirty
+  buffers retain Phase 2 disk-missing/data-safety semantics.
+- Monaco worker evidence passes same-file and cross-file JS/TS, JS importing JS,
+  TS importing TS, mixed JS/TS, JSX, TSX, completion, hover, signature help,
+  definition, and JavaScript/TypeScript diagnostics. HTML/CSS/JSON registration
+  remains passing and C#/PHP remain tokenization-only.
+- Focused Phase 3 regression passed 49 tests across 5 files. The full suite passed
+  365 tests across 38 files; typecheck, lint, production build, Electron
+  production-worker smoke, and `git diff --check` passed. The known jsdom canvas
+  diagnostic remains non-blocking. Sandboxed test/build attempts that required
+  child-process creation were rerun successfully with process-spawn permission.
+- No dependency, `package-lock.json`, privileged API, generic language IPC,
+  canonical-root exposure, external service, Python/Java provider,
+  `node_modules` mirroring, full `tsconfig`, or Phase 3D/4 implementation was
+  introduced. Full packaged/installed verification remains Phase 7.
+
+#### 3D — HTML/CSS/JSON intelligence — `COMPLETE`
+
+- Verify Monaco-native HTML completion and hover. HTML diagnostics and Problems
+  contribution are deferred because the current provider has no validation
+  support; no replacement validator/provider is part of this package.
+- Enable/verify Monaco-native CSS and JSON completion, diagnostics, and
+  provider-supported hover using current in-memory models.
 - Apply the trusted/offline JSON schema policy and verify provider cleanup and
   stale-diagnostic removal.
 - Dependencies: 3B; no new package or external runtime expected.
@@ -1710,7 +1763,32 @@ Completion evidence:
 - STOP if schema behavior requires unapproved network trust, a new dependency,
   or privileged Renderer authority.
 
-#### 3E — Problems and diagnostics integration — `NOT_STARTED`
+Completion evidence:
+
+- Production defaults enable Monaco-native HTML completion/hover while leaving
+  HTML diagnostics disabled, enable CSS completion/hover/validation, and enable
+  JSON completion/hover/validation with an empty schema list and schema requests
+  disabled.
+- Actual-worker tests verify HTML tag and attribute completion plus hover from
+  current dirty content. The HTML worker exposes no validation operation, so
+  diagnostics and its Problems contribution remain deferred without a custom
+  validator or alternate provider.
+- Actual-worker tests verify CSS property/value completion, hover, diagnostic
+  source/severity/range, update after editing, clearing after a fix, and model
+  disposal. JSON tests verify local schema-free peer-property completion, syntax
+  diagnostics, update/clear/disposal, no useful schema-free hover, and no network
+  access even when a document contains a remote `$schema`.
+- Tier 2 stays model-local and uses `EditorModelManager` models and existing
+  switch/close/disposal ownership. No project index, new IPC, filesystem/process
+  authority, dependency, package-lock change, or Phase 3E Problems work was
+  introduced.
+- Focused Phase 3D tests passed 24 tests across 3 files. The full suite passed
+  374 tests across 39 files; typecheck, lint, production build, Electron
+  production-worker smoke, and `git diff --check` passed. The unchanged jsdom
+  canvas diagnostic remains non-blocking. Full packaged/installed acceptance
+  remains Phase 7.
+
+#### 3E — Problems and diagnostics integration — `COMPLETE`
 
 - Add the normalized Problems store, marker aggregation, project/file scoping,
   stale cleanup, severity/source display, and navigation to file/range.
@@ -1718,22 +1796,68 @@ Completion evidence:
 - Complexity: MEDIUM.
 - STOP if diagnostics ownership conflicts with Monaco/model lifecycle or if
   Problems behavior requires an unapproved product decision.
+- Implemented a renderer-owned normalized store and Monaco marker controller for
+  JavaScript, TypeScript, CSS, and JSON. Provider/file replacement and clearing,
+  deterministic file/range ordering, severity/source preservation, deduplication,
+  stale project/provider/model-version rejection, and lifecycle cleanup pass.
+- Integrated Problems into the existing Bottom Panel without changing Terminal
+  ownership. The panel provides neutral empty state, file grouping, counts,
+  severity/source/location display, and current-state updates. HTML contributes
+  no diagnostics; C#/PHP remain tokenization-only; Python/Java/external LSP stay
+  deferred.
+- Navigation reuses the existing editor workspace and canonical model, activates
+  the correct tab, reveals the diagnostic range, preserves dirty content, and
+  fails safely for deleted/stale and old-project targets.
+- Focused Phase 3E coverage passed 11 tests across 3 files. The full suite passed
+  385 tests across 42 files; typecheck, lint, production build, Electron Monaco
+  worker smoke, and `git diff --check` passed. The unchanged jsdom canvas warning
+  remains non-blocking. No dependency, package-lock change, IPC, filesystem,
+  process, network, validator, language provider, or architecture deviation was
+  introduced.
 
-#### 3F — Stabilization and final verification — `NOT_STARTED`
+#### 3F — Stabilization and final verification — `COMPLETE`
 
 - Run integration, lifecycle, performance/resource, security, Windows,
   development/production-build, and documentation gates for current languages.
-- Verify C#/PHP syntax assignment and confirm Python/Java remain outside current
-  acceptance without weakening future extensibility.
+- Verify C#/PHP syntax assignment and confirm all Python/Java support remains
+  outside current acceptance without weakening future extensibility.
 - Dependencies: 3B–3E.
 - Complexity: MEDIUM.
 - STOP on failed current-scope acceptance, resource leaks, stale diagnostics,
   boundary violations, or undocumented scope/dependency changes.
 
+Completion evidence:
+
+- Audited all uncommitted Phase 3 changes and classified them as Phase 3A/3B
+  foundation, Phase 3C JS/TS synchronization, Phase 3D HTML/CSS/JSON, Phase 3E
+  Problems, the two authorized Phase 2D Search corrections, tests, or
+  documentation. No accidental unrelated file, temporary/debug code, dead
+  helper, package change, or generated tracked artifact was found.
+- Reverified the renderer-only Monaco/provider boundary, project-relative file
+  flow, no language IPC/canonical-root exposure, offline JSON behavior, and
+  secure BrowserWindow configuration. No new filesystem, process, network, raw
+  IPC, dependency, validator, external provider, Python, or Java authority exists.
+- Added two focused deterministic stabilization tests. Repeated JS/TS project
+  activate/switch/close/reopen cycles do not accumulate background models;
+  repeated Problems controller cycles release marker listeners and diagnostics.
+  Focused Phase 3 acceptance passed 69 tests across 9 files.
+- Both authorized Search race regressions passed in two independent 57-test
+  integration runs. Two independent full-suite runs each passed 387 tests across
+  42 files with no retry configuration or timing sleeps.
+- Typecheck, lint, production build, Electron production-worker smoke, and
+  `git diff --check` passed. The smoke loaded editor, JavaScript/TypeScript,
+  HTML, CSS, and JSON workers from production `file:` assets with
+  `contextIsolation: true`, `nodeIntegration: false`, and `sandbox: true`.
+  The unchanged jsdom canvas warning remains non-blocking.
+- Current Phase 3 V1 acceptance is complete. HTML diagnostics, full `tsconfig`,
+  bare-package/`node_modules` resolution, unrestricted declaration loading,
+  Python, Java, external LSP, and packaged/installed acceptance remain explicitly
+  deferred. No Phase 4 implementation was started.
+
 ### Exit gate
 
-- All current-scope provider decisions are recorded; deferred Python/Java
-  provider decisions are not an exit blocker.
+- All current-scope provider decisions are recorded; deferred Python/Java and
+  external-server decisions are not an exit blocker.
 - Required provider feasibility evidence passes; full packaged/installed provider
   verification remains a Phase 7 exit condition.
 - Phase 3 Definition of Done in Section 19 passes.
@@ -1769,8 +1893,8 @@ from Terminal.
 - Separate stdout, stderr, exit code, stop/cancellation, and final exit metadata.
 - Output UI and actionable missing/invalid runtime states.
 - Windows owned-process-tree cleanup without a public generic `executeCommand`.
-- Node.js and configured Python project/file support within current V1 scope;
-  TypeScript only after ADR-014.
+- Node.js project/file support within current V1 scope; TypeScript only after
+  ADR-014. Python Run is deferred from V1.
 
 ### Acceptance criteria
 
@@ -1974,7 +2098,9 @@ produced by the named implementation phase.
   search states, Problems navigation, and dependency/status UX. Trivial visual
   presentation does not require excessive tests.
 - **Windows integration:** paths, locks, executable detection, shell launch,
-  `node-pty`, process trees, provider processes, Git, and persistence replacement.
+  `node-pty`, process trees, current Monaco worker resources, Git, and persistence
+  replacement. External provider processes belong only to a future authorized
+  language phase.
 - **Manual Electron smoke:** complete user workflows in development and, during
   Phase 7, packaged/installed operation.
 
@@ -2015,8 +2141,9 @@ Every privileged work package must verify:
   or arbitrary child-process capability;
 - executable plus argument arrays and `shell: false` where possible;
 - redacted logs without secrets, environment dumps, credentials, or file content;
-- cleanup of watchers, models, PTYs, Run processes, and provider processes by
-  their owner.
+- cleanup of watchers, models, PTYs, Run processes, and current provider workers
+  by their owner; future external provider processes must satisfy the same
+  ownership rule if authorized.
 
 An API equivalent to `window.api.execute(command)` is prohibited.
 
@@ -2056,20 +2183,25 @@ acceptance work is not a V1 exit requirement.
 
 - Current provider decisions are recorded and the current Tier 1/2 matrix
   capabilities plus Tier 3 C#/PHP syntax assignment pass.
-- Completion, hover, required signature/definition behavior, diagnostics, and
-  Problems/navigation pass.
+- Completion, hover, required signature/definition behavior, and diagnostics for
+  JavaScript, TypeScript, CSS, and JSON pass. Problems/navigation for those
+  diagnostic sources passes in Phase 3E. HTML diagnostics/Problems contribution
+  remain deferred under ADR-015.
 - Provider status/recovery and project switch/close, root `UNAVAILABLE`, renderer
   reload, worker cleanup, and stale-diagnostic behavior pass.
-- Runtime and Language Service remain independent; editor/save survive all
-  required service failure states.
-- Python and Java intelligence remain deferred and introduce no current
+- Runtime and current Monaco providers remain independent; editor/save survive
+  all applicable worker failure/status states. External service lifecycle is not
+  a Phase 3 exit gate.
+- Manual user-facing language-service restart is not required; external-server
+  start/stop/restart/crash UX remains future scope.
+- All Python and Java support remains deferred and introduces no current
   dependency, process, IPC, or acceptance requirement.
 - Defined tests, Windows smoke, typecheck, lint, and build pass.
 
 ### Phase 4 Definition of Done
 
-- Trusted JS/Python and decided TypeScript Run strategies satisfy current V1
-  file/project scope.
+- Trusted JavaScript and decided TypeScript Run strategies satisfy current V1
+  file/project scope. Python Run remains deferred.
 - stdout, stderr, exit code, Output UI, runtime errors, stop, cancellation, and
   Windows process-tree cleanup pass.
 - No generic executor exists and Terminal remains separate.
