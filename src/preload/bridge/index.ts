@@ -1,5 +1,6 @@
 import type { StudentIdeApi } from '../../shared/contracts'
 import { createFileBridge } from './file'
+import { createGitBridge } from './git'
 import {
   createLifecycleBridge,
   type IpcRendererLike,
@@ -14,6 +15,7 @@ export function createPreloadApi(
 ): StudentIdeApi {
   return {
     file: createFileBridge(ipcRenderer),
+    git: createGitBridge(ipcRenderer),
     lifecycle: createLifecycleBridge(ipcRenderer),
     project: createProjectBridge(ipcRenderer),
     search: createSearchBridge(ipcRenderer),

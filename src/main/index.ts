@@ -27,6 +27,7 @@ import { DesktopApplication } from './app/desktop-application'
 import { ApplicationQuitCoordinator } from './app/application-quit-coordinator'
 import { FoundationIpcService } from './ipc/foundation-ipc-service'
 import { FileIpcService } from './ipc/file-ipc-service'
+import { GitIpcService } from './ipc/git-ipc-service'
 import { IpcHandlerRegistry } from './ipc/ipc-handler-registry'
 import { ProjectIpcService } from './ipc/project-ipc-service'
 import { SearchIpcService } from './ipc/search-ipc-service'
@@ -45,6 +46,9 @@ import { RunService } from './services/run/run-service'
 import { RunProjectLifecycle } from './services/run/run-project-lifecycle'
 import { WindowsPipedProcessAdapter } from './services/run/windows-piped-process-adapter'
 import { NodeRuntimeDetector } from './services/dependencies/node-runtime'
+import { GitExecutableDetector } from './services/dependencies/git-executable'
+import { GitCommandRunner } from './services/git/git-command-runner'
+import { GitService } from './services/git/git-service'
 import { DomainError } from './errors/app-error'
 import { RunIpcService } from './ipc/run-ipc-service'
 import { WindowManager } from './window/window-manager'
@@ -221,6 +225,13 @@ void app.whenReady().then(async () => {
     (event) => publishToWindows(FILE_CHANNELS.changed, event),
     (status) => publishToWindows(FILE_CHANNELS.statusChanged, status),
   )
+  const gitService = new GitService(
+    projectService,
+    fileSystemService,
+    new GitExecutableDetector(),
+    new GitCommandRunner(),
+  )
+  const gitIpc = new GitIpcService(ipcRegistry, gitService)
   const searchIpc = new SearchIpcService(
     ipcRegistry,
     searchService,
@@ -304,6 +315,7 @@ void app.whenReady().then(async () => {
     runIpc,
     projectIpc,
     fileIpc,
+    gitIpc,
     searchIpc,
     terminalIpc,
     windowManager,

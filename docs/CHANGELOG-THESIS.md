@@ -973,3 +973,57 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   verified; Windows 10 and installed/package verification remain Phase 7 work.
 - Phase 4 V1 is complete. TypeScript Run, Run Project, npm scripts, dev servers and
   project entry configuration remain deferred. No commit, push or merge was performed.
+
+## Phase 5A — Git Foundation + Dependency / Repository Detection (`COMPLETE`, 2026-09-06)
+
+- Added side-effect-free Git dependency/repository contracts and one narrow
+  `git:get-state` IPC/Preload capability. Requests accept only the active project
+  ID; exact validation rejects executable, cwd, argument, command, shell, and
+  unknown fields. Responses are exact-validated and expose no canonical path or
+  process authority.
+- Added a Git-specific Main PATH detector without changing Node detection. It
+  checks exact `git.exe` candidates, ignores empty/relative/current-drive entries,
+  supports quoted/spaced/Unicode and UNC paths, does not use PATHEXT or cwd search,
+  and distinguishes validated `AVAILABLE` from safe-lookup `MISSING`.
+  `NOT_CONFIGURED` and configured-path `INVALID_CONFIGURATION` remain reserved for
+  future Settings support.
+- Added a private finite `GitCommandRunner` using built-in `execFile` with separate
+  executable/arguments, `shell: false`, Main-owned cwd, bounded stdout/stderr,
+  timeout, cancellation-ready `AbortSignal`, hidden Windows process creation, and
+  safe error mapping. Terminal, Run, ProcessManager, and Windows Job semantics are
+  unchanged.
+- Added GitService repository probing through fixed Main-owned arguments. Main
+  authorizes and revalidates the active available project, canonicalizes Git's
+  reported top-level, and accepts only exact platform-correct equality with the
+  canonical project root. Normal non-Git folders and project subfolders inside a
+  parent repository return `NOT_REPOSITORY`; unexpected Git failures remain
+  structured errors.
+- Final review reopened the premature completion claim for path authorization
+  and missing real-process/repository evidence. Remediation strictly validates
+  single fully-qualified drive/UNC output before realpath, rejecting malformed
+  components, relative/current-drive forms, NUL/control characters and extra
+  lines with safe `PROCESS_FAILED`. Dot and drive-relative regressions use the
+  actual process cwd as the active root. Existing canonical Windows comparison
+  and decisions 1A/2B/3A are unchanged.
+- Real-process tests exposed early settlement on spawn failure before child
+  close. The local runner fix waits for close and guards duplicate completion;
+  deterministic tests cover close-before/callback-before ordering. Six real Git
+  process tests verify success, non-zero exit, timeout, cancellation, overflow
+  and spawn failure, including dead PIDs, single callback/close, destroyed timer
+  resources and removed abort listeners. Overflow uses a live batch process and
+  asserts captured output stays within 1024 bytes.
+- Three temporary real-Git integrations use production ProjectService identity/
+  authorization, GitService, detector, runner and realpath: exact spaced Unicode
+  repository root is `REPOSITORY`; ordinary folder and project nested in a parent
+  repository are `NOT_REPOSITORY`. Availability is the only stubbed domain port.
+  Local Git 2.47.1.windows.2 ran all nine integration tests without skips. The
+  Windows/PATH gate explicitly reports unavailable environments; no real UNC
+  network-share or packaged/Windows 10 acceptance is claimed.
+- After remediation, focused Git/Preload coverage passed 76/76. Full regression
+  passed 566/566 across 49 files with the existing `--maxWorkers=4`. Typecheck,
+  lint, fresh production/native build and whitespace verification passed.
+  Sandboxed test/build spawn EPERM required approved outside-sandbox runs; the
+  known jsdom canvas diagnostic remains non-blocking. No test timeout increase,
+  assertion weakening, dependency/package-lock change, Phase 5B+ operation,
+  Source Control UI, stage, commit or push was introduced. Phase 5A completion
+  now includes these remediation gates; Phase 5 overall remains `IN_PROGRESS`.

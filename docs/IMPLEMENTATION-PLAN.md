@@ -114,7 +114,7 @@ before affected work continues.
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
-| Phase 5 — Git Integration | `NOT_STARTED` | Basic local Git workflow through typed GitService |
+| Phase 5 — Git Integration | `IN_PROGRESS` | 5A foundation/detection complete; 5B–5F remain |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2153,6 +2153,41 @@ not a Phase 4 V1 acceptance requirement.
 
 ## 11. Phase 5 — Git Integration
 
+### Current work-package status
+
+- Phase 5A — Git Foundation + Dependency / Repository Detection: `COMPLETE`.
+- Phase 5B — Git Status + Stage / Unstage: `NOT_STARTED`.
+- Phase 5C — Commit + Branch + History: `NOT_STARTED`.
+- Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `NOT_STARTED`.
+- Phase 5E — Right Sidebar + Source Control UI: `NOT_STARTED`.
+- Phase 5F — Stabilization / Final Verification: `NOT_STARTED`.
+
+Phase 5A added PATH-only Git detection, the private bounded finite command
+runner, active-project/exact-top-level repository authorization, the normal
+`NOT_REPOSITORY` state, and narrow exact-validated IPC/Preload contracts. It did
+not add status parsing, repository mutations, branch/history operations,
+polling/watchers, or Renderer UI.
+
+Phase 5A was reopened for authorized final-review remediation on 2026-09-06 and
+returned to `COMPLETE` after fresh acceptance. Top-level parsing now validates
+the complete fully-qualified drive/UNC path before realpath; malformed output
+fails with `PROCESS_FAILED`, including dot/drive-relative output when process cwd
+equals the active root. Canonical Windows case/separator comparison is unchanged.
+The finite runner now waits for child close even on spawn failure. Real Git
+tests verify success, non-zero exit, timeout, cancellation, bounded overflow,
+spawn failure, dead child PIDs, one completion/close, destroyed timeout resources,
+and removed AbortSignal listeners. Real ProjectService/GitService integration
+verifies a spaced Unicode repository root, ordinary folder and nested project.
+
+Fresh evidence: focused Git/Preload tests 76/76 (including six real-process and
+three real-repository tests; none skipped locally), full regression 566/566 in
+49 files with `--maxWorkers=4`, typecheck, lint, build and `git diff --check` pass.
+Local Git is 2.47.1.windows.2. Sandboxed test/build spawn EPERM was an environment
+failure; approved outside-sandbox runs passed. Real integration explicitly reports
+skips without Windows PATH Git and cannot establish acceptance in that environment.
+UNC syntax/identity has automated coverage; no live network-share smoke is claimed.
+This remediation does not authorize Phase 5B; Phase 5 overall remains `IN_PROGRESS`.
+
 ### Goal
 
 Implement FR-027 through FR-032 using the accepted local Git CLI behind a typed
@@ -2168,6 +2203,10 @@ GitService (ADR-009).
 
 - No Git implementation strategy decision remains open. Configuration UX may be
   deferred to Phase 6, but GitService must expose explicit dependency states.
+- Phase 5A uses PATH-first detection: `AVAILABLE` and `MISSING` are emitted now;
+  `NOT_CONFIGURED` and configured-path `INVALID_CONFIGURATION` remain reserved.
+  Repository authorization requires canonical project root equality with Git's
+  canonical top-level, and an ordinary non-Git folder is `NOT_REPOSITORY`.
 
 ### Key deliverables
 
