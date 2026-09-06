@@ -1,7 +1,9 @@
 import {
   execFile,
+  spawn,
   type ChildProcess,
   type ExecFileException,
+  type SpawnOptions,
 } from 'node:child_process'
 
 import { DomainError } from '../../errors/app-error'
@@ -47,13 +49,89 @@ const nodeExecFile: GitExecFile = (executable, args, options, callback) => {
   return execFile(executable, [...args], options, callback)
 }
 
+export type GitSpawn = (executable: string, args: readonly string[], options: SpawnOptions) => ChildProcess
+export interface GitStreamResult {
+  readonly exitCode: number
+  readonly stoppedEarly: boolean
+}
+
 /** Private finite-process adapter. Callers, never Renderer payloads, own args/cwd. */
 export class GitCommandRunner {
   constructor(
     private readonly executeFile: GitExecFile = nodeExecFile,
     private readonly maxBufferBytes = DEFAULT_MAX_BUFFER_BYTES,
     private readonly environment: NodeJS.ProcessEnv = process.env,
+    private readonly spawnProcess: GitSpawn = (executable, args, options) => spawn(executable, [...args], options),
   ) {}
+
+  /** Main-only stream consumer. Returning true stops after the semantic limit. */
+  stream(
+    executable: string,
+    args: readonly string[],
+    cwd: string,
+    consume: (chunk: Uint8Array) => boolean,
+    options: GitCommandOptions = {},
+  ): Promise<GitStreamResult> {
+    validateCommand(executable, args, cwd)
+    const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) throw invalidCommand('Git timeout must be a positive integer.')
+    if (options.signal?.aborted) return Promise.reject(cancelled('cancelled'))
+    return new Promise((resolve, reject) => {
+      let child: ChildProcess
+      try {
+        child = this.spawnProcess(executable, args, {
+          cwd, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
+          env: gitEnvironment(this.environment),
+        })
+      } catch {
+        reject(streamFailure())
+        return
+      }
+      let failure: unknown
+      let stoppedEarly = false
+      let settled = false
+      let stderrBytes = 0
+      const stop = (error?: unknown) => {
+        if (settled || failure || stoppedEarly) return
+        if (error) failure = error
+        else stoppedEarly = true
+        child.kill()
+      }
+      const abort = () => stop(cancelled('cancelled'))
+      const timer = setTimeout(() => stop(cancelled('timeout')), timeoutMs)
+      options.signal?.addEventListener('abort', abort, { once: true })
+      if (options.signal?.aborted) abort()
+      const stdout = (chunk: Buffer) => {
+        if (failure || stoppedEarly || settled) return
+        try {
+          if (consume(chunk)) stop()
+        } catch (error) {
+          stop(error instanceof DomainError ? error : streamFailure())
+        }
+      }
+      const stderr = (chunk: Buffer) => {
+        stderrBytes += chunk.byteLength
+        if (stderrBytes > this.maxBufferBytes) stop(streamFailure('output-limit'))
+      }
+      const error = () => { failure ??= streamFailure() }
+      child.stdout?.on('data', stdout)
+      child.stderr?.on('data', stderr)
+      child.once('error', error)
+      child.once('close', (code) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        options.signal?.removeEventListener('abort', abort)
+        child.stdout?.removeListener('data', stdout)
+        child.stderr?.removeListener('data', stderr)
+        child.removeListener('error', error)
+        if (failure) reject(failure)
+        else if (stoppedEarly) resolve({ exitCode: 0, stoppedEarly: true })
+        else if (typeof code === 'number') resolve({ exitCode: code, stoppedEarly: false })
+        else reject(streamFailure())
+      })
+    })
+  }
 
   execute(
     executable: string,
@@ -76,11 +154,7 @@ export class GitCommandRunner {
       const child = this.executeFile(executable, args, {
         cwd,
         encoding: 'utf8',
-        env: {
-          ...this.environment,
-          LANG: 'C',
-          LC_ALL: 'C',
-        },
+        env: gitEnvironment(this.environment),
         maxBuffer: this.maxBufferBytes,
         shell: false,
         signal: options.signal,
@@ -100,6 +174,20 @@ export class GitCommandRunner {
       child?.once('close', () => { processClosed = true })
     })
   }
+}
+
+function gitEnvironment(environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  // Ambient Git overrides must not redirect this project's index/root/pathspecs.
+  const result = Object.fromEntries(Object.entries(environment)
+    .filter(([name]) => !name.toUpperCase().startsWith('GIT_')))
+  return { ...result, LANG: 'C', LC_ALL: 'C', GIT_TERMINAL_PROMPT: '0' }
+}
+
+function streamFailure(reason = 'process-failure'): DomainError {
+  return new DomainError({
+    code: 'PROCESS_FAILED', message: 'Git could not complete the operation.',
+    operation: 'git:execute', details: { reason }, retryable: false,
+  })
 }
 
 function complete(
