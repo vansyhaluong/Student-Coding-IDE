@@ -344,8 +344,9 @@ Acceptance criteria tối thiểu cho mỗi ngôn ngữ Tier 1:
 * Diagnostics.
 * Problems panel.
 
-Run không phải deliverable của Phase 3. JavaScript và TypeScript Run được xử lý
-riêng trong Phase 4; TypeScript vẫn phụ thuộc decision gate ADR-014.
+Run không phải deliverable của Phase 3. Phase 4 V1 chỉ Run file JavaScript `.js`
+hiện tại trong active project. TypeScript Language Intelligence vẫn được hỗ trợ;
+TypeScript Run được defer sang future scope với decision gate ADR-014.
 
 #### Tier 2 — Language Intelligence
 
@@ -615,18 +616,48 @@ Người dùng có thể chạy file hiện tại bằng nút:
 ▶ Run
 ```
 
-Hệ thống xác định loại file và chạy command tương ứng.
+Phase 4 V1 chỉ chạy file JavaScript `.js` hiện tại đã được xác thực thuộc active
+project bằng Node.js. Các extension khác không được Run trong V1.
+
+Chỉ có một primary Run action ở bên phải editor header, áp dụng cho file active;
+không có Run button trùng lặp, global project Run hay npm/framework launcher.
+
+Nếu editor model của target dirty, chặn Run và thông báo yêu cầu Save trước.
+Không auto-save, chạy stale disk content hay tạo temporary execution file;
+authoritative Monaco/editor buffer phải được giữ nguyên.
+
+Mỗi target chỉ có một active run. Bấm Run lại cùng target tự dừng run hiện tại,
+chờ cleanup hoàn tất rồi mới tạo run mới; không overlap và không confirmation
+prompt trong V1. Cleanup thất bại không được khởi chạy replacement.
+
+Main resolve Node từ process `PATH`; Renderer không resolve/chọn executable.
+Không bundled Node, configured absolute Node path hay Node-path Settings UI trong
+Phase 4. Không resolve được Node thì báo `MISSING`, chặn Run và hiển thị lỗi hữu
+ích, an toàn. Configured Node path được defer sang future Settings scope.
+
+Sau khi project close/switch được xác nhận, dừng mọi Run thuộc project hiện tại
+và chờ cleanup thành công trước khi hoàn tất transition. Cleanup lỗi thì không
+close/switch, giữ current project/editor state. Khi root unavailable, dừng các
+Run thuộc project và reject late/stale events; output project cũ không được cập
+nhật UI của project thay thế. Không thay đổi Terminal behavior.
 
 Ví dụ:
 
 ```text
 .js  → node file.js
-.ts  → TypeScript runtime strategy
+.ts  → Run DEFERRED, không hỗ trợ trong V1 hiện tại
 ```
 
-TypeScript run strategy phải được quyết định trước Phase 4. Các candidate có thể
-gồm `tsx`, `ts-node` hoặc compile rồi chạy bằng Node.js; quyết định cuối cùng phải
-được ghi trong `docs/DECISIONS.md`.
+TypeScript Run được defer, không bị từ chối vĩnh viễn. V1 không chọn TypeScript
+runtime, compile/transpile strategy, `tsx`, `ts-node` hay Node-native TypeScript
+execution policy. ADR-014 là gate cho future TypeScript Run, không chặn JavaScript
+Run của Phase 4. Strategy tương lai phải được quyết định và kiểm chứng trước khi
+thêm TypeScript execution.
+
+RunService giữ abstraction RunStrategy nội bộ, hẹp; Phase 4 chỉ có concrete
+JavaScriptRunStrategy. Future TypeScriptRunStrategy có thể được bổ sung khi được
+authorize mà không thiết kế lại core RunService; không tạo placeholder production
+code hay dependency TypeScript Run trong V1.
 
 Run phải kiểm tra runtime tương ứng độc lập với language service. Nếu runtime bị
 thiếu hoặc cấu hình không hợp lệ, IDE phải báo lỗi rõ ràng thay vì fail silent.
@@ -638,17 +669,13 @@ criteria của V1. Python Run được defer khỏi V1 hiện tại.
 
 ### FR-023 — Run Project
 
-Trong V1, built-in Run Project ưu tiên:
+Built-in Run Project được defer, không phải acceptance requirement của Phase 4
+V1. V1 chỉ Run file `.js` hiện tại trong active project theo FR-022.
 
-* Node.js project.
-
-Ví dụ:
-
-#### Node.js
-
-```bash
-npm run dev
-```
+`npm run ...`, npm/package-manager script execution, dev-server orchestration,
+project entry configuration và framework/project launcher logic đều ngoài scope
+Phase 4 V1. Không implement project entry selection. Một future phase được
+authorize có thể bổ sung Run Project sau khi quyết định rõ entry/script policy.
 
 Các lệnh như `python`, `dotnet run`, `php artisan serve` và lệnh Java vẫn có thể
 được người dùng tự nhập trong Integrated Terminal; khả năng terminal chung này
@@ -662,7 +689,10 @@ Laravel, Java và các framework Tier 3 là future enhancement, trừ khi requir
 
 ### FR-024 — Hiển thị Output
 
-Khi chạy chương trình, output được hiển thị trong một panel riêng.
+Khi chạy chương trình, output được hiển thị trong tab `Output`, sibling của
+`Problems` và `Terminal` trong Bottom Panel hiện có. Không tạo panel architecture
+khác hay redesign Terminal. stdout và stderr được phân biệt, kèm running state,
+target context, exit result và Stop khi đang chạy.
 
 Ví dụ:
 
@@ -1231,7 +1261,8 @@ classification, risk và implication cho Student Coding IDE.
 Phase 1 đã chọn xterm.js + `node-pty` với Phase 2 Windows/native compatibility
 gate, chấp nhận local Git CLI phía sau typed GitService và chấp nhận versioned
 JSON persistence. Provider Phase 3 hiện tại đã được ADR-015 chốt và Phase 3B xác
-nhận bằng evidence; TypeScript Run vẫn giữ decision gate của Phase 4.
+nhận bằng evidence; TypeScript Run giữ decision gate ADR-014 cho future scope,
+không chặn Phase 4 JavaScript Run.
 
 `CODEBASE-MAP.md` phải map source của Student Coding IDE, không sao chép codebase
 map của Orca. Có thể có phần riêng ghi reference mapping của Orca nếu hữu ích.
@@ -1293,8 +1324,8 @@ Formatter và debugger không thuộc phase này.
 
 Triển khai hoặc chỉnh sửa:
 
-* Run file.
-* Run project trong phạm vi V1.
+* Run file JavaScript `.js` hiện tại trong active project bằng Node.js.
+* TypeScript Run và built-in Run Project được defer; không phải V1 acceptance.
 * stdout và stderr.
 * Exit code.
 * Output panel và error output.
@@ -1561,7 +1592,7 @@ Matrix khởi tạo có thể dùng cấu trúc:
 | Language | Editor | Language service | Runtime | Run | Diagnostics | Completion | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | JavaScript | Monaco | Monaco-native worker | Node.js | V1 | V1 | V1 | Current Phase 3 V1 |
-| TypeScript | Monaco | Monaco-native worker | Strategy TBD | V1 | V1 | V1 | Current Phase 3 V1; Run strategy TBD Phase 4 |
+| TypeScript | Monaco | Monaco-native worker | Deferred; no V1 runtime selected | Deferred | V1 | V1 | Phase 3 intelligence supported; future Run gate ADR-014 |
 | HTML | Monaco | Monaco-native worker | N/A | No | Deferred | V1 | Current V1 syntax/completion/conditional hover; diagnostics deferred |
 | CSS | Monaco | Monaco-native worker | N/A | No | V1 | V1 | Current Phase 3 V1 |
 | JSON | Monaco | Monaco-native worker | N/A | No | V1 | V1 | Current Phase 3 V1 |

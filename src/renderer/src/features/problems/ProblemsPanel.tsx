@@ -23,6 +23,7 @@ interface ProblemsPanelProps {
   height: number
   onHeightChange(height: number): void
   onSelectTerminal(): void
+  onSelectOutput?(): void
   onClosePanel(): void
   onNavigate(problem: ProblemItem): void
   interactionLocked: boolean
@@ -34,6 +35,7 @@ export function ProblemsPanel({
   height,
   onHeightChange,
   onSelectTerminal,
+  onSelectOutput,
   onClosePanel,
   onNavigate,
   interactionLocked,
@@ -67,6 +69,7 @@ export function ProblemsPanel({
             <ListChecks aria-hidden="true" /><span>Problems</span>
             {snapshot.totalCount > 0 && <small>{snapshot.totalCount}</small>}
           </button>
+          {onSelectOutput && <button type="button" role="tab" aria-selected="false" onClick={onSelectOutput}><span>Output</span></button>}
         </div>
         <div className="problems-summary" aria-label="Problem counts">
           <span><AlertCircle aria-hidden="true" />{snapshot.errorCount}</span>

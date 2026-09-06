@@ -137,17 +137,45 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 
 ## ADR-014 — TypeScript execution strategy
 
-- **Status:** Proposed — spike required before Phase 4
-- **Context:** TypeScript is Tier 1 Run, including a useful single-file student workflow.
+- **Status:** Deferred — future TypeScript Run decision gate; not a Phase 4 V1 blocker
+- **Context:** Explicit user scope clarification limits Phase 4 V1 to the current authorized JavaScript `.js` file inside the active project via Node.js. TypeScript Language Intelligence remains supported from Phase 3; TypeScript Run is deferred, not permanently rejected.
 - **Options:** `tsx`; `ts-node`; compile with `tsc` then Node; Node native type stripping where the detected runtime supports the file/project.
-- **Selected option:** `TBD`. `tsx` is the leading candidate for a predictable single-file experience, but no package is approved in Phase 1.
+- **Selected option:** None. V1 selects no TypeScript runtime, compile/transpile strategy, `tsx`, `ts-node`, or Node-native TypeScript execution policy. The options below are future comparison evidence only, not approved dependencies or implementation work.
 - **Rationale:**
   - `tsx`: simple and fast; adds a dependency and may differ from project build configuration.
   - `ts-node`: familiar but configuration/ESM behavior can be harder for beginners.
   - `tsc` + Node: accurate compile diagnostics but slower and needs output/config lifecycle.
   - Node native TypeScript: no runner dependency but behavior depends on Node version and supports only erasable syntax/config limitations.
-- **Consequences:** Before Phase 4, test Windows paths, ESM/CommonJS, source maps/error locations, `tsconfig`, cancellation/tree cleanup, single-file and project behavior. Record the final selection here.
-- **Phase:** 4 decision gate.
+- **Consequences:** Before a future authorized TypeScript execution implementation, decide and verify the strategy, including Windows paths, ESM/CommonJS, source maps/error locations, `tsconfig`, runtime compatibility, cancellation/tree cleanup, and the authorized file/project scope. Record the final selection here. RunService retains a narrow internal RunStrategy boundary with only JavaScriptRunStrategy in Phase 4 V1; a future TypeScriptRunStrategy must not require redesigning core RunService. Do not implement placeholder TypeScript production code.
+- **Related scope clarification:** Built-in Run Project, npm/package-manager scripts, dev-server orchestration, project entry configuration, and framework/project launcher logic are deferred from Phase 4 V1. Future Run Project requires a separately authorized entry/script policy. This clarification resolves no other Run behavior or lifecycle decision.
+- **Phase:** Future TypeScript Run gate; not a dependency or exit gate for current Phase 4 JavaScript implementation.
+
+### Approved Phase 4 V1 Run policies
+
+Explicit user decisions apply to current-file JavaScript Run only:
+
+- One active session per target. Re-run stops the old session and awaits
+  successful cleanup before replacement, with no prompt or overlapping sessions.
+- Dirty target: block Run and require explicit Save; do not auto-save, execute
+  stale disk content, create temporary execution files, or mutate editor buffers.
+- Node detection: Main-controlled process PATH only; unresolved Node is `MISSING`
+  and blocks Run with a safe useful error. Bundled Node, configured absolute Node
+  paths, and Node-path Settings UI are deferred. No detection dependency is approved.
+- Confirmed project close/switch waits for all project Run cleanup before commit;
+  cleanup failure preserves current project/editor state. Root unavailability
+  stops project runs and rejects stale events, including across replacement projects.
+- One primary Run action on the right of the editor header. Output joins Problems
+  and Terminal in the existing Bottom Panel. No duplicate Run affordance or
+  Terminal redesign.
+- Windows process-tree feasibility is a read-only gate before implementation:
+  verify creation-time ownership for a Node process with separate stdout/stderr,
+  descendants after root exit, bounded whole-tree cleanup, and reuse of existing
+  shutdown/project ownership. No production/native/dependency/package-lock change,
+  ProcessManager redesign, timeout change, lifecycle change, or test weakening is
+  authorized by that review. Report insufficiency for user decision.
+
+These are approved product policies, not evidence of an implemented RunService
+or a passed Windows feasibility gate. ADR-014 remains deferred as stated above.
 
 ## ADR-015 — Phase 3 V1 language scope and providers
 
@@ -297,5 +325,5 @@ No package is installed by this analysis.
 | HTML/CSS/JSON intelligence | Existing Monaco workers | Built for editor integration | Confirm HTML completion/hover, CSS/JSON diagnostics, and trusted/offline JSON schema behavior; HTML diagnostics are deferred | Browser-worker packaging only | SELECTED Phase 3A; no new dependency |
 | Python intelligence | Future provider decision; Pyright/basedpyright/python-lsp-server remain unselected candidates | Deferred evaluation can use future requirements and packaging evidence | Would add external-service distribution, IPC, lifecycle, and security cost | Future Windows/process gate required | DEFERRED; no current Phase 3 dependency |
 | Java intelligence | Future provider decision | Preserves future extensibility | Would add provider/runtime/process complexity if an external server is selected | Future Windows/process gate required | DEFERRED; no current Phase 3 dependency |
-| TypeScript Run | `tsx`, `ts-node`, `tsc` + Node, native Node TS | Multiple viable UX choices | Semantics/version/config trade-offs | Must test Windows invocation/stop | TBD Phase 4 |
+| TypeScript Run | `tsx`, `ts-node`, `tsc` + Node, native Node TS | Future comparison only; no V1 selection | Semantics/version/config trade-offs | Must test Windows invocation/stop before future execution | DEFERRED; future ADR-014 gate |
 | Automated tests | `vitest` | Reuses Vite/TypeScript transform; unit, service, and adapter integration support | Keep Electron E2E separate until required | No native ABI; CI Node 22 compatible | SELECTED Phase 2A |

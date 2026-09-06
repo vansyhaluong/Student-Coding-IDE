@@ -40,6 +40,7 @@ describe('lifecycle preload bridge', () => {
       'file',
       'lifecycle',
       'project',
+      'run',
       'search',
       'terminal',
     ])

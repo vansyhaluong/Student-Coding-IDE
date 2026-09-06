@@ -8,8 +8,8 @@ records the approved Phase 3 V1 scope and its verified implementation status.
 
 | Language | Tier | Syntax | Completion | Hover | Signature Help | Definition | Diagnostics | Problems | Run | Runtime | Language Service | Decision status |
 |---|---:|---|---|---|---|---|---|---|---|---|---|---|
-| JavaScript | 1 | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Phase 4 | Node.js | Monaco TypeScript worker with bounded project snapshot | Accepted for Phase 3 V1 |
-| TypeScript | 1 | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Phase 4 | Strategy TBD; ultimately executes with Node-compatible runtime | Monaco TypeScript worker with bounded project snapshot | Accepted for Phase 3 V1; Run strategy TBD Phase 4 |
+| JavaScript | 1 | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Current saved authorized `.js` file in active project | Node.js | Monaco TypeScript worker with bounded project snapshot | Phase 3 intelligence and Phase 4 JavaScript Run/Output accepted and verified |
+| TypeScript | 1 | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Deferred | No V1 runtime selected | Monaco TypeScript worker with bounded project snapshot | Phase 3 intelligence supported; future Run gate ADR-014 |
 | HTML | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Deferred | Deferred | No | N/A | Monaco HTML worker | V1 syntax/completion/hover; diagnostics deferred because provider has no validation support |
 | CSS | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Yes | Yes | No | N/A | Monaco CSS worker | Accepted and verified for Phase 3 V1 |
 | JSON | 2 | Yes | Yes, local schema-free behavior | No useful result without a configured local schema | Not required | Not required | Yes | Yes | No | N/A | Monaco JSON worker | Accepted and verified for current local-only configuration |
@@ -159,9 +159,35 @@ change was required.
 
 ## TypeScript Run gate
 
-TypeScript Run is a separate Phase 4 commitment, not a Phase 3 capability. The
-runner is not selected. Before Phase 4 implementation, ADR-014 must select and
-verify one strategy for:
+### Approved current JavaScript execution policy
+
+Node resolution is Main-controlled process PATH only. Missing Node reports
+`MISSING` and blocks Run; bundled Node and configured absolute Node paths/Settings
+UI are deferred. Renderer never selects an executable. Dirty current `.js`
+targets must be saved explicitly before Run; buffers remain untouched. Re-run
+stops and fully cleans the prior same-target session before replacement, without
+a prompt or overlap. Confirmed project close/switch waits for project Run cleanup
+and preserves project/editor state on failure; unavailable roots stop owned runs
+and stale events are rejected. UI uses one right-aligned editor-header Run action
+and an Output sibling tab in the existing Bottom Panel. The feasibility spike,
+production native adapter, Electron binding, and lifecycle/UI smokes are verified;
+installed-package acceptance remains Phase 7.
+
+### Deferred TypeScript execution
+
+Phase 4 V1 requires only Node.js Run of the current authorized JavaScript `.js`
+file inside the active project. Built-in Run Project, npm scripts, dev-server
+orchestration, project entry configuration, and framework/project launchers are
+deferred; future Run Project requires an explicit entry/script policy.
+
+TypeScript Run is deferred, not permanently rejected. TypeScript intelligence
+remains supported from Phase 3. No V1 TypeScript runtime, compilation,
+transpilation, ts-node, tsx, or Node-native execution policy is selected.
+RunService retains a narrow RunStrategy boundary with JavaScriptRunStrategy as
+the only V1 concrete strategy and no placeholder TypeScript production code.
+ADR-014 does not block current Phase 4. Before a future authorized phase adds
+TypeScriptRunStrategy without redesigning core RunService, it must select and
+verify a strategy for the authorized scope, including:
 
 - single-file and project runs;
 - Node version compatibility;
@@ -171,4 +197,4 @@ verify one strategy for:
 - Windows executable/path behavior;
 - stop and descendant cleanup.
 
-Candidates are `tsx`, `ts-node`, compile with `tsc` then Node, and Node native TypeScript support when its detected version and file syntax are compatible.
+Future candidates are `tsx`, `ts-node`, compile with `tsc` then Node, and Node native TypeScript support when its detected version and file syntax are compatible. None is selected or authorized for V1.

@@ -113,7 +113,7 @@ before affected work continues.
 | Phase 2E — Integrated Terminal | `COMPLETE` | 2E-J corrective Steps 1–3 and final consolidated review passed |
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
-| Phase 4 — Run & Output | `NOT_STARTED` | Trusted Run strategies, output, stop, and cleanup |
+| Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
 | Phase 5 — Git Integration | `NOT_STARTED` | Basic local Git workflow through typed GitService |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
@@ -1865,47 +1865,289 @@ Completion evidence:
 
 ## 10. Phase 4 — Run & Output
 
+### Authorized execution packages
+
+- 4A — Run contracts/service/strategy foundation: `COMPLETE`.
+- 4B — PATH runtime detection/native adapter/Electron binding: `COMPLETE`.
+- 4C — Run execution lifecycle/re-run/cleanup: `COMPLETE`.
+- 4D — Project/application lifecycle integration: `COMPLETE`.
+- 4E — Editor-header Run and Bottom Panel Output: `COMPLETE`.
+- 4F — Stabilization/security/regression/build/native verification: `COMPLETE`.
+
+The user accepted the isolated Windows native spike as feasibility evidence and
+authorized production integration. Baseline diagnostics classified the Monaco
+registration timeout as test-infrastructure/resource contention; two subsequent
+full suites passed 387/387. Keep maxWorkers=4 and existing test timeouts. The user
+subsequently authorized continuation of interrupted 4B work; IPC/bridge factories are not composed
+into the live application until execution is ready. Native, lifecycle, and UI
+acceptance must be verified separately from spike evidence.
+
+4A verified scope: exact shared request/session/event validators; Main-generated
+opaque session IDs; owner-scoped immutable preparation records; narrow
+RunPreparationAuthority and RunStrategy seams; JavaScript-only explicit
+executable/argument preparation; uncomposed typed Main IPC and Preload adapters.
+No actual Node detection, filesystem authorization implementation, process spawn,
+stop/re-run execution, native binding, project/shutdown wiring, or UI is claimed.
+Focused tests passed 37/37; full regression passed 424/424 across 43 files.
+Typecheck, lint, production build, and whitespace checks passed. Vitest remains
+maxWorkers=4 with unchanged timeouts/retry behavior. Spike fixture lint metadata
+was corrected without changing fixture behavior. Dependencies/package-lock,
+ProcessManager, Terminal, Renderer runtime capability, and security flags are unchanged.
+
+4B completion evidence (2026-09-05):
+
+- PATH-only Node detection rejects empty, relative and current-drive-rooted entries,
+  supports quoted/spaced and UNC directories, and returns safe missing/invalid errors.
+- Main-only Node-API 8 Windows x64 adapter uses creation-time Job membership,
+  separate bounded asynchronous stdout/stderr delivery, UTF-8 streaming decoding,
+  root exit and EOF settlement, and explicit native release. The internal RunService
+  seam rechecks injected authority, registers before creation, rolls back failed
+  spawn registration, and retains ownership on cleanup failure. No app/IPC wiring.
+- `npm run build` compiles `out/main/native/run-process.node` with existing MSVC,
+  Electron headers/import library and npm's delay-load hook, without downloads or
+  dependencies. Native compilation is Windows x64 only; other hosts retain JS
+  builds and fail closed if the adapter is constructed. Ubuntu execution was not
+  performed in this Windows session. Packaged/installed acceptance remains Phase 7.
+- `node_modules/.bin/electron.cmd scripts/smoke-run-native.mjs` passed using the
+  production Main entry and native artifact under Electron 44.0.0, ABI 149, x64.
+  Fifteen cycles verified asynchronous independent streams, Unicode, exit 0/7,
+  single exit/EOF delivery, concurrent/idempotent close, and native release.
+  Additional checks proved a surviving descendant remains Job-owned after root
+  exit, ProcessManager cleanup empties/releases it, and native spawn failure leaves
+  no registered resource. This is production-binding evidence, not reused spike output.
+- Full suite passed 436/436 across 44 files; typecheck, lint, production build,
+  and `git diff --check` passed. Worker count/timeouts/retries are unchanged.
+  Existing jsdom canvas diagnostic remains non-blocking. Sandbox spawn EPERM
+  required approved execution outside the sandbox for build/tests/native smoke.
+- No new decision, dependency, package-lock, ProcessManager, Terminal, or security
+  flag changes. Concrete filesystem authorization, execution/re-run state,
+  project/shutdown composition and UI remain 4C–4E; 4F retains final integration
+  verification. Phase 4 as a whole is not complete.
+
+4C completion evidence (2026-09-05):
+
+- Implemented Main-only semantic start/stop, immutable existing RunSession state
+  transitions, opaque IDs, and canonical-target serialized re-run. Different
+  targets remain concurrent; a replacement cannot start until old cleanup succeeds.
+  Dirty/unsupported/invalid targets and missing runtime fail before spawn. The
+  injected Main authority/runtime seams are rechecked before execution; concrete
+  authority/application composition is not claimed by this package.
+- Exact session and active-target record guards reject old stdout/stderr/exit/error
+  callbacks. Output preserves stream identity and adapter delivery order. Natural
+  exit initiates descendant cleanup; terminal state/exit is emitted once only after
+  root exit, both EOFs and native resource release. Exit 0 is EXITED, non-zero or
+  observation failure is FAILED, and explicit Stop before root exit is CANCELLED.
+- ProcessManager remains unchanged. Unique per-session resource-owner keys use its
+  existing cleanupOwner await/deduplication/retry behavior. Failed cleanup remains
+  STOPPING with safe retryable errors and retained tracking; no terminal event or
+  replacement occurs. Recent completed-session tombstones (bounded to 128 snapshots,
+  no output/native resources) support duplicate Stop; foreign/unknown IDs fail closed.
+- Focused deterministic 4A–4C tests passed 71/71, including 22 new lifecycle cases:
+  individual cleanup gates, duplicate Stop, Stop during STARTING, cleanup retry,
+  spawn failure, safe valid error events, owner rejection, same-target concurrent
+  requests/case aliases, different-target concurrency, and late stale callbacks.
+  Full regression passed 458/458 across 45 files with maxWorkers=4 and unchanged
+  timeouts/retries; no sleeps/skips/tooling changes. Known jsdom canvas noise remains
+  non-blocking. Typecheck, lint, production build and git diff --check passed.
+- Production Electron 44.0.0 / ABI 149 / Windows x64 lifecycle smoke passed five
+  sessions covering natural exit 0/7, streams, Stop/duplicate Stop, same-target
+  replacement and root-first descendant cleanup; final resource count was zero.
+  Reproduction: build, then
+  `node_modules/.bin/electron.cmd scripts/smoke-run-lifecycle.mjs`.
+  Existing 4B native smoke passed 15 cycles plus root-first/failed-spawn checks.
+  `npm run smoke:monaco-workers` passed editor/JS/TS/HTML/CSS/JSON discovery from
+  production file assets with the three required Electron security flags.
+- No ProcessManager/native architecture/Terminal/renderer/security changes, new
+  dependency, lockfile edit, or new ADR decision. Project switch/close, application
+  shutdown, live IPC composition and Run/Output UI remain unimplemented 4D–4E work.
+  No commit/push/merge; 4D requires separate explicit authorization.
+
+4D completion evidence (2026-09-05):
+
+- Main composes RunService, PATH detector, lazy native adapter and the managed
+  RunProjectLifecycle. Its existing ProjectService guard runs after the unsaved
+  and Terminal guard. Cancel leaves Run active; approval blocks new starts and
+  awaits all project-owned cleanup before mutation. The lease remains held until
+  existing project-changed/transition-failed notifications, including persistence
+  awaits. Failure preserves the current project and returns a retryable domain error.
+- Existing FileSystemService status subscriptions stop/mute unavailable-project
+  runs without a new watcher. Main-only authorizeRunFile validates regular-file,
+  canonical containment and availability using the existing resolver. Generation
+  guards invalidate pending starts across transition/unavailability/reopen and at
+  the final pre-spawn boundary. Cleanup requests remain tracked through the gap
+  between session finalization and ProcessManager promise/tracking completion.
+- DesktopApplication STOPPING blocks Run starts/events immediately. Run cleanup
+  remains in existing managed-service order; failed cleanup retains STOPPING,
+  dependencies and the window for ADR-021 retry. ProjectService, unsaved service,
+  quit coordinator, DesktopApplication, ProcessManager and Terminal were not redesigned
+  or modified. No global transition queue or independent shutdown owner was added.
+- Sixteen deterministic 4D tests cover switch/close approval and cancellation,
+  cleanup failure/retry without mutation, overlapping transitions, multiple targets,
+  project scoping, unavailable/reopen/stale events, pending-authority/runtime races,
+  concrete file authority, duplicate shutdown and real quit-coordinator retry.
+  Focused 4A–4D/unsaved/shutdown suite passed 109/109 across seven files. Final full
+  regression passed 474/474 across 46 files. Typecheck, lint, production build and
+  git diff --check passed; maxWorkers=4, test timeouts/retries unchanged. Existing
+  jsdom canvas diagnostic remains non-blocking.
+- `node_modules/.bin/electron.cmd scripts/smoke-run-project-lifecycle.mjs` passed
+  with production services and native adapter under Electron 44.0.0 / ABI 149:
+  cancel, confirmed switch, close, unavailable, reopen and shutdown; four native
+  sessions released, zero resources remaining. Existing Run lifecycle smoke passed
+  five sessions, including natural exit/non-zero/re-run/root-first cleanup. Monaco
+  production-worker smoke passed editor/JS/TS/HTML/CSS/JSON with secure window flags.
+- Main shared build chunks are emitted beside the entry so native binding relative
+  paths remain valid after Run becomes shared by app and smoke entry. Native process
+  creation/cleanup architecture is unchanged. No dependency/lockfile/ADR change,
+  Renderer invoke authority, Run button, Output UI, commit, push or merge. 4E requires
+  separate explicit authorization; full Phase 4 and packaged acceptance are not claimed.
+
+4E completion evidence (2026-09-05; authorized after 4D acceptance):
+
+- Registered the existing validated Run IPC adapter and exposed only typed
+  start/stop/onEvent through studentIde.run. Main observes renderer navigation and
+  destruction; owner-generation invalidation rejects pending launches and owned
+  cleanup mutes old events, awaits release, and retains failures for shutdown retry.
+  No generic IPC, process options, renderer Node access, or new wire DTOs.
+- One Run entry point sits at the right of the existing editor-tabs header.
+  The normal file-model surface is unambiguous; no extra shell/header was added.
+  Saved active-project .js targets can run; dirty, missing, unavailable, conflicted,
+  and unsupported targets are disabled with feedback. TypeScript copy explicitly
+  says current V1. Missing Node/spawn failures use safe inline Output feedback.
+- The same header group exposes Stop for an active target. Run again delegates
+  replacement to Main; pending invokes and STARTING/STOPPING disable duplicates.
+  Cleanup failure exposes Retry Stop. No renderer-generated process state or
+  optimistic replacement RUNNING state; fast exit events outrank older invoke replies.
+- Output is a sibling of existing Terminal/Problems tabs with the existing
+  PanelResizer and height state. Latest requested/stopped target output is shown;
+  per-target views retain separate stdout/stderr chunks in received order. Stream
+  view notifications batch on animation frames. Target/session/project guards
+  reject superseded events; project changes, unavailability and unmount clear
+  buffered views/frames. One Run subscription lives above panel/header mounts.
+- 21 new deterministic Renderer-to-Preload-to-RunService integration cases plus
+  three owner-cleanup cases and one App tab/subscription case. Existing Preload
+  capability-list and App subscription-count fixtures now account for Run.
+  Full regression passed 499/499 across 47 files with maxWorkers=4, unchanged
+  timeouts/retries, no sleeps/skips, and existing non-blocking jsdom canvas output.
+  Typecheck, lint, production/native build and git diff --check passed.
+- New production UI smoke: build, then
+  `node_modules/.bin/electron.cmd scripts/smoke-run-ui.mjs`. Actual built React,
+  Monaco, Preload and native Run services verified Run/re-run/Stop, stdout/stderr,
+  exit 0/7 and Problems/Output switching; four sessions released, zero resources.
+  Screenshot inspection confirmed header placement and existing panel/token style.
+  The harness waits for active-file selection after asynchronous file opening.
+- Existing native smoke passed 15 cycles and root-first/failed-spawn checks;
+  lifecycle smoke passed five sessions; project lifecycle smoke passed four with
+  zero remaining resources. Monaco worker smoke passed editor/JS/TS/HTML/CSS/JSON
+  with contextIsolation=true, nodeIntegration=false, sandbox=true under Electron
+  44.0.0 / ABI 149 / Windows x64.
+- No dependency/package-lock/ADR changes, shell redesign, Terminal or Problems
+  behavior changes, commit, push or merge. Only sibling tab navigation was added
+  to those panels. At 4E completion, 4F remained NOT_STARTED pending explicit
+  authorization; full Phase 4 and packaged/installed acceptance were not claimed.
+
+4F completion evidence (2026-09-05; authorized after 4E acceptance):
+
+- Audited every tracked modification and untracked Phase 4 source, build script,
+  fixture, test, spike and documentation file. No unrelated changes, tracked
+  generated/native artifacts, logs, debug files, secrets, private data or source
+  references to local developer paths remain. Generated native outputs stay under
+  ignored `out/`; package.json and package-lock.json are unchanged.
+- Reverified the complete 4A–4E architecture and security boundary: opaque Run
+  sessions, Main-owned strategies/runtime/process lifecycle, exact IPC validation,
+  typed Preload capability, creation-time Windows Job ownership, separate streams,
+  single finalization, cleanup retry retention, project/application cleanup, stale
+  rejection and the editor-header/Bottom Panel presentation. Renderer has no process
+  authority or generic execution channel; contextIsolation, disabled nodeIntegration
+  and sandbox remain enabled.
+- Focused Phase 4 integration passed 180/180 across eight files. Two consecutive full
+  suites passed 500/500 across 47 files with `--maxWorkers=4`; timeouts, retries,
+  sleeps and Monaco coverage were unchanged. The known jsdom canvas diagnostic was
+  non-blocking and no deterministic regression appeared. Representative Terminal,
+  Problems, Search, Language Intelligence, editor/save and panel-resize coverage
+  passed 147/147 across 16 files.
+- Production Electron/native verification passed: native smoke completed 15 cycles;
+  Run lifecycle smoke passed three repetitions of five sessions; project/application
+  lifecycle smoke passed three repetitions of four sessions; UI smoke passed twice
+  with eight sessions per run and six same-target cycles. All checks ended with zero
+  tracked Run/ProcessManager resources, released native handles and no surviving
+  descendants. Root-exits-before-child cleanup, Stop, re-run, switch/cancel/close,
+  unavailable-project and shutdown behavior remained passing.
+- Terminal native/service smoke, Monaco production worker smoke, typecheck, lint,
+  production build and `git diff --check` passed. The production build emits and the
+  built Electron application resolves `out/main/native/run-process.node` relative to
+  Main output. This Windows 11 build (NT 10.0.26200.9168, display version 25H2) was
+  verified; Windows 10 and an installed/package target were not available and remain
+  Phase 7 verification, consistent with Section 19.
+- No dependency, lockfile, ADR, architecture, security flag, Terminal behavior,
+  Problems behavior, commit, push or merge change. Phase 4 V1 is complete; TypeScript
+  Run, Run Project, npm scripts, dev-server orchestration and project entry settings
+  remain deferred.
+
 ### Goal
 
-Implement FR-022 through FR-026 as a trusted, non-interactive Run domain separate
-from Terminal.
+Implement FR-022 and FR-024 through FR-026 as a trusted, non-interactive Run
+domain separate from Terminal: only the current authorized JavaScript `.js` file
+inside the active project via Node.js. FR-023 built-in Run Project is deferred,
+not a Phase 4 V1 acceptance requirement.
 
 ### Dependencies
 
 - Stable project/editor/output targets and ProcessManager primitives from Phase 2.
 - Runtime/dependency status UX foundation from Phase 3 where shared conceptually,
   while runtime operation remains independent of Language Services.
-- ADR-008, ADR-012, and ADR-014.
+- ADR-008 and ADR-012. ADR-014 is a future TypeScript Run gate, not a Phase 4 V1 dependency.
 
 ### Decision gates
 
-- Resolve ADR-014 before TypeScript Run implementation. Compare `tsx`, `ts-node`,
-  `tsc` + Node, and compatible Node native TypeScript support for single-file and
-  project runs, Node versions, ESM/CommonJS, `tsconfig`, error/source locations,
-  startup speed, Windows paths, stop, and descendant cleanup.
-- Do not add a runner dependency until the ADR records the selected strategy.
+- ADR-014 is deferred until a future authorized TypeScript Run phase. No V1
+  TypeScript runtime, compile/transpile strategy, ts-node, tsx, or Node-native
+  TypeScript policy is selected; no TypeScript Run dependency is authorized.
+- The user resolved target/save, runtime detection, re-run, UI, and project
+  lifecycle policies below, then accepted the isolated native Windows spike and
+  authorized a narrow Main-only native piped-process adapter. Production Electron
+  loading, async output, native release, and build artifact verification remain
+  4B–4F gates; spike evidence cannot satisfy those production checks. ProcessManager
+  redesign, Terminal/node-pty behavior changes, new dependencies, or package-lock
+  changes still require stopping for a separate user decision.
 
 ### Key deliverables
 
-- Main-owned RunService with trusted language/project strategies.
+- Main-owned RunService with a narrow internal RunStrategy boundary and exactly
+  one concrete V1 JavaScriptRunStrategy. Future authorized strategies can be
+  selected without redesigning core RunService; no TypeScript placeholder code.
 - Explicit executable, argument array, cwd, controlled environment additions, and
   `shell: false` where possible.
 - Separate stdout, stderr, exit code, stop/cancellation, and final exit metadata.
 - Output UI and actionable missing/invalid runtime states.
+- Main-controlled process PATH Node detection only; `MISSING` blocks Run with a
+  safe useful message. Bundled Node and configured Node paths/Settings UI deferred.
+- Dirty target blocks Run until explicit Save; no auto-save, stale disk execution,
+  temporary execution file, or authoritative buffer mutation.
+- Same-target re-run stops and awaits successful cleanup before replacement;
+  one active run per target, no overlap or confirmation prompt.
+- Confirmed project close/switch waits for all old-project Run cleanup; failure
+  preserves project/editor state. Unavailable root stops owned runs; reject stale
+  output and replacement-project/session events.
+- One primary Run action on the editor header's right side, and an Output sibling
+  tab in the existing Bottom Panel. No duplicate action or Terminal redesign.
 - Windows owned-process-tree cleanup without a public generic `executeCommand`.
-- Node.js project/file support within current V1 scope; TypeScript only after
-  ADR-014. Python Run is deferred from V1.
+- Node.js execution of the current authorized `.js` file in the active project.
+  TypeScript and Python Run are deferred. Built-in Run Project, npm/package-manager
+  scripts, dev-server orchestration, project entry configuration, and framework/
+  project launchers are deferred; future Run Project needs an explicit entry/script policy.
 
 ### Acceptance criteria
 
 - Run remains distinct from Terminal and Language Server lifecycles.
-- Output/error/exit behavior and runtime-missing UX satisfy FR-022–FR-026.
+- Output/error/exit behavior and runtime-missing UX satisfy FR-022 and FR-024–FR-026.
 - Stop terminates the IDE-owned process tree without killing unrelated processes.
 - Application shutdown leaves no IDE-owned Run process.
 
 ### Exit gate
 
-- ADR-014 is resolved and verified before TypeScript Run is accepted.
+- Only JavaScript `.js` execution is accepted in V1; TypeScript execution remains
+  deferred behind future ADR-014 selection and verification. Phase 3 TypeScript
+  intelligence remains supported. FR-023 is not a current exit gate.
 - Phase 4 Definition of Done in Section 19 passes.
 - Typecheck, lint, build, defined tests, and Windows process cleanup checks pass.
 
@@ -2053,7 +2295,7 @@ dependency packaging, application packaging, installer, and documentation review
 | JS/TS/HTML/CSS/JSON providers | ADR-013, ADR-015 | Phase 3B implementation | RESOLVED Phase 3A — Monaco-native workers/providers | Matrix capabilities, bounded cross-file behavior, sync, worker lifecycle, development/production-build behavior, resource discovery; full packaged/installed verification is Phase 7 |
 | Python/Java providers | ADR-013, ADR-015 | Future explicitly authorized language phase | DEFERRED — no provider selected | Re-evaluate capabilities, distribution, executable/config discovery, Main-owned lifecycle, narrow IPC, Windows behavior, license, and packaging only when future scope is authorized |
 | Large-file language thresholds | Architecture §8 | Phase 3 acceptance for expensive features | RESOLVED Phase 3B — initial 500 files / 5 MiB total / 256 KiB per file | Re-measure during 3C integration while edit/save remains available; lower bounds if live responsiveness requires it |
-| TypeScript Run strategy | ADR-014 | TypeScript Phase 4 implementation | Proposed; unresolved | Node versions, ESM/CJS, `tsconfig`, errors/maps, startup, Windows paths, stop/tree cleanup |
+| TypeScript Run strategy | ADR-014 | Future authorized TypeScript execution | Deferred; not a Phase 4 V1 blocker | Node versions, ESM/CJS, `tsconfig`, errors/maps, startup, Windows paths, stop/tree cleanup |
 | Test infrastructure and command | ADR-018 / Requirement Phase 7 | Phase 2A acceptance, before Phase 2A automated tests are considered complete | RESOLVED Phase 2A — Vitest; `npm test` | Node-environment unit/main/service/IPC adapter coverage, Vite/TypeScript compatibility, CI Node 22, and later opt-in renderer/Electron E2E tooling only when required |
 | Windows terminal cleanup strategy | ADR-007, ADR-008, ADR-020 | Phase 2E-J corrective Step 2 | RESOLVED — Windows Job Object primary | Atomic `PROC_THREAD_ATTRIBUTE_JOB_LIST`, fail-closed capability/spawn, retained natural-root ownership, explicit terminate/empty/release; taskkill legacy-only |
 | Minimum Windows/ConPTY baseline | ADR-007, ADR-020 | Phase 2E-H completion | RESOLVED Phase 2E-H — no exact minimum build introduced | V1 remains Windows 10/11 x64; recorded build is evidence only |
@@ -2075,7 +2317,7 @@ decision register. This plan does not select any unresolved option.
 | Process-tree cleanup | 2E, 4, 7 | Orphans or unrelated process termination | Owned registry, bounded escalation, Windows descendant tests |
 | Language-provider packaging | 3, 7 | Intelligence works only in development or fails after distribution | Phase 3 provider distribution-feasibility gate and minimal spike if needed; Phase 7 full packaged/installed provider/resource verification |
 | Future Python/Java provider distribution | Future language phase, 7 | Future intelligence may require external process/distribution work | Deferred provider decision; preserve Main ownership, narrow validated IPC, Windows lifecycle, and packaged verification gates |
-| TypeScript Run strategy | 4 | Inconsistent execution/config behavior | ADR-014 spike before implementation |
+| TypeScript Run strategy | Future | Inconsistent execution/config behavior | ADR-014 decision and verification before future authorized TypeScript execution |
 | Large-project search responsiveness | 2D, 2F | Frozen UI or memory growth | Async bounded batches, exclusions, cancellation, representative performance smoke |
 | JSON corruption/recovery | 2A, 6, 7 | Lost settings/workspace convenience state | Atomic serialized writes, backup, schema migration, corruption tests |
 | Listener/model/process leaks | 2–4 | Degraded repeated use or shutdown | Ownership IDs, unsubscribe contracts, disposal and repeated-cycle tests |
@@ -2200,8 +2442,10 @@ acceptance work is not a V1 exit requirement.
 
 ### Phase 4 Definition of Done
 
-- Trusted JavaScript and decided TypeScript Run strategies satisfy current V1
-  file/project scope. Python Run remains deferred.
+- JavaScriptRunStrategy executes the current authorized `.js` file inside the
+  active project via Node.js through an extensible internal RunStrategy boundary.
+  TypeScript/Python Run and built-in Run Project remain deferred; no V1 TypeScript
+  runtime/compile/transpile selection or npm/dev-server/project-entry execution.
 - stdout, stderr, exit code, Output UI, runtime errors, stop, cancellation, and
   Windows process-tree cleanup pass.
 - No generic executor exists and Terminal remains separate.
