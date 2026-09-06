@@ -1967,6 +1967,9 @@ function installApi(overrides: {
   search?: Partial<SearchApi>
 } = {}): StudentIdeApi {
   const api: StudentIdeApi = {
+    git: {
+      getState: async () => failure('Not configured'),
+    },
     run: {
       start: async () => failure('Not configured'),
       stop: async () => failure('Not configured'),
