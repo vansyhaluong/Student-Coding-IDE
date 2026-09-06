@@ -21,6 +21,9 @@ import { useProjectProblems } from './features/problems/use-project-problems'
 import { SearchPanel } from './features/search/SearchPanel'
 import { TerminalPanel } from './features/terminal/TerminalPanel'
 import { terminalController } from './features/terminal/terminal-session'
+import { EditorRunAction } from './features/output/EditorRunAction'
+import { OutputPanel } from './features/output/OutputPanel'
+import { useProjectRun } from './features/output/use-project-run'
 
 const DEFAULT_SIDEBAR_WIDTH = 280
 const MIN_SIDEBAR_WIDTH = 220
@@ -36,13 +39,14 @@ export default function App() {
   const [leftWidth, setLeftWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [rightWidth, setRightWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
-  const [bottomPanel, setBottomPanel] = useState<'terminal' | 'problems' | null>(null)
+  const [bottomPanel, setBottomPanel] = useState<'terminal' | 'problems' | 'output' | null>(null)
   const [terminalOpenRequest, setTerminalOpenRequest] = useState(0)
   const [terminalHeight, setTerminalHeight] = useState(DEFAULT_TERMINAL_HEIGHT)
   const projectGeneration = useRef(0)
   const sidebarWidths = useRef({ left: leftWidth, right: rightWidth })
   sidebarWidths.current = { left: leftWidth, right: rightWidth }
   const editor = useEditorWorkspace(project, editorModelManager)
+  const run = useProjectRun(project, editor.fileSystemUnavailable)
   useProjectLanguage(project, editorModelManager)
   useProjectProblems(project)
 
@@ -203,7 +207,9 @@ export default function App() {
         </div>
         <div className="chrome-center">
           {project
-            ? <EditorTabs manager={editor.manager} onClose={editor.closeDocument} />
+            ? <><EditorTabs manager={editor.manager} onClose={editor.closeDocument} />
+              <EditorRunAction manager={editor.manager} controller={run} locked={editor.interactionLocked}
+                onShowOutput={() => setBottomPanel('output')} /></>
             : <span className="chrome-context">Student Coding IDE</span>}
         </div>
         <div className="chrome-right">
@@ -291,7 +297,15 @@ export default function App() {
               </div>
             )}
           </div>
-          {bottomPanel === 'problems' ? (
+          {bottomPanel === 'output' ? (
+            <OutputPanel controller={run} height={terminalHeight} onHeightChange={setTerminalHeight}
+              onSelectTerminal={() => {
+                setTerminalOpenRequest((request) => request + 1)
+                setBottomPanel('terminal')
+              }}
+              onSelectProblems={() => setBottomPanel('problems')}
+              onClosePanel={() => setBottomPanel(null)} />
+          ) : bottomPanel === 'problems' ? (
             <ProblemsPanel
               store={problemsStore}
               project={project}
@@ -302,6 +316,7 @@ export default function App() {
                 setBottomPanel('terminal')
               }}
               onClosePanel={() => setBottomPanel(null)}
+              onSelectOutput={() => setBottomPanel('output')}
               interactionLocked={editor.interactionLocked}
               onNavigate={(problem) => void editor.navigateToLocation({
                 projectId: problem.projectId,
@@ -318,6 +333,7 @@ export default function App() {
               height={terminalHeight}
               onHeightChange={setTerminalHeight}
               onSelectProblems={() => setBottomPanel('problems')}
+              onSelectOutput={() => setBottomPanel('output')}
               onClosePanel={() => setBottomPanel(null)}
               interactionLocked={editor.interactionLocked}
             />

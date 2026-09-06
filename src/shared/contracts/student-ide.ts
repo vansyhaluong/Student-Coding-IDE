@@ -3,6 +3,7 @@ import type { LifecycleApi } from './lifecycle'
 import type { ProjectApi } from './project'
 import type { SearchApi } from './search'
 import type { TerminalContractApi } from './terminal'
+import type { RunApi } from './run'
 
 export interface StudentIdeApi {
   file: FileApi
@@ -10,4 +11,5 @@ export interface StudentIdeApi {
   project: ProjectApi
   search: SearchApi
   terminal: TerminalContractApi
+  run: RunApi
 }

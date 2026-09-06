@@ -1,12 +1,12 @@
 # Student Coding IDE Codebase Map
 
-This map describes the current independent source tree and planned module locations. Phase 2A established the application and security foundations, Phase 2B added the authorized project/filesystem Explorer, Phase 2C added retained Monaco editing and data-safety behavior, Phase 2D completed bounded project search and the Orca/STYLEGUIDE corrective UI pass, Phase 2E completed the integrated terminal and Windows Job-owned cleanup path, Phase 2F completed cross-feature stabilization, Phase 3B established the Monaco-native language foundation, Phase 3C implemented production bounded JS/TS project synchronization, Phase 3D completed model-local HTML/CSS/JSON intelligence, Phase 3E added Problems aggregation and navigation, and Phase 3F completed stabilization/final verification. Phase 4 and later work remain assigned to subsequent authorized work packages.
+This map describes the current independent source tree and planned module locations. Phase 2A established the application and security foundations, Phase 2B added the authorized project/filesystem Explorer, Phase 2C added retained Monaco editing and data-safety behavior, Phase 2D completed bounded project search and the Orca/STYLEGUIDE corrective UI pass, Phase 2E completed the integrated terminal and Windows Job-owned cleanup path, Phase 2F completed cross-feature stabilization, Phase 3B established the Monaco-native language foundation, Phase 3C implemented production bounded JS/TS project synchronization, Phase 3D completed model-local HTML/CSS/JSON intelligence, Phase 3E added Problems aggregation and navigation, Phase 3F completed stabilization/final verification, and Phase 4 completed the controlled JavaScript Run/Output domain and stabilization gate. Later work remains assigned to subsequent authorized work packages.
 
-## Current source tree through Phase 3
+## Current source tree through Phase 4
 
 | Current path | Role | Status |
 |---|---|---|
-| `src/main/index.ts` | Electron readiness, secure BrowserWindow composition, unsaved/terminal transition coordination, owner-scoped search/terminal event routing, production TerminalService/IPC composition, and fail-closed Electron quit wiring | Implemented through Phase 2E-J corrective Step 3 |
+| `src/main/index.ts` | Electron readiness, secure BrowserWindow, unsaved/terminal coordination, Main Run composition, owner routing/navigation cleanup and fail-closed quit wiring | Implemented and verified through Phase 4; narrow Run invoke/preload capability is live |
 | `src/main/app/` | DesktopApplication startup/reverse shutdown ownership plus Main-only before-quit approval, in-flight cleanup sharing, retry, and final-quit coordination | Implemented through Phase 2E-J corrective Step 3 |
 | `src/main/window/` | Secure BrowserWindow ownership, accepted navigation/external-URL policy, and final-quit authorization that prevents the last window bypassing cleanup | Implemented through Phase 2E-J corrective Step 3 |
 | `src/main/ipc/` | Validated handler registration, safe result/error mapping, lifecycle/project/file/search adapters, project-scoped filesystem status, and terminal handlers with owner-only event routing and WebContents cleanup | Implemented through Phase 2F |
@@ -17,6 +17,15 @@ This map describes the current independent source tree and planned module locati
 | `src/main/services/lifecycle/` | Transition-ID dirty-buffer and terminal coordination for project switch/close plus application-close unsaved protection, including timeout and renderer-ownership checks | Implemented through Phase 2E-G |
 | `src/main/services/persistence/` | Versioned JSON, serialized writes, backup, and recovery foundation | Implemented Phase 2A foundation |
 | `src/main/services/process/` | Internal owned-resource registry plus narrow Main-only Job-owned/legacy-root process-tree abstraction, primary Windows Job finalizer, and gated fingerprinted taskkill legacy backend | Implemented through Phase 2E-J corrective Step 2; no public process executor |
+| `src/main/services/run/` | Main-owned preparation/strategy, Run lifecycle, per-target re-run, project/owner-generation guards, Windows piped-process adapter/native binding and managed RunProjectLifecycle integration | Implemented and stabilized through Phase 4 |
+| `tests/main/run-project-lifecycle.test.ts`, `scripts/smoke-run-project-lifecycle.mjs` | Real coordinator/service integration tests and native project/application smoke | 4D verification |
+| `tests/main/run-lifecycle.test.ts`, `scripts/smoke-run-lifecycle.mjs` | Deterministic lifecycle/cleanup/re-run/stale-event tests and production Electron lifecycle verification | 4C verification |
+| `src/main/services/dependencies/node-runtime.ts` | Main PATH-only Node detection; rejects relative/current-drive paths and returns safe missing/invalid states | 4B implemented |
+| `scripts/build-run-native.mjs`, `scripts/smoke-run-native.mjs`, `tests/fixtures/run/`, `tests/main/run-runtime.test.ts` | Electron native artifact compilation, real process smoke fixtures, runtime/launch boundary regression | 4B verification |
+| `src/shared/contracts/run.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Exact Run validation and live narrow start/stop/event capability; no Renderer process options | 4A foundation, 4E composition |
+| `src/renderer/src/features/output/` | EditorRunAction, OutputPanel, useProjectRun subscription ownership and RunController per-target session/output projection | Implemented 4E |
+| `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-run-ui.mjs` | Deterministic UI/Preload/RunService integration and production Electron/native Run UI verification | 4E verification |
+| `tests/main/run-foundation.test.ts` | 4A contracts, path/authority rejection, strategy preparation, session ownership, IPC/preload validation and cleanup | 37 focused tests |
 | `src/main/services/terminal/` | Main-owned TerminalService registry/ownership/lifecycle/batching, project-transition leases, Windows shell resolution, environment policy, native-independent PTY port, sole production patched-node-pty adapter, retained natural-root ownership, and unified Job finalization | Implemented through Phase 2E-J corrective Step 2 |
 | `patches/` and `scripts/` | Inspectable node-pty Windows Job tooling plus the production-build Monaco worker discovery smoke | Implemented through Phase 3B |
 | `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, project, file/filesystem-status, search, and terminal request/event/state contracts | Implemented through Phase 2F |
@@ -30,7 +39,7 @@ This map describes the current independent source tree and planned module locati
 | `src/renderer/src/features/problems/` | Project/provider-generation-safe normalized diagnostic aggregation, Monaco marker consumption, grouped Problems presentation, cleanup, and file/range navigation requests | Implemented Phase 3E |
 | `src/renderer/src/features/search/` | Search query/state, grouped bounded results, cancellation, stale-event guards, navigation requests, and immediate-submit/project-reset lifecycle safety | Implemented Phase 2D plus verified corrective fixes during Phase 3E |
 | `src/renderer/src/features/terminal/` | Renderer-session TerminalController, xterm/FitAddon factory, stable session hosts, ordered writes, fitting/resizing, shared Bottom Panel tabs, and multiple-session controls | Implemented through Phase 3E |
-| `src/renderer/src/styles.css` | Semantic dark tokens and Orca-aligned shell, typography, controls, Explorer/Search, editor, Terminal/Problems Bottom Panel, dialogs, interaction states, and scrollbars | Implemented through Phase 3E |
+| `src/renderer/src/styles.css` | Semantic dark tokens and Orca-aligned shell, typography, controls, Explorer/Search, editor, Terminal/Problems/Output Bottom Panel, dialogs, interaction states, and scrollbars | Implemented through Phase 4 |
 | `tests/` | Vitest contract, service, IPC, preload, security/lifecycle, Phase 2 feature coverage, Monaco capability/worker/URI/diagnostic tests, bounded JS/TS feasibility/performance smokes, Phase 3C discovery/model/live-sync/lifecycle integration coverage, actual-worker HTML/CSS/JSON checks, Problems aggregation/UI/navigation/lifecycle coverage, repeated project/provider cleanup, and Search race regressions | Implemented through Phase 3F |
 | `electron.vite.config.ts` | main/preload/renderer build configuration | Existing foundation |
 | `docs/` | Requirements, reference, architecture, decisions, and thesis record | Existing and Phase 1 output |
@@ -61,8 +70,8 @@ There is no Orca source tree, submodule, runtime dependency, or copied Orca modu
 | Future external language services | LanguageServiceManager | `src/main/services/language/` | Deferred Main-owned external provider executable/lifecycle/validated routing; no current Phase 3 module required | Future |
 | Problems | Problems UI/model | `src/renderer/src/features/problems/` | Normalized problems and file/range navigation | 3 |
 | Dependency detection | DependencyDetectionService | `src/main/services/dependencies/` | Runtime, Git, and future external-language executable state; current Phase 3 Monaco workers need no executable detection | 4–6/Future |
-| Run | RunService | `src/main/services/run/` | Trusted strategies, output, exit, stop/tree cleanup | 4 |
-| Output | Output UI | `src/renderer/src/features/output/` | stdout/stderr/exit presentation | 4 |
+| Run execution | RunService / internal RunStrategy / JavaScriptRunStrategy | `src/main/services/run/` | 4A–4E execution, lifecycle and narrow UI composition exist. Future TS strategy remains behind ADR-014; Run Project/npm scripts/project entry deferred | 4/Future |
+| Output | Output UI | `src/renderer/src/features/output/` | Existing Bottom Panel sibling with stdout/stderr/exit/error output; single editor-header Run entry and contextual Stop | Implemented 4E |
 | Git | GitService | `src/main/services/git/` | Detection, status, stage, commit, branch, history | 5 |
 | Source Control | Git UI | `src/renderer/src/features/git/` | Git status/actions/dependency states | 5 |
 | Settings | SettingsService | `src/main/services/settings/` | Schema/defaults/validation/update | 6 |

@@ -13,6 +13,8 @@ import {
   FILE_CHANNELS,
   PROJECT_CHANNELS,
   SEARCH_CHANNELS,
+  RUN_CHANNELS,
+  type RunEvent,
   type FileChangedEvent,
   type ProjectFileSystemStatus,
   type ProjectChangedEvent,
@@ -39,6 +41,12 @@ import { SearchService } from './services/search/search-service'
 import { NodePtyPort } from './services/terminal/node-pty-adapter'
 import { WindowsShellResolver } from './services/terminal/shell-resolver'
 import { TerminalService } from './services/terminal/terminal-service'
+import { RunService } from './services/run/run-service'
+import { RunProjectLifecycle } from './services/run/run-project-lifecycle'
+import { WindowsPipedProcessAdapter } from './services/run/windows-piped-process-adapter'
+import { NodeRuntimeDetector } from './services/dependencies/node-runtime'
+import { DomainError } from './errors/app-error'
+import { RunIpcService } from './ipc/run-ipc-service'
 import { WindowManager } from './window/window-manager'
 
 interface AppMetadata {
@@ -100,6 +108,33 @@ void app.whenReady().then(async () => {
   })
 
   const ipcRegistry = new IpcHandlerRegistry(ipcMain)
+  const nodeRuntime = new NodeRuntimeDetector()
+  let runAdapter: WindowsPipedProcessAdapter | undefined
+  const runService = new RunService({
+    authorize: async (target, ownerId) => {
+      const assertOwner = () => {
+        const owner = webContents.fromId(ownerId)
+        if (!owner || owner.isDestroyed()) throw new DomainError({ code: 'PERMISSION_DENIED',
+          message: 'The Run window is no longer available.', operation: 'run:authorize', retryable: false })
+      }
+      assertOwner()
+      const file = await fileSystemService.authorizeRunFile(target.projectId, target.relativePath)
+      assertOwner()
+      return { projectId: target.projectId, relativePath: target.relativePath, ...file }
+    },
+    resolveRuntime: () => nodeRuntime.resolve(),
+  }, {
+    // Delay loading until an authorized Run; unsupported hosts retain normal IDE startup.
+    adapter: { create: (execution, observe) => {
+      runAdapter ??= new WindowsPipedProcessAdapter()
+      return runAdapter.create(execution, observe)
+    } },
+    manager: processManager,
+    onEvent: (ownerId, event) => publishToRenderer(ownerId, RUN_CHANNELS.event, event),
+    onEventSinkError: () => console.error('A Run event could not be delivered.'),
+  })
+  const runLifecycle = new RunProjectLifecycle(runService, projectService, fileSystemService,
+    () => console.error('Unavailable-project Run cleanup failed; cleanup remains retryable.'))
   unsavedTransitionService = new UnsavedTransitionService(
     ipcRegistry,
     projectService,
@@ -227,6 +262,31 @@ void app.whenReady().then(async () => {
   )
   terminalIpcReference.current = terminalIpc
 
+  const runOwners = new Map<number, () => void>()
+  const runIpc = new RunIpcService(ipcRegistry, runService, (ownerId) => {
+    if (runOwners.has(ownerId)) return
+    const owner = webContents.fromId(ownerId)
+    if (!owner || owner.isDestroyed()) throw new DomainError({ code: 'PERMISSION_DENIED',
+      message: 'The Run window is no longer available.', retryable: false })
+    const cleanup = () => {
+      void runService.stopOwner(ownerId).catch(() => {
+        console.error('Run window cleanup failed; resources remain tracked for shutdown retry.')
+      })
+    }
+    const navigation = (_event: unknown, _url: string, inPlace: boolean, mainFrame: boolean) => {
+      if (mainFrame && !inPlace) cleanup()
+    }
+    const destroyed = () => { cleanup(); remove() }
+    const remove = () => {
+      owner.removeListener('did-start-navigation', navigation)
+      owner.removeListener('destroyed', destroyed)
+      runOwners.delete(ownerId)
+    }
+    owner.on('did-start-navigation', navigation)
+    owner.once('destroyed', destroyed)
+    runOwners.set(ownerId, remove)
+  })
+
   desktopApplication = new DesktopApplication([
     persistenceService,
     processManager,
@@ -236,6 +296,12 @@ void app.whenReady().then(async () => {
     terminalService,
     foundationIpc,
     unsavedTransitionService,
+    // Starts after the unsaved guard; stops before it and all Run dependencies.
+    runLifecycle,
+    { name: 'RunOwnerSubscriptions', stop: () => {
+      for (const remove of [...runOwners.values()]) remove()
+    } },
+    runIpc,
     projectIpc,
     fileIpc,
     searchIpc,
@@ -248,6 +314,8 @@ void app.whenReady().then(async () => {
   })
 
   removeLifecyclePublisher = desktopApplication.subscribe((status) => {
+    // Block starts/events at STOPPING; cleanup stays in managed-service order.
+    if (status.state === 'STOPPING') runService.beginShutdown()
     for (const window of BrowserWindow.getAllWindows()) {
       if (!window.isDestroyed()) {
         window.webContents.send(LIFECYCLE_CHANNELS.statusChanged, status)
@@ -303,7 +371,7 @@ function publishLifecycleToWindows(
 function publishToRenderer(
   ownerId: number,
   channel: string,
-  event: SearchEvent,
+  event: SearchEvent | RunEvent,
 ): void {
   const window = BrowserWindow.getAllWindows().find(
     (candidate) => !candidate.isDestroyed()

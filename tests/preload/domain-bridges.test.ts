@@ -67,6 +67,7 @@ describe('Phase 2B preload bridges', () => {
       'file',
       'lifecycle',
       'project',
+      'run',
       'search',
       'terminal',
     ])
