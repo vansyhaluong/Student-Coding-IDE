@@ -6,10 +6,12 @@ import {
   GIT_CHANNELS,
   validateGetGitStateRequest,
   validateGitState,
+  validateGitStatus,
+  validateGitPathRequest,
+  validateGitMutationOutcome,
   type GitApi,
-  type GitState,
 } from '../../shared/contracts/git'
-import { validateExactObject } from '../../shared/contracts/validation'
+import { validateExactObject, type ValidationResult } from '../../shared/contracts/validation'
 import type { IpcRendererLike } from './lifecycle'
 import { invokeSafely } from './invoke'
 
@@ -24,7 +26,7 @@ function invalid(): AppResult<never> {
   }
 }
 
-/** Phase 5A detection only; process options remain private to Main. */
+/** Semantic Git operations; all process options remain private to Main. */
 export function createGitBridge(ipc: IpcRendererLike): GitApi {
   return {
     async getState(projectId) {
@@ -32,16 +34,35 @@ export function createGitBridge(ipc: IpcRendererLike): GitApi {
       if (!request.ok) return invalid()
       return parseGitResult(
         await invokeSafely(ipc, GIT_CHANNELS.getState, request.value),
+        validateGitState, GIT_CHANNELS.getState,
       )
+    },
+    async getStatus(projectId) {
+      const request = validateGetGitStateRequest({ projectId })
+      if (!request.ok) return invalid()
+      return parseGitResult(await invokeSafely(ipc, GIT_CHANNELS.getStatus, request.value),
+        validateGitStatus, GIT_CHANNELS.getStatus)
+    },
+    async stage(projectId, path) {
+      const request = validateGitPathRequest({ projectId, path })
+      if (!request.ok) return invalid()
+      return parseGitResult(await invokeSafely(ipc, GIT_CHANNELS.stage, request.value),
+        validateGitMutationOutcome, GIT_CHANNELS.stage)
+    },
+    async unstage(projectId, path) {
+      const request = validateGitPathRequest({ projectId, path })
+      if (!request.ok) return invalid()
+      return parseGitResult(await invokeSafely(ipc, GIT_CHANNELS.unstage, request.value),
+        validateGitMutationOutcome, GIT_CHANNELS.unstage)
     },
   }
 }
 
-function parseGitResult(value: unknown): AppResult<GitState> {
+function parseGitResult<T>(value: unknown, validate: (value: unknown) => ValidationResult<T>, operation: string): AppResult<T> {
   const envelope = validateExactObject(value, ['ok', 'value', 'error'])
   if (envelope.ok && envelope.value.ok === true) {
     const exact = validateExactObject(value, ['ok', 'value'])
-    const state = validateGitState(envelope.value.value)
+    const state = validate(envelope.value.value)
     if (exact.ok && state.ok) return { ok: true, value: state.value }
   }
   if (envelope.ok && envelope.value.ok === false) {
@@ -54,7 +75,7 @@ function parseGitResult(value: unknown): AppResult<GitState> {
     error: {
       code: 'INTERNAL_ERROR',
       message: 'The application returned an invalid response.',
-      operation: GIT_CHANNELS.getState,
+      operation,
       details: { boundaryFailure: 'response-validation' },
       retryable: false,
     },

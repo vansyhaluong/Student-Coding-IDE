@@ -1027,3 +1027,33 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   assertion weakening, dependency/package-lock change, Phase 5B+ operation,
   Source Control UI, stage, commit or push was introduced. Phase 5A completion
   now includes these remediation gates; Phase 5 overall remains `IN_PROGRESS`.
+
+## Phase 5B — Git Status + Stage / Unstage (`COMPLETE`, 2026-09-06)
+
+- Resumed and completed the interrupted authorized backend package. Added typed
+  status and selected-path stage/unstage capabilities with exact IPC/Preload
+  validation; Renderer still receives no executable, cwd or command authority.
+- Status uses incremental porcelain v2 parsing with staged/unstaged slots,
+  untracked files, rename/copy pairs and read-only conflicts. Memory is bounded
+  by 1000 retained entries and 128 KiB per token; a complete 1001st entry signals
+  truncation and stops the process. Unsupported/malformed output fails closed.
+- Main revalidates the exact active repository and canonical selected paths,
+  rejects directory expansion, and uses literal pathspecs. Safe unstage handles
+  both existing and unborn HEAD without modifying working content or unrelated
+  index entries. Rename and copy selection have distinct semantics.
+- Process environment strips ambient Git overrides. Streaming timeout,
+  cancellation, malformed output, overflow and spawn failure settle after close
+  with timer/listener cleanup. Confirmed writes survive failed status refresh;
+  unknown mutation outcomes require refresh and are not reported as cancelled.
+- Final regression passed 676/676 tests across 53 files with unchanged worker
+  settings and no local skips. This includes 18 real 5B repository cases and
+  eight real streaming-process cases, plus parser/path/IPC/security coverage.
+  Repository evidence includes Unicode/literal paths, staged-plus-modified files,
+  additions/deletions, rename/copy, unborn HEAD, conflicts, external index locks,
+  nested-root rejection and the 1001-file limit.
+- Typecheck, lint, production/native build and whitespace checks passed. Sandbox
+  spawn EPERM required approved outside-sandbox tests/build; the existing jsdom
+  canvas diagnostic remains non-blocking. No dependency/ADR change or visible UI
+  was introduced. Comprehensive owner lifecycle, Source Control UI and remaining
+  Git operations stay in 5C–5F. Live UNC, Windows 10 and packaged acceptance are
+  not claimed. No project commit, push or merge was performed.

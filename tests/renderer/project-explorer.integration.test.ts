@@ -1969,6 +1969,9 @@ function installApi(overrides: {
   const api: StudentIdeApi = {
     git: {
       getState: async () => failure('Not configured'),
+      getStatus: async () => failure('Not configured'),
+      stage: async () => failure('Not configured'),
+      unstage: async () => failure('Not configured'),
     },
     run: {
       start: async () => failure('Not configured'),

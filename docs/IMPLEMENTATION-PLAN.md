@@ -114,7 +114,7 @@ before affected work continues.
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
-| Phase 5 — Git Integration | `IN_PROGRESS` | 5A foundation/detection complete; 5B–5F remain |
+| Phase 5 — Git Integration | `IN_PROGRESS` | 5A foundation/detection and 5B status/stage/unstage complete; 5C–5F remain |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2156,7 +2156,7 @@ not a Phase 4 V1 acceptance requirement.
 ### Current work-package status
 
 - Phase 5A — Git Foundation + Dependency / Repository Detection: `COMPLETE`.
-- Phase 5B — Git Status + Stage / Unstage: `NOT_STARTED`.
+- Phase 5B — Git Status + Stage / Unstage: `COMPLETE`.
 - Phase 5C — Commit + Branch + History: `NOT_STARTED`.
 - Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `NOT_STARTED`.
 - Phase 5E — Right Sidebar + Source Control UI: `NOT_STARTED`.
@@ -2187,6 +2187,50 @@ failure; approved outside-sandbox runs passed. Real integration explicitly repor
 skips without Windows PATH Git and cannot establish acceptance in that environment.
 UNC syntax/identity has automated coverage; no live network-share smoke is claimed.
 This remediation does not authorize Phase 5B; Phase 5 overall remains `IN_PROGRESS`.
+
+#### Phase 5B execution and acceptance (2026-09-06)
+
+The user explicitly authorized resuming the interrupted 5B implementation on
+2026-09-06. Phase 4 and 5A prerequisites were complete; no Git decision gate
+remained open. Existing uncommitted Git contracts, service, runner, parser,
+path authority, IPC/Preload and tests were retained and completed. The Explorer
+test change only supplies the expanded Git API stub; no unrelated change was
+overwritten. Tracking moved through `IN_PROGRESS` before acceptance.
+
+- Scope: FR-028/FR-029 backend status and selected-file stage/safe unstage.
+  Source Control UI is 5E; commit/branch/history is 5C; comprehensive owner
+  lifecycle/cancellation coordination is 5D; final Phase 5 acceptance is 5F.
+- Status streams porcelain v2 NUL-delimited records with independent staged,
+  unstaged and untracked states, rename/copy source paths and read-only conflicts.
+  The parser retains at most 1000 entries, marks `didHitLimit` only after a
+  complete 1001st entry, bounds individual tokens to 128 KiB and rejects malformed
+  UTF-8, paths and unsupported records (including submodule records).
+- Mutations select one entry from a fresh authorized snapshot. Main validates
+  canonical containment, rejects directory expansion and uses literal pathspecs
+  with `--`. Rename unstage includes both paths; copy unstage selects only the
+  destination. Unstage uses index-only restore with HEAD or path-limited reset
+  for an unborn repository, preserving working content and unrelated index data.
+- Exact request/response validation exposes no cwd, executable, raw command or
+  argument authority. Runner environment removes ambient `GIT_*` overrides;
+  process calls use `shell: false`, hidden Windows launch, timeout and bounded
+  output. Streaming completion waits for child close and releases listeners/timers.
+- A confirmed mutation followed by failed refresh retains `applied: true` with
+  `refreshRequired: true`. An interrupted mutation with unknown index outcome is
+  `PROCESS_FAILED` with explicit refresh guidance, never reported as cancelled.
+- Acceptance: all 676 tests in 53 files passed with unchanged `--maxWorkers=4`,
+  including 18 real 5B repository cases and eight real streaming-process cases;
+  no local skips. Real repository cases cover clean/MM/add/delete, Unicode,
+  spaces, leading dash and literal brackets, rename/copy, unborn HEAD, conflicts,
+  index locks, the 1001-file limit and nested-root rejection. Unit/IPC tests cover
+  invalid payloads, canonical escapes/directory links and refresh-failure outcomes.
+- Typecheck, lint, production/native build and `git diff --check` passed. Sandbox
+  spawn EPERM required approved outside-sandbox test/build runs. The existing
+  jsdom canvas diagnostic remains non-blocking. No new dependency, ADR change,
+  visible UI or future work package was introduced. No live UNC share, Windows 10
+  or packaged-app acceptance is claimed; those remain later acceptance work.
+
+Phase 5B's backend exit gate is complete. This does not mark the overall Phase 5
+Definition of Done complete or authorize implementation of 5C–5F.
 
 ### Goal
 
