@@ -290,6 +290,7 @@ input:focus-visible,
 
 .editor-tabs {
   display: flex;
+  flex: 1;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
@@ -297,6 +298,41 @@ input:focus-visible,
 }
 
 .editor-tabs::-webkit-scrollbar { display: none; }
+
+.editor-run-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-self: center;
+  align-items: center;
+  padding: 0 6px;
+  -webkit-app-region: no-drag;
+}
+.editor-run-button { width: 94px; }
+.editor-run-actions svg { width: 14px; height: 14px; }
+.output-context {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.output-context > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.output-context > span:last-child { flex-shrink: 0; }
+.output-log {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 12px;
+  font: 12px/1.6 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+}
+.output-stream { color: var(--muted-foreground); }
+.output-stderr { color: var(--destructive); }
+.output-log:focus-visible { outline: 1px solid var(--ring); outline-offset: -1px; }
 
 .editor-tab {
   display: flex;

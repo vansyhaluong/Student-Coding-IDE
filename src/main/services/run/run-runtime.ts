@@ -1,0 +1,13 @@
+/** Main-only build entry used by native verification and later app composition. */
+export { WindowsPipedProcessAdapter } from './windows-piped-process-adapter'
+export { NodeRuntimeDetector } from '../dependencies/node-runtime'
+export { RunService } from './run-service'
+export { ProcessManager } from '../process/process-manager'
+export { RunProjectLifecycle } from './run-project-lifecycle'
+export { ProjectService } from '../project/project-service'
+export { FileSystemService } from '../filesystem/filesystem-service'
+export { UnsavedTransitionService } from '../lifecycle/unsaved-transition-service'
+export { IpcHandlerRegistry } from '../../ipc/ipc-handler-registry'
+export { DesktopApplication } from '../../app/desktop-application'
+export { RunIpcService } from '../../ipc/run-ipc-service'
+export { FileIpcService } from '../../ipc/file-ipc-service'

@@ -305,13 +305,151 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 RunService is separate from TerminalService. A run session represents a command selected by a trusted language/project strategy, not arbitrary renderer text. It has `STARTING`, `RUNNING`, `STOPPING`, `EXITED`, `FAILED`, or `CANCELLED` state and emits separate stdout, stderr, and terminal exit metadata.
 
-The main process starts it with an explicit executable, argument array, cwd, controlled environment additions, and `shell: false` when possible. Concurrent policy is one active run per run target in V1; starting a replacement asks or stops explicitly rather than orphaning the old process.
+The main process starts it with an explicit executable, argument array, cwd,
+controlled environment additions, and `shell: false`. V1 permits one active run
+per target. Re-running the same target stops its current run, awaits successful
+cleanup, and only then starts the replacement, without a confirmation prompt.
+Sessions for the same target must never overlap; cleanup failure blocks replacement.
+
+Main resolves Node from its process PATH in Phase 4 V1. Missing Node produces a
+safe `MISSING` state and blocks Run with an actionable message. No bundled Node,
+configured absolute Node path, or Node-path Settings UI is included; configured
+Node paths are future Settings scope. Renderer has no executable selection authority.
+
+Dirty active targets block Run with a Save-first message. No auto-save, stale-disk
+execution, temporary-file execution, or mutation of the authoritative editor
+buffer is allowed. The single primary Run button sits on the right side of the
+editor header. Output is a sibling of Problems and Terminal in the existing
+Bottom Panel; there is no competing panel system or Terminal redesign.
+
+After project close/switch confirmation, stop all old-project Run sessions and
+await successful cleanup before committing the transition. Failure preserves
+current project/editor state. Root unavailability stops project-owned runs and
+rejects stale events; old-project output cannot mutate replacement project UI.
+Run cleanup integrates with existing transition/shutdown ownership, without
+changing Terminal behavior. Windows piped-process ownership feasibility must
+be established before production Run lifecycle implementation.
+
+The user accepted the isolated native spike as evidence for creation-time Job
+ownership with separate pipes, including descendants surviving root exit. This
+does not verify production Electron binding or packaging. Later native cleanup
+must account for Job empty, root exit, both pipe EOFs, and native handle release;
+Job accounting alone is insufficient.
+
+4A implements only preparation/contract foundations. RunService uses an injected
+Main-only authorization/runtime seam and owns immutable STARTING preparations
+with opaque IDs and renderer-owner checks. Duplicate target preparations must
+be released before another can be reserved; this is not user-facing re-run
+behavior. 4C must stop/clean the old execution before replacement. No preparation
+spawns a process or transitions to RUNNING. Filesystem existence/canonical scope,
+active-project availability, and final pre-spawn revalidation belong to the
+later concrete authority; current-editor/dirty tracking remains Renderer-owned
+and a renderer dirty flag must not be mistaken for disk authorization.
+
+4B adds a Main-only Windows x64 Node-API piped-process adapter and PATH Node
+detection. The native binding creates the process suspended with creation-time
+Job ownership and explicit inherited pipe handles, installs asynchronous bounded
+pipe observers, then resumes it. Release requires root exit, both delivered EOFs,
+drained callbacks, and an empty Job. RunService's internal launch seam registers
+ownership before native creation and retains it when cleanup fails. ProcessManager
+and Terminal semantics are unchanged. The production build emits the native
+artifact beside the Main-only runtime entry; portable builds skip native compilation
+and unsupported hosts fail closed when constructing the adapter.
+
+4C implements semantic start/stop and per-canonical-target serialized re-run in
+RunService using the existing RunSession states. Different targets can run
+concurrently. Run events carry immutable session snapshots and are routed to the
+owning window's injected Main event sink; callbacks must match both the exact
+live session record and its target record. Finalized/old callbacks are ignored.
+Root exit initiates cleanup of any surviving descendants; exit events are emitted
+only after root exit, both EOFs, native release and successful cleanup. Natural
+exit 0 becomes EXITED, non-zero/observation failure becomes FAILED, and explicit
+Stop before root exit becomes CANCELLED. Cleanup failure remains STOPPING with a
+safe retryable error and retained ownership; it cannot unblock a replacement.
+ProcessManager's existing cleanupOwner method uses a unique per-session resource
+owner key to await/share/retry cleanup without stopping other targets. Registration
+is removed only after successful finalization. A bounded 128-entry completed
+snapshot cache makes recent duplicate/late Stop idempotent without retaining output
+or native resources; unknown/evicted or foreign session IDs fail closed.
+The Main-only preparation and launch seams remain available for foundation tests.
+Actual filesystem authority composition, project transitions, application shutdown,
+live IPC event routing and UI are still later-package work; no Run capability is
+wired into the live renderer by 4C.
+
+4D composes Run in Main and adds RunProjectLifecycle as a managed service. Its
+ProjectService guard is registered after UnsavedTransitionService, preserving
+existing dirty/save/discard/cancel and Terminal confirmation/cleanup behavior.
+Only post-confirmation does it acquire a Run start-blocking lease and await
+project-owned cleanup. The lease survives asynchronous project creation/persistence
+until the existing project-changed or transition-failed notification. Failed
+cleanup throws a safe domain error before mutation and retains retryable ownership.
+No new transition queue or shutdown coordinator is introduced.
+
+Existing FileSystemService status subscriptions drive unavailable-project cleanup;
+there is no Run watcher. Events are muted immediately for unavailable sessions,
+while native exit/EOF accounting continues internally. Generation checks invalidate
+asynchronous starts across leases, unavailability and reopen, including immediately
+before native creation. Pending starts and cleanup request promises are awaited so
+the small interval between session finalization and ProcessManager tracking removal
+cannot let a transition finish early. FileSystemService.authorizeRunFile provides
+Main-only regular-file/canonical-root/availability checks through its existing path
+resolver; no canonical paths are returned over IPC.
+
+DesktopApplication STOPPING immediately blocks new Run starts and event delivery.
+RunProjectLifecycle.stop awaits RunService cleanup in the existing reverse service
+order, before unsaved/project/filesystem/ProcessManager dependencies stop. Failures
+retain STOPPING and the failed service for retry under ADR-021; WindowManager remains
+shutdown-last. Main routes only existing session DTO events to their owner; Run
+invoke handlers/preload APIs and UI are still not exposed. Shared Main build chunks
+remain beside the entry so the verified native/ binding path survives Rollup sharing.
+
+4E registers the 4A IPC/Preload factories as studentIde.run with start, stop and
+onEvent only. Main observes Run owners before dispatch and invalidates pending
+starts on renderer navigation/destruction. Owner cleanup remains in RunService,
+using existing ProcessManager release/retry semantics; no renderer execution
+options or independent shutdown coordinator are introduced.
+
+The existing editor-tabs header hosts one right-aligned Run entry point and
+contextual Stop. It uses the active EditorModelManager file, dirty/disk/conflict
+state and project availability for presentation guards; Main remains final disk
+and runtime authority. Missing Node is reported from the start result without a
+new dependency-query API. Re-run sends the same semantic start; Main stops/releases
+the old session before emitting the replacement. Pending IPC is view state only.
+
+The focused Output RunController projects authoritative session DTOs into
+per-target output views, preserving distinct streams and delivery order. It accepts
+new session identities only for its outstanding start, ignores superseded events,
+and never replaces a newer event state with an older invoke response. Output
+notifications batch per animation frame. Project/availability changes invalidate
+pending replies, clear views and scheduled frames; one application-level Run
+subscription survives panel switches and is removed on unmount. Output uses the
+existing Bottom Panel tab/height/PanelResizer pattern and CSS tokens. No global
+all-domain store or new ADR-011 selection is introduced.
+
+RunSession/event DTOs carry no executable, native handle, cwd, args,
+environment, or canonical root. Internal PreparedRun is never a wire DTO.
 
 Stop terminates the IDE-owned process tree on Windows, waits for exit, then escalates within a bounded timeout. Application shutdown performs the same cleanup. The low-level ProcessManager may share process tracking and tree-termination utilities, but cannot erase semantic differences among run and PTY processes or any future external language-server process.
 
-V1 built-in project run targets are Node.js projects. TypeScript execution remains
-a decision gate described in `DECISIONS.md`. Python Run, framework auto-detection,
-and Tier 3 built-in runners are future work.
+Phase 4 V1 runs only the current authorized JavaScript `.js` file inside the
+active project via Node.js. Built-in Run Project, npm/package-manager scripts,
+dev-server orchestration, project entry configuration, and framework/project
+launcher logic are deferred. Future Run Project requires an explicitly authorized
+entry/script policy.
+
+RunService selects a narrow internal RunStrategy that supports a target and
+prepares the explicit executable, arguments, cwd, and controlled environment
+additions. JavaScriptRunStrategy is the only concrete Phase 4 V1 strategy. This
+is not a plugin system or a renderer execution capability.
+
+TypeScript Run is deferred, not permanently rejected; Phase 3 TypeScript
+intelligence remains supported. A future authorized phase may add
+TypeScriptRunStrategy without redesigning core RunService after ADR-014 decides
+and verifies runtime, tsconfig, and compile/transpile policy. No TypeScript
+runtime, compile/transpile strategy, ts-node, tsx, or Node-native TypeScript
+execution policy is selected for V1. No placeholder TypeScript strategy or Run
+dependency is introduced. ADR-014 does not block Phase 4 JavaScript Run. Python
+Run and Tier 3 built-in runners remain future work.
 
 ## 11. Git architecture
 
@@ -516,7 +654,10 @@ The Phase 0 foundation already enables `contextIsolation`, disables `nodeIntegra
 
 - Canonicalization accounts for drive letters, case-insensitive comparison, UNC paths, separators, reserved names, and long paths.
 - Use Node path APIs; never concatenate filesystem separators.
-- Executable detection checks configured absolute path first, then the effective `PATH`, and reports invalid configuration separately from missing dependency.
+- Phase 4 Node detection uses only Main's process `PATH`; configured absolute
+  Node paths and their Settings UI are deferred. For future authorized configured
+  executable support, detection checks configured absolute path first, then the
+  effective `PATH`, and distinguishes invalid configuration from missing dependency.
 - PTY selection and shell arguments are Windows-aware; PowerShell and `cmd.exe` quoting are not interchangeable.
 - Run/Git use executable plus argument arrays and avoid `shell: true`.
 - Process stop validates ownership and terminates descendants without broad process-name killing.

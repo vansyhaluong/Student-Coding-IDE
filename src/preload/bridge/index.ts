@@ -7,6 +7,7 @@ import {
 import { createProjectBridge } from './project'
 import { createSearchBridge } from './search'
 import { createTerminalBridge } from './terminal'
+import { createRunBridge } from './run'
 
 export function createPreloadApi(
   ipcRenderer: IpcRendererLike,
@@ -17,5 +18,6 @@ export function createPreloadApi(
     project: createProjectBridge(ipcRenderer),
     search: createSearchBridge(ipcRenderer),
     terminal: createTerminalBridge(ipcRenderer),
+    run: createRunBridge(ipcRenderer),
   }
 }
