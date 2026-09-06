@@ -185,6 +185,24 @@ export class FileSystemService implements ManagedService {
     return this.fileSystem.readFile(target.canonicalPath)
   }
 
+  /** Main-only canonical file authorization. Never exposed as a path-returning IPC. */
+  async authorizeRunFile(projectId: ProjectId, relativePath: string): Promise<{
+    canonicalRoot: string; canonicalFile: string
+  }> {
+    const project = this.projectService.getAuthorizedProject(projectId)
+    if (this.getStatus(projectId).state !== 'AVAILABLE') {
+      throw invalidPath('The project root is unavailable.', 'run:authorize')
+    }
+    const target = await this.resolveExisting(project, relativePath, false)
+    const stats = await this.fileSystem.lstat(target.canonicalPath)
+    if (!stats.isFile()) throw invalidPath('The Run target is not a file.', 'run:authorize')
+    this.projectService.getAuthorizedProject(projectId)
+    if (this.getStatus(projectId).state !== 'AVAILABLE') {
+      throw invalidPath('The project root is unavailable.', 'run:authorize')
+    }
+    return { canonicalRoot: project.canonicalRoot, canonicalFile: target.canonicalPath }
+  }
+
   async write(
     projectId: ProjectId,
     relativePath: string,

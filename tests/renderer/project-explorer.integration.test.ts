@@ -95,6 +95,7 @@ import type {} from '../../src/renderer/src/student-ide'
 
 import App from '../../src/renderer/src/App'
 import { editorModelManager } from '../../src/renderer/src/features/editor/editor-session'
+import { terminalController } from '../../src/renderer/src/features/terminal/terminal-session'
 import { ProjectExplorer } from '../../src/renderer/src/features/explorer/ProjectExplorer'
 import type {
   AppResult,
@@ -1389,15 +1390,15 @@ describe('App project integration', () => {
     expect(terminalCreate).not.toHaveBeenCalled()
 
     view.unmount()
-    expect(unsubscribe).toHaveBeenCalledOnce()
+    expect(unsubscribe).toHaveBeenCalledTimes(2)
     expect(unsubscribeSettlement).toHaveBeenCalledOnce()
     expect(statusListeners.size).toBe(0)
     expect(settlementListeners.size).toBe(0)
     render(createElement(App))
     await screen.findByRole('button', { name: 'Close project' })
-    expect(onStatusChanged).toHaveBeenCalledTimes(2)
+    expect(onStatusChanged).toHaveBeenCalledTimes(4)
     expect(onProjectTransitionSettled).toHaveBeenCalledTimes(2)
-    expect(statusListeners.size).toBe(1)
+    expect(statusListeners.size).toBe(2)
     expect(settlementListeners.size).toBe(1)
   })
 
@@ -1908,6 +1909,42 @@ describe('App project integration', () => {
     expect(screen.getByTitle('New folder').hasAttribute('disabled')).toBe(true)
     expect(screen.getByRole('button', { name: 'Close project' }).hasAttribute('disabled')).toBe(false)
   })
+
+  it('keeps one Run stream subscription across Output, Problems, Terminal and project changes', async () => {
+    // This shell test exercises tab routing; terminal-panel tests own the xterm port.
+    vi.spyOn(terminalController, 'createSession').mockResolvedValue(null)
+    const listeners = new Set<(event: import('../../src/shared/contracts').RunEvent) => void>()
+    const projects = new Set<Parameters<ProjectApi['onChanged']>[0]>()
+    const api = installApi({
+      file: { listDirectory: async () => success([file('main.js')]), read: async () => success('console.log(1)') },
+      project: { getActive: async () => success(project), onChanged: (listener) => {
+        projects.add(listener); return () => { projects.delete(listener) }
+      } },
+    })
+    api.run.onEvent = (listener) => { listeners.add(listener); return () => { listeners.delete(listener) } }
+    const view = render(createElement(StrictMode, null, createElement(App)))
+    fireEvent.click(await screen.findByTitle('main.js'))
+    expect(await screen.findByRole('button', { name: 'Run' })).not.toBeNull()
+    expect(listeners.size).toBe(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Open Problems' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Output' }))
+    expect(screen.getByLabelText('Output panel')).not.toBeNull()
+    expect(screen.getByRole('separator', { name: 'Resize Output panel' })).not.toBeNull()
+    fireEvent.click(screen.getByRole('tab', { name: 'Terminal' }))
+    expect(screen.getByLabelText('Terminal panel')).not.toBeNull()
+    fireEvent.click(screen.getByRole('tab', { name: 'Output' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Problems' }))
+    expect(screen.getByLabelText('Problems panel')).not.toBeNull()
+    expect(listeners.size).toBe(1)
+    act(() => { for (const listener of projects) listener({ activeProject: null }) })
+    fireEvent.click(screen.getByRole('tab', { name: 'Output' }))
+    expect(screen.getByText('Open a project to view Run output.')).not.toBeNull()
+    expect(screen.queryByRole('group', { name: 'Run current file' })).toBeNull()
+    expect(listeners.size).toBe(1)
+    view.unmount()
+    expect(listeners.size).toBe(0)
+    expect(projects.size).toBe(0)
+  })
 })
 
 function renderExplorer(): void {
@@ -1930,6 +1967,11 @@ function installApi(overrides: {
   search?: Partial<SearchApi>
 } = {}): StudentIdeApi {
   const api: StudentIdeApi = {
+    run: {
+      start: async () => failure('Not configured'),
+      stop: async () => failure('Not configured'),
+      onEvent: () => () => undefined,
+    },
     file: {
       listDirectory: async () => success([]),
       stat: async () => failure('Not configured'),
