@@ -1057,3 +1057,74 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   was introduced. Comprehensive owner lifecycle, Source Control UI and remaining
   Git operations stay in 5C–5F. Live UNC, Windows 10 and packaged acceptance are
   not claimed. No project commit, push or merge was performed.
+
+## Phase 5C — Commit + Branch + History (`COMPLETE`, 2026-09-06)
+
+- Implemented the explicitly authorized backend package from the clean,
+  committed Phase 5B baseline on `feature/phase-5`. Main/IPC/Preload now expose
+  staged-only commit, one local branch snapshot, safe existing-local branch
+  switch and bounded local HEAD history. All requests/responses are runtime
+  validated; Renderer gains no process or raw Git authority.
+- Commit preserves unstaged content and supports first commits and Unicode/
+  multiline messages. Invalid messages and Git failures are normalized safely.
+  Fixed metadata checks reject commit during merge/rebase/cherry-pick/revert/
+  sequencer operations, including a real pending merge verified in tests.
+- Branch snapshots distinguish attached, detached and unborn state. Main checks
+  fresh local membership before switching, uses no force/discard/creation flags
+  and protects ignored files as well as ordinary local changes. A nonzero switch
+  can follow an applied switch when post-checkout fails: the approved policy
+  reports unknown outcome, requires refresh and never automatically retries.
+- History returns full id, subject, author name and authored ISO timestamp from
+  HEAD ancestry only. Confirmed unborn history is empty; default/max are 50/100,
+  with invalid requests rejected. Fixed NUL framing excludes bodies; typed
+  parsing and the existing 1 MiB process-output bound reject malformed/excessive
+  output safely. No new history or branch dependency was required.
+- Confirmed commit/switch success reuses the 5B applied/refresh-required envelope,
+  preserving truth after refresh failure or a project transition. Exact active
+  project/root authorization remains in place. Full owner cancellation and
+  lifecycle coordination remain Phase 5D.
+- Final verification passed: 34 focused 5C tests (23 real Git repository tests),
+  176 focused 5A/5B regressions, and all 710 tests across 55 files with unchanged
+  `--maxWorkers=4` and no local skips. Typecheck, lint, production/native build
+  and whitespace checks passed. Local Git: 2.47.1.windows.2.
+- Sandboxed test/build EPERM required approved outside-sandbox execution. An
+  initial full run concurrent with build had two new tests exceed the existing
+  5-second timeout. History's unnecessary branch enumeration was removed; final
+  isolated full-suite verification passed with all assertions/timeouts intact.
+  No sleeps, configured retries or skipped tests were added. The existing jsdom
+  canvas diagnostic remains non-blocking.
+- Updated Implementation Plan and Codebase Map after verification. No dependency,
+  package-lock or ADR change; no Source Control UI, remote Git, Phase 5D system,
+  repository stage/commit/push, or overall Phase 5 completion is claimed.
+
+### Phase 5C remediation — valid local branch `@` (2026-09-06)
+
+- Corrected the MEDIUM review finding: shared validation and branch snapshots
+  accept Git-valid `@` without weakening other name restrictions. Its presence
+  no longer prevents switching unrelated local branches.
+- Implemented user-approved option 1: normal branches retain safe `git switch`;
+  `@` uses Main-generated exact `refs/heads/@` with a native detached switch,
+  project/root and HEAD/ref revalidation, then symbolic HEAD attachment and final
+  proof. Native post-checkout may see DETACHED, as explicitly approved.
+  Failed/interrupted steps or unproven final state return mutation-outcome-unknown
+  after a recovery probe, without rollback, retry, hook suppression or read-tree.
+- Added real Git evidence for exact target identity, hooks, blocked and harmless
+  local changes, ignored-file preservation, attachment lock failure, ref/project
+  changes and failed final proof. Existing invalid-input checks still pass.
+- Corrective reopening is complete: focused 44/44 (32 real Git cases), 5A/5B
+  regression 176/176, full suite 720/720 across 55 files with maxWorkers=4,
+  typecheck, lint and production/native build passed. Git 2.47.1.windows.2;
+  approved outside-sandbox test/build execution, no timeout inflation or retries.
+- No dependency/package-lock change, repository staging/commit/push, Phase 5D,
+  Source Control UI or remote Git was introduced.
+
+### Phase 5C resumed verification (2026-09-07)
+
+- Reviewed the existing uncommitted `@` correction; no further production edit
+  was needed. Corrected the Implementation Plan overview to list 5D–5F remaining.
+- Fresh standalone full suite passed 720/720 tests in 55 files; typecheck, lint
+  and production/native Windows build passed. An earlier suite overlapping
+  typecheck/lint had three timeouts (717 passed); no assertions, timeouts,
+  worker settings or skip/retry settings were changed. Tests/build ran with
+  approval outside the sandbox after spawn EPERM.
+- 5C remains complete. No ADR, dependency or later-package scope changed.

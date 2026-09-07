@@ -1,4 +1,5 @@
-import { realpath } from 'node:fs/promises'
+import { realpath, lstat } from 'node:fs/promises'
+import { join } from 'node:path'
 
 import type {
   GitState,
@@ -6,8 +7,10 @@ import type {
   ProjectId,
   GitStatus,
   GitMutationOutcome,
+  GitBranchSnapshot,
+  GitHistoryItem,
 } from '../../../shared/contracts'
-import { isGitRelativePath } from '../../../shared/contracts'
+import { isGitRelativePath, isGitBranchName, isGitCommitId, isGitCommitMessage, validateGitHistoryRequest } from '../../../shared/contracts'
 import { DomainError } from '../../errors/app-error'
 import {
   normalizePathIdentity,
@@ -17,6 +20,7 @@ import type { GitCommandResult, GitCommandOptions, GitStreamResult } from './git
 import type { GitExecutableStatus } from '../dependencies/git-executable'
 import { GitStatusParser, type ParsedGitStatus } from './git-status-parser'
 import { authorizeGitPath, invalidGitPath, type GitPathAccess } from './git-path-authority'
+import { parseGitHistory, parseGitLocalBranches, malformedLocalGit } from './git-local-parser'
 
 const STATUS_ARGS = ['-c', 'status.renames=copies', 'status', '--porcelain=v2', '--branch', '--untracked-files=all', '-z'] as const
 
@@ -68,6 +72,7 @@ export class GitService {
     private readonly roots: GitRootAccess = diskRoots,
     private readonly platform: NodeJS.Platform = process.platform,
     private readonly paths?: GitPathAccess,
+    private readonly metadata: { lstat(path: string): Promise<unknown> } = { lstat },
   ) {}
 
   async getState(projectId: ProjectId): Promise<GitState> {
@@ -125,6 +130,168 @@ export class GitService {
 
   unstage(projectId: ProjectId, path: string): Promise<GitMutationOutcome> {
     return this.mutate(projectId, path, 'unstage')
+  }
+
+  async getBranches(projectId: ProjectId, options: GitCommandOptions = {}): Promise<GitBranchSnapshot> {
+    return (await this.readBranches(projectId, options)).snapshot
+  }
+
+  private async readBranches(projectId: ProjectId, options: GitCommandOptions = {}) {
+    const context = await this.repository(projectId)
+    const run = (args: readonly string[]) => this.commands.execute(context.executable, args, context.project.canonicalRoot, options)
+    const headBefore = await run(['symbolic-ref', '--quiet', 'HEAD'])
+    if (headBefore.exitCode !== 0 && headBefore.exitCode !== 1) throw malformedLocalGit()
+    const currentBranch = headBefore.exitCode === 1 ? null : localHeadName(headBefore.stdout)
+    const head = await run(['rev-parse', '--verify', '--quiet', 'HEAD'])
+    const list = await run(['for-each-ref', '--sort=refname', '--format=%(refname)%00%(objectname)%00%(objecttype)%00', 'refs/heads/'])
+    if (list.exitCode !== 0) throw gitOperationFailure('get-branches', 'command-failed')
+    const refs = parseGitLocalBranches(list.stdout)
+    const headAfter = await run(['symbolic-ref', '--quiet', 'HEAD'])
+    const oidAfter = await run(['rev-parse', '--verify', '--quiet', 'HEAD'])
+    if (headBefore.exitCode !== headAfter.exitCode || headBefore.stdout !== headAfter.stdout
+      || head.exitCode !== oidAfter.exitCode || head.stdout !== oidAfter.stdout) {
+      throw gitOperationFailure('get-branches', 'repository-changed')
+    }
+    const branches = [...refs.keys()]
+    let snapshot: GitBranchSnapshot
+    if (head.exitCode === 0) {
+      const oid = singleLine(head.stdout)
+      if (!isGitCommitId(oid) || (currentBranch !== null && refs.get(currentBranch) !== oid)) throw malformedLocalGit()
+      snapshot = currentBranch === null ? { state: 'DETACHED', currentBranch, branches }
+        : { state: 'ATTACHED', currentBranch, branches }
+    } else {
+      // A missing symbolic target is unborn; other lookup failures are not.
+      if (currentBranch === null || refs.has(currentBranch)) throw malformedLocalGit()
+      const missing = await run(['show-ref', '--verify', '--quiet', `refs/heads/${currentBranch}`])
+      if (missing.exitCode !== 1) throw malformedLocalGit()
+      snapshot = { state: 'UNBORN', currentBranch, branches }
+    }
+    await this.repository(projectId, context.project.pathIdentity)
+    return { ...context, snapshot, refs }
+  }
+
+  async getHistory(projectId: ProjectId, limit?: number, options: GitCommandOptions = {}): Promise<readonly GitHistoryItem[]> {
+    const request = validateGitHistoryRequest({ projectId, limit })
+    if (!request.ok) throw invalidLocalInput('get-history')
+    const before = await this.repository(projectId)
+    const head = await this.commands.execute(before.executable, ['rev-parse', '--verify', '--quiet', 'HEAD'], before.project.canonicalRoot, options)
+    if (head.exitCode !== 0) {
+      const symbolic = await this.commands.execute(before.executable, ['symbolic-ref', '--quiet', 'HEAD'], before.project.canonicalRoot, options)
+      if (symbolic.exitCode !== 0) throw malformedLocalGit()
+      const branch = localHeadName(symbolic.stdout)
+      const target = await this.commands.execute(before.executable, ['show-ref', '--verify', '--quiet', `refs/heads/${branch}`], before.project.canonicalRoot, options)
+      if (target.exitCode !== 1) throw malformedLocalGit()
+      await this.repository(projectId, before.project.pathIdentity)
+      return []
+    }
+    if (!isGitCommitId(singleLine(head.stdout))) throw malformedLocalGit()
+    const result = await this.commands.execute(before.executable, [
+      'log', `--max-count=${request.value.limit}`, '--no-decorate', '--no-show-signature', '--encoding=UTF-8',
+      '-z', '--format=tformat:%H%x00%s%x00%an%x00%aI', 'HEAD', '--',
+    ], before.project.canonicalRoot, options)
+    if (result.exitCode !== 0) throw gitOperationFailure('get-history', 'command-failed')
+    const history = parseGitHistory(result.stdout, request.value.limit)
+    await this.repository(projectId, before.project.pathIdentity)
+    return history
+  }
+
+  async commit(projectId: ProjectId, message: string): Promise<GitMutationOutcome> {
+    if (!isGitCommitMessage(message)) throw invalidLocalInput('commit')
+    const before = await this.repository(projectId)
+    await this.assertNoSequencedOperation(before)
+    await this.repository(projectId, before.project.pathIdentity)
+    return this.mutateLocal(projectId, before, ['commit', '-m', message], 'commit')
+  }
+
+  async switchBranch(projectId: ProjectId, branch: string): Promise<GitMutationOutcome> {
+    if (!isGitBranchName(branch)) throw invalidLocalInput('switch-branch')
+    const before = await this.readBranches(projectId)
+    if (!before.snapshot.branches.includes(branch)) throw invalidLocalInput('switch-branch')
+    await this.repository(projectId, before.project.pathIdentity)
+    if (branch === '@') return this.switchAtBranch(projectId, before, before.refs.get(branch)!)
+    return this.mutateLocal(projectId, before,
+      ['switch', '--no-guess', '--no-overwrite-ignore', '--', branch], 'switch-branch')
+  }
+
+  private async switchAtBranch(projectId: ProjectId, before: { project: ActiveProject; executable: string },
+    targetId: string): Promise<GitMutationOutcome> {
+    // Git switch treats the short name @ as HEAD. Only Main constructs this ref.
+    const targetRef = 'refs/heads/@'
+    const run = (args: readonly string[]) => this.commands.execute(before.executable, args, before.project.canonicalRoot)
+    const prove = async (attached: boolean) => {
+      await this.repository(projectId, before.project.pathIdentity)
+      const symbolic = await run(['symbolic-ref', '--quiet', 'HEAD'])
+      const head = await run(['rev-parse', '--verify', '--quiet', 'HEAD'])
+      const target = await run(['rev-parse', '--verify', '--quiet', targetRef])
+      if ((attached ? symbolic.exitCode !== 0 || singleLine(symbolic.stdout) !== targetRef
+        : symbolic.exitCode !== 1 || symbolic.stdout !== '')
+        || head.exitCode !== 0 || target.exitCode !== 0
+        || singleLine(head.stdout) !== targetId || singleLine(target.stdout) !== targetId) {
+        throw malformedLocalGit()
+      }
+      await this.repository(projectId, before.project.pathIdentity)
+    }
+    try {
+      // Authorized exception: native post-checkout runs once and sees DETACHED.
+      const checkout = await run(['switch', '--detach', '--no-guess', '--no-overwrite-ignore', '--', targetRef])
+      if (checkout.exitCode !== 0) throw malformedLocalGit()
+      await prove(false)
+      const attach = await run(['symbolic-ref', 'HEAD', targetRef])
+      if (attach.exitCode !== 0) throw malformedLocalGit()
+      await prove(true)
+    } catch {
+      await this.reprobeAfterInterruptedMutation(projectId, before.project.pathIdentity)
+      throw gitOperationFailure('switch-branch', 'mutation-outcome-unknown')
+    }
+    try {
+      const status = await this.getStatus(projectId)
+      this.assertProjectStillAvailable(projectId, before.project.pathIdentity)
+      return { applied: true, status, refreshRequired: false }
+    } catch {
+      return { applied: true, status: null, refreshRequired: true }
+    }
+  }
+
+  private async assertNoSequencedOperation(context: { project: ActiveProject; executable: string }): Promise<void> {
+    const result = await this.commands.execute(context.executable, ['rev-parse', '--absolute-git-dir'], context.project.canonicalRoot)
+    if (result.exitCode !== 0) throw gitOperationFailure('commit', 'command-failed')
+    const directory = parseGitTopLevel(result.stdout, this.platform)
+    for (const marker of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply', 'sequencer']) {
+      try {
+        await this.metadata.lstat(join(directory, marker))
+      } catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'ENOENT') continue
+        throw gitOperationFailure('commit', 'repository-state-unavailable')
+      }
+      throw gitOperationFailure('commit', 'operation-in-progress')
+    }
+  }
+
+  private async mutateLocal(projectId: ProjectId, before: { project: ActiveProject; executable: string },
+    args: readonly string[], action: 'commit' | 'switch-branch'): Promise<GitMutationOutcome> {
+    let result: GitCommandResult
+    try {
+      result = await this.commands.execute(before.executable, args, before.project.canonicalRoot)
+    } catch {
+      await this.reprobeAfterInterruptedMutation(projectId, before.project.pathIdentity)
+      throw gitOperationFailure(action, 'mutation-outcome-unknown')
+    }
+    if (result.exitCode !== 0) {
+      if (action === 'switch-branch') {
+        // post-checkout can fail AFTER switching. Nonzero is not proof of unapplied.
+        await this.reprobeAfterInterruptedMutation(projectId, before.project.pathIdentity)
+        throw gitOperationFailure(action, 'mutation-outcome-unknown')
+      }
+      throw gitOperationFailure(action, 'command-failed')
+    }
+    try {
+      await this.repository(projectId, before.project.pathIdentity)
+      const status = await this.getStatus(projectId)
+      this.assertProjectStillAvailable(projectId, before.project.pathIdentity)
+      return { applied: true, status, refreshRequired: false }
+    } catch {
+      return { applied: true, status: null, refreshRequired: true }
+    }
   }
 
   private async repository(projectId: ProjectId, expectedIdentity?: string) {
@@ -296,7 +463,7 @@ function gitCommandFailure(): DomainError {
 }
 
 function gitOperationFailure(
-  action: 'get-status' | 'stage' | 'unstage', reason: string,
+  action: 'get-status' | 'stage' | 'unstage' | 'commit' | 'get-branches' | 'switch-branch' | 'get-history', reason: string,
 ): DomainError {
   return new DomainError({
     code: 'PROCESS_FAILED', operation: `git:${action}`,
@@ -306,4 +473,24 @@ function gitOperationFailure(
         ? 'Conflicted entries are read-only.' : 'Git could not complete the requested operation.',
     details: { reason, refreshRequired: reason === 'mutation-outcome-unknown' }, retryable: false,
   })
+}
+
+function invalidLocalInput(action: string): DomainError {
+  return new DomainError({ code: 'INVALID_INPUT', operation: `git:${action}`,
+    message: 'Invalid Git request.', details: { reason: 'invalid-input' }, retryable: false })
+}
+
+function singleLine(stdout: string): string {
+  if (!stdout.endsWith('\n')) throw malformedLocalGit()
+  const line = stdout.slice(0, -1)
+  if (!line || /[\r\n\0]/.test(line)) throw malformedLocalGit()
+  return line
+}
+
+function localHeadName(stdout: string): string {
+  const ref = singleLine(stdout)
+  if (!ref.startsWith('refs/heads/')) throw malformedLocalGit()
+  const name = ref.slice('refs/heads/'.length)
+  if (!isGitBranchName(name)) throw malformedLocalGit()
+  return name
 }

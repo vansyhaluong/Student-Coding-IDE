@@ -40,6 +40,10 @@ export const GIT_CHANNELS = {
   getStatus: 'git:get-status',
   stage: 'git:stage',
   unstage: 'git:unstage',
+  commit: 'git:commit',
+  getBranches: 'git:get-branches',
+  switchBranch: 'git:switch-branch',
+  getHistory: 'git:get-history',
 } as const
 
 export const MAX_GIT_STATUS_ENTRIES = 1000
@@ -75,6 +79,114 @@ export interface GitApi {
   getStatus(projectId: ProjectId): Promise<AppResult<GitStatus>>
   stage(projectId: ProjectId, path: string): Promise<AppResult<GitMutationOutcome>>
   unstage(projectId: ProjectId, path: string): Promise<AppResult<GitMutationOutcome>>
+  commit(projectId: ProjectId, message: string): Promise<AppResult<GitMutationOutcome>>
+  getBranches(projectId: ProjectId): Promise<AppResult<GitBranchSnapshot>>
+  switchBranch(projectId: ProjectId, branch: string): Promise<AppResult<GitMutationOutcome>>
+  getHistory(projectId: ProjectId, limit?: number): Promise<AppResult<readonly GitHistoryItem[]>>
+}
+
+export const DEFAULT_GIT_HISTORY_LIMIT = 50
+export const MAX_GIT_HISTORY_LIMIT = 100
+
+export type GitBranchSnapshot =
+  | { readonly state: 'ATTACHED'; readonly currentBranch: string; readonly branches: readonly string[] }
+  | { readonly state: 'DETACHED'; readonly currentBranch: null; readonly branches: readonly string[] }
+  | { readonly state: 'UNBORN'; readonly currentBranch: string | null; readonly branches: readonly string[] }
+
+export interface GitHistoryItem {
+  readonly id: string
+  readonly subject: string
+  readonly authorName: string
+  readonly authoredAt: string
+}
+
+export interface GitCommitRequest extends GetGitStateRequest { readonly message: string }
+export interface GitSwitchRequest extends GetGitStateRequest { readonly branch: string }
+export interface GitHistoryRequest extends GetGitStateRequest { readonly limit: number }
+
+export function isGitCommitMessage(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && !value.includes('\0')
+}
+
+/** Local branch names, never revisions, options, or complete refs. Main also checks membership. */
+export function isGitBranchName(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value !== 'HEAD'
+    && !value.startsWith('-') && !value.endsWith('.')
+    && !value.includes('..') && !value.includes('@{')
+    && !Array.from(value).some((character) => character.charCodeAt(0) <= 32 || character.charCodeAt(0) === 127)
+    && !/[~^:?*[\\]/u.test(value)
+    && value.split('/').every((part) => part.length > 0 && !part.startsWith('.') && !part.endsWith('.lock'))
+}
+
+export function validateGitCommitRequest(value: unknown): ValidationResult<GitCommitRequest> {
+  const object = validateExactObject(value, ['projectId', 'message'])
+  if (!object.ok) return object
+  if (!isProjectId(object.value.projectId)) return invalid('$.projectId')
+  if (!isGitCommitMessage(object.value.message)) return invalid('$.message')
+  return { ok: true, value: { projectId: object.value.projectId, message: object.value.message } }
+}
+
+export function validateGitSwitchRequest(value: unknown): ValidationResult<GitSwitchRequest> {
+  const object = validateExactObject(value, ['projectId', 'branch'])
+  if (!object.ok) return object
+  if (!isProjectId(object.value.projectId)) return invalid('$.projectId')
+  if (!isGitBranchName(object.value.branch)) return invalid('$.branch')
+  return { ok: true, value: { projectId: object.value.projectId, branch: object.value.branch } }
+}
+
+export function validateGitHistoryRequest(value: unknown): ValidationResult<GitHistoryRequest> {
+  const object = validateExactObject(value, ['projectId', 'limit'])
+  if (!object.ok) return object
+  if (!isProjectId(object.value.projectId)) return invalid('$.projectId')
+  const limit = object.value.limit === undefined ? DEFAULT_GIT_HISTORY_LIMIT : object.value.limit
+  if (typeof limit !== 'number' || !Number.isSafeInteger(limit) || limit < 1 || limit > MAX_GIT_HISTORY_LIMIT) return invalid('$.limit')
+  return { ok: true, value: { projectId: object.value.projectId, limit } }
+}
+
+export function validateGitBranchSnapshot(value: unknown): ValidationResult<GitBranchSnapshot> {
+  const object = validateExactObject(value, ['state', 'currentBranch', 'branches'])
+  if (!object.ok) return object
+  const { state, currentBranch, branches } = object.value
+  if (!Array.isArray(branches) || !branches.every(isGitBranchName)
+    || new Set(branches).size !== branches.length) return invalid('$.branches')
+  if (state === 'DETACHED' && currentBranch === null) return { ok: true, value: { state, currentBranch, branches } }
+  if (state === 'ATTACHED' && isGitBranchName(currentBranch) && branches.includes(currentBranch)) {
+    return { ok: true, value: { state, currentBranch, branches } }
+  }
+  if (state === 'UNBORN' && (currentBranch === null || isGitBranchName(currentBranch))
+    && (currentBranch === null || !branches.includes(currentBranch))) return { ok: true, value: { state, currentBranch, branches } }
+  return invalid('$')
+}
+
+export function isGitCommitId(value: unknown): value is string {
+  return typeof value === 'string' && /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(value)
+}
+
+export function validateGitHistory(value: unknown): ValidationResult<readonly GitHistoryItem[]> {
+  if (!Array.isArray(value) || value.length > MAX_GIT_HISTORY_LIMIT) return invalid('$')
+  const items: GitHistoryItem[] = []
+  const ids = new Set<string>()
+  for (const item of value) {
+    const object = validateExactObject(item, ['id', 'subject', 'authorName', 'authoredAt'])
+    if (!object.ok) return object
+    const { id, subject, authorName, authoredAt } = object.value
+    if (!isGitCommitId(id) || ids.has(id) || typeof subject !== 'string' || subject.includes('\0')
+      || typeof authorName !== 'string' || authorName.includes('\0')
+      || !isGitAuthoredAt(authoredAt)) return invalid('$')
+    ids.add(id)
+    items.push({ id, subject, authorName, authoredAt })
+  }
+  return { ok: true, value: items }
+}
+
+function isGitAuthoredAt(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/.test(value)
+    || !Number.isFinite(Date.parse(value))) return false
+  const [year, month, day, hour, minute, second, offsetHour, offsetMinute] = value.match(/\d+/g)!.map(Number)
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  return month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1]
+    && hour <= 23 && minute <= 59 && second <= 59 && offsetHour <= 23 && offsetMinute <= 59
 }
 
 /** Repository-relative Windows V1 file identity, always using forward slashes. */

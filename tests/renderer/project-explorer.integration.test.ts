@@ -1972,6 +1972,10 @@ function installApi(overrides: {
       getStatus: async () => failure('Not configured'),
       stage: async () => failure('Not configured'),
       unstage: async () => failure('Not configured'),
+      commit: async () => failure('Not configured'),
+      getBranches: async () => failure('Not configured'),
+      switchBranch: async () => failure('Not configured'),
+      getHistory: async () => failure('Not configured'),
     },
     run: {
       start: async () => failure('Not configured'),

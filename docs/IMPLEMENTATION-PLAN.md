@@ -114,7 +114,7 @@ before affected work continues.
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
-| Phase 5 — Git Integration | `IN_PROGRESS` | 5A foundation/detection and 5B status/stage/unstage complete; 5C–5F remain |
+| Phase 5 — Git Integration | `IN_PROGRESS` | 5A foundation/detection, 5B status/stage/unstage and 5C commit/branch/history complete; 5D–5F remain |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2157,7 +2157,7 @@ not a Phase 4 V1 acceptance requirement.
 
 - Phase 5A — Git Foundation + Dependency / Repository Detection: `COMPLETE`.
 - Phase 5B — Git Status + Stage / Unstage: `COMPLETE`.
-- Phase 5C — Commit + Branch + History: `NOT_STARTED`.
+- Phase 5C — Commit + Branch + History: `COMPLETE` (including the authorized local branch `@` remediation).
 - Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `NOT_STARTED`.
 - Phase 5E — Right Sidebar + Source Control UI: `NOT_STARTED`.
 - Phase 5F — Stabilization / Final Verification: `NOT_STARTED`.
@@ -2231,6 +2231,127 @@ overwritten. Tracking moved through `IN_PROGRESS` before acceptance.
 
 Phase 5B's backend exit gate is complete. This does not mark the overall Phase 5
 Definition of Done complete or authorize implementation of 5C–5F.
+
+#### Phase 5C execution and acceptance (2026-09-06)
+
+The user subsequently authorized Phase 5C after the committed 5B baseline
+`7c766382e768838fdaf4e5f2a83076f8863aa179` on `feature/phase-5`. The initial
+worktree was clean. Implementation proceeded only after the user resolved the
+history, branch snapshot, switch-outcome and in-progress-operation decisions.
+Documentation was updated after implementation and verification, as requested.
+
+- APIs: `commit(projectId, message)`, `getBranches(projectId)`,
+  `switchBranch(projectId, branch)` and `getHistory(projectId, limit?)`.
+  Existing state/status/stage/unstage capabilities remain intact. Requests reject
+  unknown fields; Preload validates both requests and responses. No executable,
+  cwd, raw Git argument/ref or shell authority is granted to Renderer.
+- Commit invokes Main-owned `git commit -m <message>` with no implicit add,
+  paths, amend, allow-empty or hook bypass. Empty/whitespace/NUL messages are
+  rejected; Unicode and multiline messages work. First commits are supported;
+  nothing staged and identity/hook failures produce safe typed errors. Main
+  checks fixed Git metadata markers and rejects commit during merge, rebase,
+  cherry-pick, revert or sequencer operations without altering their state.
+- One branch snapshot contains `state: ATTACHED | DETACHED | UNBORN`,
+  `currentBranch` and an array of local branch names. Detached has null current
+  branch; unborn retains the initial name when Git supplies it. Main reads only
+  `refs/heads/` with fixed `for-each-ref` formatting and checks HEAD identity
+  around the list to reject an observed inconsistent snapshot. Switching requires
+  membership in fresh local branch data and uses
+  `git switch --no-guess --no-overwrite-ignore -- <branch>` for normal names;
+  the authorized `@` exception is documented below. No branch creation,
+  force, discard or implicit remote checkout is exposed. Git-blocked switches
+  preserve local work; ignored files are also protected against overwrite.
+- History is reachable from current HEAD only, including detached HEAD; confirmed
+  unborn repositories return `[]`. Default count is 50, maximum 100; invalid,
+  noninteger and out-of-range requests are rejected, never clamped. Items contain
+  full `id`, `subject`, `authorName` and ISO 8601 `authoredAt` only. Main runs
+  `git log --max-count=<limit> --no-decorate --no-show-signature --encoding=UTF-8 -z --format=tformat:%H%x00%s%x00%an%x00%aI HEAD --`.
+  Four NUL-terminated fields form each record; bodies are excluded. Incomplete,
+  malformed, duplicate or excessive records fail closed. The existing finite
+  runner bounds stdout/stderr at 1 MiB; an oversized subject fails safely rather
+  than producing an unbounded or truncated semantic result. History checks HEAD
+  directly instead of enumerating unrelated branches.
+- Commit/switch reuse the 5B mutation envelope: confirmed success retains
+  `applied: true` even if post-operation status refresh fails or the project
+  changes. A failed/interrupted switch is reauthorized/refreshed and reports
+  `mutation-outcome-unknown`, with refresh required and no automatic retry:
+  `post-checkout` can return nonzero after Git has actually switched. Interrupted
+  commit also preserves unknown outcome. The successful envelope refreshes file
+  status; callers obtain branch/history snapshots using their semantic APIs.
+- Every operation retains active-project availability, canonical-root and exact
+  Git top-level authorization. Parent-repository authority remains denied. Read
+  operations accept internal runner options for future cancellation integration;
+  full project/owner lifecycle coordination remains 5D. External Git activity is
+  not transactionally locked by this package.
+- Verification: focused 5C 34/34 (23 real Git repository cases); focused 5A/5B
+  regression 176/176; final full suite 710/710 in 55 files with
+  `--maxWorkers=4`, no local skips. Typecheck, lint, production/native build and
+  `git diff --check` passed. Git version: 2.47.1.windows.2.
+- Evidence includes staged-only/MM content preservation, first commit, identity
+  and real hook failures, actual pending-merge rejection, all fixed operation
+  markers, attached/detached/unborn snapshots, clean/dirty/ignored-file switch
+  behavior, post-checkout failure after applied switch, project change after
+  mutation, 101 real imported commits, Unicode subjects/bodies, oversized output,
+  malformed DTOs and nested/stale-project rejection.
+- Sandbox test/build spawning failed with EPERM; the identical commands ran via
+  the approved outside-sandbox method. An initial full run concurrent with build
+  had two 5C tests exceed the existing 5-second test timeout (706 others passed).
+  After removing unnecessary branch enumeration from history and running the
+  suite without the competing build, all 710 passed. No timeout inflation,
+  sleeps, configured retries, assertion weakening or skips were added. The known
+  jsdom canvas diagnostic remains non-blocking.
+
+#### Phase 5C corrective verification — local branch `@` (2026-09-06)
+
+The final review's MEDIUM finding reopened 5C from `COMPLETE` to `IN_PROGRESS`:
+the shared validator rejected a valid local branch `@`, breaking the entire
+snapshot and unrelated switches. The correction is now verified and 5C returns
+to `COMPLETE`, within its existing backend scope.
+
+- Shared validation accepts `@`; all other branch-name restrictions remain.
+  Main still validates semantic membership in a fresh local branch snapshot.
+- User-approved option 1 keeps the normal switch command unchanged. For `@`,
+  Main constructs exact `refs/heads/@` and runs
+  `git switch --detach --no-guess --no-overwrite-ignore -- refs/heads/@`.
+  The native `post-checkout` hook runs normally and may observe DETACHED HEAD;
+  this exception was explicitly authorized. Hooks are never suppressed.
+- Main reauthorizes the exact project/root, proves detached HEAD and the local
+  target ref still match the freshly captured commit, then runs
+  `git symbolic-ref HEAD refs/heads/@`. It reauthorizes and proves attached HEAD
+  and the target commit again before reporting success. Intermediate failures
+  or an unproven final state trigger a recovery probe and safe nonretryable
+  `mutation-outcome-unknown`; there is no rollback or automatic retry.
+  Once success is proven, status-refresh failure retains the existing applied
+  mutation envelope. No external-Git transaction lock or 5D system is added.
+- Real Git regressions cover distinct main/@ commits, attached snapshots,
+  unrelated normal switching, detached hook context, tracked/ignored blockers,
+  harmless staged/unstaged/untracked/ignored preservation, failing hooks,
+  HEAD lock failure, moved target ref, project transition and final-state change.
+  Invalid names and unlisted full-ref-shaped requests remain rejected.
+- Fresh verification: 44 focused 5C tests, including 32 real Git cases;
+  176 focused 5A/5B regressions; 720/720 full-suite tests in 55 files with
+  `--maxWorkers=4`; typecheck, lint and production/native build all passed.
+  Git: 2.47.1.windows.2. Tests/build used the approved outside-sandbox path for
+  the known spawning restriction. No timeouts, retries, skips or dependencies
+  were added; package-lock is unchanged.
+
+#### Phase 5C resumed verification (2026-09-07)
+
+The user requested continuation of the previous corrective work. Review found
+the documented local `@` correction already present in the uncommitted worktree;
+no further production change was needed. Fresh verification passed 720/720 tests
+in 55 files with the unchanged `npm test` command, typecheck, lint and
+production/native build. The first suite run overlapping typecheck/lint had
+three timeouts (5B, 5C and Monaco; 717 passed); a standalone full run passed
+without changing assertions, timeouts, worker settings or skip/retry settings.
+Tests/build required approved outside-sandbox execution after spawn EPERM.
+The overview row now correctly lists 5D–5F as remaining. Phase 5C stays COMPLETE;
+this continuation does not authorize 5D or change an ADR.
+
+Only this backend package is complete. No dependency, package-lock or ADR change,
+Source Control UI, remote Git, Phase 5D lifecycle system, repository stage,
+commit or push was introduced. Phase 5 overall is not complete; 5D–5F require
+their own authorization and acceptance.
 
 ### Goal
 

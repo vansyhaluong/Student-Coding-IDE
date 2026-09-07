@@ -2,6 +2,11 @@ import {
   GIT_CHANNELS,
   validateGetGitStateRequest,
   validateGitPathRequest,
+  validateGitCommitRequest,
+  validateGitSwitchRequest,
+  validateGitHistoryRequest,
+  type GitBranchSnapshot,
+  type GitHistoryItem,
   type GitState,
   type GitStatus,
   type GitMutationOutcome,
@@ -15,6 +20,10 @@ export interface GitQueries {
   getStatus(projectId: ProjectId): Promise<GitStatus>
   stage(projectId: ProjectId, path: string): Promise<GitMutationOutcome>
   unstage(projectId: ProjectId, path: string): Promise<GitMutationOutcome>
+  commit(projectId: ProjectId, message: string): Promise<GitMutationOutcome>
+  getBranches(projectId: ProjectId): Promise<GitBranchSnapshot>
+  switchBranch(projectId: ProjectId, branch: string): Promise<GitMutationOutcome>
+  getHistory(projectId: ProjectId, limit: number): Promise<readonly GitHistoryItem[]>
 }
 
 /** Narrow semantic Git surface; no executable, cwd, or args cross IPC. */
@@ -45,6 +54,22 @@ export class GitIpcService implements ManagedService {
         handle: ({ projectId, path }) => this.git[action](projectId, path),
       }))
     }
+    this.cleanup.push(this.registry.register({
+      channel: GIT_CHANNELS.commit, validate: validateGitCommitRequest,
+      handle: ({ projectId, message }) => this.git.commit(projectId, message),
+    }))
+    this.cleanup.push(this.registry.register({
+      channel: GIT_CHANNELS.getBranches, validate: validateGetGitStateRequest,
+      handle: ({ projectId }) => this.git.getBranches(projectId),
+    }))
+    this.cleanup.push(this.registry.register({
+      channel: GIT_CHANNELS.switchBranch, validate: validateGitSwitchRequest,
+      handle: ({ projectId, branch }) => this.git.switchBranch(projectId, branch),
+    }))
+    this.cleanup.push(this.registry.register({
+      channel: GIT_CHANNELS.getHistory, validate: validateGitHistoryRequest,
+      handle: ({ projectId, limit }) => this.git.getHistory(projectId, limit),
+    }))
   }
 
   stop(): void {
