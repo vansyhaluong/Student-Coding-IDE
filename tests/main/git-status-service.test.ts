@@ -149,7 +149,8 @@ describe('Phase 5B IPC and Preload', () => {
     const ipc: IpcMainLike = { handle: (channel, handler) => { handlers.set(channel, handler) }, removeHandler: (channel) => { handlers.delete(channel) } }
     const status = { entries: [], didHitLimit: false }
     const outcome = { applied: true as const, status, refreshRequired: false as const }
-    const git = { getState: vi.fn(), getStatus: vi.fn(async () => status), stage: vi.fn(async () => outcome), unstage: vi.fn(async () => outcome) }
+    const git = { getState: vi.fn(), getStatus: vi.fn(async () => status), stage: vi.fn(async () => outcome), unstage: vi.fn(async () => outcome),
+      commit: vi.fn(), getBranches: vi.fn(), switchBranch: vi.fn(), getHistory: vi.fn() }
     const service = new GitIpcService(new IpcHandlerRegistry(ipc), git)
     service.start()
     const invoke = vi.fn(async (channel: string, payload: unknown) => handlers.get(channel)!({ sender: { id: 1 } }, payload))

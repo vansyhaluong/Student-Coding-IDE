@@ -9,6 +9,11 @@ import {
   validateGitStatus,
   validateGitPathRequest,
   validateGitMutationOutcome,
+  validateGitCommitRequest,
+  validateGitSwitchRequest,
+  validateGitHistoryRequest,
+  validateGitBranchSnapshot,
+  validateGitHistory,
   type GitApi,
 } from '../../shared/contracts/git'
 import { validateExactObject, type ValidationResult } from '../../shared/contracts/validation'
@@ -54,6 +59,34 @@ export function createGitBridge(ipc: IpcRendererLike): GitApi {
       if (!request.ok) return invalid()
       return parseGitResult(await invokeSafely(ipc, GIT_CHANNELS.unstage, request.value),
         validateGitMutationOutcome, GIT_CHANNELS.unstage)
+    },
+    async commit(projectId, message) {
+      const request = validateGitCommitRequest({ projectId, message })
+      if (!request.ok) return invalid()
+      return parseGitResult(await invokeSafely(ipc, GIT_CHANNELS.commit, request.value),
+        validateGitMutationOutcome, GIT_CHANNELS.commit)
+    },
+    async getBranches(projectId) {
+      const request = validateGetGitStateRequest({ projectId })
+      if (!request.ok) return invalid()
+      return parseGitResult(await invokeSafely(ipc, GIT_CHANNELS.getBranches, request.value),
+        validateGitBranchSnapshot, GIT_CHANNELS.getBranches)
+    },
+    async switchBranch(projectId, branch) {
+      const request = validateGitSwitchRequest({ projectId, branch })
+      if (!request.ok) return invalid()
+      return parseGitResult(await invokeSafely(ipc, GIT_CHANNELS.switchBranch, request.value),
+        validateGitMutationOutcome, GIT_CHANNELS.switchBranch)
+    },
+    async getHistory(projectId, limit) {
+      const request = validateGitHistoryRequest({ projectId, limit })
+      if (!request.ok) return invalid()
+      return parseGitResult(await invokeSafely(ipc, GIT_CHANNELS.getHistory, request.value),
+        (value) => {
+          const result = validateGitHistory(value)
+          return result.ok && result.value.length > request.value.limit
+            ? { ok: false, issues: [{ path: '$', message: 'History exceeds requested limit' }] } : result
+        }, GIT_CHANNELS.getHistory)
     },
   }
 }

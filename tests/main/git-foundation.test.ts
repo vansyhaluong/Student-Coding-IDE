@@ -486,6 +486,7 @@ describe('Phase 5A Git IPC and Preload boundary', () => {
     const registry = new IpcHandlerRegistry(ipcMain)
     const git = {
       getStatus: vi.fn(), stage: vi.fn(), unstage: vi.fn(),
+      commit: vi.fn(), getBranches: vi.fn(), switchBranch: vi.fn(), getHistory: vi.fn(),
       getState: vi.fn(async (): Promise<GitState> => ({
         dependency: 'AVAILABLE',
         repository: 'REPOSITORY',
@@ -527,7 +528,7 @@ describe('Phase 5A Git IPC and Preload boundary', () => {
       removeListener: vi.fn(),
     }
     const api = createGitBridge(transport)
-    expect(Object.keys(api)).toEqual(['getState', 'getStatus', 'stage', 'unstage'])
+    expect(Object.keys(api)).toEqual(['getState', 'getStatus', 'stage', 'unstage', 'commit', 'getBranches', 'switchBranch', 'getHistory'])
     expect(api).not.toHaveProperty('executeGit')
     expect(api).not.toHaveProperty('runGit')
     await expect(api.getState(projectId)).resolves.toEqual({

@@ -5,14 +5,18 @@ This map describes the current independent source tree and planned module locati
 Phase 5B extends that foundation with bounded Git status and selected-file
 stage/unstage through validated IPC/Preload, without Renderer UI.
 
-## Current source tree through Phase 5B
+Phase 5C adds staged-only commit, a local branch snapshot, safe existing-local
+branch switch and bounded HEAD history. Git UI and coordinated owner lifecycle
+remain later work packages.
+
+## Current source tree through Phase 5C
 
 | Current path | Role | Status |
 |---|---|---|
 | `src/main/index.ts` | Electron readiness, secure BrowserWindow, unsaved/terminal coordination, Main Run/Git composition, owner routing/navigation cleanup and fail-closed quit wiring | Implemented and verified through Phase 5A; narrow Run and Git detection capabilities are live |
 | `src/main/app/` | DesktopApplication startup/reverse shutdown ownership plus Main-only before-quit approval, in-flight cleanup sharing, retry, and final-quit coordination | Implemented through Phase 2E-J corrective Step 3 |
 | `src/main/window/` | Secure BrowserWindow ownership, accepted navigation/external-URL policy, and final-quit authorization that prevents the last window bypassing cleanup | Implemented through Phase 2E-J corrective Step 3 |
-| `src/main/ipc/` | Validated handler registration, safe result/error mapping, lifecycle/project/file/search/terminal/Run adapters, and narrow Git state/status/stage/unstage handling | Implemented through Phase 5B |
+| `src/main/ipc/` | Validated handler registration, safe result/error mapping, lifecycle/project/file/search/terminal/Run adapters, and semantic Git state/status/index/commit/branches/history handling | Implemented through Phase 5C |
 | `src/main/errors/` | Structured domain errors and safe IPC serialization | Implemented Phase 2A foundation |
 | `src/main/services/project/` | One active project, create/open/close/switch, transition guards, identity, authorization, and recent metadata | Implemented Phase 2B |
 | `src/main/services/filesystem/` | Authorized lazy list/read/write/stat/create/rename/Recycle Bin operations, bounded watcher lifecycle, and authoritative active-project availability | Implemented through Phase 2F |
@@ -25,7 +29,9 @@ stage/unstage through validated IPC/Preload, without Renderer UI.
 | `tests/main/run-lifecycle.test.ts`, `scripts/smoke-run-lifecycle.mjs` | Deterministic lifecycle/cleanup/re-run/stale-event tests and production Electron lifecycle verification | 4C verification |
 | `src/main/services/dependencies/node-runtime.ts` | Main PATH-only Node detection; rejects relative/current-drive paths and returns safe missing/invalid states | 4B implemented |
 | `src/main/services/dependencies/git-executable.ts` | Main PATH-only exact `git.exe` detection; ignores unsafe entries and grants no Renderer/configured-path authority | 5A implemented |
-| `src/main/services/git/` | Private finite/streaming runner and GitService exact-root authorization, bounded status and selected-file stage/unstage | 5B implemented; branch/history and coordinated owner lifecycle remain later packages |
+| `src/main/services/git/` | Private finite/streaming runner and GitService exact-root authorization, bounded status, selected-file stage/unstage, staged commit, local branch snapshot/safe switch and HEAD history | 5C implemented; coordinated owner lifecycle remains 5D |
+| `src/main/services/git/git-local-parser.ts` | Fixed machine-output parsing for local branch names and bounded typed history; rejects malformed records | 5C implemented |
+| `tests/main/git-local.test.ts`, `tests/main/git-local.integration.test.ts` | Contract/IPC/Preload/outcome validation and production GitService/runner tests in temporary local repositories, including exact local `@` fallback and preservation | 5C remediation verified: 44 tests, including 32 real Git cases |
 | `src/main/services/git/git-status-parser.ts` | Incremental bounded porcelain v2 parser; staged/unstaged slots, rename/copy pairs, conflicts and internal unborn state | 5B implemented |
 | `src/main/services/git/git-path-authority.ts` | Canonical selected-file containment, deleted-path ancestor authorization and directory expansion rejection | 5B implemented |
 | `tests/main/git-status-parser.test.ts`, `tests/main/git-status-service.test.ts` | Parser/contract, path authority, mutation outcome and IPC/Preload regressions | 5B verified |
@@ -38,8 +44,8 @@ stage/unstage through validated IPC/Preload, without Renderer UI.
 | `tests/main/run-foundation.test.ts` | 4A contracts, path/authority rejection, strategy preparation, session ownership, IPC/preload validation and cleanup | 37 focused tests |
 | `src/main/services/terminal/` | Main-owned TerminalService registry/ownership/lifecycle/batching, project-transition leases, Windows shell resolution, environment policy, native-independent PTY port, sole production patched-node-pty adapter, retained natural-root ownership, and unified Job finalization | Implemented through Phase 2E-J corrective Step 2 |
 | `patches/` and `scripts/` | Inspectable node-pty Windows Job tooling plus the production-build Monaco worker discovery smoke | Implemented through Phase 3B |
-| `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, project, file/filesystem-status, search, terminal, Run, and Git state/status/mutation contracts | Implemented through Phase 5B |
-| `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed domain bridges including exact-validated Git state/status/stage/unstage; normalized transport errors and subscription cleanup | Implemented through Phase 5B |
+| `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, project, file/filesystem-status, search, terminal, Run, and Git state/status/mutation/branch/history contracts | Implemented through Phase 5C |
+| `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed domain bridges including exact-validated semantic Git operations through commit/branches/history; normalized transport errors and subscription cleanup | Implemented through Phase 5C |
 | `src/renderer/src/main.tsx` | React renderer bootstrap, packaged Geist/xterm styles, and renderer-session editor/terminal/language/Problems disposal on real page unload | Implemented through Phase 3E |
 | `src/renderer/src/App.tsx` | Resizable Orca-aligned project/editor/tools shell, top-chrome editor tabs, Explorer/Search coordination, Terminal/Problems Bottom Panel ownership, ordered dirty/terminal transition decisions, transition locks, unavailable-project UX, active-project language synchronization, and Problems navigation | Implemented through Phase 3E |
 | `src/renderer/src/components/` | Shared semantic buttons, focus-managed dialogs, and keyboard/pointer sidebar and Bottom Panel resizing | Implemented through Phase 2E-F |
