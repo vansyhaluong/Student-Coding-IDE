@@ -476,6 +476,31 @@ Canonical comparison continues to use the existing Windows case/separator-aware
 project identity. The finite runner settles only after child `close`, including
 spawn failure and cancellation, so exit/PID state alone cannot claim cleanup.
 
+Phase 5D composes GitService through GitOperationLifecycle and a Main-only
+GitOwnedCommandRunner. Each request has a project/owner generation and request
+identity; Main rejects obsolete reads and Preload rejects replies superseded
+while in transport. Project changes, root unavailability, renderer navigation/
+destruction and application shutdown invalidate the appropriate work. A project
+transition waits for Git operations and owned cleanup before releasing authority.
+Mutations are serialized. Cancellation stops preparation; after mutation dispatch,
+the bounded command drains and preserves applied or explicitly unknown outcomes,
+without automatic retry. Stale applied outcomes discard their status snapshot.
+
+Git document ownership is established by Main before window load. Navigation
+start revokes the previous document; only a committed current main-frame event
+restores availability. Both Git context and operation IPC verify Electron's
+sender frame against the committed `processId`/`frameToken` values, reject
+detached/disposed frames and never restore ownership on request. These frame
+values stay inside Main; shared Git DTOs and Renderer authority are unchanged.
+
+On Windows, the production Git runner creates each process inside an atomic
+Windows Job using the existing private native pipe/ownership primitives. A Git
+root exit terminates surviving owned hook descendants; release requires root
+exit, both pipe EOFs, native settlement and an empty Job. Cleanup failure retains
+ownership and blocks new work, project release and application shutdown until a
+cleanup retry succeeds. Run retains its separate single-target native entry and
+semantic lifecycle. No generic process capability crosses Preload.
+
 ## 12. Language-service architecture
 
 ```text

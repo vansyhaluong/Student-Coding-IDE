@@ -18,6 +18,7 @@ import { GitService } from '../../src/main/services/git/git-service'
 import { normalizePathIdentity } from '../../src/main/services/project/project-identity'
 import { DomainError } from '../../src/main/errors/app-error'
 import { createGitBridge } from '../../src/preload/bridge/git'
+import { gitSemanticTransport } from '../helpers/git-semantic-transport'
 import type { IpcRendererLike } from '../../src/preload/bridge/lifecycle'
 import {
   GIT_CHANNELS,
@@ -527,7 +528,7 @@ describe('Phase 5A Git IPC and Preload boundary', () => {
       on: vi.fn(),
       removeListener: vi.fn(),
     }
-    const api = createGitBridge(transport)
+    const api = createGitBridge(gitSemanticTransport(transport))
     expect(Object.keys(api)).toEqual(['getState', 'getStatus', 'stage', 'unstage', 'commit', 'getBranches', 'switchBranch', 'getHistory'])
     expect(api).not.toHaveProperty('executeGit')
     expect(api).not.toHaveProperty('runGit')

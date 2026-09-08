@@ -1128,3 +1128,57 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   worker settings or skip/retry settings were changed. Tests/build ran with
   approval outside the sandbox after spawn EPERM.
 - 5C remains complete. No ADR, dependency or later-package scope changed.
+
+## Phase 5D — Git lifecycle, cancellation and stale results (`COMPLETE`, 2026-09-08)
+
+- Resumed the authorized unfinished work on `feature/phase-5`, preserving its
+  uncommitted implementation and fixtures. Added Main-owned project/window
+  generations, latest-read cancellation, mutation serialization and transition/
+  shutdown draining around the existing GitService semantic operations.
+- Added validated identity framing and Preload receiving guards. Late replies
+  are rejected after supersession, project changes, root unavailability or app
+  shutdown. Confirmed mutations preserve `applied` while dropping stale status;
+  unknown outcomes require refresh and never trigger automatic retries.
+- Production Git now uses retained Windows Job ownership with bounded command
+  timeouts/output. Root exit terminates surviving hook descendants; release
+  requires both pipe EOFs, native settlement and an empty Job. Cleanup failure
+  blocks authority release and app shutdown until retry succeeds. The private
+  native Git entry shares pipe/Job primitives while preserving Run's original
+  single-target entry, separate service and lifecycle.
+- Verification passed: 760/760 tests across 59 files, including 40 5D cases;
+  real Git hook/descendant, abort/timeout and semantic mutation integration;
+  Git native Electron Unicode/argv/commit/history smoke; existing Run native
+  smoke with 15 cycles, root-first cleanup and failed spawn. Typecheck, lint,
+  final production/native build and whitespace checks passed.
+- Evidence host: Windows NT 10.0.26200.0 x64, Git 2.47.1.windows.2 and Electron
+  44.0.0. Sandbox EPERM required approved external execution. Earlier suites
+  had timeout failures; oversized native scenarios were split into independent
+  cases and final standalone verification passed with unchanged worker count,
+  timeout limits and configured retries. Existing jsdom canvas noise remains.
+  Non-Windows native skips provide no Windows acceptance evidence.
+- Updated Architecture, Codebase Map and Implementation Plan. No ADR change,
+  added dependency, repository commit/push or Phase 5E/5F implementation.
+  Overall Phase 5 remains in progress; Source Control UI is the next package.
+
+### Phase 5D remediation — committed document ownership (2026-09-08)
+
+- Completed resumed verification of the MEDIUM finding where `git:get-context`
+  could restore an owner revoked during navigation. Main now observes windows
+  before load and restores ownership only on a committed current main document;
+  context and semantic IPC reject stale Electron sender-frame identities.
+  Shared DTOs and the public Git API are unchanged.
+- Six added document regressions verify context rejection, replacement/token
+  races, repeated navigation, invalid callers, read cancellation and mutation
+  draining. The focused document/lifecycle IPC run passed 16/16 tests; the full
+  suite passed 766/766 across 60 files with no skips.
+- Real sandboxed Electron Preload/Main smoke passed three reloads on the same
+  WebContents, four distinct document frames and three rejected old-document
+  requests. Fresh document requests succeeded after each commit.
+- Typecheck, lint, production/native build, Git native smoke, Run native smoke
+  (15 cycles plus descendant cleanup and failed spawn), and diff whitespace
+  checks passed. Test/build sandbox spawn EPERM was resolved by approved
+  outside-sandbox execution. Existing jsdom canvas diagnostics were non-blocking.
+- Phase 5D returned to COMPLETE after corrective verification. This continuation
+  retained the prior implementation without further production changes and
+  updated acceptance evidence. No ADR/dependency change, architecture deviation,
+  repository commit/push or Phase 5E/5F work.

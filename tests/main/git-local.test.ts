@@ -5,6 +5,7 @@ import {
 } from '../../src/shared/contracts'
 import { parseGitHistory, parseGitLocalBranches } from '../../src/main/services/git/git-local-parser'
 import { createGitBridge } from '../../src/preload/bridge/git'
+import { gitSemanticTransport } from '../helpers/git-semantic-transport'
 import { GitIpcService } from '../../src/main/ipc/git-ipc-service'
 import { IpcHandlerRegistry, type IpcMainLike } from '../../src/main/ipc/ipc-handler-registry'
 import { GitService } from '../../src/main/services/git/git-service'
@@ -87,7 +88,7 @@ describe('Phase 5C IPC and Preload production boundary', () => {
     const service = new GitIpcService(new IpcHandlerRegistry(ipc), git)
     service.start()
     const invoke = vi.fn(async (channel: string, payload: unknown) => handlers.get(channel)!({ sender: { id: 1 } }, payload))
-    const bridge = createGitBridge({ invoke, on: vi.fn(), removeListener: vi.fn() })
+    const bridge = createGitBridge(gitSemanticTransport({ invoke, on: vi.fn(), removeListener: vi.fn() }))
     expect(await bridge.commit(projectId, 'message')).toEqual({ ok: true, value: outcome })
     expect(await bridge.switchBranch(projectId, 'main')).toEqual({ ok: true, value: outcome })
     expect(await bridge.getBranches(projectId)).toEqual({ ok: true, value: snapshot })

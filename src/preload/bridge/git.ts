@@ -19,6 +19,7 @@ import {
 import { validateExactObject, type ValidationResult } from '../../shared/contracts/validation'
 import type { IpcRendererLike } from './lifecycle'
 import { invokeSafely } from './invoke'
+import { createGitIdentityTransport } from './git-identity'
 
 function invalid(): AppResult<never> {
   return {
@@ -32,7 +33,8 @@ function invalid(): AppResult<never> {
 }
 
 /** Semantic Git operations; all process options remain private to Main. */
-export function createGitBridge(ipc: IpcRendererLike): GitApi {
+export function createGitBridge(transport: IpcRendererLike): GitApi {
+  const ipc = createGitIdentityTransport(transport)
   return {
     async getState(projectId) {
       const request = validateGetGitStateRequest({ projectId })
