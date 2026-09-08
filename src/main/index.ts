@@ -21,6 +21,7 @@ import {
   type ProjectTransitionSettledEvent,
   type RecentProjectMetadata,
   type SearchEvent,
+  type NamesSearchEvent,
   type UnsavedTransitionRequestEvent,
 } from '../shared/contracts'
 import { DesktopApplication } from './app/desktop-application'
@@ -249,6 +250,7 @@ void app.whenReady().then(async () => {
       SEARCH_CHANNELS.event,
       event,
     ),
+    (ownerId, event) => publishToRenderer(ownerId, SEARCH_CHANNELS.namesEvent, event),
   )
   const terminalIpc = new TerminalIpcService(
     ipcRegistry,
@@ -394,7 +396,7 @@ function publishLifecycleToWindows(
 function publishToRenderer(
   ownerId: number,
   channel: string,
-  event: SearchEvent | RunEvent,
+  event: SearchEvent | NamesSearchEvent | RunEvent,
 ): void {
   const window = BrowserWindow.getAllWindows().find(
     (candidate) => !candidate.isDestroyed()

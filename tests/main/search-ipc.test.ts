@@ -69,6 +69,7 @@ describe('Phase 2D search IPC', () => {
       registry,
       searchService,
       (ownerId, event) => published.push({ ownerId, event }),
+      () => {},
     )
     ipc.start()
 
@@ -130,6 +131,7 @@ describe('Phase 2D search IPC', () => {
       registry,
       searchService,
       (_ownerId, event) => events.push(event),
+      () => {},
     )
     ipc.start()
     await ipcMain.invoke(SEARCH_CHANNELS.start, {
