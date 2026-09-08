@@ -4,6 +4,7 @@ import { authorizeGitPath } from '../../src/main/services/git/git-path-authority
 import { normalizePathIdentity } from '../../src/main/services/project/project-identity'
 import { DomainError } from '../../src/main/errors/app-error'
 import { createGitBridge } from '../../src/preload/bridge/git'
+import { gitSemanticTransport } from '../helpers/git-semantic-transport'
 import { GitIpcService } from '../../src/main/ipc/git-ipc-service'
 import { IpcHandlerRegistry, type IpcMainLike } from '../../src/main/ipc/ipc-handler-registry'
 import { GIT_CHANNELS, type ProjectId } from '../../src/shared/contracts'
@@ -154,7 +155,7 @@ describe('Phase 5B IPC and Preload', () => {
     const service = new GitIpcService(new IpcHandlerRegistry(ipc), git)
     service.start()
     const invoke = vi.fn(async (channel: string, payload: unknown) => handlers.get(channel)!({ sender: { id: 1 } }, payload))
-    const bridge = createGitBridge({ invoke, on: vi.fn(), removeListener: vi.fn() })
+    const bridge = createGitBridge(gitSemanticTransport({ invoke, on: vi.fn(), removeListener: vi.fn() }))
     expect(await bridge.getStatus(id)).toEqual({ ok: true, value: status })
     for (const action of ['stage', 'unstage'] as const) {
       expect(await bridge[action](id, '-file.txt')).toEqual({ ok: true, value: outcome })

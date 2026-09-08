@@ -114,7 +114,7 @@ before affected work continues.
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
-| Phase 5 — Git Integration | `IN_PROGRESS` | 5A foundation/detection, 5B status/stage/unstage and 5C commit/branch/history complete; 5D–5F remain |
+| Phase 5 — Git Integration | `IN_PROGRESS` | 5A–5D complete, including document ownership remediation; 5E–5F remain |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2158,7 +2158,7 @@ not a Phase 4 V1 acceptance requirement.
 - Phase 5A — Git Foundation + Dependency / Repository Detection: `COMPLETE`.
 - Phase 5B — Git Status + Stage / Unstage: `COMPLETE`.
 - Phase 5C — Commit + Branch + History: `COMPLETE` (including the authorized local branch `@` remediation).
-- Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `NOT_STARTED`.
+- Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `COMPLETE` (including document ownership remediation).
 - Phase 5E — Right Sidebar + Source Control UI: `NOT_STARTED`.
 - Phase 5F — Stabilization / Final Verification: `NOT_STARTED`.
 
@@ -2352,6 +2352,90 @@ Only this backend package is complete. No dependency, package-lock or ADR change
 Source Control UI, remote Git, Phase 5D lifecycle system, repository stage,
 commit or push was introduced. Phase 5 overall is not complete; 5D–5F require
 their own authorization and acceptance.
+
+#### Phase 5D resumed execution (2026-09-08)
+
+Corrective reopening: the final read-only review found that `git:get-context`
+unconditionally restored an owner lost during navigation. The user authorized
+only this MEDIUM document-ownership remediation. Phase 5D was reopened to
+`IN_PROGRESS`; it returned to `COMPLETE` after document-specific regressions and
+the original verification matrix passed again, as recorded below.
+No new public contract, decision, dependency or Phase 5E work is authorized.
+
+Document ownership remediation verification (2026-09-08):
+
+- Retained and verified the resumed implementation: Main observes WebContents
+  before load, revokes ownership on navigation/crash/destruction, and restores
+  only a committed current main document. Both context and semantic Git IPC
+  check trusted sender-frame identity; requests cannot restore lost ownership.
+- Six document regression cases cover pre-commit/context rejection, repeated
+  navigation, stale caller/token rejection, invalid frames, pending read
+  cancellation and dispatched mutation draining across replacement.
+- Focused document/lifecycle IPC run: 16/16 tests. Full `npm test`: 766/766
+  tests across 60 files, with no skips or configured retry/timeout changes.
+- Electron 44.0.0 document smoke passed three same-WebContents reloads with
+  four distinct committed frames and three rejected old-document semantic
+  requests. New-document requests succeeded after each commit.
+- Production/native `npm run build`, `npm run typecheck`, `npm run lint`,
+  Git native smoke, Run native smoke (15 cycles, root-first descendant cleanup
+  and failed spawn), and `git diff --check` passed. Sandbox spawn EPERM required
+  approved outside-sandbox test/build execution; Electron smokes also ran with
+  approval. The existing jsdom canvas diagnostic remains non-blocking.
+- No additional production correction was needed on this continuation. No ADR,
+  dependency, public DTO or architecture deviation; 5E/5F remain NOT_STARTED.
+
+The user authorized continuation of the unfinished 5D work on `feature/phase-5`.
+The existing uncommitted lifecycle, IPC identity, native Git runner, composition,
+and regression fixtures were retained. Phase 4 and 5A–5C are complete; ADR-009,
+ADR-016 and the existing Windows Job ownership primitives apply, with no open
+Git strategy/dependency gate. The package moved to `IN_PROGRESS` on resumption
+and to `COMPLETE` after the following exit evidence passed.
+
+- Scope: project/owner generations, latest-read cancellation, stale receiving
+  guards, serialized mutations, project transition draining, root unavailability,
+  renderer reload/destruction, shutdown and retained process-tree cleanup.
+- Main owns all command dispatch and Windows Jobs. Preload carries only validated
+  request identity and transient transport bookkeeping; the semantic Git API
+  remains unchanged. No renderer process, executable, cwd or argv authority.
+- Mutation preparation can be cancelled. Once dispatched, a mutation drains with
+  its bounded command timeout; applied results survive lost owners but lose stale
+  snapshots. Unknown outcomes require refresh and are never automatically retried.
+- Native `createGit` shares only private pipe/Job primitives with Run; Run's
+  single-target `create` entry remains intact. No package or public executor added.
+- Required exit evidence: deterministic lifecycle/IPC/race/security/cleanup tests,
+  real Windows Git hooks and surviving descendants, abort/timeout cleanup,
+  production Electron native smoke, Run native regression smoke, full `npm test`,
+  typecheck, lint, build and `git diff --check`.
+- 5E Source Control UI, 5F final Phase 5 review, settings, remote/hosted Git and
+  credential storage remain outside this package.
+
+Verification and exit result:
+
+- Full `npm test`: 760/760 tests across 59 files, including 40 new 5D tests;
+  no local skips. Native integration covers ordinary hooks, a detached hook
+  descendant proven alive after Git root exit and dead after cleanup, abort,
+  timeout, semantic index/commit and exact local `@` branch/history operations.
+- Deterministic tests prove Main and receiving-side latest-result protection,
+  identity rejection before dispatch, project close/switch draining, reload,
+  unavailable root, lost owner and shutdown behavior. DesktopApplication stays
+  `STOPPING` and retains dependencies when Git cleanup fails, then completes on
+  successful explicit retry. Transport listeners are removed after settlement.
+- `node_modules\\.bin\\electron.cmd scripts/smoke-git-native.mjs`: PASS with
+  real Unicode/quoted/trailing-backslash commit/history, pipe EOFs and empty Job
+  release. Existing `scripts/smoke-run-native.mjs`: PASS, 15 cycles plus
+  root-first descendant cleanup and failed spawn.
+- Windows NT 10.0.26200.0 x64, Git 2.47.1.windows.2, Electron 44.0.0.
+  Typecheck, lint, final production/native build and `git diff --check` passed.
+- Sandbox spawn EPERM required approved outside-sandbox test/build execution.
+  Earlier full runs hit existing timeouts in Monaco/5C and an oversized new
+  native scenario. The new scenario was split into independent hook,
+  index/commit and branch/history cases; the final standalone suite passed
+  without changing maxWorkers=4, timeout limits or configured retries. The
+  existing jsdom canvas diagnostic remains non-blocking. Non-Windows CI skips
+  the Windows-native cases explicitly and cannot claim native acceptance.
+- No ADR/dependency change or architecture deviation. No Source Control UI or
+  packaged/installed Windows acceptance is claimed; those remain 5E/7 scope.
+  Phase 5D is complete; Phase 5 overall remains `IN_PROGRESS`.
 
 ### Goal
 

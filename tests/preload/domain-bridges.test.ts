@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { createPreloadApi } from '../../src/preload/bridge'
+import { GIT_CONTEXT_CHANNEL } from '../../src/shared/contracts/git-lifecycle'
 import type { IpcRendererLike } from '../../src/preload/bridge/lifecycle'
 import {
   FILE_CHANNELS,
@@ -22,7 +23,13 @@ class FakeIpcRenderer implements IpcRendererLike {
     void listener
     this.listeners.delete(channel)
   })
-  readonly invoke = vi.fn(async (channel: string) => this.responses.get(channel))
+  readonly invoke = vi.fn(async (channel: string, payload?: unknown) => {
+    if (channel === GIT_CONTEXT_CHANNEL) return { ok: true, value: { generation: 'fixture-generation' } }
+    if (channel.startsWith('git:')) return { ok: true, value: {
+      identity: (payload as { identity: unknown }).identity, result: this.responses.get(channel),
+    } }
+    return this.responses.get(channel)
+  })
 
   on(
     channel: string,
