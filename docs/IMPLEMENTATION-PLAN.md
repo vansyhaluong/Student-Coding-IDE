@@ -114,7 +114,7 @@ before affected work continues.
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
-| Phase 5 — Git Integration | `IN_PROGRESS` | 5A–5D complete, including document ownership remediation; 5E–5F remain |
+| Phase 5 — Git Integration | `IN_PROGRESS` | 5A–5D complete; 5E sidebar correction implemented, standard parallel test gate blocked by Git timeouts; 5F remains |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2159,7 +2159,7 @@ not a Phase 4 V1 acceptance requirement.
 - Phase 5B — Git Status + Stage / Unstage: `COMPLETE`.
 - Phase 5C — Commit + Branch + History: `COMPLETE` (including the authorized local branch `@` remediation).
 - Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `COMPLETE` (including document ownership remediation).
-- Phase 5E — Right Sidebar + Source Control UI: `NOT_STARTED`.
+- Phase 5E — Right Sidebar + Source Control UI: `BLOCKED` (visual correction verified; standard parallel test gate has Git integration timeouts).
 - Phase 5F — Stabilization / Final Verification: `NOT_STARTED`.
 
 Phase 5A added PATH-only Git detection, the private bounded finite command
@@ -2436,6 +2436,91 @@ Verification and exit result:
 - No ADR/dependency change or architecture deviation. No Source Control UI or
   packaged/installed Windows acceptance is claimed; those remain 5E/7 scope.
   Phase 5D is complete; Phase 5 overall remains `IN_PROGRESS`.
+
+#### Phase 5E execution and acceptance (2026-09-08)
+
+Corrective reopening: the user identified sidebar visual-fidelity gaps against
+Orca's actual implementation and explicitly authorized alignment. This correction
+also has explicit approval for sharing the existing trusted Git snapshot with
+Explorer, file-only decorations, hiding stale/untrusted data, no folder aggregation
+or new requests, and conflict `!` with accessible "Conflicted — read-only" text.
+Normal display priority is D > M > A/U > R > C. This does not reopen Git semantics
+or authorize 5F. Completion below records the original 5E baseline; the correction
+must pass regression and visual verification before returning to COMPLETE.
+
+Corrective verification follow-up (2026-09-08):
+
+- Completed the resumed compact activity tabs, project toolbar, Names/Contents
+  strip, 24 px file rows, folder expansion icons and file-only Git decorations.
+  Reference evidence is the locked Orca right-sidebar ActivityBarButton,
+  FileExplorerToolbar/QueryStrip/ViewSwitch/Row and status-display patterns;
+  implementation remains independent. No folder aggregation or new Git requests.
+- Fixed explicit accessible file-row names, including `Conflicted — read-only`.
+  Focused sidebar regression passed 85/85 tests. Snapshot invalidation, project
+  replacement and conflict behavior passed without changing domain semantics.
+- Typecheck, lint, final production/native build and diff whitespace checks passed.
+  Real Windows Electron Git/UI smoke and Names/conflict fixture smoke passed.
+  Inspected `explorer-aligned.png`, `explorer-narrow.png`, `full-shell.png` and
+  `source-control.png` under `out/phase-5e-ui/`. The real smoke verifies 280/220 px
+  layouts, keyboard resize, viewport/content containment, accessible labels,
+  semantic Git actions, draft retention, sandbox and owned process cleanup.
+  Geometry assertions account for the Windows DPI-scaled strip border.
+- Full diagnostic `npm test -- --no-file-parallelism` passed 807/807 tests in
+  65 files, with no skipped tests and unchanged assertions/timeouts. This is not
+  a passing result for the default parallel `npm test` command: repeated default
+  runs timed out in different real Git integration cases at 5 seconds. An initial
+  Monaco import timeout did not recur. Sandbox spawn EPERM required approved
+  external test/build execution; existing jsdom canvas noise remains non-blocking.
+- 5E moves to BLOCKED solely on the unresolved default parallel test gate. UI
+  correction is implemented and verified, but the full exit gate is not claimed.
+  Test configuration, dependencies and ADRs are unchanged; 5F is not started or
+  ready for execution. The completion narrative below is historical baseline.
+
+The user authorized continuing 5E on `feature/phase-5`. Phase 4 and 5A–5D
+prerequisites were COMPLETE. The resumed working tree already contained the
+Source Control component, right-sidebar composition, Names/Contents search and
+their tests; these changes were preserved. 5E moved through IN_PROGRESS before
+verification. No Git strategy/dependency decision was open. Feature-local React
+state follows ADR-011's existing default without selecting a shared-state library.
+
+- Scope: right-sidebar Explorer/Source Control tabs and FR-027–FR-032 presentation
+  over the existing finite Git API. Status separates staged/unstaged/untracked
+  entries, shows conflicts read-only and reports truncation. Actions stage or
+  unstage the selected file, commit already-staged changes, explicitly switch a
+  selected local branch and display backend-bounded history.
+- Draft text survives tab switches and Refresh; successful commit clears only
+  unchanged submitted text. Failure/unknown outcome retains the draft; newer
+  edits survive delayed success. Project replacement/close or renderer reload
+  resets the project-session draft. Duplicate mutations are blocked.
+- Applied-but-unrefreshed and unknown outcomes require explicit Refresh and
+  never retry mutations automatically. Late reads cannot replace newer snapshots.
+  Added regression coverage for initial transition-lock recovery and rejection of
+  reads after root unavailability; unavailable/locked projects disable mutations.
+  Missing, invalid, not-configured and non-repository states leave the editor
+  available. Main/Preload retain project/document/process authority.
+- Visual reference: locked Orca `4bb337741c335cfcc428d3b4271023566e2dadb8`,
+  `src/renderer/src/app-shell/AppWorkspaceShell.tsx` evidence in
+  `docs/ORCA-ANALYSIS.md`, and `docs/STYLEGUIDE.md`. The independent UI retains
+  the existing compact dark shell, semantic tokens and sidebar proportions;
+  Source Control uses the existing thin dark scrollbar language. No source copied.
+- Verification: `npm test` passed 802/802 tests across 64 files, with no skips;
+  typecheck, lint, final production/native build and `git diff --check` passed.
+  Initial sandbox worker/build spawn EPERM required approved external execution.
+  One first full run timed out loading Monaco; the unchanged test timeout and
+  worker settings passed the complete rerun. Existing jsdom canvas noise remains.
+- `scripts/smoke-git-ui.mjs` passed against a temporary Windows Git repository
+  using built App, production sandboxed Preload, validated Main IPC, document
+  ownership, GitService and native Job runner: status, stage/unstage, staged-only
+  commit, branch switch, history, draft retention, non-repository, project switch/
+  close and no pending runner cleanup. The project repository was not committed.
+- `scripts/smoke-phase-5e-ui.mjs` passed production-component/CSS fixture checks
+  for Names results, read-only conflict actions and no horizontal sidebar overflow.
+  Captured images under `out/phase-5e-ui/` were visually inspected. This fixture
+  smoke is distinct from the real Git/UI integration evidence above.
+- No ADR change, dependency, architecture deviation, hosted/remote Git, Settings,
+  repository commit/push or Phase 5F implementation. No remaining 5E blocker;
+  5F is ready for separate authorization. Overall Phase 5 remains IN_PROGRESS;
+  full final stabilization and packaged Windows acceptance remain 5F/7.
 
 ### Goal
 

@@ -3,10 +3,12 @@ import type {
   SearchApi,
   SearchEvent,
   SearchMatch,
+  NamesSearchEvent,
 } from '../../shared/contracts'
 import {
   APP_ERROR_CODES,
   SEARCH_CHANNELS,
+  SEARCH_LIMITS,
 } from '../../shared/contracts'
 import type { IpcRendererLike } from './lifecycle'
 import { invokeSafely } from './invoke'
@@ -14,6 +16,18 @@ import { isRecord, parseAppResult } from './result'
 
 export function createSearchBridge(ipcRenderer: IpcRendererLike): SearchApi {
   return {
+    async startNames(projectId, operationId, query) {
+      return parseAppResult(await invokeSafely(ipcRenderer, SEARCH_CHANNELS.startNames,
+        { projectId, operationId, query }), (value): value is null => value === null,
+      SEARCH_CHANNELS.startNames)
+    },
+    onNamesEvent(listener): () => void {
+      const wrapped = (_event: unknown, payload: unknown): void => {
+        if (isNamesEvent(payload)) listener(payload)
+      }
+      ipcRenderer.on(SEARCH_CHANNELS.namesEvent, wrapped)
+      return () => ipcRenderer.removeListener(SEARCH_CHANNELS.namesEvent, wrapped)
+    },
     async start(projectId, operationId, query) {
       return parseAppResult(
         await invokeSafely(ipcRenderer, SEARCH_CHANNELS.start, {
@@ -40,6 +54,16 @@ export function createSearchBridge(ipcRenderer: IpcRendererLike): SearchApi {
       return () => ipcRenderer.removeListener(SEARCH_CHANNELS.event, wrapped)
     },
   }
+}
+
+function isNamesEvent(value: unknown): value is NamesSearchEvent {
+  if (!isRecord(value) || !isProjectId(value.projectId) || !isOperationId(value.operationId)) return false
+  if (value.type !== 'batch') return isSearchEvent(value)
+  return Object.keys(value).every((key) => ['type', 'projectId', 'operationId', 'matches'].includes(key))
+    && Array.isArray(value.matches) && value.matches.length <= SEARCH_LIMITS.batchSize
+    && value.matches.every((match) => isRecord(match) && Object.keys(match).length === 1
+      && isRelativePath(match.relativePath) && ![...match.relativePath].some((char) => char.charCodeAt(0) < 32)
+      && !match.relativePath.split('/').some((part) => part === '.' || part === ''))
 }
 
 function isSearchEvent(value: unknown): value is SearchEvent {

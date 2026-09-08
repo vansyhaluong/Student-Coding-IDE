@@ -114,6 +114,8 @@ import type {
   SearchEvent,
   SearchMatch,
   StudentIdeApi,
+  GitApi,
+  GitStatus,
   UnsavedTransitionRequestEvent,
 } from '../../src/shared/contracts'
 
@@ -135,6 +137,50 @@ afterEach(() => {
 })
 
 describe('ProjectExplorer integration', () => {
+  it('shares trusted Source Control decorations without another Git lifecycle and hides invalidated/project-old data', async () => {
+    let changed!: (event: ProjectChangedEvent) => void
+    const initial: GitStatus = { entries: [
+      { path: 'main.ts', staged: { kind: 'ADDED' }, unstaged: { kind: 'MODIFIED' }, untracked: false },
+      { path: 'new.ts', staged: null, unstaged: null, untracked: true },
+      { path: 'conflict.ts', staged: { kind: 'CONFLICTED' }, unstaged: { kind: 'CONFLICTED' }, untracked: false },
+      { path: 'src/nested.ts', staged: null, unstaged: { kind: 'MODIFIED' }, untracked: false },
+    ], didHitLimit: false }
+    const getStatus = vi.fn<GitApi['getStatus']>(async () => success(initial))
+    installApi({ project: { getActive: async () => success(project), onChanged: (listener) => { changed = listener; return () => {} } },
+      file: { listDirectory: async (_id, path) => success(path ? [file('src/nested.ts')] : [file('main.ts'), file('new.ts'), file('conflict.ts'), directory('src')]) },
+      git: { getState: async () => success({ dependency: 'AVAILABLE', repository: 'REPOSITORY' }), getStatus,
+        getBranches: async () => success({ state: 'UNBORN', currentBranch: 'main', branches: [] }), getHistory: async () => success([]) } })
+    const view = render(createElement(App))
+    const badge = (path: string) => view.container.querySelector(`.tree-row[title="${path}"] .file-git-decoration`)
+    await waitFor(() => expect(badge('main.ts')?.textContent).toBe('M'))
+    expect(badge('new.ts')?.textContent).toBe('U')
+    expect(badge('conflict.ts')?.textContent).toBe('!')
+    expect(badge('conflict.ts')?.getAttribute('title')).toBe('Conflicted — read-only')
+    expect(badge('conflict.ts')?.getAttribute('aria-label')).toBe('Conflicted — read-only')
+    expect(screen.getByRole('button', { name: 'conflict.ts Conflicted — read-only' })).toBeTruthy()
+    expect(badge('src')).toBeNull()
+    fireEvent.click(screen.getByTitle('src'))
+    await waitFor(() => expect(badge('src/nested.ts')?.textContent).toBe('M'))
+    fireEvent.click(screen.getByRole('tab', { name: 'Source Control' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Explorer' }))
+    expect(getStatus).toHaveBeenCalledTimes(1)
+    const pending = deferred<AppResult<GitStatus>>()
+    getStatus.mockReturnValueOnce(pending.promise)
+    fireEvent.click(screen.getByRole('tab', { name: 'Source Control' }))
+    fireEvent.click(screen.getByLabelText('Refresh Source Control'))
+    expect(view.container.querySelectorAll('.file-git-decoration')).toHaveLength(0)
+    await act(async () => pending.resolve(success(initial)))
+    await waitFor(() => expect(view.container.querySelectorAll('.file-git-decoration').length).toBeGreaterThan(0))
+    const next = deferred<AppResult<GitStatus>>()
+    getStatus.mockReturnValueOnce(next.promise)
+    const other = { id: 'project_abcdef1234567890abcdef12', name: 'Other' } as ProjectIdentity
+    act(() => changed({ activeProject: other }))
+    expect(view.container.querySelectorAll('.file-git-decoration')).toHaveLength(0)
+    await act(async () => next.resolve(success({ entries: [], didHitLimit: false })))
+    expect(view.container.querySelectorAll('.file-git-decoration')).toHaveLength(0)
+    expect(getStatus).toHaveBeenCalledTimes(3)
+  })
+
   it('loads the root initially and expands folders lazily', async () => {
     const listDirectory = vi.fn(async (
       _projectId: ProjectIdentity['id'],
@@ -337,6 +383,40 @@ describe('ProjectExplorer integration', () => {
 })
 
 describe('Project Search integration', () => {
+  it('uses accessible icon-only tool tabs, retains draft and Search state across tabs, and clears the draft on close', async () => {
+    let changed!: (event: ProjectChangedEvent) => void
+    installApi({ project: { getActive: async () => success(project), onChanged: (listener) => { changed = listener; return () => {} } },
+      git: { getState: async () => success({ dependency: 'AVAILABLE', repository: 'REPOSITORY' }),
+        getStatus: async () => success({ entries: [], didHitLimit: false }),
+        getBranches: async () => success({ state: 'UNBORN', currentBranch: 'main', branches: [] }),
+        getHistory: async () => success([]) } })
+    render(createElement(App))
+    await screen.findByRole('tab', { name: 'Names' })
+    const tools = screen.getByRole('tablist', { name: 'Project tools' })
+    expect(tools.querySelectorAll('[role="tab"]')).toHaveLength(2)
+    for (const tab of tools.querySelectorAll('button')) {
+      expect(tab.textContent).toBe('')
+      expect(tab.getAttribute('aria-label')).toBe(tab.getAttribute('title'))
+      expect(tab.querySelector('svg')).toBeTruthy()
+    }
+    expect(screen.queryByRole('tab', { name: 'Search' })).toBeNull()
+    expect(screen.getByLabelText('Search project').closest('#explorer-sidebar-panel')).toBeTruthy()
+    fireEvent.click(screen.getByRole('tab', { name: 'Contents' }))
+    fireEvent.change(screen.getByLabelText('Search project'), { target: { value: 'kept query' } })
+    fireEvent.click(screen.getByRole('tab', { name: 'Source Control' }))
+    const input = await screen.findByLabelText('Commit message')
+    fireEvent.change(input, { target: { value: 'draft' } })
+    fireEvent.click(screen.getByRole('tab', { name: 'Explorer' }))
+    expect((screen.getByLabelText('Search project') as HTMLInputElement).value).toBe('kept query')
+    expect(screen.getByRole('tab', { name: 'Contents' }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.click(screen.getByRole('tab', { name: 'Source Control' }))
+    expect((screen.getByLabelText('Commit message') as HTMLTextAreaElement).value).toBe('draft')
+    act(() => changed({ activeProject: null }))
+    expect(screen.queryByLabelText('Commit message')).toBeNull()
+    act(() => changed({ activeProject: project }))
+    expect((await screen.findByLabelText('Commit message') as HTMLTextAreaElement).value).toBe('')
+  })
+
   it('shows grouped loading/results states and preserves search state across sidebar tabs', async () => {
     const searchEvents = createSearchEventBus()
     const start = vi.fn(async (...args: Parameters<SearchApi['start']>) => {
@@ -350,7 +430,7 @@ describe('Project Search integration', () => {
       search: { start, onEvent: searchEvents.subscribe },
     })
     render(createElement(App))
-    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Contents' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     vi.useFakeTimers()
@@ -382,9 +462,9 @@ describe('Project Search integration', () => {
     fireEvent.click(mainGroup)
     expect(mainGroup.getAttribute('aria-expanded')).toBe('true')
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Source Control' }))
+    expect(screen.queryByRole('tab', { name: 'Contents' })).toBeNull()
     fireEvent.click(screen.getByRole('tab', { name: 'Explorer' }))
-    await screen.findByText('Empty folder')
-    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
     expect(screen.getByText('3 matches in 2 files')).not.toBeNull()
     expect((input as HTMLInputElement).value).toBe('save')
     expect(listDirectory.mock.calls).toEqual([
@@ -404,7 +484,7 @@ describe('Project Search integration', () => {
       search: { start, onEvent: searchEvents.subscribe },
     })
     render(createElement(App))
-    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Contents' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'missing' } })
@@ -440,7 +520,7 @@ describe('Project Search integration', () => {
       search: { start, onEvent: searchEvents.subscribe },
     })
     render(createElement(App))
-    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Contents' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'alpha' } })
@@ -475,7 +555,7 @@ describe('Project Search integration', () => {
       search: { start, onEvent: searchEvents.subscribe },
     })
     render(createElement(App))
-    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Contents' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     vi.useFakeTimers()
@@ -509,7 +589,7 @@ describe('Project Search integration', () => {
       search: { start, onEvent: searchEvents.subscribe },
     })
     render(createElement(App))
-    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Contents' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     fireEvent.change(input, { target: { value: 'alpha' } })
@@ -533,8 +613,8 @@ describe('Project Search integration', () => {
 
     await waitFor(() => expect(screen.queryByText('old.ts')).toBeNull())
     expect(screen.queryByText('late.ts')).toBeNull()
-    expect((input as HTMLInputElement).value).toBe('')
-    expect(screen.getByText('Type to search in files')).not.toBeNull()
+    expect((screen.getByLabelText('Search project') as HTMLInputElement).value).toBe('')
+    expect(screen.getByRole('tab', { name: 'Names' }).getAttribute('aria-selected')).toBe('true')
   })
 
   it('reuses a dirty canonical model and reveals each selected result without overwriting it', async () => {
@@ -550,7 +630,7 @@ describe('Project Search integration', () => {
       search: { start, onEvent: searchEvents.subscribe },
     })
     render(createElement(App))
-    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Contents' }))
     const input = screen.getByLabelText('Search project')
     await waitFor(() => expect((input as HTMLInputElement).disabled).toBe(false))
     act(() => {
@@ -1385,7 +1465,7 @@ describe('App project integration', () => {
     expect(screen.getByRole('button', { name: 'Switch project' }).hasAttribute('disabled')).toBe(true)
     expect(screen.getByTitle('New file').hasAttribute('disabled')).toBe(true)
     expect(screen.getByTitle('New Terminal').hasAttribute('disabled')).toBe(true)
-    fireEvent.click(screen.getByRole('tab', { name: 'Search' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Contents' }))
     expect(screen.getByLabelText('Search project').hasAttribute('disabled')).toBe(true)
     expect(terminalCreate).not.toHaveBeenCalled()
 
@@ -1965,6 +2045,7 @@ function installApi(overrides: {
   lifecycle?: Partial<LifecycleApi>
   project?: Partial<ProjectApi>
   search?: Partial<SearchApi>
+  git?: Partial<GitApi>
 } = {}): StudentIdeApi {
   const api: StudentIdeApi = {
     git: {
@@ -1976,6 +2057,7 @@ function installApi(overrides: {
       getBranches: async () => failure('Not configured'),
       switchBranch: async () => failure('Not configured'),
       getHistory: async () => failure('Not configured'),
+      ...overrides.git,
     },
     run: {
       start: async () => failure('Not configured'),
@@ -2013,6 +2095,8 @@ function installApi(overrides: {
       ...overrides.project,
     },
     search: {
+      startNames: async () => success(null),
+      onNamesEvent: () => () => undefined,
       start: async () => success(null),
       cancel: async () => success(null),
       onEvent: () => () => undefined,

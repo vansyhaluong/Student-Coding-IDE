@@ -3,6 +3,7 @@ import {
   validateCancelSearchRequest,
   validateStartSearchRequest,
   type SearchEvent,
+  type NamesSearchEvent,
 } from '../../shared/contracts'
 import type { ManagedService } from '../app/desktop-application'
 import { SearchService } from '../services/search/search-service'
@@ -16,10 +17,20 @@ export class SearchIpcService implements ManagedService {
     private readonly registry: IpcHandlerRegistry,
     private readonly searchService: SearchService,
     private readonly publish: (ownerId: number, event: SearchEvent) => void,
+    private readonly publishNames: (ownerId: number, event: NamesSearchEvent) => void,
   ) {}
 
   start(): void {
     this.cleanup.push(
+      this.registry.register({
+        channel: SEARCH_CHANNELS.startNames,
+        validate: validateStartSearchRequest,
+        handle: (request, context) => {
+          this.searchService.startNames(request, context.senderId,
+            (event) => this.publishNames(context.senderId, event))
+          return null
+        },
+      }),
       this.registry.register({
         channel: SEARCH_CHANNELS.start,
         validate: validateStartSearchRequest,

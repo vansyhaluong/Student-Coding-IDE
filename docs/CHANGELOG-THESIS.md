@@ -1182,3 +1182,58 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   retained the prior implementation without further production changes and
   updated acceptance evidence. No ADR/dependency change, architecture deviation,
   repository commit/push or Phase 5E/5F work.
+
+## Phase 5E — Right sidebar and Source Control (original completion, 2026-09-08)
+
+### Corrective sidebar follow-up (2026-09-08)
+
+- Follow-up icon correction: replaced the Explorer tab's `Folder` with the
+  existing Lucide `Files` icon in `App.tsx`, matching `icon: Files` in Orca's
+  `src/renderer/src/components/right-sidebar/use-right-sidebar-activity-items.ts`
+  at locked commit `4bb337741c335cfcc428d3b4271023566e2dadb8`. Retained the
+  16 px icon and existing tab styling. Typecheck, lint, build, 60 Explorer
+  integration tests and real Electron sidebar/Git smoke passed; the regenerated
+  `explorer-aligned.png` was visually inspected. No dependency or ADR change;
+  the previously recorded full parallel-test blocker remains unchanged.
+- Finished verification of the resumed Orca-aligned sidebar geometry, search-mode
+  strip, compact file rows and trusted file-only Git decorations. Added explicit
+  accessible file-row names, including conflict read-only descriptions.
+- Expanded the real Electron smoke with accessible labels, DPI-aware geometry,
+  220 px keyboard resizing and viewport/content containment. Real Git/UI and
+  Names/conflict fixture smoke passed; all four generated screenshots were inspected.
+- Focused regression passed 85/85; full sequential diagnostic passed 807/807
+  tests across 65 files via `npm test -- --no-file-parallelism`. Typecheck, lint,
+  production/native build and whitespace checks passed.
+- Default parallel `npm test` still has varying 5-second real Git integration
+  timeouts. The corrective package is BLOCKED on that gate, despite successful
+  sequential verification; no timeout/assertion/configuration changes were made.
+  No new dependency, ADR, architecture deviation, repository commit/push or 5F work.
+
+### Original baseline evidence
+
+- Continued the existing uncommitted 5E work on `feature/phase-5`, preserving
+  sidebar, Names/Contents search, Source Control and test changes. The right
+  sidebar provides Explorer/Source Control icon tabs with retained session state.
+- Source Control presents dependency/repository states, staged/unstaged/untracked
+  files, read-only conflicts, selected-file stage/unstage, staged-only commit,
+  current/local branch switching and bounded history through the existing Git API.
+- Drafts survive tab/Refresh changes; only unchanged successfully submitted text
+  is cleared. Newer edits and failed/unknown submissions are retained. Project
+  replacement/close resets drafts. Mutations are serialized in the UI; stale reads
+  and unsafe follow-up after unknown/unrefreshed outcomes are blocked.
+- Corrected initial project-lock recovery and read settlement after unavailable
+  roots; added the regression test. Matched Source Control scrolling to existing
+  dark semantic styles without redesigning the Orca-aligned shell.
+- Verified 802/802 automated tests across 64 files, typecheck, lint, final
+  production/native build and whitespace checks. Initial sandbox spawn EPERM
+  required approved external execution. A first-run Monaco timeout did not recur
+  in the full rerun; no test timeout/worker configuration changed.
+- Added `scripts/smoke-git-ui.mjs`: built App + production Preload/Main/document
+  ownership/GitService/native runner passed real temporary-repository status,
+  stage/unstage, staged-only commit, branch/history, draft retention, project
+  replacement/non-repository/close, sandbox and owned cleanup. Component fixture
+  smoke separately passed conflict/no-overflow and Names rendering checks.
+  Screenshots in `out/phase-5e-ui/` were inspected.
+- Updated Codebase Map and Implementation Plan. No new dependency, ADR change,
+  architecture deviation or commit/push of this repository. Phase 5E is complete;
+  Phase 5F remains NOT_STARTED and overall Phase 5 remains IN_PROGRESS.

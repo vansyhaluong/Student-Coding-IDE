@@ -97,11 +97,39 @@ There is no Orca source tree, submodule, runtime dependency, or copied Orca modu
 | Run execution | RunService / internal RunStrategy / JavaScriptRunStrategy | `src/main/services/run/` | 4A–4E execution, lifecycle and narrow UI composition exist. Future TS strategy remains behind ADR-014; Run Project/npm scripts/project entry deferred | 4/Future |
 | Output | Output UI | `src/renderer/src/features/output/` | Existing Bottom Panel sibling with stdout/stderr/exit/error output; single editor-header Run entry and contextual Stop | Implemented 4E |
 | Git | GitService | `src/main/services/git/` | Detection, status, stage, commit, branch, history | 5 |
-| Source Control | Git UI | `src/renderer/src/features/git/` | Git status/actions/dependency states | 5 |
+| Source Control | Git UI | `src/renderer/src/features/git/SourceControl.tsx` | Project-session Git status, selected-row stage/unstage, commit draft, local branch switch, bounded history, unavailable/unknown/applied recovery | Implemented 5E |
 | Settings | SettingsService | `src/main/services/settings/` | Schema/defaults/validation/update | 6 |
 | Persistence | PersistenceService | `src/main/services/persistence/` | Versioned JSON, atomic writes, migration/recovery | 2/6 |
 | Settings UI | Settings UI | `src/renderer/src/features/settings/` | Theme/editor/path settings, validation UX, and user-facing Recent Projects management | 6 |
 | Test support | Service/IPC fixtures | `tests/` or colocated `*.test.ts` | Critical unit and integration gates | 2–7 |
+
+## Phase 5E actual UI and verification paths
+
+- `src/renderer/src/App.tsx` retains Explorer and Source Control in the right
+  sidebar with accessible icon tabs; `styles.css` provides existing-token Git
+  controls and dark scrolling. Git remains mounted across tab switches and is
+  replaced on project identity changes.
+- `src/renderer/src/features/git/file-decoration.ts` projects the trusted Git
+  snapshot into file-only Explorer badges and colors. SourceControl publishes
+  that snapshot through App; Explorer creates no additional Git requests or
+  lifecycle. Invalidated snapshots and old project identities are hidden.
+- `tests/renderer/file-decoration.test.ts` covers display priority and conflict
+  distinction; Explorer integration tests cover snapshot sharing, accessibility,
+  nested files, invalidation and project replacement.
+- `tests/renderer/source-control.test.tsx` covers semantic actions, draft
+  retention, mutation outcomes, stale reads, lock recovery and Preload identity
+  integration. `tests/renderer/project-explorer.integration.test.ts` covers shell
+  tabs, Search retention and project-close draft reset.
+- `scripts/smoke-git-ui.mjs` exercises the built App, production Preload/Main Git
+  IPC, document ownership and native runner against a temporary local repository.
+  `scripts/smoke-phase-5e-ui.mjs` verifies production component layout with fixture
+  responses. Generated screenshots are under `out/phase-5e-ui/`.
+  The real Git smoke also checks Orca-aligned geometry, accessible file labels,
+  and keyboard resizing to 220 px with viewport and content containment.
+- Existing resumed Names/Contents search changes remain in SearchService, search
+  contracts/IPC/Preload, SearchPanel and ProjectExplorer. Their regression paths
+  are `tests/main/search-names.test.ts`, `tests/preload/search-names.test.ts`,
+  and `tests/renderer/search-names.test.tsx`.
 
 ## Dependency direction
 

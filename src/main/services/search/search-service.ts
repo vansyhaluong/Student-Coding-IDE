@@ -13,6 +13,8 @@ import {
   type SearchEvent,
   type SearchMatch,
   type StartSearchRequest,
+  type NamesSearchEvent,
+  type NamesMatch,
 } from '../../../shared/contracts'
 import type { ManagedService } from '../../app/desktop-application'
 import { DomainError, serializeAppError } from '../../errors/app-error'
@@ -58,6 +60,7 @@ interface SearchOperation {
   limitReached: boolean
   batch: SearchMatch[]
   publish(event: SearchEvent): void
+  names?: { batch: NamesMatch[]; publish(event: NamesSearchEvent): void }
 }
 
 const nodeSearchFileSystem: SearchFileSystem = {
@@ -107,6 +110,7 @@ export class SearchService implements ManagedService {
     request: StartSearchRequest,
     ownerId: number,
     publish: (event: SearchEvent) => void,
+    names?: SearchOperation['names'],
   ): void {
     if (this.stopped) {
       throw new DomainError({
@@ -150,6 +154,7 @@ export class SearchService implements ManagedService {
       limitReached: false,
       batch: [],
       publish,
+      names,
     }
     this.operations.set(request.operationId, operation)
     void this.run(operation).finally(() => {
@@ -171,6 +176,10 @@ export class SearchService implements ManagedService {
       })
     }
     operation.cancelled = true
+  }
+
+  startNames(request: StartSearchRequest, ownerId: number, publish: (event: NamesSearchEvent) => void): void {
+    this.startSearch(request, ownerId, () => {}, { batch: [], publish })
   }
 
   cancelOwner(ownerId: number): void {
@@ -206,7 +215,8 @@ export class SearchService implements ManagedService {
         this.publishComplete(operation, 'cancelled')
         return
       }
-      operation.publish({
+      const publish = operation.names?.publish ?? operation.publish
+      publish({
         type: 'error',
         projectId: operation.request.projectId,
         operationId: operation.request.operationId,
@@ -266,7 +276,8 @@ export class SearchService implements ManagedService {
               operation.skippedFiles += 1
             }
           } else if (entry.isFile()) {
-            await this.searchFile(project, absolutePath, relativePath, operation)
+            if (operation.names) await this.searchName(project, absolutePath, relativePath, operation)
+            else await this.searchFile(project, absolutePath, relativePath, operation)
             if (
               operation.matchCount >= SEARCH_LIMITS.maximumMatches
               || operation.scannedFiles >= SEARCH_LIMITS.maximumFiles
@@ -322,6 +333,28 @@ export class SearchService implements ManagedService {
     }
   }
 
+  private async searchName(project: ActiveProject, absolutePath: string,
+    relativePath: string, operation: SearchOperation): Promise<void> {
+    const names = operation.names
+    if (!names) return
+    try {
+      const stats = await this.fileSystem.lstat(absolutePath)
+      if (stats.isSymbolicLink() || !stats.isFile()
+        || !await this.canonicalContainedPath(project, absolutePath)) {
+        operation.skippedFiles++
+        return
+      }
+      if (!this.isAuthoritative(operation)) return
+      operation.scannedFiles++
+      // Same literal Unicode case-insensitive matching as Contents, against paths only.
+      if (new RegExp(escapeRegExp(operation.request.query), 'iu').test(relativePath)) {
+        names.batch.push({ relativePath })
+        operation.matchCount++
+        if (names.batch.length >= SEARCH_LIMITS.batchSize) this.flushBatch(operation)
+      }
+    } catch { operation.skippedFiles++ }
+  }
+
   private collectMatches(
     content: string,
     relativePath: string,
@@ -370,6 +403,13 @@ export class SearchService implements ManagedService {
   }
 
   private flushBatch(operation: SearchOperation): void {
+    if (operation.names) {
+      if (operation.names.batch.length && this.isAuthoritative(operation)) {
+        operation.names.publish({ type: 'batch', projectId: operation.request.projectId,
+          operationId: operation.request.operationId, matches: operation.names.batch.splice(0) })
+      }
+      return
+    }
     if (operation.batch.length === 0 || !this.isAuthoritative(operation)) return
     const matches = operation.batch.splice(0)
     operation.publish({
@@ -385,7 +425,8 @@ export class SearchService implements ManagedService {
     status: 'completed' | 'cancelled',
   ): void {
     if (this.stopped || !this.isOwnerAlive(operation.ownerId)) return
-    operation.publish({
+    const publish = operation.names?.publish ?? operation.publish
+    publish({
       type: 'complete',
       projectId: operation.request.projectId,
       operationId: operation.request.operationId,

@@ -6,12 +6,16 @@ import type {
   ProjectIdentity,
   SearchCompleteEvent,
   SearchMatch,
+  NamesMatch,
 } from '../../../../shared/contracts'
 
 interface SearchPanelProps {
   project: ProjectIdentity | null
   onNavigate(match: SearchMatch): void
   interactionLocked?: boolean
+  tree?: ReactNode
+  onOpenFile?(path: string): void
+  showProjectName?: boolean
 }
 
 type SearchStatus = 'idle' | 'debouncing' | 'searching' | 'complete' | 'cancelled' | 'error'
@@ -25,7 +29,13 @@ export function SearchPanel({
   project,
   onNavigate,
   interactionLocked = false,
+  tree,
+  onOpenFile,
+  showProjectName = true,
 }: SearchPanelProps) {
+  const [mode, setMode] = useState<'names' | 'contents'>('names')
+  const modeRef = useRef(mode)
+  const [names, setNames] = useState<NamesMatch[]>([])
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<SearchStatus>('idle')
   const [matches, setMatches] = useState<SearchMatch[]>([])
@@ -48,7 +58,7 @@ export function SearchPanel({
 
   useEffect(() => window.studentIde.search.onEvent((event) => {
     if (
-      event.operationId !== activeOperation.current
+      modeRef.current !== 'contents' || event.operationId !== activeOperation.current
       || event.projectId !== projectRef.current?.id
     ) return
     if (event.type === 'batch') {
@@ -68,6 +78,21 @@ export function SearchPanel({
     }
   }), [])
 
+  useEffect(() => window.studentIde.search.onNamesEvent((event) => {
+    if (modeRef.current !== 'names' || event.operationId !== activeOperation.current
+      || event.projectId !== projectRef.current?.id) return
+    if (event.type === 'batch') setNames((current) => [...current, ...event.matches])
+    else {
+      clearLoadingTimer()
+      setLoadingVisible(false)
+      activeOperation.current = null
+      if (event.type === 'complete') {
+        setSummary(event)
+        setStatus(event.status === 'cancelled' ? 'cancelled' : 'complete')
+      } else { setError(event.error.message); setStatus('error') }
+    }
+  }), [])
+
   useLayoutEffect(() => {
     clearDebounceTimer()
     clearLoadingTimer()
@@ -77,6 +102,9 @@ export function SearchPanel({
       void window.studentIde.search.cancel(operationId).catch(() => undefined)
     }
     queryRef.current = ''
+    modeRef.current = 'names'
+    setMode('names')
+    setNames([])
     setQuery('')
     setMatches([])
     setSummary(null)
@@ -122,6 +150,7 @@ export function SearchPanel({
     const previous = activeOperation.current
     const operationId = createOperationId()
     activeOperation.current = operationId
+    setNames([])
     if (previous) {
       void window.studentIde.search.cancel(previous).catch(() => undefined)
     }
@@ -137,7 +166,8 @@ export function SearchPanel({
     setCollapsedGroups(new Set())
     setSelectedMatch(null)
     try {
-      const result = await window.studentIde.search.start(
+      const start = modeRef.current === 'names' ? window.studentIde.search.startNames : window.studentIde.search.start
+      const result = await start(
         project.id,
         operationId,
         nextQuery,
@@ -174,6 +204,7 @@ export function SearchPanel({
     clearLoadingTimer()
     setLoadingVisible(false)
     setMatches([])
+    setNames([])
     setSummary(null)
     setError(null)
     setCollapsedGroups(new Set())
@@ -204,12 +235,22 @@ export function SearchPanel({
     queryRef.current = ''
     setQuery('')
     setMatches([])
+    setNames([])
     setSummary(null)
     setError(null)
     setStatus('idle')
     setLoadingVisible(false)
     setCollapsedGroups(new Set())
     setSelectedMatch(null)
+  }
+
+  const switchMode = (next: 'names' | 'contents'): void => {
+    if (next === modeRef.current || interactionLockedRef.current) return
+    clearDebounceTimer(); clearLoadingTimer(); cancelActive()
+    modeRef.current = next
+    setMode(next); setNames([]); setMatches([]); setSummary(null); setError(null)
+    setStatus('idle'); setLoadingVisible(false)
+    if (queryRef.current.trim()) void runSearch(queryRef.current)
   }
 
   const toggleGroup = (relativePath: string): void => {
@@ -223,10 +264,10 @@ export function SearchPanel({
 
   return (
     <section className="search-panel" aria-label="Project Search">
-      <div className="search-project-toolbar" title={project?.name}>
+      {showProjectName && <div className="search-project-toolbar" title={project?.name}>
         <Folder />
         <span>{project?.name ?? 'No project'}</span>
-      </div>
+      </div>}
       <form className="search-form" onSubmit={(event) => void submit(event)}>
         <label htmlFor="project-search-input">Search project</label>
         <div className="search-input-shell">
@@ -240,7 +281,7 @@ export function SearchPanel({
             }}
             disabled={!project || interactionLocked}
             maxLength={256}
-            placeholder="Search"
+            placeholder="Find files..."
             autoComplete="off"
             spellCheck={false}
           />
@@ -252,6 +293,37 @@ export function SearchPanel({
           )}
         </div>
       </form>
+
+      <div className="search-mode-tabs" role="tablist" aria-label="Search mode">
+        {(['names', 'contents'] as const).map((item) => <button key={item} type="button"
+          id={`search-mode-${item}`} role="tab" aria-selected={mode === item}
+          aria-controls="search-mode-results" disabled={interactionLocked}
+          onClick={() => switchMode(item)} onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+              event.preventDefault()
+              const next = item === 'names' ? 'contents' : 'names'
+              switchMode(next); document.getElementById(`search-mode-${next}`)?.focus()
+            }
+          }}>{item === 'names' ? 'Names' : 'Contents'}</button>)}
+      </div>
+      <div id="search-mode-results" role="tabpanel" aria-labelledby={`search-mode-${mode}`} className="search-mode-results">
+      <div hidden={mode !== 'names' || query.length > 0}>{tree}</div>
+      {mode === 'names' && query.length > 0 && <>
+        <div className="search-status" aria-live="polite" aria-busy={status === 'debouncing' || status === 'searching'}>
+          {status === 'debouncing' && <span className="sr-only">Search queued</span>}
+          {status === 'searching' && loadingVisible && 'Searching…'}
+          {status === 'error' && <span role="alert">{error}</span>}
+          {status === 'complete' && `${names.length} files${summary?.limitReached ? ' — result limit reached' : ''}`}
+          {status === 'cancelled' && 'Search cancelled.'}
+        </div>
+        <ul className="names-results" aria-label="Matching file paths">
+          {names.map(({ relativePath }) => <li key={relativePath}><button type="button"
+            disabled={interactionLocked} title={relativePath} onClick={() => onOpenFile?.(relativePath)}>
+            <File aria-hidden="true" /><span>{relativePath}</span>
+          </button></li>)}
+        </ul>
+      </>}
+      {mode === 'contents' && <>
 
       <div
         className={`search-status ${groups.length > 0 ? 'summary' : 'empty'}`}
@@ -312,6 +384,8 @@ export function SearchPanel({
           ))}
         </div>
       )}
+      </>}
+      </div>
     </section>
   )
 }

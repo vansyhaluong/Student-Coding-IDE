@@ -1,7 +1,7 @@
-import { Folder, FolderOpen, FolderPlus, ListChecks, Search, SquareTerminal, X } from 'lucide-react'
+import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
-import type { AppResult, ProjectIdentity } from '../../shared/contracts'
+import type { AppResult, GitStatus, ProjectIdentity } from '../../shared/contracts'
 import { SidebarResizer } from './components/SidebarResizer'
 import { Button } from './components/ui/Button'
 import { Dialog, PromptDialog } from './components/ui/Dialog'
@@ -19,6 +19,7 @@ import { ProblemsPanel } from './features/problems/ProblemsPanel'
 import { problemsStore } from './features/problems/problems-session'
 import { useProjectProblems } from './features/problems/use-project-problems'
 import { SearchPanel } from './features/search/SearchPanel'
+import { SourceControl } from './features/git/SourceControl'
 import { TerminalPanel } from './features/terminal/TerminalPanel'
 import { terminalController } from './features/terminal/terminal-session'
 import { EditorRunAction } from './features/output/EditorRunAction'
@@ -33,9 +34,13 @@ const DEFAULT_TERMINAL_HEIGHT = 260
 
 export default function App() {
   const [project, setProject] = useState<ProjectIdentity | null>(null)
+  const [gitDecorationSnapshot, setGitDecorationSnapshot] = useState<{ project: ProjectIdentity; status: GitStatus | null } | null>(null)
+  const publishGitSnapshot = useCallback((owner: ProjectIdentity, status: GitStatus | null) => {
+    setGitDecorationSnapshot({ project: owner, status })
+  }, [])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [sidebarTab, setSidebarTab] = useState<'explorer' | 'search'>('explorer')
+  const [sidebarTab, setSidebarTab] = useState<'explorer' | 'git'>('explorer')
   const [leftWidth, setLeftWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [rightWidth, setRightWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -182,7 +187,7 @@ export default function App() {
     '--projects-width': `${leftWidth}px`,
     '--tools-width': `${rightWidth}px`,
   } as CSSProperties
-  const selectSidebarTab = (tab: 'explorer' | 'search'): void => {
+  const selectSidebarTab = (tab: 'explorer' | 'git'): void => {
     setSidebarTab(tab)
     requestAnimationFrame(() => document.getElementById(`${tab}-sidebar-tab`)?.focus())
   }
@@ -349,22 +354,24 @@ export default function App() {
               role="tab"
               aria-selected={sidebarTab === 'explorer'}
               aria-controls="explorer-sidebar-panel"
+              aria-label="Explorer" title="Explorer"
               onClick={() => setSidebarTab('explorer')}
               onKeyDown={(event) => {
-                if (event.key === 'ArrowRight') selectSidebarTab('search')
+                if (event.key === 'ArrowRight') selectSidebarTab('git')
               }}
-            ><Folder /><span>Explorer</span></button>
+            ><Files aria-hidden="true" /></button>
             <button
               type="button"
-              id="search-sidebar-tab"
+              id="git-sidebar-tab"
               role="tab"
-              aria-selected={sidebarTab === 'search'}
-              aria-controls="search-sidebar-panel"
-              onClick={() => setSidebarTab('search')}
+              aria-selected={sidebarTab === 'git'}
+              aria-controls="git-sidebar-panel"
+              aria-label="Source Control" title="Source Control"
+              onClick={() => setSidebarTab('git')}
               onKeyDown={(event) => {
                 if (event.key === 'ArrowLeft') selectSidebarTab('explorer')
               }}
-            ><Search /><span>Search</span></button>
+            ><GitBranch aria-hidden="true" /></button>
           </div>
           <div
             id="explorer-sidebar-panel"
@@ -382,6 +389,12 @@ export default function App() {
                 onRequestDelete={editor.requestDelete}
                 interactionLocked={editor.interactionLocked || editor.fileSystemUnavailable}
                 unavailable={editor.fileSystemUnavailable}
+                gitStatus={gitDecorationSnapshot?.project === project && !editor.interactionLocked && !editor.fileSystemUnavailable
+                  ? gitDecorationSnapshot.status : null}
+                search={(tree) => <SearchPanel project={project} tree={tree} showProjectName={false}
+                  onOpenFile={(path) => void editor.openFile(path)}
+                  onNavigate={(match) => void editor.navigateToSearchMatch(match)}
+                  interactionLocked={editor.interactionLocked || editor.fileSystemUnavailable} />}
               />
             ) : (
               <section className="explorer-panel" aria-label="Project Explorer">
@@ -396,17 +409,14 @@ export default function App() {
             )}
           </div>
           <div
-            id="search-sidebar-panel"
+            id="git-sidebar-panel"
             className="sidebar-panel"
             role="tabpanel"
-            aria-labelledby="search-sidebar-tab"
-            hidden={sidebarTab !== 'search'}
+            aria-labelledby="git-sidebar-tab"
+            hidden={sidebarTab !== 'git'}
           >
-            <SearchPanel
-              project={project}
-              onNavigate={(match) => void editor.navigateToSearchMatch(match)}
-              interactionLocked={editor.interactionLocked || editor.fileSystemUnavailable}
-            />
+            {project ? <SourceControl key={project.id} project={project} locked={editor.interactionLocked}
+              unavailable={editor.fileSystemUnavailable} onSnapshot={publishGitSnapshot} /> : <p className="git-empty">Open a project to use Source Control.</p>}
           </div>
         </aside>
       </div>
