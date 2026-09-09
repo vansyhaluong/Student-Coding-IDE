@@ -114,7 +114,7 @@ before affected work continues.
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
-| Phase 5 — Git Integration | `IN_PROGRESS` | 5A–5E complete; 5E corrective verification passed; 5F remains |
+| Phase 5 — Git Integration | `COMPLETE` | 5A–5F complete; final stabilization and Phase 5 exit gate passed |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2160,7 +2160,45 @@ not a Phase 4 V1 acceptance requirement.
 - Phase 5C — Commit + Branch + History: `COMPLETE` (including the authorized local branch `@` remediation).
 - Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `COMPLETE` (including document ownership remediation).
 - Phase 5E — Right Sidebar + Source Control UI: `COMPLETE` (whitespace remediation and default parallel test gate verified on 2026-09-09).
-- Phase 5F — Stabilization / Final Verification: `NOT_STARTED`.
+- Phase 5F — Stabilization / Final Verification: `COMPLETE`.
+
+#### Phase 5F stabilization and final verification (2026-09-09)
+
+Phase 5F began from clean committed baseline
+`6af919e43e9676f6cf37cc462dfb359010561839` on `feature/phase-5`; commits
+`7e24792`, `7c76638`, `ded21ad`, `f67bef5`, `b1e6d0a` and `6af919e` contain
+the verified Phase 5A–5E sequence. The audit found no production defect,
+architecture deviation, new decision gate or test-policy issue requiring a code
+change. Only verified completion documentation was updated.
+
+- Focused verification passed: 5A 66/66, 5B 110/110, 5C 44/44, 5D 46/46,
+  5E 105/105, Phase 2D Search regression 28/28 and Run regression 112/112.
+  The combined real-Git matrix passed 72/72 using Git 2.47.1.windows.2.
+- Electron 44 Windows x64 smokes passed for Git native argv/commit/history and
+  Job cleanup, committed-document ownership across three reloads, built Git/UI
+  workflows, Names/conflict/overflow presentation, and existing Run native,
+  session, project and application lifecycle cleanup. Native Run completed 15
+  cycles; all lifecycle smokes ended with zero retained resources.
+- The standalone full `npm test` command passed 811/811 tests across 65 files in
+  66.95 seconds with its established `--maxWorkers=4`. No local test was skipped;
+  no retry, sleep, timeout, assertion or worker configuration changed. The known
+  jsdom canvas diagnostic remains non-blocking.
+- Typecheck, lint, production/native build and final `git diff --check` passed.
+  Test/build process spawning used the approved external execution path required
+  by the managed sandbox.
+- Static security and consistency review confirmed secure BrowserWindow flags,
+  exact runtime-validated IPC, narrow semantic Preload APIs, exact active-root
+  repository authorization, project/document generations, truthful applied and
+  unknown mutation outcomes, read-only conflicts, file-only trusted decoration
+  projection, and separate Search/Git/Run ownership without polling.
+- Deferred scope remains absent: remote Git, fetch/pull/push, hosted review APIs,
+  merge/rebase or conflict-resolution UI, discard/diff, stage-all, branch
+  creation/deletion/rename, worktrees, submodules, polling/watchers, Explorer
+  folder aggregation and Explorer context menus. Phase 5 added no dependency or
+  package-lock change.
+
+The Phase 5 Definition of Done and package exit gate pass. Phase 5 is COMPLETE;
+packaged/installed Windows 10/11 acceptance remains Phase 7 scope.
 
 Phase 5A added PATH-only Git detection, the private bounded finite command
 runner, active-project/exact-top-level repository authorization, the normal
