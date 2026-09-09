@@ -30,6 +30,41 @@ function setup() {
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe('Explorer Names/Contents through production Search Preload', () => {
+  it.each(['', '   ', '\t\u00a0'])('treats empty/whitespace query %j as empty in both modes', async (query) => {
+    vi.useFakeTimers()
+    const f = setup()
+    f.type(query)
+    fireEvent.submit(screen.getByLabelText('Search project').closest('form')!)
+    await act(async () => vi.advanceTimersByTime(400))
+    expect(screen.getByText('Normal file tree').parentElement?.hidden).toBe(false)
+    expect(screen.queryByRole('list', { name: 'Matching file paths' })).toBeNull()
+    expect(screen.queryByLabelText('Clear search')).toBeNull()
+    fireEvent.click(screen.getByRole('tab', { name: 'Contents' }))
+    expect(screen.getByText('Type to search in files')).toBeTruthy()
+    fireEvent.submit(screen.getByLabelText('Search project').closest('form')!)
+    fireEvent.click(screen.getByRole('tab', { name: 'Names' }))
+    expect(screen.getByText('Normal file tree').parentElement?.hidden).toBe(false)
+    expect(f.invoke).not.toHaveBeenCalled()
+  })
+
+  it('restores the tree and cancels a normal query when replaced with whitespace', async () => {
+    vi.useFakeTimers()
+    const f = setup()
+    f.type(' src ')
+    await act(async () => vi.advanceTimersByTime(180))
+    const identity = f.latest()[1] as { projectId: string; operationId: string; query: string }
+    expect(identity.query).toBe(' src ')
+    expect(screen.getByText('Normal file tree').parentElement?.hidden).toBe(true)
+    f.type('   ')
+    await act(async () => vi.advanceTimersByTime(400))
+    f.send(SEARCH_CHANNELS.namesEvent, { projectId: identity.projectId, operationId: identity.operationId,
+      type: 'batch', matches: [{ relativePath: 'late.ts' }] })
+    expect(screen.getByText('Normal file tree').parentElement?.hidden).toBe(false)
+    expect(screen.queryByText('late.ts')).toBeNull()
+    expect(f.invoke.mock.calls.filter(([channel]) => channel === SEARCH_CHANNELS.startNames)).toHaveLength(1)
+    expect(f.invoke).toHaveBeenLastCalledWith(SEARCH_CHANNELS.cancel, { operationId: identity.operationId })
+  })
+
   it('defaults to Names, debounces typing, uses paths-only results and restores the tree on clear', async () => {
     vi.useFakeTimers()
     const f = setup()

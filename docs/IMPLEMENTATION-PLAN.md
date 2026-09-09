@@ -114,7 +114,7 @@ before affected work continues.
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
-| Phase 5 — Git Integration | `IN_PROGRESS` | 5A–5D complete; 5E sidebar correction implemented, standard parallel test gate blocked by Git timeouts; 5F remains |
+| Phase 5 — Git Integration | `IN_PROGRESS` | 5A–5E complete; 5E corrective verification passed; 5F remains |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2159,7 +2159,7 @@ not a Phase 4 V1 acceptance requirement.
 - Phase 5B — Git Status + Stage / Unstage: `COMPLETE`.
 - Phase 5C — Commit + Branch + History: `COMPLETE` (including the authorized local branch `@` remediation).
 - Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `COMPLETE` (including document ownership remediation).
-- Phase 5E — Right Sidebar + Source Control UI: `BLOCKED` (visual correction verified; standard parallel test gate has Git integration timeouts).
+- Phase 5E — Right Sidebar + Source Control UI: `COMPLETE` (whitespace remediation and default parallel test gate verified on 2026-09-09).
 - Phase 5F — Stabilization / Final Verification: `NOT_STARTED`.
 
 Phase 5A added PATH-only Git detection, the private bounded finite command
@@ -2438,6 +2438,29 @@ Verification and exit result:
   Phase 5D is complete; Phase 5 overall remains `IN_PROGRESS`.
 
 #### Phase 5E execution and acceptance (2026-09-08)
+
+Resumed corrective acceptance (2026-09-09):
+
+- Retained the existing SearchPanel whitespace correction and four regression
+  cases. Empty/whitespace-only input restores the Names tree, leaves Contents
+  idle and issues no search; replacing an active query cancels it and rejects
+  late results. Spaces in a non-empty literal query remain significant.
+- Standalone default `npm test` passed 811/811 tests across 65 files in 62.88s,
+  with four workers, no skips and unchanged timeout/assertion/retry settings.
+  The earlier real Git timeouts did not reproduce; this is fresh acceptance
+  evidence, not a claimed root-cause fix for timing sensitivity.
+- Typecheck, lint, production/native build and `git diff --check` passed.
+  Sandbox worker initialization/build spawn failures required approved external
+  execution. The known jsdom canvas diagnostic remains non-blocking.
+- Both Electron 5E smokes passed: real temporary-repository Git actions,
+  project/draft lifecycle, sandbox and owned cleanup; Names/conflict fixture,
+  280/220 px sidebar geometry and no horizontal overflow. Inspected all four
+  regenerated screenshots under `out/phase-5e-ui/`.
+- All 5E gates now pass and 5E returns to COMPLETE. No new dependency, ADR,
+  architecture deviation or Git backend change. 5F remains NOT_STARTED and
+  requires separate authorization; overall Phase 5 remains IN_PROGRESS.
+
+The following entries describe the earlier correction and blocked verification.
 
 Corrective reopening: the user identified sidebar visual-fidelity gaps against
 Orca's actual implementation and explicitly authorized alignment. This correction

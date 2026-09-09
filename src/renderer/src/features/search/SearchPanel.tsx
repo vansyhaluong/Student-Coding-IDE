@@ -37,6 +37,7 @@ export function SearchPanel({
   const modeRef = useRef(mode)
   const [names, setNames] = useState<NamesMatch[]>([])
   const [query, setQuery] = useState('')
+  const hasQuery = hasSearchQuery(query)
   const [status, setStatus] = useState<SearchStatus>('idle')
   const [matches, setMatches] = useState<SearchMatch[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -137,7 +138,7 @@ export function SearchPanel({
 
   const runSearch = async (nextQuery: string): Promise<void> => {
     if (interactionLockedRef.current) return
-    if (!project || nextQuery.trim().length === 0) {
+    if (!project || !hasSearchQuery(nextQuery)) {
       cancelActive()
       setMatches([])
       setSummary(null)
@@ -209,7 +210,7 @@ export function SearchPanel({
     setError(null)
     setCollapsedGroups(new Set())
     setSelectedMatch(null)
-    if (!project || nextQuery.trim().length === 0) {
+    if (!project || !hasSearchQuery(nextQuery)) {
       setStatus('idle')
       return
     }
@@ -250,7 +251,7 @@ export function SearchPanel({
     modeRef.current = next
     setMode(next); setNames([]); setMatches([]); setSummary(null); setError(null)
     setStatus('idle'); setLoadingVisible(false)
-    if (queryRef.current.trim()) void runSearch(queryRef.current)
+    if (hasSearchQuery(queryRef.current)) void runSearch(queryRef.current)
   }
 
   const toggleGroup = (relativePath: string): void => {
@@ -286,7 +287,7 @@ export function SearchPanel({
             spellCheck={false}
           />
           {status === 'searching' && loadingVisible && <LoaderCircle className="search-loading-icon" />}
-          {query.length > 0 && !(status === 'searching' && loadingVisible) && (
+          {hasQuery && !(status === 'searching' && loadingVisible) && (
             <button type="button" className="search-clear" onClick={clear} aria-label="Clear search">
               <X />
             </button>
@@ -307,8 +308,8 @@ export function SearchPanel({
           }}>{item === 'names' ? 'Names' : 'Contents'}</button>)}
       </div>
       <div id="search-mode-results" role="tabpanel" aria-labelledby={`search-mode-${mode}`} className="search-mode-results">
-      <div hidden={mode !== 'names' || query.length > 0}>{tree}</div>
-      {mode === 'names' && query.length > 0 && <>
+      <div hidden={mode !== 'names' || hasQuery}>{tree}</div>
+      {mode === 'names' && hasQuery && <>
         <div className="search-status" aria-live="polite" aria-busy={status === 'debouncing' || status === 'searching'}>
           {status === 'debouncing' && <span className="sr-only">Search queued</span>}
           {status === 'searching' && loadingVisible && 'Searching…'}
@@ -388,6 +389,11 @@ export function SearchPanel({
       </div>
     </section>
   )
+}
+
+// Normalize emptiness only: spaces in a non-empty literal query remain significant.
+function hasSearchQuery(query: string): boolean {
+  return query.trim().length > 0
 }
 
 function clearTimer(timer: { current: ReturnType<typeof setTimeout> | null }): void {
