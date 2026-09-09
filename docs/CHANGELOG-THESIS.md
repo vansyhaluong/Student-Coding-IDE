@@ -1253,3 +1253,28 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
 - Updated Codebase Map and Implementation Plan. No new dependency, ADR change,
   architecture deviation or commit/push of this repository. Phase 5E is complete;
   Phase 5F remains NOT_STARTED and overall Phase 5 remains IN_PROGRESS.
+
+## Phase 5F — Stabilization / Final Verification (`COMPLETE`, 2026-09-09)
+
+- Started from clean committed Phase 5A–5E baseline `6af919e` on
+  `feature/phase-5` and audited contracts, Main/Preload/Renderer authority,
+  repository/path validation, mutation truthfulness, stale-state isolation,
+  document ownership, Search/Git separation, process cleanup, UI state and test
+  quality. No production defect or architecture/decision change was required.
+- Focused tests passed: 5A 66/66, 5B 110/110, 5C 44/44, 5D 46/46, 5E 105/105,
+  Phase 2D Search 28/28 and Run 112/112. The combined real-Git matrix passed
+  72/72. Full `npm test` passed 811/811 across 65 files with the established
+  four workers and no local skips.
+- Electron/native evidence passed Git command/Job cleanup, three document reloads,
+  built semantic Git/UI workflow, Names/conflict/resize presentation, 15 Run
+  native cycles, Run re-run/stop and project/application cleanup. All lifecycle
+  smokes finished with zero retained resources.
+- Typecheck, lint, production/native build and whitespace checks passed. No retry,
+  sleep, timeout, assertion or worker policy changed; no dependency or lockfile
+  changed. The managed sandbox required the existing approved external process
+  path for test/build execution.
+- Confirmed absent/deferred: remote Git and fetch/pull/push, hosted review APIs,
+  merge/rebase and conflict resolution, discard/diff, stage-all, branch management,
+  worktrees, submodules, polling/watchers, Explorer folder aggregation and context
+  menus. Packaged/installed Windows 10/11 verification remains Phase 7.
+- Phase 5 is COMPLETE. No commit, push, merge or tag was performed by Phase 5F.
