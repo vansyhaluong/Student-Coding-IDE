@@ -114,7 +114,7 @@ before affected work continues.
 | Phase 2F — Core IDE Stabilization | `COMPLETE` | Integrated Core IDE workflow and cleanup |
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
-| Phase 5 — Git Integration | `COMPLETE` | 5A–5F complete; final stabilization and Phase 5 exit gate passed |
+| Phase 5 — Git Integration | `COMPLETE` | Corrective Phase 5C native-test portability fix and Phase 5F re-verification passed locally |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2157,10 +2157,31 @@ not a Phase 4 V1 acceptance requirement.
 
 - Phase 5A — Git Foundation + Dependency / Repository Detection: `COMPLETE`.
 - Phase 5B — Git Status + Stage / Unstage: `COMPLETE`.
-- Phase 5C — Commit + Branch + History: `COMPLETE` (including the authorized local branch `@` remediation).
+- Phase 5C — Commit + Branch + History: `COMPLETE` (including the authorized local branch `@` and native-test portability remediations).
 - Phase 5D — Git Lifecycle / Cancellation / Stale-result Protection: `COMPLETE` (including document ownership remediation).
 - Phase 5E — Right Sidebar + Source Control UI: `COMPLETE` (whitespace remediation and default parallel test gate verified on 2026-09-09).
-- Phase 5F — Stabilization / Final Verification: `COMPLETE`.
+- Phase 5F — Stabilization / Final Verification: `COMPLETE` (including corrective portability re-verification).
+
+#### Phase 5 corrective native-test portability (2026-09-09)
+
+Ubuntu GitHub Actions exposed a missing non-Windows suite guard in the Phase 5C
+real local Git integration tests. This was a test-configuration defect, not
+evidence of a production Git regression. The production detector retains its
+Windows `git.exe` semantics. Phase 5C and Phase 5F were correctively reopened
+only for this remediation and returned to `COMPLETE` after local re-verification.
+
+The entire Phase 5C native suite now uses the existing suite-level non-Windows
+skip policy. Unsupported non-Windows CI intentionally skips it without running
+individual assertions; Windows continues to run all 32 tests normally and still
+fails if required Git is unavailable. Focused Phase 5C passed 32/32 on Windows,
+and the combined 5A/5B/5D native regression passed 32/32. The first default full
+run had one existing 5-second timing-sensitive Phase 5C timeout at 5.022 seconds
+(810/811 passed); an unchanged independent rerun passed 811/811 across 65 files.
+Typecheck, lint, production/native build and whitespace checks passed. No
+assertion, timeout, configured retry, product semantic, production code,
+dependency, lockfile, contract, IPC or ADR changed. The corrected Ubuntu GitHub
+Actions run remains pending until the uncommitted fix is pushed and is not
+claimed as passing here.
 
 #### Phase 5F stabilization and final verification (2026-09-09)
 

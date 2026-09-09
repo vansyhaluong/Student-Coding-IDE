@@ -1278,3 +1278,24 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   worktrees, submodules, polling/watchers, Explorer folder aggregation and context
   menus. Packaged/installed Windows 10/11 verification remains Phase 7.
 - Phase 5 is COMPLETE. No commit, push, merge or tag was performed by Phase 5F.
+
+## Phase 5 corrective native-test portability (2026-09-09)
+
+- Ubuntu GitHub Actions exposed that the Phase 5C real local Git integration
+  suite ran unconditionally even though production Git detection intentionally
+  uses Windows `git.exe` semantics. This was a test-configuration defect; no
+  production Git regression was found.
+- Correctively reopened Phase 5C and Phase 5F, then guarded the entire 5C native
+  suite with the existing non-Windows suite-skip policy. Non-Windows CI now
+  skips the Windows-specific suite intentionally. Windows still runs all 32
+  tests and treats unavailable Git or any assertion failure as a failure.
+- Focused Phase 5C passed 32/32 on Windows. Phase 5A/5B/5D native regression
+  passed 32/32. The first unchanged default full run recorded one existing
+  5-second timing-sensitive 5C timeout at 5.022 seconds (810/811 passed); an
+  independent unchanged rerun passed 811/811 across 65 files.
+- Typecheck, lint, production/native build and `git diff --check` passed. No
+  assertion, timeout, configured retry, production code, product semantic,
+  dependency, lockfile, contract, IPC or ADR changed. Phase 5C and Phase 5F
+  returned to `COMPLETE` after local corrective verification.
+- The corrected Ubuntu GitHub Actions run remains pending until this uncommitted
+  change is pushed. No CI pass, commit, push, merge or tag is claimed here.

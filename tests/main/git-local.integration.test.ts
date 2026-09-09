@@ -9,7 +9,14 @@ import { GitService } from '../../src/main/services/git/git-service'
 import { ProjectService } from '../../src/main/services/project/project-service'
 import type { ProjectId } from '../../src/shared/contracts'
 
-const dependency = await new GitExecutableDetector().detect()
+const dependency = process.platform === 'win32'
+  ? await new GitExecutableDetector().detect()
+  : { state: 'MISSING' as const }
+
+// Portable CI cannot establish Windows Git acceptance; Windows must run it.
+if (process.platform !== 'win32') {
+  console.warn('Phase 5C native Git tests SKIPPED: Windows PATH Git is required; no native acceptance evidence.')
+}
 
 async function fixture(run: (f: Awaited<ReturnType<typeof setup>>) => Promise<void>, head = true) {
   const directory = await mkdtemp(join(tmpdir(), 'student-ide-phase5c-'))
@@ -69,7 +76,7 @@ async function setup(directory: string, head: boolean) {
   return { directory, executable, runner, git, put, read, index, hook, service, project, projects, calls, control }
 }
 
-describe('Phase 5C production service with real local Git', () => {
+describe.skipIf(process.platform !== 'win32')('Phase 5C production service with real local Git', () => {
   async function atTarget(f: Awaited<ReturnType<typeof setup>>, ignored = false) {
     await f.git('switch', '-c', 'target-fixture')
     await f.put(ignored ? 'ignored.txt' : 'tracked.txt', 'at branch content')
