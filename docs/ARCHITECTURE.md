@@ -457,6 +457,50 @@ GitService uses the local Git CLI through a typed wrapper. Calls use an executab
 
 Git status is independent of editor, runtime, and language-service availability. Missing or invalid Git leaves the core editor operational and produces an explicit Source Control state. V1 delegates authentication to Git and the operating system; the IDE neither stores credentials nor implements hosted pull-request providers.
 
+Phase 5A resolves Git from Main's process `PATH` only. A validated `git.exe` is
+`AVAILABLE`; a completed lookup with no usable executable is `MISSING`.
+`NOT_CONFIGURED` and configured-path `INVALID_CONFIGURATION` remain public
+contract states reserved for future configured-path support. Repository probing
+uses only fixed Main-owned arguments and the authorized canonical project root
+as cwd. A working tree is accepted only when Git's canonical top-level root
+equals that project root using platform-correct identity comparison; an ordinary
+non-Git folder or a project nested inside a parent repository is the normal
+`NOT_REPOSITORY` state.
+
+Before filesystem canonicalization, Git top-level stdout must contain exactly
+one fully-qualified path (with at most one terminal LF/CRLF). Windows drive and
+UNC syntax is validated in full; relative/current-drive paths, malformed path
+components, NUL/control characters and extra lines fail with `PROCESS_FAILED`.
+Unvalidated output never reaches `realpath` or resolves against process cwd.
+Canonical comparison continues to use the existing Windows case/separator-aware
+project identity. The finite runner settles only after child `close`, including
+spawn failure and cancellation, so exit/PID state alone cannot claim cleanup.
+
+Phase 5D composes GitService through GitOperationLifecycle and a Main-only
+GitOwnedCommandRunner. Each request has a project/owner generation and request
+identity; Main rejects obsolete reads and Preload rejects replies superseded
+while in transport. Project changes, root unavailability, renderer navigation/
+destruction and application shutdown invalidate the appropriate work. A project
+transition waits for Git operations and owned cleanup before releasing authority.
+Mutations are serialized. Cancellation stops preparation; after mutation dispatch,
+the bounded command drains and preserves applied or explicitly unknown outcomes,
+without automatic retry. Stale applied outcomes discard their status snapshot.
+
+Git document ownership is established by Main before window load. Navigation
+start revokes the previous document; only a committed current main-frame event
+restores availability. Both Git context and operation IPC verify Electron's
+sender frame against the committed `processId`/`frameToken` values, reject
+detached/disposed frames and never restore ownership on request. These frame
+values stay inside Main; shared Git DTOs and Renderer authority are unchanged.
+
+On Windows, the production Git runner creates each process inside an atomic
+Windows Job using the existing private native pipe/ownership primitives. A Git
+root exit terminates surviving owned hook descendants; release requires root
+exit, both pipe EOFs, native settlement and an empty Job. Cleanup failure retains
+ownership and blocks new work, project release and application shutdown until a
+cleanup retry succeeds. Run retains its separate single-target native entry and
+semantic lifecycle. No generic process capability crosses Preload.
+
 ## 12. Language-service architecture
 
 ```text

@@ -21,12 +21,14 @@ import {
   type ProjectTransitionSettledEvent,
   type RecentProjectMetadata,
   type SearchEvent,
+  type NamesSearchEvent,
   type UnsavedTransitionRequestEvent,
 } from '../shared/contracts'
 import { DesktopApplication } from './app/desktop-application'
 import { ApplicationQuitCoordinator } from './app/application-quit-coordinator'
 import { FoundationIpcService } from './ipc/foundation-ipc-service'
 import { FileIpcService } from './ipc/file-ipc-service'
+import { GitLifecycleIpcService } from './ipc/git-lifecycle-ipc-service'
 import { IpcHandlerRegistry } from './ipc/ipc-handler-registry'
 import { ProjectIpcService } from './ipc/project-ipc-service'
 import { SearchIpcService } from './ipc/search-ipc-service'
@@ -45,6 +47,11 @@ import { RunService } from './services/run/run-service'
 import { RunProjectLifecycle } from './services/run/run-project-lifecycle'
 import { WindowsPipedProcessAdapter } from './services/run/windows-piped-process-adapter'
 import { NodeRuntimeDetector } from './services/dependencies/node-runtime'
+import { GitExecutableDetector } from './services/dependencies/git-executable'
+import { GitOwnedCommandRunner } from './services/git/git-owned-command-runner'
+import { GitOperationLifecycle } from './services/git/git-operation-lifecycle'
+import { GitDocumentOwners } from './services/git/git-document-owners'
+import { GitService } from './services/git/git-service'
 import { DomainError } from './errors/app-error'
 import { RunIpcService } from './ipc/run-ipc-service'
 import { WindowManager } from './window/window-manager'
@@ -160,7 +167,11 @@ void app.whenReady().then(async () => {
   )
 
   windowManager = new WindowManager({
-    createWindow: (options) => new BrowserWindow(options),
+    createWindow: (options) => {
+      const window = new BrowserWindow(options)
+      gitDocuments.observe(window.webContents)
+      return window
+    },
     openExternal: (url) => shell.openExternal(url),
     preloadPath: join(__dirname, '../preload/index.js'),
     rendererFile: join(__dirname, '../renderer/index.html'),
@@ -221,6 +232,16 @@ void app.whenReady().then(async () => {
     (event) => publishToWindows(FILE_CHANNELS.changed, event),
     (status) => publishToWindows(FILE_CHANNELS.statusChanged, status),
   )
+  const gitLifecycle = new GitOperationLifecycle(projectService, fileSystemService, new GitOwnedCommandRunner())
+  const gitService = new GitService(
+    projectService,
+    fileSystemService,
+    new GitExecutableDetector(),
+    gitLifecycle.commands,
+  )
+  const gitDocuments = new GitDocumentOwners(gitLifecycle)
+  const gitIpc = new GitLifecycleIpcService(ipcRegistry, gitService, gitLifecycle,
+    (context) => gitDocuments.assertCurrent(context))
   const searchIpc = new SearchIpcService(
     ipcRegistry,
     searchService,
@@ -229,6 +250,7 @@ void app.whenReady().then(async () => {
       SEARCH_CHANNELS.event,
       event,
     ),
+    (ownerId, event) => publishToRenderer(ownerId, SEARCH_CHANNELS.namesEvent, event),
   )
   const terminalIpc = new TerminalIpcService(
     ipcRegistry,
@@ -298,12 +320,15 @@ void app.whenReady().then(async () => {
     unsavedTransitionService,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
     runLifecycle,
+    gitLifecycle,
+    gitDocuments,
     { name: 'RunOwnerSubscriptions', stop: () => {
       for (const remove of [...runOwners.values()]) remove()
     } },
     runIpc,
     projectIpc,
     fileIpc,
+    gitIpc,
     searchIpc,
     terminalIpc,
     windowManager,
@@ -315,7 +340,7 @@ void app.whenReady().then(async () => {
 
   removeLifecyclePublisher = desktopApplication.subscribe((status) => {
     // Block starts/events at STOPPING; cleanup stays in managed-service order.
-    if (status.state === 'STOPPING') runService.beginShutdown()
+    if (status.state === 'STOPPING') { runService.beginShutdown(); gitLifecycle.beginShutdown() }
     for (const window of BrowserWindow.getAllWindows()) {
       if (!window.isDestroyed()) {
         window.webContents.send(LIFECYCLE_CHANNELS.statusChanged, status)
@@ -371,7 +396,7 @@ function publishLifecycleToWindows(
 function publishToRenderer(
   ownerId: number,
   channel: string,
-  event: SearchEvent | RunEvent,
+  event: SearchEvent | NamesSearchEvent | RunEvent,
 ): void {
   const window = BrowserWindow.getAllWindows().find(
     (candidate) => !candidate.isDestroyed()

@@ -38,6 +38,7 @@ describe('lifecycle preload bridge', () => {
     const api = createPreloadApi(new FakeIpcRenderer())
     expect(Object.keys(api).sort()).toEqual([
       'file',
+      'git',
       'lifecycle',
       'project',
       'run',

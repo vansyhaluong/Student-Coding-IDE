@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { createPreloadApi } from '../../src/preload/bridge'
+import { GIT_CONTEXT_CHANNEL } from '../../src/shared/contracts/git-lifecycle'
 import type { IpcRendererLike } from '../../src/preload/bridge/lifecycle'
 import {
   FILE_CHANNELS,
+  GIT_CHANNELS,
   PROJECT_CHANNELS,
   SEARCH_CHANNELS,
 } from '../../src/shared/contracts'
@@ -21,7 +23,13 @@ class FakeIpcRenderer implements IpcRendererLike {
     void listener
     this.listeners.delete(channel)
   })
-  readonly invoke = vi.fn(async (channel: string) => this.responses.get(channel))
+  readonly invoke = vi.fn(async (channel: string, payload?: unknown) => {
+    if (channel === GIT_CONTEXT_CHANNEL) return { ok: true, value: { generation: 'fixture-generation' } }
+    if (channel.startsWith('git:')) return { ok: true, value: {
+      identity: (payload as { identity: unknown }).identity, result: this.responses.get(channel),
+    } }
+    return this.responses.get(channel)
+  })
 
   on(
     channel: string,
@@ -59,12 +67,17 @@ describe('Phase 2B preload bridges', () => {
         state: 'AVAILABLE',
       },
     })
+    ipcRenderer.responses.set(GIT_CHANNELS.getState, {
+      ok: true,
+      value: { dependency: 'MISSING', repository: null },
+    })
     ipcRenderer.responses.set(SEARCH_CHANNELS.start, { ok: true, value: null })
     ipcRenderer.responses.set(SEARCH_CHANNELS.cancel, { ok: true, value: null })
     const api = createPreloadApi(ipcRenderer)
 
     expect(Object.keys(api).sort()).toEqual([
       'file',
+      'git',
       'lifecycle',
       'project',
       'run',
@@ -87,6 +100,12 @@ describe('Phase 2B preload bridges', () => {
     await expect(api.file.getStatus(
       'project_1234567890abcdef12345678' as never,
     )).resolves.toMatchObject({ ok: true, value: { state: 'AVAILABLE' } })
+    await expect(api.git.getState(
+      'project_1234567890abcdef12345678' as never,
+    )).resolves.toEqual({
+      ok: true,
+      value: { dependency: 'MISSING', repository: null },
+    })
     expect(ipcRenderer.invoke).toHaveBeenCalledWith(FILE_CHANNELS.write, {
       projectId: 'project_1234567890abcdef12345678',
       relativePath: 'main.ts',

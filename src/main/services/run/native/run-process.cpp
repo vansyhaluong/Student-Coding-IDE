@@ -136,11 +136,19 @@ static std::wstring quote(const std::wstring& input) {
 static napi_value create(napi_env env, napi_callback_info info) {
   std::unique_ptr<Session> s = std::make_unique<Session>();
   try {
-    size_t argc = 5; napi_value argv[5]; napiCheck(napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
+    size_t argc = 5; napi_value argv[5]; void* mode = nullptr;
+    napiCheck(napi_get_cb_info(env, info, &argc, argv, nullptr, &mode));
     check(argc == 5, "Expected executable, target, cwd, environment, observer");
-    auto executable = string(env, argv[0]), target = string(env, argv[1]), cwd = string(env, argv[2]);
-    // Only the Main adapter calls this private binding; one file argument, no shell.
-    auto command = quote(executable) + L" " + quote(target);
+    auto executable = string(env, argv[0]), cwd = string(env, argv[2]);
+    auto command = quote(executable);
+    if (mode) {
+      // Private Git adapter only. Run retains its original single-target entry.
+      uint32_t count; napiCheck(napi_get_array_length(env, argv[1], &count));
+      for (uint32_t i = 0; i < count; ++i) {
+        napi_value value; napiCheck(napi_get_element(env, argv[1], i, &value));
+        command += L" " + quote(string(env, value));
+      }
+    } else command += L" " + quote(string(env, argv[1]));
     uint32_t envCount; napiCheck(napi_get_array_length(env, argv[3], &envCount));
     std::wstring environment;
     for (uint32_t i = 0; i < envCount; ++i) {
@@ -240,11 +248,13 @@ static napi_value control(napi_env env, napi_callback_info info) {
   } catch (const std::exception& error) { napi_throw_error(env, nullptr, error.what()); return nullptr; }
 }
 static napi_value init(napi_env env, napi_value exports) {
+  static int gitMode = 1;
   napi_property_descriptor methods[] = {
     {"create", nullptr, create, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"control", nullptr, control, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"createGit", nullptr, create, nullptr, nullptr, nullptr, napi_default, &gitMode},
   };
-  napi_define_properties(env, exports, 2, methods);
+  napi_define_properties(env, exports, 3, methods);
   napi_set_named_property(env, exports, "capability", text(env, "student-ide-piped-job-v1"));
   return exports;
 }

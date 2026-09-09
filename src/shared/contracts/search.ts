@@ -10,6 +10,8 @@ export const SEARCH_CHANNELS = {
   start: 'search:start',
   cancel: 'search:cancel',
   event: 'search:event',
+  startNames: 'search:start-names',
+  namesEvent: 'search:names-event',
 } as const
 
 export const SEARCH_LIMITS = {
@@ -78,7 +80,18 @@ export type SearchEvent =
   | SearchCompleteEvent
   | SearchErrorEvent
 
+export interface NamesMatch { readonly relativePath: string }
+export interface NamesBatchEvent {
+  type: 'batch'
+  projectId: ProjectId
+  operationId: string
+  matches: NamesMatch[]
+}
+export type NamesSearchEvent = NamesBatchEvent | SearchCompleteEvent | SearchErrorEvent
+
 export interface SearchApi {
+  startNames(projectId: ProjectId, operationId: string, query: string): Promise<AppResult<null>>
+  onNamesEvent(listener: (event: NamesSearchEvent) => void): () => void
   start(
     projectId: ProjectId,
     operationId: string,

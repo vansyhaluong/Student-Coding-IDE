@@ -1,5 +1,6 @@
 export * from './app-error'
 export * from './file'
+export * from './git'
 export * from './lifecycle'
 export * from './project'
 export * from './run'

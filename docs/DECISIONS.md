@@ -92,6 +92,15 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 - **Selected option:** A typed GitService wrapping the local Git CLI with executable/argument arrays.
 - **Rationale:** It keeps native Git semantics visible and debuggable while centralizing parsing, validation, cancellation, and errors.
 - **Consequences:** Git must be installed or configured; dependency state is `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`, or `INVALID_CONFIGURATION`. Credentials are delegated to Git/OS. Hosted reviews are omitted.
+- **Phase 5A policy:** Main performs PATH-first detection of exact `git.exe`
+  candidates without PATHEXT or cwd fallback. A validated candidate is
+  `AVAILABLE`; absence is `MISSING`. `NOT_CONFIGURED` and configured-path
+  `INVALID_CONFIGURATION` remain in the public contract but are not emitted by
+  Phase 5A. Renderer supplies no executable, cwd, arguments, or shell content.
+  Repository detection runs a bounded fixed Git probe at the authorized active
+  project root. Git's canonical top-level must equal the canonical project root;
+  a normal non-Git folder or a subfolder of a parent repository returns the
+  typed `NOT_REPOSITORY` state rather than an `AppError`.
 - **Phase:** 1 decision; implementation Phase 5.
 
 ## ADR-010 — Persistence strategy

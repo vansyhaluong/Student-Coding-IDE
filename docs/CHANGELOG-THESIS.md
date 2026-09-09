@@ -973,3 +973,329 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   verified; Windows 10 and installed/package verification remain Phase 7 work.
 - Phase 4 V1 is complete. TypeScript Run, Run Project, npm scripts, dev servers and
   project entry configuration remain deferred. No commit, push or merge was performed.
+
+## Phase 5A — Git Foundation + Dependency / Repository Detection (`COMPLETE`, 2026-09-06)
+
+- Added side-effect-free Git dependency/repository contracts and one narrow
+  `git:get-state` IPC/Preload capability. Requests accept only the active project
+  ID; exact validation rejects executable, cwd, argument, command, shell, and
+  unknown fields. Responses are exact-validated and expose no canonical path or
+  process authority.
+- Added a Git-specific Main PATH detector without changing Node detection. It
+  checks exact `git.exe` candidates, ignores empty/relative/current-drive entries,
+  supports quoted/spaced/Unicode and UNC paths, does not use PATHEXT or cwd search,
+  and distinguishes validated `AVAILABLE` from safe-lookup `MISSING`.
+  `NOT_CONFIGURED` and configured-path `INVALID_CONFIGURATION` remain reserved for
+  future Settings support.
+- Added a private finite `GitCommandRunner` using built-in `execFile` with separate
+  executable/arguments, `shell: false`, Main-owned cwd, bounded stdout/stderr,
+  timeout, cancellation-ready `AbortSignal`, hidden Windows process creation, and
+  safe error mapping. Terminal, Run, ProcessManager, and Windows Job semantics are
+  unchanged.
+- Added GitService repository probing through fixed Main-owned arguments. Main
+  authorizes and revalidates the active available project, canonicalizes Git's
+  reported top-level, and accepts only exact platform-correct equality with the
+  canonical project root. Normal non-Git folders and project subfolders inside a
+  parent repository return `NOT_REPOSITORY`; unexpected Git failures remain
+  structured errors.
+- Final review reopened the premature completion claim for path authorization
+  and missing real-process/repository evidence. Remediation strictly validates
+  single fully-qualified drive/UNC output before realpath, rejecting malformed
+  components, relative/current-drive forms, NUL/control characters and extra
+  lines with safe `PROCESS_FAILED`. Dot and drive-relative regressions use the
+  actual process cwd as the active root. Existing canonical Windows comparison
+  and decisions 1A/2B/3A are unchanged.
+- Real-process tests exposed early settlement on spawn failure before child
+  close. The local runner fix waits for close and guards duplicate completion;
+  deterministic tests cover close-before/callback-before ordering. Six real Git
+  process tests verify success, non-zero exit, timeout, cancellation, overflow
+  and spawn failure, including dead PIDs, single callback/close, destroyed timer
+  resources and removed abort listeners. Overflow uses a live batch process and
+  asserts captured output stays within 1024 bytes.
+- Three temporary real-Git integrations use production ProjectService identity/
+  authorization, GitService, detector, runner and realpath: exact spaced Unicode
+  repository root is `REPOSITORY`; ordinary folder and project nested in a parent
+  repository are `NOT_REPOSITORY`. Availability is the only stubbed domain port.
+  Local Git 2.47.1.windows.2 ran all nine integration tests without skips. The
+  Windows/PATH gate explicitly reports unavailable environments; no real UNC
+  network-share or packaged/Windows 10 acceptance is claimed.
+- After remediation, focused Git/Preload coverage passed 76/76. Full regression
+  passed 566/566 across 49 files with the existing `--maxWorkers=4`. Typecheck,
+  lint, fresh production/native build and whitespace verification passed.
+  Sandboxed test/build spawn EPERM required approved outside-sandbox runs; the
+  known jsdom canvas diagnostic remains non-blocking. No test timeout increase,
+  assertion weakening, dependency/package-lock change, Phase 5B+ operation,
+  Source Control UI, stage, commit or push was introduced. Phase 5A completion
+  now includes these remediation gates; Phase 5 overall remains `IN_PROGRESS`.
+
+## Phase 5B — Git Status + Stage / Unstage (`COMPLETE`, 2026-09-06)
+
+- Resumed and completed the interrupted authorized backend package. Added typed
+  status and selected-path stage/unstage capabilities with exact IPC/Preload
+  validation; Renderer still receives no executable, cwd or command authority.
+- Status uses incremental porcelain v2 parsing with staged/unstaged slots,
+  untracked files, rename/copy pairs and read-only conflicts. Memory is bounded
+  by 1000 retained entries and 128 KiB per token; a complete 1001st entry signals
+  truncation and stops the process. Unsupported/malformed output fails closed.
+- Main revalidates the exact active repository and canonical selected paths,
+  rejects directory expansion, and uses literal pathspecs. Safe unstage handles
+  both existing and unborn HEAD without modifying working content or unrelated
+  index entries. Rename and copy selection have distinct semantics.
+- Process environment strips ambient Git overrides. Streaming timeout,
+  cancellation, malformed output, overflow and spawn failure settle after close
+  with timer/listener cleanup. Confirmed writes survive failed status refresh;
+  unknown mutation outcomes require refresh and are not reported as cancelled.
+- Final regression passed 676/676 tests across 53 files with unchanged worker
+  settings and no local skips. This includes 18 real 5B repository cases and
+  eight real streaming-process cases, plus parser/path/IPC/security coverage.
+  Repository evidence includes Unicode/literal paths, staged-plus-modified files,
+  additions/deletions, rename/copy, unborn HEAD, conflicts, external index locks,
+  nested-root rejection and the 1001-file limit.
+- Typecheck, lint, production/native build and whitespace checks passed. Sandbox
+  spawn EPERM required approved outside-sandbox tests/build; the existing jsdom
+  canvas diagnostic remains non-blocking. No dependency/ADR change or visible UI
+  was introduced. Comprehensive owner lifecycle, Source Control UI and remaining
+  Git operations stay in 5C–5F. Live UNC, Windows 10 and packaged acceptance are
+  not claimed. No project commit, push or merge was performed.
+
+## Phase 5C — Commit + Branch + History (`COMPLETE`, 2026-09-06)
+
+- Implemented the explicitly authorized backend package from the clean,
+  committed Phase 5B baseline on `feature/phase-5`. Main/IPC/Preload now expose
+  staged-only commit, one local branch snapshot, safe existing-local branch
+  switch and bounded local HEAD history. All requests/responses are runtime
+  validated; Renderer gains no process or raw Git authority.
+- Commit preserves unstaged content and supports first commits and Unicode/
+  multiline messages. Invalid messages and Git failures are normalized safely.
+  Fixed metadata checks reject commit during merge/rebase/cherry-pick/revert/
+  sequencer operations, including a real pending merge verified in tests.
+- Branch snapshots distinguish attached, detached and unborn state. Main checks
+  fresh local membership before switching, uses no force/discard/creation flags
+  and protects ignored files as well as ordinary local changes. A nonzero switch
+  can follow an applied switch when post-checkout fails: the approved policy
+  reports unknown outcome, requires refresh and never automatically retries.
+- History returns full id, subject, author name and authored ISO timestamp from
+  HEAD ancestry only. Confirmed unborn history is empty; default/max are 50/100,
+  with invalid requests rejected. Fixed NUL framing excludes bodies; typed
+  parsing and the existing 1 MiB process-output bound reject malformed/excessive
+  output safely. No new history or branch dependency was required.
+- Confirmed commit/switch success reuses the 5B applied/refresh-required envelope,
+  preserving truth after refresh failure or a project transition. Exact active
+  project/root authorization remains in place. Full owner cancellation and
+  lifecycle coordination remain Phase 5D.
+- Final verification passed: 34 focused 5C tests (23 real Git repository tests),
+  176 focused 5A/5B regressions, and all 710 tests across 55 files with unchanged
+  `--maxWorkers=4` and no local skips. Typecheck, lint, production/native build
+  and whitespace checks passed. Local Git: 2.47.1.windows.2.
+- Sandboxed test/build EPERM required approved outside-sandbox execution. An
+  initial full run concurrent with build had two new tests exceed the existing
+  5-second timeout. History's unnecessary branch enumeration was removed; final
+  isolated full-suite verification passed with all assertions/timeouts intact.
+  No sleeps, configured retries or skipped tests were added. The existing jsdom
+  canvas diagnostic remains non-blocking.
+- Updated Implementation Plan and Codebase Map after verification. No dependency,
+  package-lock or ADR change; no Source Control UI, remote Git, Phase 5D system,
+  repository stage/commit/push, or overall Phase 5 completion is claimed.
+
+### Phase 5C remediation — valid local branch `@` (2026-09-06)
+
+- Corrected the MEDIUM review finding: shared validation and branch snapshots
+  accept Git-valid `@` without weakening other name restrictions. Its presence
+  no longer prevents switching unrelated local branches.
+- Implemented user-approved option 1: normal branches retain safe `git switch`;
+  `@` uses Main-generated exact `refs/heads/@` with a native detached switch,
+  project/root and HEAD/ref revalidation, then symbolic HEAD attachment and final
+  proof. Native post-checkout may see DETACHED, as explicitly approved.
+  Failed/interrupted steps or unproven final state return mutation-outcome-unknown
+  after a recovery probe, without rollback, retry, hook suppression or read-tree.
+- Added real Git evidence for exact target identity, hooks, blocked and harmless
+  local changes, ignored-file preservation, attachment lock failure, ref/project
+  changes and failed final proof. Existing invalid-input checks still pass.
+- Corrective reopening is complete: focused 44/44 (32 real Git cases), 5A/5B
+  regression 176/176, full suite 720/720 across 55 files with maxWorkers=4,
+  typecheck, lint and production/native build passed. Git 2.47.1.windows.2;
+  approved outside-sandbox test/build execution, no timeout inflation or retries.
+- No dependency/package-lock change, repository staging/commit/push, Phase 5D,
+  Source Control UI or remote Git was introduced.
+
+### Phase 5C resumed verification (2026-09-07)
+
+- Reviewed the existing uncommitted `@` correction; no further production edit
+  was needed. Corrected the Implementation Plan overview to list 5D–5F remaining.
+- Fresh standalone full suite passed 720/720 tests in 55 files; typecheck, lint
+  and production/native Windows build passed. An earlier suite overlapping
+  typecheck/lint had three timeouts (717 passed); no assertions, timeouts,
+  worker settings or skip/retry settings were changed. Tests/build ran with
+  approval outside the sandbox after spawn EPERM.
+- 5C remains complete. No ADR, dependency or later-package scope changed.
+
+## Phase 5D — Git lifecycle, cancellation and stale results (`COMPLETE`, 2026-09-08)
+
+- Resumed the authorized unfinished work on `feature/phase-5`, preserving its
+  uncommitted implementation and fixtures. Added Main-owned project/window
+  generations, latest-read cancellation, mutation serialization and transition/
+  shutdown draining around the existing GitService semantic operations.
+- Added validated identity framing and Preload receiving guards. Late replies
+  are rejected after supersession, project changes, root unavailability or app
+  shutdown. Confirmed mutations preserve `applied` while dropping stale status;
+  unknown outcomes require refresh and never trigger automatic retries.
+- Production Git now uses retained Windows Job ownership with bounded command
+  timeouts/output. Root exit terminates surviving hook descendants; release
+  requires both pipe EOFs, native settlement and an empty Job. Cleanup failure
+  blocks authority release and app shutdown until retry succeeds. The private
+  native Git entry shares pipe/Job primitives while preserving Run's original
+  single-target entry, separate service and lifecycle.
+- Verification passed: 760/760 tests across 59 files, including 40 5D cases;
+  real Git hook/descendant, abort/timeout and semantic mutation integration;
+  Git native Electron Unicode/argv/commit/history smoke; existing Run native
+  smoke with 15 cycles, root-first cleanup and failed spawn. Typecheck, lint,
+  final production/native build and whitespace checks passed.
+- Evidence host: Windows NT 10.0.26200.0 x64, Git 2.47.1.windows.2 and Electron
+  44.0.0. Sandbox EPERM required approved external execution. Earlier suites
+  had timeout failures; oversized native scenarios were split into independent
+  cases and final standalone verification passed with unchanged worker count,
+  timeout limits and configured retries. Existing jsdom canvas noise remains.
+  Non-Windows native skips provide no Windows acceptance evidence.
+- Updated Architecture, Codebase Map and Implementation Plan. No ADR change,
+  added dependency, repository commit/push or Phase 5E/5F implementation.
+  Overall Phase 5 remains in progress; Source Control UI is the next package.
+
+### Phase 5D remediation — committed document ownership (2026-09-08)
+
+- Completed resumed verification of the MEDIUM finding where `git:get-context`
+  could restore an owner revoked during navigation. Main now observes windows
+  before load and restores ownership only on a committed current main document;
+  context and semantic IPC reject stale Electron sender-frame identities.
+  Shared DTOs and the public Git API are unchanged.
+- Six added document regressions verify context rejection, replacement/token
+  races, repeated navigation, invalid callers, read cancellation and mutation
+  draining. The focused document/lifecycle IPC run passed 16/16 tests; the full
+  suite passed 766/766 across 60 files with no skips.
+- Real sandboxed Electron Preload/Main smoke passed three reloads on the same
+  WebContents, four distinct document frames and three rejected old-document
+  requests. Fresh document requests succeeded after each commit.
+- Typecheck, lint, production/native build, Git native smoke, Run native smoke
+  (15 cycles plus descendant cleanup and failed spawn), and diff whitespace
+  checks passed. Test/build sandbox spawn EPERM was resolved by approved
+  outside-sandbox execution. Existing jsdom canvas diagnostics were non-blocking.
+- Phase 5D returned to COMPLETE after corrective verification. This continuation
+  retained the prior implementation without further production changes and
+  updated acceptance evidence. No ADR/dependency change, architecture deviation,
+  repository commit/push or Phase 5E/5F work.
+
+## Phase 5E — Right sidebar and Source Control (original completion, 2026-09-08)
+
+### Resumed corrective acceptance (2026-09-09)
+
+- Verified the retained whitespace-only Search fix and four regression cases:
+  Names restores its tree, Contents remains idle, no empty search is sent, and
+  active-query cancellation rejects late results while preserving literal spaces
+  in non-empty queries.
+- Default parallel `npm test` passed 811/811 in 65 files with unchanged four
+  workers, timeouts, assertions and retry settings. Previous Git timeouts did
+  not reproduce; no timing root-cause fix is claimed.
+- Typecheck, lint, production/native build, both Electron 5E smokes and
+  `git diff --check` passed. Inspected four regenerated sidebar screenshots;
+  real Git smoke verified semantic actions, sandbox and owned cleanup.
+  Tests/build used approved external execution after sandbox spawn failures.
+- 5E returns to COMPLETE; 5F remains NOT_STARTED. No dependency, ADR,
+  architecture change or repository commit/push.
+
+### Corrective sidebar follow-up (2026-09-08; historical blocker)
+
+- Follow-up icon correction: replaced the Explorer tab's `Folder` with the
+  existing Lucide `Files` icon in `App.tsx`, matching `icon: Files` in Orca's
+  `src/renderer/src/components/right-sidebar/use-right-sidebar-activity-items.ts`
+  at locked commit `4bb337741c335cfcc428d3b4271023566e2dadb8`. Retained the
+  16 px icon and existing tab styling. Typecheck, lint, build, 60 Explorer
+  integration tests and real Electron sidebar/Git smoke passed; the regenerated
+  `explorer-aligned.png` was visually inspected. No dependency or ADR change;
+  the previously recorded full parallel-test blocker remains unchanged.
+- Finished verification of the resumed Orca-aligned sidebar geometry, search-mode
+  strip, compact file rows and trusted file-only Git decorations. Added explicit
+  accessible file-row names, including conflict read-only descriptions.
+- Expanded the real Electron smoke with accessible labels, DPI-aware geometry,
+  220 px keyboard resizing and viewport/content containment. Real Git/UI and
+  Names/conflict fixture smoke passed; all four generated screenshots were inspected.
+- Focused regression passed 85/85; full sequential diagnostic passed 807/807
+  tests across 65 files via `npm test -- --no-file-parallelism`. Typecheck, lint,
+  production/native build and whitespace checks passed.
+- Default parallel `npm test` still has varying 5-second real Git integration
+  timeouts. The corrective package is BLOCKED on that gate, despite successful
+  sequential verification; no timeout/assertion/configuration changes were made.
+  No new dependency, ADR, architecture deviation, repository commit/push or 5F work.
+
+### Original baseline evidence
+
+- Continued the existing uncommitted 5E work on `feature/phase-5`, preserving
+  sidebar, Names/Contents search, Source Control and test changes. The right
+  sidebar provides Explorer/Source Control icon tabs with retained session state.
+- Source Control presents dependency/repository states, staged/unstaged/untracked
+  files, read-only conflicts, selected-file stage/unstage, staged-only commit,
+  current/local branch switching and bounded history through the existing Git API.
+- Drafts survive tab/Refresh changes; only unchanged successfully submitted text
+  is cleared. Newer edits and failed/unknown submissions are retained. Project
+  replacement/close resets drafts. Mutations are serialized in the UI; stale reads
+  and unsafe follow-up after unknown/unrefreshed outcomes are blocked.
+- Corrected initial project-lock recovery and read settlement after unavailable
+  roots; added the regression test. Matched Source Control scrolling to existing
+  dark semantic styles without redesigning the Orca-aligned shell.
+- Verified 802/802 automated tests across 64 files, typecheck, lint, final
+  production/native build and whitespace checks. Initial sandbox spawn EPERM
+  required approved external execution. A first-run Monaco timeout did not recur
+  in the full rerun; no test timeout/worker configuration changed.
+- Added `scripts/smoke-git-ui.mjs`: built App + production Preload/Main/document
+  ownership/GitService/native runner passed real temporary-repository status,
+  stage/unstage, staged-only commit, branch/history, draft retention, project
+  replacement/non-repository/close, sandbox and owned cleanup. Component fixture
+  smoke separately passed conflict/no-overflow and Names rendering checks.
+  Screenshots in `out/phase-5e-ui/` were inspected.
+- Updated Codebase Map and Implementation Plan. No new dependency, ADR change,
+  architecture deviation or commit/push of this repository. Phase 5E is complete;
+  Phase 5F remains NOT_STARTED and overall Phase 5 remains IN_PROGRESS.
+
+## Phase 5F — Stabilization / Final Verification (`COMPLETE`, 2026-09-09)
+
+- Started from clean committed Phase 5A–5E baseline `6af919e` on
+  `feature/phase-5` and audited contracts, Main/Preload/Renderer authority,
+  repository/path validation, mutation truthfulness, stale-state isolation,
+  document ownership, Search/Git separation, process cleanup, UI state and test
+  quality. No production defect or architecture/decision change was required.
+- Focused tests passed: 5A 66/66, 5B 110/110, 5C 44/44, 5D 46/46, 5E 105/105,
+  Phase 2D Search 28/28 and Run 112/112. The combined real-Git matrix passed
+  72/72. Full `npm test` passed 811/811 across 65 files with the established
+  four workers and no local skips.
+- Electron/native evidence passed Git command/Job cleanup, three document reloads,
+  built semantic Git/UI workflow, Names/conflict/resize presentation, 15 Run
+  native cycles, Run re-run/stop and project/application cleanup. All lifecycle
+  smokes finished with zero retained resources.
+- Typecheck, lint, production/native build and whitespace checks passed. No retry,
+  sleep, timeout, assertion or worker policy changed; no dependency or lockfile
+  changed. The managed sandbox required the existing approved external process
+  path for test/build execution.
+- Confirmed absent/deferred: remote Git and fetch/pull/push, hosted review APIs,
+  merge/rebase and conflict resolution, discard/diff, stage-all, branch management,
+  worktrees, submodules, polling/watchers, Explorer folder aggregation and context
+  menus. Packaged/installed Windows 10/11 verification remains Phase 7.
+- Phase 5 is COMPLETE. No commit, push, merge or tag was performed by Phase 5F.
+
+## Phase 5 corrective native-test portability (2026-09-09)
+
+- Ubuntu GitHub Actions exposed that the Phase 5C real local Git integration
+  suite ran unconditionally even though production Git detection intentionally
+  uses Windows `git.exe` semantics. This was a test-configuration defect; no
+  production Git regression was found.
+- Correctively reopened Phase 5C and Phase 5F, then guarded the entire 5C native
+  suite with the existing non-Windows suite-skip policy. Non-Windows CI now
+  skips the Windows-specific suite intentionally. Windows still runs all 32
+  tests and treats unavailable Git or any assertion failure as a failure.
+- Focused Phase 5C passed 32/32 on Windows. Phase 5A/5B/5D native regression
+  passed 32/32. The first unchanged default full run recorded one existing
+  5-second timing-sensitive 5C timeout at 5.022 seconds (810/811 passed); an
+  independent unchanged rerun passed 811/811 across 65 files.
+- Typecheck, lint, production/native build and `git diff --check` passed. No
+  assertion, timeout, configured retry, production code, product semantic,
+  dependency, lockfile, contract, IPC or ADR changed. Phase 5C and Phase 5F
+  returned to `COMPLETE` after local corrective verification.
+- The corrected Ubuntu GitHub Actions run remains pending until this uncommitted
+  change is pushed. No CI pass, commit, push, merge or tag is claimed here.
