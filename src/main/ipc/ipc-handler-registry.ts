@@ -12,6 +12,15 @@ export interface IpcInvokeEventLike {
   sender: {
     id: number
   }
+  readonly senderFrame?: IpcSenderFrame | null
+}
+
+/** Trusted Electron metadata, used only inside Main; never part of an IPC DTO. */
+export interface IpcSenderFrame {
+  readonly processId: number
+  readonly frameToken: string
+  readonly detached: boolean
+  isDestroyed(): boolean
 }
 
 export interface IpcMainLike {
@@ -24,6 +33,7 @@ export interface IpcMainLike {
 
 export interface IpcRequestContext {
   senderId: number
+  senderFrame?: IpcSenderFrame | null
 }
 
 export interface IpcRequestDefinition<TRequest, TResponse> {
@@ -63,6 +73,7 @@ export class IpcHandlerRegistry {
       try {
         const value = await definition.handle(validation.value, {
           senderId: event.sender.id,
+          senderFrame: event.senderFrame,
         })
         return success(value)
       } catch (error) {

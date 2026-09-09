@@ -5,12 +5,14 @@ import {
   useReducer,
   useRef,
   useState,
+  type ReactNode,
 } from 'react'
 import {
   ChevronRight,
   File,
   FilePlus2,
   Folder,
+  FolderOpen,
   FolderPlus,
   Link2,
   Pencil,
@@ -22,7 +24,9 @@ import type {
   AppError,
   FileEntry,
   ProjectIdentity,
+  GitStatus,
 } from '../../../../shared/contracts'
+import { fileDecoration } from '../git/file-decoration'
 import {
   explorerReducer,
   initialExplorerModel,
@@ -40,6 +44,8 @@ interface ProjectExplorerProps {
   onRequestDelete?(entry: FileEntry): Promise<(() => void) | null>
   interactionLocked?: boolean
   unavailable?: boolean
+  search?(tree: ReactNode): ReactNode
+  gitStatus?: GitStatus | null
   /** Phase 2B compatibility only; no longer called. */
   onPreview?(path: string, content: string): void
   /** Phase 2B compatibility only; no longer called. */
@@ -57,6 +63,8 @@ export function ProjectExplorer({
   onRequestDelete,
   interactionLocked = false,
   unavailable = false,
+  search,
+  gitStatus = null,
 }: ProjectExplorerProps) {
   const [state, dispatch] = useReducer(explorerReducer, initialExplorerModel)
   const [operationError, setOperationError] = useState<string | null>(null)
@@ -200,7 +208,6 @@ export function ProjectExplorer({
     <section className="explorer-panel" aria-label="Project Explorer">
       <div className="explorer-toolbar">
         <div className="explorer-project-name" title={project.name}>
-          <Folder className="tree-entry-icon folder" />
           <span>{project.name}</span>
         </div>
         <div className="explorer-actions" aria-label="File actions">
@@ -219,18 +226,19 @@ export function ProjectExplorer({
         </div>
       )}
 
-      <div className="tree-scroll">
+      {(search ?? ((tree: ReactNode) => tree))(<div className="tree-scroll">
         <DirectoryContents
           directoryPath=""
           depth={0}
           directories={state.directories}
           expanded={state.expanded}
           selectedPath={state.selectedPath}
+          gitStatus={gitStatus}
           onLoad={loadDirectory}
           onSelect={selectEntry}
           onToggle={toggleDirectory}
         />
-      </div>
+      </div>)}
       {entryDialog && (
         <PromptDialog
           title={entryDialog.mode === 'create'
@@ -267,6 +275,7 @@ export function ProjectExplorer({
 }
 
 interface DirectoryContentsProps {
+  gitStatus: GitStatus | null
   directoryPath: string
   depth: number
   directories: Record<string, DirectoryLoadState>
@@ -283,6 +292,7 @@ function DirectoryContents({
   directories,
   expanded,
   selectedPath,
+  gitStatus,
   onLoad,
   onSelect,
   onToggle,
@@ -308,6 +318,8 @@ function DirectoryContents({
       {directory.entries.map((entry) => {
         const isDirectory = entry.kind === 'directory' && !entry.isSymbolicLink
         const isExpanded = Boolean(expanded[entry.relativePath])
+        const status = entry.kind === 'file' ? gitStatus?.entries.find((item) => item.path === entry.relativePath) : undefined
+        const decoration = status ? fileDecoration(status) : null
         return (
           <li key={entry.relativePath}>
             <button
@@ -326,15 +338,18 @@ function DirectoryContents({
               }}
               aria-expanded={isDirectory ? isExpanded : undefined}
               aria-current={selectedPath === entry.relativePath ? 'true' : undefined}
+              aria-label={decoration ? `${entry.name} ${decoration.label}` : entry.name}
               title={entry.relativePath}
             >
               <span className="tree-caret">{isDirectory ? <ChevronRight className={`tree-chevron${isExpanded ? ' expanded' : ''}`} /> : null}</span>
               {entry.isSymbolicLink
                 ? <Link2 className="tree-entry-icon link" />
                 : isDirectory
-                  ? <Folder className="tree-entry-icon folder" />
+                  ? isExpanded ? <FolderOpen className="tree-entry-icon folder" /> : <Folder className="tree-entry-icon folder" />
                   : <File className="tree-entry-icon file" />}
-              <span className="tree-name">{entry.name}</span>
+              <span className={`tree-name${decoration ? ` git-decoration-${decoration.kind}` : ''}`}>{entry.name}</span>
+              {decoration && <span className={`file-git-decoration git-decoration-${decoration.kind}`}
+                role="img" title={decoration.label} aria-label={decoration.label}>{decoration.badge}</span>}
             </button>
             {isDirectory && isExpanded && (
               <DirectoryContents
@@ -343,6 +358,7 @@ function DirectoryContents({
                 directories={directories}
                 expanded={expanded}
                 selectedPath={selectedPath}
+                gitStatus={gitStatus}
                 onLoad={onLoad}
                 onSelect={onSelect}
                 onToggle={onToggle}
