@@ -1185,7 +1185,23 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
 
 ## Phase 5E — Right sidebar and Source Control (original completion, 2026-09-08)
 
-### Corrective sidebar follow-up (2026-09-08)
+### Resumed corrective acceptance (2026-09-09)
+
+- Verified the retained whitespace-only Search fix and four regression cases:
+  Names restores its tree, Contents remains idle, no empty search is sent, and
+  active-query cancellation rejects late results while preserving literal spaces
+  in non-empty queries.
+- Default parallel `npm test` passed 811/811 in 65 files with unchanged four
+  workers, timeouts, assertions and retry settings. Previous Git timeouts did
+  not reproduce; no timing root-cause fix is claimed.
+- Typecheck, lint, production/native build, both Electron 5E smokes and
+  `git diff --check` passed. Inspected four regenerated sidebar screenshots;
+  real Git smoke verified semantic actions, sandbox and owned cleanup.
+  Tests/build used approved external execution after sandbox spawn failures.
+- 5E returns to COMPLETE; 5F remains NOT_STARTED. No dependency, ADR,
+  architecture change or repository commit/push.
+
+### Corrective sidebar follow-up (2026-09-08; historical blocker)
 
 - Follow-up icon correction: replaced the Explorer tab's `Folder` with the
   existing Lucide `Files` icon in `App.tsx`, matching `icon: Files` in Orca's
