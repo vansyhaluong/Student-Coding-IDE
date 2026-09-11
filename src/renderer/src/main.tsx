@@ -1,3 +1,4 @@
+import { startCsharpSession } from './features/language/csharp/csharp-session'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -16,7 +17,9 @@ if (!root) {
   throw new Error('Root element was not found')
 }
 
+const disposeCsharpSession = startCsharpSession()
 window.addEventListener('pagehide', () => {
+  disposeCsharpSession()
   terminalController.shutdown()
   typeScriptProjectController.dispose()
   disposeProblemsSession()

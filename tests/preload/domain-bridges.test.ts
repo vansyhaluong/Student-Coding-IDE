@@ -78,6 +78,7 @@ describe('Phase 2B preload bridges', () => {
     expect(Object.keys(api).sort()).toEqual([
       'file',
       'git',
+      'language',
       'lifecycle',
       'project',
       'run',

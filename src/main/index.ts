@@ -1,3 +1,6 @@
+import { CsharpSemanticService } from './services/language/csharp-semantic-service'
+import { LanguageIpcService } from './ipc/language-ipc-service'
+import { LANGUAGE_CHANNELS } from '../shared/contracts/language'
 import {
   app,
   BrowserWindow,
@@ -340,6 +343,11 @@ void app.whenReady().then(async () => {
     { name: 'CsharpWorkspaceStore', stop: () => csharpStore.stop() },
     csharpSession,
     csharpOwners,
+    new LanguageIpcService(ipcRegistry, new CsharpSemanticService(projectService, fileSystemService,
+      csharpSession, csharpManager, csharpOwners, (senderId, projectId, status) => {
+        const window = BrowserWindow.getAllWindows().find(w => !w.isDestroyed() && w.webContents.id === senderId)
+        window?.webContents.send(LANGUAGE_CHANNELS.status, { projectId, status })
+      })),
     gitLifecycle,
     gitDocuments,
     { name: 'RunOwnerSubscriptions', stop: () => {

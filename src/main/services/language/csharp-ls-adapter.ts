@@ -166,7 +166,7 @@ export class CSharpLsAdapter {
     return result
   }
   async definition(operation: string, params: Lsp.TextDocumentPositionParams): Promise<Lsp.Definition | null> {
-    // URI containment and semantic public conversion are deliberately deferred to 5.5E/F.
+    // The public semantic service performs URI containment and DTO conversion.
     const result = await this.request<Lsp.Definition | null>(
       operation, 'textDocument/definition', params, params.textDocument.uri)
     if (result !== null && (Array.isArray(result) ? result : [result]).some(

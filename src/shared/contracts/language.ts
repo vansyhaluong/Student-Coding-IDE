@@ -1,3 +1,4 @@
+import type { AppResult } from './app-error'
 import type { ProjectId } from './project'
 
 export const LANGUAGE_PROVIDER_IDS = ['monaco-tokenization', 'csharp-ls'] as const
@@ -41,6 +42,7 @@ export const LANGUAGE_REASON_CODES = [
   'CSHARP_LS_MISSING', 'CSHARP_LS_INVALID', 'CSHARP_LS_VERSION_MISMATCH', 'CSHARP_LS_PROBE_FAILED',
   'SDK_SELECTION_FAILED', 'SOLUTION_PARSE_FAILED', 'PROJECT_EVALUATION_FAILED',
   'PROJECT_REFERENCE_MISSING', 'PROJECT_REFERENCE_OUTSIDE_ROOT',
+  'NO_SOLUTION_PROJECTS', 'PREFLIGHT_BOUND_EXCEEDED', 'INVALID_EVALUATION_JSON', 'WORKSPACE_PREFLIGHT_FAILED',
 ] as const
 export type LanguageReasonCode = (typeof LANGUAGE_REASON_CODES)[number]
 
@@ -57,6 +59,7 @@ export const LANGUAGE_LIMITS = {
   maximumDefinitions: 100,
   maximumDiagnostics: 2_000,
   maximumTextLength: 256 * 1024,
+  maximumDocumentChanges: 1_000,
   maximumCandidateCount: 256,
 } as const
 
@@ -85,14 +88,20 @@ export interface WorkspaceCandidate {
   readonly relativePath: string
 }
 export type LanguageWorkspaceStatus =
-  | { readonly state: 'READY'; readonly selected: WorkspaceCandidate }
+  | { readonly state: 'READY'; readonly mode: 'solution'; readonly selected: WorkspaceCandidate }
+  | { readonly state: 'READY'; readonly mode: 'project' }
   | { readonly state: 'SELECTION_REQUIRED'; readonly candidates: readonly WorkspaceCandidate[] }
   | { readonly state: 'NO_CSHARP_WORKSPACE' }
-  | { readonly state: 'PREFLIGHT_FAILED'; readonly selected: WorkspaceCandidate; readonly reason: LanguageReasonCode }
+  | { readonly state: 'PREFLIGHT_FAILED'; readonly selected?: WorkspaceCandidate; readonly reason: LanguageReasonCode }
 
 export interface LanguageStatus {
   readonly providerId: 'csharp-ls'
   readonly capabilities: readonly LanguageCapability[]
+  readonly effectiveCapabilities: readonly LanguageCapability[]
+  readonly completionResolve: boolean
+  readonly completionTriggers: readonly string[]
+  readonly signatureTriggers: readonly string[]
+  readonly signatureRetriggers: readonly string[]
   readonly dependency: LanguageDependencyStatus
   readonly service: LanguageServiceStatus
   readonly workspace: LanguageWorkspaceStatus
@@ -184,3 +193,33 @@ export interface DiagnosticResult {
   readonly documentVersion: DocumentVersion
   readonly diagnostics: readonly LanguageDiagnostic[]
 }
+
+/** Public document identity; modelVersion always comes from the retained Monaco model. */
+export interface LanguageModelIdentity extends LanguageDocumentIdentity { readonly modelVersion: DocumentVersion }
+export interface OpenLanguageDocumentRequest extends LanguageModelIdentity { readonly text: string; readonly dirty: boolean }
+export interface LanguageTextChange { readonly range: LanguageRange; readonly text: string }
+export interface ChangeLanguageDocumentRequest extends LanguageModelIdentity { readonly changes: readonly LanguageTextChange[] }
+export interface LanguageStatusEvent { readonly projectId: ProjectId; readonly status: LanguageStatus }
+export interface LanguageApi {
+  getStatus(projectId: ProjectId): Promise<AppResult<LanguageStatus>>
+  getWorkspaceState(projectId: ProjectId): Promise<AppResult<LanguageWorkspaceStatus>>
+  selectWorkspace(request: SelectLanguageWorkspaceRequest): Promise<AppResult<LanguageStatus>>
+  openDocument(request: OpenLanguageDocumentRequest): Promise<AppResult<LanguageStatus>>
+  changeDocument(request: ChangeLanguageDocumentRequest): Promise<AppResult<null>>
+  saveDocument(request: LanguageModelIdentity): Promise<AppResult<null>>
+  closeDocument(request: LanguageModelIdentity): Promise<AppResult<null>>
+  getCompletion(request: CompletionRequest): Promise<AppResult<CompletionResult>>
+  resolveCompletion(request: CompletionResolveRequest): Promise<AppResult<CompletionItem>>
+  getHover(request: HoverRequest): Promise<AppResult<HoverResult | null>>
+  getSignatureHelp(request: SignatureHelpRequest): Promise<AppResult<SignatureHelpResult | null>>
+  getDefinition(request: DefinitionRequest): Promise<AppResult<DefinitionResult>>
+  cancel(requestId: SemanticRequestId): Promise<AppResult<null>>
+  onStatus(listener: (event: LanguageStatusEvent) => void): () => void
+}
+export const LANGUAGE_CHANNELS = {
+  getStatus: 'language:get-status', getWorkspaceState: 'language:get-workspace-state', selectWorkspace: 'language:select-workspace',
+  openDocument: 'language:open-document', changeDocument: 'language:change-document', saveDocument: 'language:save-document',
+  closeDocument: 'language:close-document', getCompletion: 'language:get-completion', resolveCompletion: 'language:resolve-completion',
+  getHover: 'language:get-hover', getSignatureHelp: 'language:get-signature-help', getDefinition: 'language:get-definition',
+  cancel: 'language:cancel', status: 'language:status',
+} as const

@@ -17,7 +17,7 @@ export interface WorkspaceLanguageManager {
   stop(): Promise<void>
 }
 
-/** Internal lazy entry point for 5.5F; no Renderer/IPC authority. */
+/** Main-owned lazy workspace session; it exposes no Renderer or IPC authority. */
 export class CsharpWorkspaceSession implements ManagedService {
   readonly name = 'CsharpWorkspaceSession'
   private generation = 0
@@ -30,6 +30,12 @@ export class CsharpWorkspaceSession implements ManagedService {
   private removers: Array<() => void> = []
   private stopped = false
   private ready?: WorkspaceResult
+  private latest?: WorkspaceResult
+  private readonly listeners = new Set<() => void>()
+  get epoch(): number { return this.generation }
+  get snapshot(): WorkspaceResult | undefined { return this.latest ? structuredClone(this.latest) : undefined }
+  subscribe(listener: () => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
+  private publish(): void { for (const listener of this.listeners) listener() }
 
   constructor(private readonly projects: ProjectService, private readonly files: FileSystemService,
     private readonly workspace: CsharpWorkspace, private readonly manager: WorkspaceLanguageManager,
@@ -74,6 +80,7 @@ export class CsharpWorkspaceSession implements ManagedService {
       current()
       const result = await this.workspace.prepare(project, abort.signal, candidateId)
       current()
+      this.latest = result; this.publish()
       if (result.state !== 'READY') return result
       const adapter = await this.manager.start({ root: project.canonicalRoot, solution: result.solution })
       current()
@@ -82,7 +89,7 @@ export class CsharpWorkspaceSession implements ManagedService {
       this.watched = new CsharpWatchedFiles(projectId, project.canonicalRoot, this.files, adapter, this.documents, assertSession)
       await this.watched.initialize()
       current()
-      this.ready = result
+      this.ready = result; this.publish()
       return result
     }
     const task = startWorkspace().catch(async (error: unknown) => {
@@ -109,6 +116,7 @@ export class CsharpWorkspaceSession implements ManagedService {
   /** Main-frame navigation, owner loss, project invalidation; never React unmount. */
   invalidate(): Promise<void> {
     ++this.generation
+    this.latest = undefined; this.publish()
     this.abort?.abort(); this.abort = undefined
     this.workspace.invalidate()
     this.documents?.invalidate(); this.documents = undefined

@@ -1454,3 +1454,21 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
 
 - Updated actual module map and implementation/language status. No commit, push
   or merge was performed.
+
+## Phase 5.5F — IPC, Preload and Monaco semantic providers (2026-09-11) — COMPLETE
+
+- Added exact-validated, committed-frame-owned C# language IPC and a narrow
+  Preload API for workspace selection, document synchronization, completion,
+  completion resolve, hover, signature help, definition and cancellation.
+- Added Main semantic mapping with bounded opaque completion handles, safe
+  presentation text, stale-result guards and canonical active-project
+  containment for definition targets.
+- Added Renderer-session synchronization and separate Monaco completion, hover,
+  signature-help and definition providers using negotiated capabilities/triggers
+  and explicit UTF-16 range/enum conversion.
+- Focused 5.5E–F regression tests passed 150/150; the full suite passed 947/947
+  in 72 files. Typecheck, lint, production/native build and `git diff --check`
+  passed without changing test policy.
+- Diagnostics/Problems/status UX, C# Run, public restart/raw logs and all other
+  deferred capabilities remain outside 5.5F. No dependency, ADR or architecture
+  deviation was introduced.

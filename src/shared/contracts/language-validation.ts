@@ -88,11 +88,14 @@ export function validateSelectLanguageWorkspaceRequest(value: unknown): Validati
   const issues: ValidationIssue[] = []
   if (!isProjectId(object.value.projectId)) invalid(issues, '$.projectId', 'ProjectId')
   validateWorkspaceCandidateField(object.value.candidate, '$.candidate', issues)
+  if (isPlainObject(object.value.candidate) && object.value.candidate.kind !== 'solution') {
+    invalid(issues, '$.candidate.kind', 'solution workspace candidate')
+  }
   return finish<SelectLanguageWorkspaceRequest>(object.value, issues)
 }
 
 export function validateLanguageStatus(value: unknown): ValidationResult<LanguageStatus> {
-  const object = validateExactObject(value, ['providerId', 'capabilities', 'dependency', 'service', 'workspace'])
+  const object = validateExactObject(value, ['providerId', 'capabilities', 'effectiveCapabilities', 'completionResolve', 'completionTriggers', 'signatureTriggers', 'signatureRetriggers', 'dependency', 'service', 'workspace'])
   if (!object.ok) return object
   const issues: ValidationIssue[] = []
   if (object.value.providerId !== 'csharp-ls') invalid(issues, '$.providerId', 'C# provider ID')
@@ -101,6 +104,19 @@ export function validateLanguageStatus(value: unknown): ValidationResult<Languag
     || !capabilities.every(isLanguageCapability) || new Set(capabilities).size !== capabilities.length
     || !CSHARP_LS_CAPABILITIES.every((capability) => capabilities.includes(capability))) {
     invalid(issues, '$.capabilities', 'complete unique capability set')
+  }
+  const effective = object.value.effectiveCapabilities
+  if (!Array.isArray(effective) || !effective.every((item) => CSHARP_LS_CAPABILITIES.includes(item))
+    || new Set(effective).size !== effective.length) invalid(issues, '$.effectiveCapabilities', 'unique effective capabilities')
+  if (typeof object.value.completionResolve !== 'boolean') invalid(issues, '$.completionResolve', 'boolean')
+  for (const field of ['completionTriggers', 'signatureTriggers', 'signatureRetriggers']) {
+    const triggers = object.value[field]
+    if (!Array.isArray(triggers) || triggers.some((v) => typeof v !== 'string' || [...v].length !== 1 || !isVisibleCharacter(v))
+      || new Set(triggers).size !== triggers.length) invalid(issues, '$.' + field, 'unique trigger characters')
+  }
+  if (isPlainObject(object.value.service) && object.value.service.state !== 'RUNNING'
+    && (Array.isArray(effective) && effective.length || object.value.completionResolve === true)) {
+    invalid(issues, '$.effectiveCapabilities', 'no effective capability while stopped')
   }
   validateDependencyStatusField(object.value.dependency, issues)
   validateServiceStatusField(object.value.service, issues)
@@ -172,15 +188,17 @@ function validateServiceStatusField(value: unknown, issues: ValidationIssue[]): 
 }
 function validateWorkspaceStatusField(value: unknown, issues: ValidationIssue[]): void {
   if (!isPlainObject(value)) return invalid(issues, '$.workspace', 'workspace status')
-  const fields = value.state === 'READY' ? ['state', 'selected']
+  const fields = value.state === 'READY' ? (value.mode === 'project' ? ['state', 'mode'] : ['state', 'mode', 'selected'])
     : value.state === 'SELECTION_REQUIRED' ? ['state', 'candidates']
       : value.state === 'NO_CSHARP_WORKSPACE' ? ['state']
-        : value.state === 'PREFLIGHT_FAILED' ? ['state', 'selected', 'reason'] : ['state']
+        : value.state === 'PREFLIGHT_FAILED' ? ['state', 'reason', ...(value.selected === undefined ? [] : ['selected'])] : ['state']
   const object = validateExactObject(value, fields)
   if (!object.ok) return prefixIssues(object.issues, '$.workspace', issues)
   if (!LANGUAGE_WORKSPACE_STATES.includes(object.value.state as LanguageWorkspaceState)) return invalid(issues, '$.workspace.state', 'workspace state')
-  if (object.value.state === 'READY' || object.value.state === 'PREFLIGHT_FAILED') {
+  if (object.value.state === 'READY' && object.value.mode !== 'project' && object.value.mode !== 'solution') invalid(issues, '$.workspace.mode', 'workspace mode')
+  if ((object.value.state === 'READY' && object.value.mode === 'solution') || (object.value.state === 'PREFLIGHT_FAILED' && object.value.selected !== undefined)) {
     validateWorkspaceCandidateField(object.value.selected, '$.workspace.selected', issues)
+    if (object.value.state === 'READY' && isPlainObject(object.value.selected) && object.value.selected.kind !== 'solution') invalid(issues, '$.workspace.selected', 'solution candidate')
   }
   if (object.value.state === 'SELECTION_REQUIRED') {
     if (!Array.isArray(object.value.candidates) || object.value.candidates.length < 2
@@ -199,4 +217,68 @@ function invalid(issues: ValidationIssue[], path: string, expected: string): voi
 }
 function finish<T>(value: Record<string, unknown>, issues: ValidationIssue[]): ValidationResult<T> {
   return issues.length > 0 ? { ok: false, issues } : { ok: true, value: value as T }
+}
+
+export function validateLanguageWorkspaceStatus(value: unknown): ValidationResult<import('./language').LanguageWorkspaceStatus> {
+  const issues: ValidationIssue[] = []
+  validateWorkspaceStatusField(value, issues)
+  return issues.length ? { ok: false, issues } : { ok: true, value: value as import('./language').LanguageWorkspaceStatus }
+}
+export function validateLanguageProject(value: unknown): ValidationResult<{ projectId: import('./project').ProjectId }> {
+  const object = validateExactObject(value, ['projectId'])
+  if (!object.ok) return object
+  return isProjectId(object.value.projectId) ? { ok: true, value: { projectId: object.value.projectId } }
+    : { ok: false, issues: [{ path: '$.projectId', message: 'Expected project identity' }] }
+}
+export function validateLanguageDocument(value: unknown, kind: 'open'): ValidationResult<import('./language').OpenLanguageDocumentRequest>
+export function validateLanguageDocument(value: unknown, kind: 'change'): ValidationResult<import('./language').ChangeLanguageDocumentRequest>
+export function validateLanguageDocument(value: unknown, kind: 'identity'): ValidationResult<import('./language').LanguageModelIdentity>
+export function validateLanguageDocument(value: unknown, kind: 'open' | 'change' | 'identity'):
+  ValidationResult<import('./language').OpenLanguageDocumentRequest | import('./language').ChangeLanguageDocumentRequest | import('./language').LanguageModelIdentity> {
+  const object = validateExactObject(value, ['projectId', 'relativePath', 'modelVersion',
+    ...(kind === 'open' ? ['text', 'dirty'] : kind === 'change' ? ['changes'] : [])])
+  if (!object.ok) return object
+  const issues: ValidationIssue[] = []
+  if (!isProjectId(object.value.projectId)) invalid(issues, '$.projectId', 'project identity')
+  if (!isLanguageRelativePath(object.value.relativePath) || !/\.cs$/i.test(String(object.value.relativePath))) invalid(issues, '$.relativePath', 'C# relative path')
+  if (!isDocumentVersion(object.value.modelVersion)) invalid(issues, '$.modelVersion', 'model version')
+  if (kind === 'open' && (typeof object.value.text !== 'string'
+    || object.value.text.length > LANGUAGE_LIMITS.maximumTextLength || typeof object.value.dirty !== 'boolean')) {
+    invalid(issues, '$', 'bounded text and dirty flag')
+  }
+  if (kind === 'change') {
+    const changes = object.value.changes
+    if (!Array.isArray(changes) || !changes.length || changes.length > LANGUAGE_LIMITS.maximumDocumentChanges) {
+      invalid(issues, '$.changes', 'bounded ordered changes')
+    }
+    else for (const change of changes) {
+      const c = validateExactObject(change, ['range', 'text'])
+      if (!c.ok || typeof c.value.text !== 'string' || c.value.text.length > LANGUAGE_LIMITS.maximumTextLength) {
+        invalid(issues, '$.changes', 'bounded text change'); continue
+      }
+      const r = validateExactObject(c.value.range, ['start', 'end'])
+      if (!r.ok) { invalid(issues, '$.changes.range', 'range'); continue }
+      validatePositionField(r.value.start, '$.changes.range.start', issues)
+      validatePositionField(r.value.end, '$.changes.range.end', issues)
+      if (isPlainObject(r.value.start) && isPlainObject(r.value.end)
+        && Number.isSafeInteger(r.value.start.line) && Number.isSafeInteger(r.value.start.character)
+        && Number.isSafeInteger(r.value.end.line) && Number.isSafeInteger(r.value.end.character)
+        && (Number(r.value.end.line) < Number(r.value.start.line)
+          || r.value.end.line === r.value.start.line && Number(r.value.end.character) < Number(r.value.start.character))) {
+        invalid(issues, '$.changes.range', 'ordered range')
+      }
+    }
+  }
+  return finish(object.value, issues)
+}
+export function validateLanguageCancel(value: unknown): ValidationResult<{ requestId: SemanticRequestId }> {
+  const object = validateExactObject(value, ['requestId'])
+  if (!object.ok) return object
+  return isSemanticRequestId(object.value.requestId) ? { ok: true, value: { requestId: object.value.requestId } }
+    : { ok: false, issues: [{ path: '$.requestId', message: 'Expected semantic request ID' }] }
+}
+
+function isVisibleCharacter(value: string): boolean {
+  const codePoint = value.codePointAt(0)
+  return codePoint !== undefined && codePoint > 0x1f && codePoint !== 0x7f
 }
