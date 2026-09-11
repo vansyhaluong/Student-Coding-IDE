@@ -15,7 +15,7 @@ not implemented until their later work packages pass.
 | HTML | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Deferred | Deferred | No | N/A | Monaco HTML worker | V1 syntax/completion/hover; diagnostics deferred because provider has no validation support |
 | CSS | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Yes | Yes | No | N/A | Monaco CSS worker | Accepted and verified for Phase 3 V1 |
 | JSON | 2 | Yes | Yes, local schema-free behavior | No useful result without a configured local schema | Not required | Not required | Yes | Yes | No | N/A | Monaco JSON worker | Accepted and verified for current local-only configuration |
-| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Deferred | Independent; no C# Run selected | Monaco tokenization + planned Main-owned `csharp-ls` | Phase 3 syntax-only complete; Phase 5.5 extension authorized, implementation gated by 5.5B |
+| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Deferred | Independent; no C# Run selected | Monaco tokenization + internal Main-owned `csharp-ls` foundation | Phase 3 syntax complete; 5.5B passed and 5.5C–E complete; user-facing integration remains 5.5F–G |
 | PHP | Syntax-only | Yes | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Future | Monaco tokenization only | Accepted syntax-only scope |
 
 ## Deferred future language support
@@ -86,7 +86,8 @@ does not retroactively change Phase 3 implementation or acceptance evidence.
 - Phase 5.5B selected `csharp-ls` 0.27.0,
   `vscode-languageserver-protocol` 3.18.3, and `vscode-jsonrpc/node` 9.0.2.
   Phase 5.5C adds the exact protocol and JSON-RPC versions as production runtime
-  dependencies; no transport or long-running session is implemented yet.
+  dependencies. Phase 5.5D–E implement internal transport, sessions, workspace
+  preflight and document synchronization; Renderer integration remains 5.5F–G.
 - Renderer sees only typed semantic APIs. It never sees raw LSP/JSON-RPC, PID,
   executable path, cwd, spawn arguments, canonical project root, raw logs, or
   diagnostic `resultId`.
@@ -111,8 +112,11 @@ structured `dotnet`/MSBuild exit codes, evaluation JSON, and path checks:
 effective SDK selection, selected `.sln`/`.slnx` parse plus listed `.csproj`
 path tokens, bounded project-mode discovery, evaluation-only properties/items,
 and `ProjectReference`
-containment/existence. It requests no target, build, or restore and writes no
-workspace file. A failure does not start `csharp-ls`; a pass is `READY`, not
+containment/existence. It requests no target, build, or restore and does not
+intentionally modify workspace files. V1 supports user-trusted projects only;
+MSBuild project/import evaluation is not sandboxed and is not guaranteed free
+of side effects for arbitrary untrusted projects (ADR-022, 2026-09-11).
+A failure does not start `csharp-ls`; a pass is `READY`, not
 proof that an equivalent Roslyn workspace will load inside the provider.
 
 ### Lifecycle and synchronization
@@ -154,8 +158,8 @@ mode; no-solution recursive discovery behavior/performance; paths with spaces,
 detection without parsing human log strings; crash/shutdown and descendant
 cleanup; and electron-vite/typecheck/build compatibility. The 2026-09-10 spike
 and corrective workspace-readiness probe passed this hard gate. Phase 5.5C
-subsequently completed under explicit authorization; starting Phase 5.5D still
-requires separate authorization.
+and Phase 5.5D–E subsequently completed under explicit authorization.
+Phase 5.5F–H still require separate authorization.
 
 ## Current provider decisions and Phase 3 acceptance evidence
 

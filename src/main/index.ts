@@ -55,6 +55,12 @@ import { GitService } from './services/git/git-service'
 import { DomainError } from './errors/app-error'
 import { RunIpcService } from './ipc/run-ipc-service'
 import { WindowManager } from './window/window-manager'
+import { createCsharpLanguageManager } from './services/language/language-service-manager'
+import { CsharpWorkspaceStore } from './services/language/csharp-workspace-store'
+import { CsharpPreflightProcess } from './services/language/csharp-preflight-process'
+import { CsharpWorkspace } from './services/language/csharp-workspace'
+import { CsharpWorkspaceSession } from './services/language/csharp-workspace-session'
+import { CsharpOwnerLifecycle } from './services/language/csharp-owner-lifecycle'
 
 interface AppMetadata {
   recentProjects: RecentProjectMetadata[]
@@ -101,6 +107,16 @@ void app.whenReady().then(async () => {
         && window.webContents.id === ownerId,
     ),
   })
+  // Lazy internal composition only: 5.5F supplies the future typed document entry.
+  // Packaged provider provisioning remains Phase 7; absence fails closed.
+  const csharpStore = new CsharpWorkspaceStore(join(app.getPath('userData'), 'workspaces'))
+  const csharpCommands = new CsharpPreflightProcess()
+  const csharpManager = createCsharpLanguageManager({ mode: app.isPackaged ? 'packaged' : 'development' }, processManager)
+  const csharpSession = new CsharpWorkspaceSession(projectService, fileSystemService,
+    new CsharpWorkspace(fileSystemService, csharpStore, csharpCommands), csharpManager, csharpCommands,
+    () => console.error('C# synchronization or cleanup failed; owned resources remain tracked.'))
+  const csharpOwners = new CsharpOwnerLifecycle(csharpSession,
+    () => console.error('C# owner cleanup failed; owned resources remain tracked.'))
   const terminalIpcReference: { current?: TerminalIpcService } = {}
   const terminalService = new TerminalService({
     ptyPort: new NodePtyPort(),
@@ -170,6 +186,7 @@ void app.whenReady().then(async () => {
     createWindow: (options) => {
       const window = new BrowserWindow(options)
       gitDocuments.observe(window.webContents)
+      csharpOwners.observe(window.webContents)
       return window
     },
     openExternal: (url) => shell.openExternal(url),
@@ -320,6 +337,9 @@ void app.whenReady().then(async () => {
     unsavedTransitionService,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
     runLifecycle,
+    { name: 'CsharpWorkspaceStore', stop: () => csharpStore.stop() },
+    csharpSession,
+    csharpOwners,
     gitLifecycle,
     gitDocuments,
     { name: 'RunOwnerSubscriptions', stop: () => {
@@ -340,7 +360,7 @@ void app.whenReady().then(async () => {
 
   removeLifecyclePublisher = desktopApplication.subscribe((status) => {
     // Block starts/events at STOPPING; cleanup stays in managed-service order.
-    if (status.state === 'STOPPING') { runService.beginShutdown(); gitLifecycle.beginShutdown() }
+    if (status.state === 'STOPPING') { runService.beginShutdown(); gitLifecycle.beginShutdown(); csharpSession.beginShutdown() }
     for (const window of BrowserWindow.getAllWindows()) {
       if (!window.isDestroyed()) {
         window.webContents.send(LIFECYCLE_CHANNELS.statusChanged, status)

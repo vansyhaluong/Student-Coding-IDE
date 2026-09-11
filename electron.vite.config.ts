@@ -11,6 +11,7 @@ export default defineConfig({
       index: resolve('src/main/index.ts'),
       'run-runtime': resolve('src/main/services/run/run-runtime.ts'),
       'language-runtime': resolve('src/main/services/language/language-service-manager.ts'),
+      'csharp-preflight-runtime': resolve('src/main/services/language/csharp-preflight-process.ts'),
     } } },
     plugins: [{ name: 'run-native-artifact', closeBundle() {
       // Portable CI still builds JS; unsupported hosts cannot load the adapter.
