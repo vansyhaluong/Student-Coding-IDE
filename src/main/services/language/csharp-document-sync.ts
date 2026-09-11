@@ -102,6 +102,14 @@ export class CsharpDocumentSync {
     return outcome
   }
 
+  /** Existing editor save already committed through FileSystemService; never write it twice. */
+  saved(handle: SyncedDocument, version: number): Promise<void> {
+    const document = this.document(handle)
+    if (version !== document.version) throw new LanguageError('invalid-version')
+    document.savedVersion = version
+    return this.queue.enqueue(() => this.transport.didSave({ textDocument: { uri: document.uri } }))
+  }
+
   async close(handle: SyncedDocument): Promise<void> {
     const document = this.document(handle)
     document.closing = true

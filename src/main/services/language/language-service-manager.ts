@@ -23,7 +23,7 @@ export interface LanguageManagerDependencies {
   factory: CsharpProcessFactory
 }
 
-/** Main-only foundation. No app composition, workspace policy, IPC, or Renderer API in 5.5D. */
+/** Main-owned provider lifecycle; callers expose only capability-scoped semantic operations. */
 export class LanguageServiceManager {
   private generation = 0
   private session?: Session
@@ -31,7 +31,18 @@ export class LanguageServiceManager {
   private stopping?: Promise<void>
   private cleaning?: Promise<void>
   private disposed = false
-  private lifecycle: 'STOPPED' | 'STARTING' | 'RUNNING' | 'CRASHED' = 'STOPPED'
+  private currentState: 'STOPPED' | 'STARTING' | 'RUNNING' | 'CRASHED' = 'STOPPED'
+  private readonly listeners = new Set<() => void>()
+  private get lifecycle() { return this.currentState }
+  private set lifecycle(state: typeof this.currentState) {
+    this.currentState = state
+    for (const listener of this.listeners) queueMicrotask(listener)
+  }
+  subscribe(listener: () => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
+  get adapter(): CSharpLsAdapter {
+    if (this.state !== 'RUNNING' || !this.session) throw new LanguageError('not-running')
+    return this.session.adapter
+  }
   private dependencyStatus?: LanguageDependencyStatus
   private cleanupFailure?: LanguageError
   private readonly owner = 'csharp_' + randomUUID()
@@ -41,6 +52,12 @@ export class LanguageServiceManager {
   get state(): 'STOPPED' | 'STARTING' | 'RUNNING' | 'CRASHED' { return this.lifecycle }
   get dependency(): LanguageDependencyStatus | undefined {
     return this.dependencyStatus ? structuredClone(this.dependencyStatus) : undefined
+  }
+  async detectDependencies(): Promise<void> {
+    if (this.dependencyStatus) return
+    const sdk = await this.dependencies.sdk.detect()
+    this.dependencyStatus = sdk.status
+    if (sdk.status.state === 'AVAILABLE') this.dependencyStatus = (await this.dependencies.provider.detect()).status
   }
   get cleanupPending(): boolean { return this.session !== undefined }
   get lastCleanupError(): LanguageError | undefined { return this.cleanupFailure }
@@ -165,7 +182,7 @@ export class LanguageServiceManager {
   }
 }
 
-/** Trusted composition for later 5.5E. Paths/environment never come from Renderer. */
+/** Trusted Main composition. Paths and environment never come from Renderer. */
 export function createCsharpLanguageManager(options: CsharpLsResolverOptions, processes: ProcessManager,
   environment: NodeJS.ProcessEnv = process.env): LanguageServiceManager {
   return new LanguageServiceManager({

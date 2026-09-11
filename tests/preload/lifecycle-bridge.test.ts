@@ -39,6 +39,7 @@ describe('lifecycle preload bridge', () => {
     expect(Object.keys(api).sort()).toEqual([
       'file',
       'git',
+      'language',
       'lifecycle',
       'project',
       'run',

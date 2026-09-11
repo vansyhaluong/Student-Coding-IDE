@@ -2,8 +2,8 @@
 
 This is the authoritative language capability contract and decision register. It
 records the verified Phase 3 scope and the newly authorized Phase 5.5 C# V1
-extension. Phase 5.5A is documentation/design only; C# semantic capabilities are
-not implemented until their later work packages pass.
+extension. Phase 5.5A established the design baseline; production capabilities
+are recorded only after their implementing work packages pass.
 `Runtime` and `Language Service` remain independent lifecycles.
 
 ## V1 capability matrix and implementation status
@@ -15,7 +15,7 @@ not implemented until their later work packages pass.
 | HTML | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Deferred | Deferred | No | N/A | Monaco HTML worker | V1 syntax/completion/hover; diagnostics deferred because provider has no validation support |
 | CSS | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Yes | Yes | No | N/A | Monaco CSS worker | Accepted and verified for Phase 3 V1 |
 | JSON | 2 | Yes | Yes, local schema-free behavior | No useful result without a configured local schema | Not required | Not required | Yes | Yes | No | N/A | Monaco JSON worker | Accepted and verified for current local-only configuration |
-| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Phase 5.5 | Deferred | Independent; no C# Run selected | Monaco tokenization + internal Main-owned `csharp-ls` foundation | Phase 3 syntax complete; 5.5B passed and 5.5C–E complete; user-facing integration remains 5.5F–G |
+| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Yes | Yes | Yes | Yes | Phase 5.5G | Phase 5.5G | Deferred | Independent; no C# Run selected | Monaco tokenization + Main-owned `csharp-ls` semantic providers | Phase 3 syntax complete; 5.5B passed and 5.5C–F complete; diagnostics/status integration remains 5.5G |
 | PHP | Syntax-only | Yes | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Future | Monaco tokenization only | Accepted syntax-only scope |
 
 ## Deferred future language support
@@ -87,7 +87,9 @@ does not retroactively change Phase 3 implementation or acceptance evidence.
   `vscode-languageserver-protocol` 3.18.3, and `vscode-jsonrpc/node` 9.0.2.
   Phase 5.5C adds the exact protocol and JSON-RPC versions as production runtime
   dependencies. Phase 5.5D–E implement internal transport, sessions, workspace
-  preflight and document synchronization; Renderer integration remains 5.5F–G.
+  preflight and document synchronization. Phase 5.5F implements semantic
+  IPC/Preload and Renderer completion, hover, signature-help and definition
+  providers; diagnostics/Problems/status integration remains Phase 5.5G.
 - Renderer sees only typed semantic APIs. It never sees raw LSP/JSON-RPC, PID,
   executable path, cwd, spawn arguments, canonical project root, raw logs, or
   diagnostic `resultId`.
@@ -158,8 +160,8 @@ mode; no-solution recursive discovery behavior/performance; paths with spaces,
 detection without parsing human log strings; crash/shutdown and descendant
 cleanup; and electron-vite/typecheck/build compatibility. The 2026-09-10 spike
 and corrective workspace-readiness probe passed this hard gate. Phase 5.5C
-and Phase 5.5D–E subsequently completed under explicit authorization.
-Phase 5.5F–H still require separate authorization.
+and Phase 5.5D–F subsequently completed under explicit authorization.
+Phase 5.5G–H still require separate authorization.
 
 ## Current provider decisions and Phase 3 acceptance evidence
 

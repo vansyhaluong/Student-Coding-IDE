@@ -2672,15 +2672,15 @@ part of this phase.
 - Phase 5.5C — Contracts + Dependency Foundation: `COMPLETE`.
 - Phase 5.5D — Main LSP Core + C# Adapter: `COMPLETE`.
 - Phase 5.5E — Workspace + Document Synchronization: `COMPLETE`.
-- Phase 5.5F — IPC + Preload + Monaco Semantic Providers: `NOT_STARTED`.
+- Phase 5.5F — IPC + Preload + Monaco Semantic Providers: `COMPLETE`.
 - Phase 5.5G — Diagnostics + Problems + Status UX: `NOT_STARTED`.
 - Phase 5.5H — Stabilization + Final Verification: `NOT_STARTED`.
 
 Phase 5.5 overall is `IN_PROGRESS`. The 2026-09-10 corrective spike resolved the
 5.5B blocker with a structured Main-owned preflight and honest readiness
 semantics. Phase 5.5C and the separately authorized 5.5D implementation are
-complete. The separately authorized 5.5E workspace/document synchronization is
-complete; 5.5F–H production implementation has not begun.
+complete. The separately authorized 5.5E workspace/document synchronization and
+5.5F semantic IPC/Monaco integration are complete; 5.5G–H have not begun.
 
 ### Goal and capability scope
 
@@ -3045,6 +3045,10 @@ trusted-workspace clarification. No sandbox, trust UX, or 5.5F+ work is included
 
 ### 5.5F — IPC + Preload + Monaco Semantic Providers
 
+Status: `COMPLETE` — explicitly authorized; Option A contract reconciliation
+is implemented with truthful workspace mode, optional failed selection and
+separate declared/effective capabilities. 5.5G+ is not started.
+
 - Add exact-validated semantic IPC and narrow Preload bridge using project IDs,
   relative paths, trusted sender/document ownership, and cancellation.
 - Register separate Monaco completion, hover, signature help, and definition
@@ -3052,6 +3056,34 @@ trusted-workspace clarification. No sandbox, trust UX, or 5.5F+ work is included
   casting protocol objects to Monaco types.
 - Reject definition targets outside the active project and stale responses after
   edits, project/session replacement, owner loss, or provider disposal.
+
+#### 2026-09-11 implementation and verification evidence
+
+- Added exact-validated language IPC and a narrow Preload bridge for workspace
+  state/selection, document open/change/save/close, completion/resolve, hover,
+  signature help, definition, cancellation and scoped status events. Main derives
+  owner identity from the committed Electron main frame and rechecks project,
+  root, session, document and Monaco version across asynchronous continuations.
+- Added Main semantic routing and explicit LSP-to-public mapping. Completion data
+  remains behind bounded opaque handles; snippets and malformed provider data are
+  rejected; presentation text is bounded and untrusted; definition returns only
+  existing file targets canonically contained by the active project.
+- Added the renderer-session C# client and four capability-specific Monaco
+  providers. Dirty in-memory text and ordered incremental UTF-16 versions are
+  synchronized before semantic work. Provider registrations follow effective
+  server capabilities and negotiated trigger characters; project replacement,
+  edits, cancellation, owner loss and disposal reject late results.
+- Added request/result bounds and exact response validation without exposing raw
+  LSP/JSON-RPC, process details, canonical roots, executable data or a generic
+  execution/restart surface. C# syntax and editor/save remain available when the
+  semantic service is unavailable.
+- The combined focused 5.5E–F regression set passed 150/150. The full suite passed
+  947/947 tests in 72 files; the existing jsdom canvas warning remained
+  non-blocking. Typecheck, lint, production/native build and `git diff --check`
+  passed without changing workers, timeouts, retries or assertions.
+- No dependency or ADR was added or changed. Diagnostics/Problems/status UX,
+  C# Run, manual restart, raw logs, Razor, metadata navigation and all other
+  deferred capabilities remain absent. Phase 5.5G requires separate authorization.
 
 ### 5.5G — Diagnostics + Problems + Status UX
 

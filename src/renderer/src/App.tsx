@@ -1,3 +1,4 @@
+import { registerCsharpNavigation } from './features/language/csharp/csharp-navigation'
 import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
@@ -54,6 +55,7 @@ export default function App() {
   const run = useProjectRun(project, editor.fileSystemUnavailable)
   useProjectLanguage(project, editorModelManager)
   useProjectProblems(project)
+  useEffect(() => registerCsharpNavigation(editor.navigateToLocation), [editor.navigateToLocation])
 
   useEffect(() => {
     let active = true

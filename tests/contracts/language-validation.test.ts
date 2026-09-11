@@ -8,6 +8,7 @@ import {
   LANGUAGE_SERVICE_STATES,
   validateCompletionRequest,
   validateCompletionResolveRequest,
+  validateLanguageDocument,
   validateLanguageStatus,
   validateSelectLanguageWorkspaceRequest,
 } from '../../src/shared/contracts'
@@ -22,9 +23,11 @@ const request = {
 const status = {
   providerId: 'csharp-ls',
   capabilities: CSHARP_LS_CAPABILITIES,
+  effectiveCapabilities: CSHARP_LS_CAPABILITIES, completionResolve: true,
+  completionTriggers: ['.'], signatureTriggers: ['(', ','], signatureRetriggers: [')'],
   dependency: { state: 'AVAILABLE', reason: null, warnings: [] },
   service: { state: 'RUNNING', reason: null },
-  workspace: { state: 'READY', selected: { kind: 'solution', relativePath: 'Student.slnx' } },
+  workspace: { state: 'READY', mode: 'solution', selected: { kind: 'solution', relativePath: 'Student.slnx' } },
 }
 
 describe('Phase 5.5C language contracts', () => {
@@ -91,6 +94,27 @@ describe('Phase 5.5C language contracts', () => {
     }).ok).toBe(true)
     expect(validateLanguageStatus({
       ...status, workspace: { state: 'SELECTION_REQUIRED', candidates: Array(257).fill({ kind: 'project', relativePath: 'App.csproj' }) },
+    }).ok).toBe(false)
+  })
+})
+
+describe('Phase 5.5F language document boundaries', () => {
+  it('rejects oversized source text, reversed ranges, excessive changes, and project-mode selection', () => {
+    expect(validateLanguageDocument({
+      projectId, relativePath: 'Program.cs', modelVersion: 1,
+      text: 'x'.repeat(LANGUAGE_LIMITS.maximumTextLength + 1), dirty: true,
+    }, 'open').ok).toBe(false)
+    expect(validateLanguageDocument({
+      projectId, relativePath: 'Program.cs', modelVersion: 2,
+      changes: [{ range: { start: { line: 2, character: 0 }, end: { line: 1, character: 0 } }, text: '' }],
+    }, 'change').ok).toBe(false)
+    expect(validateLanguageDocument({
+      projectId, relativePath: 'Program.cs', modelVersion: 2,
+      changes: Array.from({ length: LANGUAGE_LIMITS.maximumDocumentChanges + 1 },
+        () => ({ range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, text: '' })),
+    }, 'change').ok).toBe(false)
+    expect(validateSelectLanguageWorkspaceRequest({
+      projectId, candidate: { kind: 'project', relativePath: 'App.csproj' },
     }).ok).toBe(false)
   })
 })
