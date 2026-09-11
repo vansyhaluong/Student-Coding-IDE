@@ -8,6 +8,11 @@ export default tseslint.config(
       'node_modules',
       'out',
       'dist',
+      'spikes/csharp-lsp-compatibility/.dotnet',
+      'spikes/csharp-lsp-compatibility/.tools',
+      'spikes/csharp-lsp-compatibility/artifacts',
+      'spikes/csharp-lsp-compatibility/dist',
+      'spikes/csharp-lsp-compatibility/node_modules',
     ],
   },
 
@@ -36,6 +41,20 @@ export default tseslint.config(
 
     languageOptions: {
       globals: globals.node,
+    },
+  },
+
+  {
+    files: [
+      'spikes/csharp-lsp-compatibility/**/*.ts',
+    ],
+
+    languageOptions: {
+      globals: globals.node,
+    },
+
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 )

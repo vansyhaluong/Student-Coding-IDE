@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process'
-import { chmod, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { appendFile, chmod, cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { GitExecutableDetector } from '../../src/main/services/dependencies/git-executable'
 import { GitCommandRunner } from '../../src/main/services/git/git-command-runner'
 import { GitService } from '../../src/main/services/git/git-service'
@@ -18,9 +18,15 @@ if (process.platform !== 'win32') {
   console.warn('Phase 5C native Git tests SKIPPED: Windows PATH Git is required; no native acceptance evidence.')
 }
 
+let baselineDirectory: string | undefined
+
+function assertSafeFixture(directory: string): void {
+  if (!resolve(directory).startsWith(resolve(tmpdir()) + sep)) throw new Error('Unsafe fixture cleanup')
+}
+
 async function fixture(run: (f: Awaited<ReturnType<typeof setup>>) => Promise<void>, head = true) {
   const directory = await mkdtemp(join(tmpdir(), 'student-ide-phase5c-'))
-  if (!resolve(directory).startsWith(resolve(tmpdir()) + sep)) throw new Error('Unsafe fixture cleanup')
+  assertSafeFixture(directory)
   let f: Awaited<ReturnType<typeof setup>> | undefined
   try { f = await setup(directory, head); await run(f) } finally {
     await f?.projects.stop()
@@ -37,14 +43,31 @@ async function setup(directory: string, head: boolean) {
     expect(result.exitCode, `fixture command ${args[0]}`).toBe(0)
     return result.stdout
   }
-  await git('init', '--quiet', '--initial-branch=main')
-  await git('config', 'user.name', 'Phase 5C Author')
-  await git('config', 'user.email', 'phase5c@example.invalid')
-  await git('config', 'commit.gpgsign', 'false')
-  await git('config', 'core.autocrlf', 'false')
-  await git('config', 'core.hooksPath', join(directory, '.git', 'hooks'))
+  const hooksPath = join(directory, '.git', 'hooks').replaceAll('\\', '/')
   const put = (path: string, content: string) => writeFile(join(directory, path), content, 'utf8')
-  if (head) {
+  if (head && baselineDirectory && directory !== baselineDirectory) {
+    await cp(join(baselineDirectory, '.git'), join(directory, '.git'), { recursive: true })
+    await Promise.all([
+      cp(join(baselineDirectory, 'tracked.txt'), join(directory, 'tracked.txt')),
+      cp(join(baselineDirectory, 'other.txt'), join(directory, 'other.txt')),
+    ])
+    await appendFile(join(directory, '.git', 'config'), `\n[core]\n\thooksPath = ${hooksPath}\n`, 'utf8')
+  } else {
+    await git('init', '--quiet', '--initial-branch=main')
+    await appendFile(join(directory, '.git', 'config'), [
+      '',
+      '[user]',
+      '\tname = Phase 5C Author',
+      '\temail = phase5c@example.invalid',
+      '[commit]',
+      '\tgpgsign = false',
+      '[core]',
+      '\tautocrlf = false',
+      `\thooksPath = ${hooksPath}`,
+      '',
+    ].join('\n'), 'utf8')
+  }
+  if (head && directory === baselineDirectory) {
     await put('tracked.txt', 'base')
     await put('other.txt', 'other base')
     await git('add', '--', 'tracked.txt', 'other.txt')
@@ -77,6 +100,18 @@ async function setup(directory: string, head: boolean) {
 }
 
 describe.skipIf(process.platform !== 'win32')('Phase 5C production service with real local Git', () => {
+  beforeAll(async () => {
+    baselineDirectory = await mkdtemp(join(tmpdir(), 'student-ide-phase5c-baseline-'))
+    assertSafeFixture(baselineDirectory)
+    const baseline = await setup(baselineDirectory, true)
+    await baseline.projects.stop()
+  })
+
+  afterAll(async () => {
+    if (baselineDirectory) await rm(baselineDirectory, { recursive: true, force: true })
+    baselineDirectory = undefined
+  })
+
   async function atTarget(f: Awaited<ReturnType<typeof setup>>, ignored = false) {
     await f.git('switch', '-c', 'target-fixture')
     await f.put(ignored ? 'ignored.txt' : 'tracked.txt', 'at branch content')

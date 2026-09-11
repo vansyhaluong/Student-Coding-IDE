@@ -1,0 +1,2369 @@
+{
+  "solutionSln": {
+    "session": {
+      "name": "solution-sln",
+      "root": "D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln",
+      "args": [
+        "--loglevel",
+        "error",
+        "--solution",
+        "SpikeSolution.sln"
+      ],
+      "processId": 35944,
+      "initializeMs": 1136,
+      "readyMs": 1295,
+      "exitCode": 0,
+      "capabilities": {
+        "hoverProvider": false,
+        "typeDefinitionProvider": true,
+        "implementationProvider": true,
+        "referencesProvider": true,
+        "documentHighlightProvider": true,
+        "documentSymbolProvider": true,
+        "codeActionProvider": true,
+        "codeLensProvider": {
+          "resolveProvider": true
+        },
+        "workspaceSymbolProvider": true,
+        "documentFormattingProvider": true,
+        "documentRangeFormattingProvider": true,
+        "documentOnTypeFormattingProvider": {
+          "firstTriggerCharacter": ";",
+          "moreTriggerCharacter": [
+            "}",
+            ")"
+          ]
+        },
+        "renameProvider": true,
+        "foldingRangeProvider": true,
+        "callHierarchyProvider": true,
+        "semanticTokensProvider": {
+          "legend": {
+            "tokenTypes": [
+              "class",
+              "comment",
+              "constant",
+              "enumMember",
+              "enum",
+              "event",
+              "method",
+              "field",
+              "variable",
+              "interface",
+              "jsonArray",
+              "jsonComment",
+              "jsonConstructorName",
+              "jsonKeyword",
+              "jsonNumber",
+              "jsonObject",
+              "jsonOperator",
+              "jsonPropertyName",
+              "jsonPunctuation",
+              "jsonString",
+              "jsonText",
+              "keyword",
+              "namespace",
+              "number",
+              "operator",
+              "parameter",
+              "property",
+              "struct",
+              "regexAlternation",
+              "regexAnchor",
+              "regexCharacterClass",
+              "regexComment",
+              "regexGrouping",
+              "regexOtherEscape",
+              "regexQuantifier",
+              "regexSelfEscapedCharacter",
+              "regexText",
+              "string",
+              "stringEscapeCharacter",
+              "typeParameter"
+            ],
+            "tokenModifiers": [
+              "static"
+            ]
+          },
+          "range": true,
+          "full": true
+        },
+        "typeHierarchyProvider": true,
+        "inlayHintProvider": {
+          "resolveProvider": false
+        },
+        "workspace": {
+          "workspaceFolders": {
+            "supported": true,
+            "changeNotifications": true
+          }
+        }
+      },
+      "registrations": [
+        {
+          "method": "textDocument/completion",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              ".",
+              "'"
+            ],
+            "resolveProvider": true
+          }
+        },
+        {
+          "method": "textDocument/definition",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/diagnostic",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "interFileDependencies": false,
+            "workspaceDiagnostics": true
+          }
+        },
+        {
+          "method": "textDocument/hover",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/signatureHelp",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              "(",
+              ",",
+              "<",
+              "{",
+              "["
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didOpen",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didChange",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "syncKind": 2
+          }
+        },
+        {
+          "method": "textDocument/didSave",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "includeText": true
+          }
+        },
+        {
+          "method": "textDocument/didClose",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "workspace/didChangeWatchedFiles",
+          "registerOptions": {
+            "watchers": [
+              {
+                "globPattern": "**/*.{cs,cshtml,csproj,sln,slnx}",
+                "kind": 7
+              }
+            ]
+          }
+        }
+      ],
+      "serverRequests": {
+        "workspace/configuration": 1,
+        "client/registerCapability": 1,
+        "workspace/diagnostic/refresh": 1,
+        "window/workDoneProgress/create": 1
+      },
+      "notifications": {
+        "window/logMessage": 4,
+        "$/progress": 2
+      },
+      "protocolEvents": [
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: initializing, version 0.27.0 (Vartai)+d48ab7781176d2d369ceeb31d986503c2ad493e2"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: csharp-ls is released under MIT license and is not affiliated with Microsoft Corp.; see https://github.com/razzmatazz/csharp-language-server"
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "14489c5a-d0fa-4043-881d-bdf9d55d3a6c",
+            "value": {
+              "kind": "begin",
+              "title": "Loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln\", solution \"SpikeSolution.sln\".."
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: Loading solution \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln\\SpikeSolution.sln\"..."
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: Finished loading solution \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln\\SpikeSolution.sln\""
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "14489c5a-d0fa-4043-881d-bdf9d55d3a6c",
+            "value": {
+              "kind": "end",
+              "message": "Finished loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln\""
+            }
+          }
+        }
+      ],
+      "stderrBytes": 0,
+      "ownedProcessesBeforeShutdown": [
+        {
+          "ProcessId": 35944,
+          "ParentProcessId": 43808,
+          "Name": "csharp-ls.exe"
+        },
+        {
+          "ProcessId": 24516,
+          "ParentProcessId": 35944,
+          "Name": "conhost.exe"
+        }
+      ],
+      "survivingOwnedProcessesAfterShutdown": []
+    },
+    "semanticReadiness": {
+      "attempts": 1,
+      "elapsedMsAfterOpen": 8844
+    },
+    "dirtySync": {
+      "changes": [
+        {
+          "version": 3,
+          "kind": "typing"
+        },
+        {
+          "version": 4,
+          "kind": "typing"
+        },
+        {
+          "version": 5,
+          "kind": "paste"
+        },
+        {
+          "version": 6,
+          "kind": "replace"
+        },
+        {
+          "version": 7,
+          "kind": "undo"
+        },
+        {
+          "version": 8,
+          "kind": "redo"
+        },
+        {
+          "version": 9,
+          "kind": "undo"
+        },
+        {
+          "version": 10,
+          "kind": "multiple-content-changes"
+        }
+      ],
+      "finalVersion": 13,
+      "diskWasNotWritten": true,
+      "utf16Comment": "Tiếng Việt 👩🏽‍💻 A B"
+    },
+    "completion": {
+      "shape": "CompletionList",
+      "isIncomplete": true,
+      "itemCount": 3,
+      "resolvedHasDetail": true,
+      "resolvedHasDocumentation": false
+    },
+    "hover": {
+      "hasContents": true,
+      "hasRange": false
+    },
+    "signature": {
+      "count": 1,
+      "activeSignature": 0,
+      "activeParameter": null,
+      "activeParameterSupported": false,
+      "activeParameterSource": null,
+      "raw": {
+        "signatures": [
+          {
+            "label": "string Greeter.Welcome(string name, int count = 1)",
+            "documentation": {
+              "kind": "markdown",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "label": "string name"
+              },
+              {
+                "label": "int count = 1"
+              }
+            ]
+          }
+        ],
+        "activeSignature": 0
+      }
+    },
+    "definition": {
+      "targets": [
+        "file:///D:/coding-ide/spikes/csharp-lsp-compatibility/fixtures/solution-sln/SpikeApp/Greeter.cs"
+      ]
+    },
+    "cancellation": {
+      "outcome": "rejected",
+      "staleResultRejectedByVersion": true
+    },
+    "legitimateEmptySemantics": {
+      "workspaceWasValid": true,
+      "completionCount": 0,
+      "hoverWasNull": true,
+      "definitionCount": 0,
+      "diagnosticCount": 0
+    },
+    "diagnostics": {
+      "firstKind": "full",
+      "firstCount": 1,
+      "firstResultId": "2026-09-10T02:47:58.0127728Z-10027-0/false",
+      "repeatedKind": "full",
+      "correctedKind": "full",
+      "correctedCount": 0,
+      "correctedResultId": "2026-09-10T02:47:58.3863882Z-10028-0/false",
+      "correctedReadiness": {
+        "attempts": 1,
+        "elapsedMs": 17
+      },
+      "staleResultRejectedByVersion": true
+    }
+  },
+  "solutionSlnx": {
+    "session": {
+      "name": "solution-slnx",
+      "root": "D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-slnx",
+      "args": [
+        "--loglevel",
+        "error",
+        "--solution",
+        "SpikeSolution.slnx"
+      ],
+      "processId": 11772,
+      "initializeMs": 821,
+      "readyMs": 952,
+      "exitCode": 0,
+      "capabilities": {
+        "hoverProvider": false,
+        "typeDefinitionProvider": true,
+        "implementationProvider": true,
+        "referencesProvider": true,
+        "documentHighlightProvider": true,
+        "documentSymbolProvider": true,
+        "codeActionProvider": true,
+        "codeLensProvider": {
+          "resolveProvider": true
+        },
+        "workspaceSymbolProvider": true,
+        "documentFormattingProvider": true,
+        "documentRangeFormattingProvider": true,
+        "documentOnTypeFormattingProvider": {
+          "firstTriggerCharacter": ";",
+          "moreTriggerCharacter": [
+            "}",
+            ")"
+          ]
+        },
+        "renameProvider": true,
+        "foldingRangeProvider": true,
+        "callHierarchyProvider": true,
+        "semanticTokensProvider": {
+          "legend": {
+            "tokenTypes": [
+              "class",
+              "comment",
+              "constant",
+              "enumMember",
+              "enum",
+              "event",
+              "method",
+              "field",
+              "variable",
+              "interface",
+              "jsonArray",
+              "jsonComment",
+              "jsonConstructorName",
+              "jsonKeyword",
+              "jsonNumber",
+              "jsonObject",
+              "jsonOperator",
+              "jsonPropertyName",
+              "jsonPunctuation",
+              "jsonString",
+              "jsonText",
+              "keyword",
+              "namespace",
+              "number",
+              "operator",
+              "parameter",
+              "property",
+              "struct",
+              "regexAlternation",
+              "regexAnchor",
+              "regexCharacterClass",
+              "regexComment",
+              "regexGrouping",
+              "regexOtherEscape",
+              "regexQuantifier",
+              "regexSelfEscapedCharacter",
+              "regexText",
+              "string",
+              "stringEscapeCharacter",
+              "typeParameter"
+            ],
+            "tokenModifiers": [
+              "static"
+            ]
+          },
+          "range": true,
+          "full": true
+        },
+        "typeHierarchyProvider": true,
+        "inlayHintProvider": {
+          "resolveProvider": false
+        },
+        "workspace": {
+          "workspaceFolders": {
+            "supported": true,
+            "changeNotifications": true
+          }
+        }
+      },
+      "registrations": [
+        {
+          "method": "textDocument/completion",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              ".",
+              "'"
+            ],
+            "resolveProvider": true
+          }
+        },
+        {
+          "method": "textDocument/definition",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/diagnostic",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "interFileDependencies": false,
+            "workspaceDiagnostics": true
+          }
+        },
+        {
+          "method": "textDocument/hover",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/signatureHelp",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              "(",
+              ",",
+              "<",
+              "{",
+              "["
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didOpen",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didChange",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "syncKind": 2
+          }
+        },
+        {
+          "method": "textDocument/didSave",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "includeText": true
+          }
+        },
+        {
+          "method": "textDocument/didClose",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "workspace/didChangeWatchedFiles",
+          "registerOptions": {
+            "watchers": [
+              {
+                "globPattern": "**/*.{cs,cshtml,csproj,sln,slnx}",
+                "kind": 7
+              }
+            ]
+          }
+        }
+      ],
+      "serverRequests": {
+        "workspace/configuration": 1,
+        "client/registerCapability": 1,
+        "workspace/diagnostic/refresh": 1,
+        "window/workDoneProgress/create": 1
+      },
+      "notifications": {
+        "window/logMessage": 4,
+        "$/progress": 2
+      },
+      "protocolEvents": [
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: initializing, version 0.27.0 (Vartai)+d48ab7781176d2d369ceeb31d986503c2ad493e2"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: csharp-ls is released under MIT license and is not affiliated with Microsoft Corp.; see https://github.com/razzmatazz/csharp-language-server"
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "2f6510af-05ce-495a-b49e-d356a8e0b511",
+            "value": {
+              "kind": "begin",
+              "title": "Loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-slnx\", solution \"SpikeSolution.slnx\".."
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: Loading solution \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-slnx\\SpikeSolution.slnx\"..."
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: Finished loading solution \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-slnx\\SpikeSolution.slnx\""
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "2f6510af-05ce-495a-b49e-d356a8e0b511",
+            "value": {
+              "kind": "end",
+              "message": "Finished loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-slnx\""
+            }
+          }
+        }
+      ],
+      "stderrBytes": 0,
+      "ownedProcessesBeforeShutdown": [
+        {
+          "ProcessId": 11772,
+          "ParentProcessId": 43808,
+          "Name": "csharp-ls.exe"
+        },
+        {
+          "ProcessId": 43748,
+          "ParentProcessId": 11772,
+          "Name": "conhost.exe"
+        }
+      ],
+      "survivingOwnedProcessesAfterShutdown": []
+    },
+    "hover": true,
+    "definitionTargets": [
+      "file:///D:/coding-ide/spikes/csharp-lsp-compatibility/fixtures/solution-slnx/SpikeApp/Greeter.cs"
+    ]
+  },
+  "projectMode": {
+    "session": {
+      "name": "project-mode-multiple",
+      "root": "D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode",
+      "args": [
+        "--loglevel",
+        "error"
+      ],
+      "processId": 21964,
+      "initializeMs": 792,
+      "readyMs": 926,
+      "exitCode": 0,
+      "capabilities": {
+        "hoverProvider": false,
+        "typeDefinitionProvider": true,
+        "implementationProvider": true,
+        "referencesProvider": true,
+        "documentHighlightProvider": true,
+        "documentSymbolProvider": true,
+        "codeActionProvider": true,
+        "codeLensProvider": {
+          "resolveProvider": true
+        },
+        "workspaceSymbolProvider": true,
+        "documentFormattingProvider": true,
+        "documentRangeFormattingProvider": true,
+        "documentOnTypeFormattingProvider": {
+          "firstTriggerCharacter": ";",
+          "moreTriggerCharacter": [
+            "}",
+            ")"
+          ]
+        },
+        "renameProvider": true,
+        "foldingRangeProvider": true,
+        "callHierarchyProvider": true,
+        "semanticTokensProvider": {
+          "legend": {
+            "tokenTypes": [
+              "class",
+              "comment",
+              "constant",
+              "enumMember",
+              "enum",
+              "event",
+              "method",
+              "field",
+              "variable",
+              "interface",
+              "jsonArray",
+              "jsonComment",
+              "jsonConstructorName",
+              "jsonKeyword",
+              "jsonNumber",
+              "jsonObject",
+              "jsonOperator",
+              "jsonPropertyName",
+              "jsonPunctuation",
+              "jsonString",
+              "jsonText",
+              "keyword",
+              "namespace",
+              "number",
+              "operator",
+              "parameter",
+              "property",
+              "struct",
+              "regexAlternation",
+              "regexAnchor",
+              "regexCharacterClass",
+              "regexComment",
+              "regexGrouping",
+              "regexOtherEscape",
+              "regexQuantifier",
+              "regexSelfEscapedCharacter",
+              "regexText",
+              "string",
+              "stringEscapeCharacter",
+              "typeParameter"
+            ],
+            "tokenModifiers": [
+              "static"
+            ]
+          },
+          "range": true,
+          "full": true
+        },
+        "typeHierarchyProvider": true,
+        "inlayHintProvider": {
+          "resolveProvider": false
+        },
+        "workspace": {
+          "workspaceFolders": {
+            "supported": true,
+            "changeNotifications": true
+          }
+        }
+      },
+      "registrations": [
+        {
+          "method": "textDocument/completion",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              ".",
+              "'"
+            ],
+            "resolveProvider": true
+          }
+        },
+        {
+          "method": "textDocument/definition",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/diagnostic",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "interFileDependencies": false,
+            "workspaceDiagnostics": true
+          }
+        },
+        {
+          "method": "textDocument/hover",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/signatureHelp",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              "(",
+              ",",
+              "<",
+              "{",
+              "["
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didOpen",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didChange",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "syncKind": 2
+          }
+        },
+        {
+          "method": "textDocument/didSave",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "includeText": true
+          }
+        },
+        {
+          "method": "textDocument/didClose",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "workspace/didChangeWatchedFiles",
+          "registerOptions": {
+            "watchers": [
+              {
+                "globPattern": "**/*.{cs,cshtml,csproj,sln,slnx}",
+                "kind": 7
+              }
+            ]
+          }
+        }
+      ],
+      "serverRequests": {
+        "workspace/configuration": 1,
+        "client/registerCapability": 1,
+        "workspace/diagnostic/refresh": 1,
+        "window/workDoneProgress/create": 1
+      },
+      "notifications": {
+        "window/logMessage": 12,
+        "$/progress": 9
+      },
+      "protocolEvents": [
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: initializing, version 0.27.0 (Vartai)+d48ab7781176d2d369ceeb31d986503c2ad493e2"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: csharp-ls is released under MIT license and is not affiliated with Microsoft Corp.; see https://github.com/razzmatazz/csharp-language-server"
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "begin",
+              "title": "Loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\".."
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: attempting to find and load solution on path \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\".."
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: 0 solution(s) found: []"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: no single preferred .sln/.slnx file found on D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode; fill load project files manually"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: looking for .csproj/fsproj files on D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode.."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Loading 6 project(s)...",
+              "percentage": 0
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\\First\\First.csproj\".."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "First.csproj 1/6",
+              "percentage": 16
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\\Second\\Second.csproj\".."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Second.csproj 2/6",
+              "percentage": 33
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\\bin\\Ignored\\Ignored.csproj\".."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Ignored.csproj 3/6",
+              "percentage": 50
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\\build\\Ignored\\Ignored.csproj\".."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Ignored.csproj 4/6",
+              "percentage": 66
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\\obj\\Ignored\\Ignored.csproj\".."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Ignored.csproj 5/6",
+              "percentage": 83
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\\out\\Ignored\\Ignored.csproj\".."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Ignored.csproj 6/6",
+              "percentage": 100
+            }
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "15e25962-c2cc-49f1-abd1-4119dcf52dad",
+            "value": {
+              "kind": "end",
+              "message": "Finished loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\project-mode\""
+            }
+          }
+        }
+      ],
+      "stderrBytes": 0,
+      "ownedProcessesBeforeShutdown": [
+        {
+          "ProcessId": 21964,
+          "ParentProcessId": 43808,
+          "Name": "csharp-ls.exe"
+        },
+        {
+          "ProcessId": 43196,
+          "ParentProcessId": 21964,
+          "Name": "conhost.exe"
+        }
+      ],
+      "survivingOwnedProcessesAfterShutdown": []
+    },
+    "discoveredSymbols": {
+      "FirstType": 1,
+      "SecondType": 1,
+      "ignored": {
+        "BinIgnoredType": 1,
+        "ObjIgnoredType": 1,
+        "BuildIgnoredType": 1,
+        "OutIgnoredType": 1
+      }
+    },
+    "providerOwnsRecursiveDiscovery": true
+  },
+  "unicodePath": {
+    "session": {
+      "name": "unicode-path",
+      "root": "D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\Đường dẫn # tiếng Việt",
+      "args": [
+        "--loglevel",
+        "error"
+      ],
+      "processId": 34712,
+      "initializeMs": 745,
+      "readyMs": 885,
+      "exitCode": 0,
+      "capabilities": {
+        "hoverProvider": false,
+        "typeDefinitionProvider": true,
+        "implementationProvider": true,
+        "referencesProvider": true,
+        "documentHighlightProvider": true,
+        "documentSymbolProvider": true,
+        "codeActionProvider": true,
+        "codeLensProvider": {
+          "resolveProvider": true
+        },
+        "workspaceSymbolProvider": true,
+        "documentFormattingProvider": true,
+        "documentRangeFormattingProvider": true,
+        "documentOnTypeFormattingProvider": {
+          "firstTriggerCharacter": ";",
+          "moreTriggerCharacter": [
+            "}",
+            ")"
+          ]
+        },
+        "renameProvider": true,
+        "foldingRangeProvider": true,
+        "callHierarchyProvider": true,
+        "semanticTokensProvider": {
+          "legend": {
+            "tokenTypes": [
+              "class",
+              "comment",
+              "constant",
+              "enumMember",
+              "enum",
+              "event",
+              "method",
+              "field",
+              "variable",
+              "interface",
+              "jsonArray",
+              "jsonComment",
+              "jsonConstructorName",
+              "jsonKeyword",
+              "jsonNumber",
+              "jsonObject",
+              "jsonOperator",
+              "jsonPropertyName",
+              "jsonPunctuation",
+              "jsonString",
+              "jsonText",
+              "keyword",
+              "namespace",
+              "number",
+              "operator",
+              "parameter",
+              "property",
+              "struct",
+              "regexAlternation",
+              "regexAnchor",
+              "regexCharacterClass",
+              "regexComment",
+              "regexGrouping",
+              "regexOtherEscape",
+              "regexQuantifier",
+              "regexSelfEscapedCharacter",
+              "regexText",
+              "string",
+              "stringEscapeCharacter",
+              "typeParameter"
+            ],
+            "tokenModifiers": [
+              "static"
+            ]
+          },
+          "range": true,
+          "full": true
+        },
+        "typeHierarchyProvider": true,
+        "inlayHintProvider": {
+          "resolveProvider": false
+        },
+        "workspace": {
+          "workspaceFolders": {
+            "supported": true,
+            "changeNotifications": true
+          }
+        }
+      },
+      "registrations": [
+        {
+          "method": "textDocument/completion",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              ".",
+              "'"
+            ],
+            "resolveProvider": true
+          }
+        },
+        {
+          "method": "textDocument/definition",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/diagnostic",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "interFileDependencies": false,
+            "workspaceDiagnostics": true
+          }
+        },
+        {
+          "method": "textDocument/hover",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/signatureHelp",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              "(",
+              ",",
+              "<",
+              "{",
+              "["
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didOpen",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didChange",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "syncKind": 2
+          }
+        },
+        {
+          "method": "textDocument/didSave",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "includeText": true
+          }
+        },
+        {
+          "method": "textDocument/didClose",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "workspace/didChangeWatchedFiles",
+          "registerOptions": {
+            "watchers": [
+              {
+                "globPattern": "**/*.{cs,cshtml,csproj,sln,slnx}",
+                "kind": 7
+              }
+            ]
+          }
+        }
+      ],
+      "serverRequests": {
+        "workspace/configuration": 1,
+        "client/registerCapability": 1,
+        "workspace/diagnostic/refresh": 1,
+        "window/workDoneProgress/create": 1
+      },
+      "notifications": {
+        "window/logMessage": 7,
+        "$/progress": 4
+      },
+      "protocolEvents": [
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: initializing, version 0.27.0 (Vartai)+d48ab7781176d2d369ceeb31d986503c2ad493e2"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: csharp-ls is released under MIT license and is not affiliated with Microsoft Corp.; see https://github.com/razzmatazz/csharp-language-server"
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "f7a39d66-e610-4c29-a5e3-51b22c7610c8",
+            "value": {
+              "kind": "begin",
+              "title": "Loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\Đường dẫn # tiếng Việt\".."
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: attempting to find and load solution on path \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\Đường dẫn # tiếng Việt\".."
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: 0 solution(s) found: []"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: no single preferred .sln/.slnx file found on D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\Đường dẫn # tiếng Việt; fill load project files manually"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: looking for .csproj/fsproj files on D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\Đường dẫn # tiếng Việt.."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "f7a39d66-e610-4c29-a5e3-51b22c7610c8",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Loading 1 project(s)...",
+              "percentage": 0
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\Đường dẫn # tiếng Việt\\UnicodeProject\\UnicodeProject.csproj\".."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "f7a39d66-e610-4c29-a5e3-51b22c7610c8",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "UnicodeProject.csproj 1/1",
+              "percentage": 100
+            }
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "f7a39d66-e610-4c29-a5e3-51b22c7610c8",
+            "value": {
+              "kind": "end",
+              "message": "Finished loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\Đường dẫn # tiếng Việt\""
+            }
+          }
+        }
+      ],
+      "stderrBytes": 0,
+      "ownedProcessesBeforeShutdown": [
+        {
+          "ProcessId": 34712,
+          "ParentProcessId": 43808,
+          "Name": "csharp-ls.exe"
+        },
+        {
+          "ProcessId": 25140,
+          "ParentProcessId": 34712,
+          "Name": "conhost.exe"
+        }
+      ],
+      "survivingOwnedProcessesAfterShutdown": []
+    },
+    "hover": true,
+    "definitionTargets": [
+      "file:///D:/coding-ide/spikes/csharp-lsp-compatibility/fixtures/Đường dẫn %23 tiếng Việt/UnicodeProject/UnicodeGreeter.cs"
+    ]
+  },
+  "crash": {
+    "session": {
+      "name": "unexpected-exit",
+      "root": "D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln",
+      "args": [
+        "--loglevel",
+        "error",
+        "--solution",
+        "SpikeSolution.sln"
+      ],
+      "processId": 43492,
+      "initializeMs": 972,
+      "readyMs": 1113,
+      "exitCode": 1,
+      "capabilities": {
+        "hoverProvider": false,
+        "typeDefinitionProvider": true,
+        "implementationProvider": true,
+        "referencesProvider": true,
+        "documentHighlightProvider": true,
+        "documentSymbolProvider": true,
+        "codeActionProvider": true,
+        "codeLensProvider": {
+          "resolveProvider": true
+        },
+        "workspaceSymbolProvider": true,
+        "documentFormattingProvider": true,
+        "documentRangeFormattingProvider": true,
+        "documentOnTypeFormattingProvider": {
+          "firstTriggerCharacter": ";",
+          "moreTriggerCharacter": [
+            "}",
+            ")"
+          ]
+        },
+        "renameProvider": true,
+        "foldingRangeProvider": true,
+        "callHierarchyProvider": true,
+        "semanticTokensProvider": {
+          "legend": {
+            "tokenTypes": [
+              "class",
+              "comment",
+              "constant",
+              "enumMember",
+              "enum",
+              "event",
+              "method",
+              "field",
+              "variable",
+              "interface",
+              "jsonArray",
+              "jsonComment",
+              "jsonConstructorName",
+              "jsonKeyword",
+              "jsonNumber",
+              "jsonObject",
+              "jsonOperator",
+              "jsonPropertyName",
+              "jsonPunctuation",
+              "jsonString",
+              "jsonText",
+              "keyword",
+              "namespace",
+              "number",
+              "operator",
+              "parameter",
+              "property",
+              "struct",
+              "regexAlternation",
+              "regexAnchor",
+              "regexCharacterClass",
+              "regexComment",
+              "regexGrouping",
+              "regexOtherEscape",
+              "regexQuantifier",
+              "regexSelfEscapedCharacter",
+              "regexText",
+              "string",
+              "stringEscapeCharacter",
+              "typeParameter"
+            ],
+            "tokenModifiers": [
+              "static"
+            ]
+          },
+          "range": true,
+          "full": true
+        },
+        "typeHierarchyProvider": true,
+        "inlayHintProvider": {
+          "resolveProvider": false
+        },
+        "workspace": {
+          "workspaceFolders": {
+            "supported": true,
+            "changeNotifications": true
+          }
+        }
+      },
+      "registrations": [
+        {
+          "method": "textDocument/completion",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              ".",
+              "'"
+            ],
+            "resolveProvider": true
+          }
+        },
+        {
+          "method": "textDocument/definition",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/diagnostic",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "interFileDependencies": false,
+            "workspaceDiagnostics": true
+          }
+        },
+        {
+          "method": "textDocument/hover",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/signatureHelp",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              "(",
+              ",",
+              "<",
+              "{",
+              "["
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didOpen",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didChange",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "syncKind": 2
+          }
+        },
+        {
+          "method": "textDocument/didSave",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "includeText": true
+          }
+        },
+        {
+          "method": "textDocument/didClose",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "workspace/didChangeWatchedFiles",
+          "registerOptions": {
+            "watchers": [
+              {
+                "globPattern": "**/*.{cs,cshtml,csproj,sln,slnx}",
+                "kind": 7
+              }
+            ]
+          }
+        }
+      ],
+      "serverRequests": {
+        "workspace/configuration": 1,
+        "client/registerCapability": 1,
+        "workspace/diagnostic/refresh": 1,
+        "window/workDoneProgress/create": 1
+      },
+      "notifications": {
+        "window/logMessage": 4,
+        "$/progress": 2
+      },
+      "protocolEvents": [
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: initializing, version 0.27.0 (Vartai)+d48ab7781176d2d369ceeb31d986503c2ad493e2"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: csharp-ls is released under MIT license and is not affiliated with Microsoft Corp.; see https://github.com/razzmatazz/csharp-language-server"
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "78287aba-e3ac-4bf2-9260-008310d2524b",
+            "value": {
+              "kind": "begin",
+              "title": "Loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln\", solution \"SpikeSolution.sln\".."
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: Loading solution \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln\\SpikeSolution.sln\"..."
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: Finished loading solution \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln\\SpikeSolution.sln\""
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "78287aba-e3ac-4bf2-9260-008310d2524b",
+            "value": {
+              "kind": "end",
+              "message": "Finished loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\solution-sln\""
+            }
+          }
+        }
+      ],
+      "stderrBytes": 0,
+      "ownedProcessesBeforeShutdown": [],
+      "survivingOwnedProcessesAfterShutdown": []
+    },
+    "pid": 43492,
+    "pendingOutcome": "resolved",
+    "automaticRestart": false,
+    "ownedProcesses": [
+      {
+        "ProcessId": 43492,
+        "ParentProcessId": 43808,
+        "Name": "csharp-ls.exe"
+      },
+      {
+        "ProcessId": 2256,
+        "ParentProcessId": 43492,
+        "Name": "conhost.exe"
+      }
+    ],
+    "survivors": []
+  },
+  "invalidWorkspace": {
+    "initializeOutcome": "resolved",
+    "processExitCodeBeforeClientShutdown": null,
+    "dynamicallyRegisteredMethods": [
+      "textDocument/completion",
+      "textDocument/definition",
+      "textDocument/diagnostic",
+      "textDocument/hover",
+      "textDocument/signatureHelp",
+      "textDocument/didOpen",
+      "textDocument/didChange",
+      "textDocument/didSave",
+      "textDocument/didClose",
+      "workspace/didChangeWatchedFiles"
+    ],
+    "serverRequests": {
+      "workspace/configuration": 1,
+      "client/registerCapability": 1,
+      "workspace/diagnostic/refresh": 1,
+      "window/workDoneProgress/create": 1
+    },
+    "notifications": {
+      "window/logMessage": 7,
+      "$/progress": 4
+    },
+    "protocolEventsBeforeClientShutdown": [
+      {
+        "method": "window/logMessage",
+        "params": {
+          "type": 3,
+          "message": "csharp-ls: initializing, version 0.27.0 (Vartai)+d48ab7781176d2d369ceeb31d986503c2ad493e2"
+        }
+      },
+      {
+        "method": "window/logMessage",
+        "params": {
+          "type": 3,
+          "message": "csharp-ls: csharp-ls is released under MIT license and is not affiliated with Microsoft Corp.; see https://github.com/razzmatazz/csharp-language-server"
+        }
+      },
+      {
+        "method": "$/progress",
+        "params": {
+          "token": "492edbab-7bca-49c0-97e8-c493323b6d46",
+          "value": {
+            "kind": "begin",
+            "title": "Loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace\".."
+          }
+        }
+      },
+      {
+        "method": "window/logMessage",
+        "params": {
+          "type": 3,
+          "message": "csharp-ls: attempting to find and load solution on path \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace\".."
+        }
+      },
+      {
+        "method": "window/logMessage",
+        "params": {
+          "type": 3,
+          "message": "csharp-ls: 0 solution(s) found: []"
+        }
+      },
+      {
+        "method": "window/logMessage",
+        "params": {
+          "type": 3,
+          "message": "csharp-ls: no single preferred .sln/.slnx file found on D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace; fill load project files manually"
+        }
+      },
+      {
+        "method": "window/logMessage",
+        "params": {
+          "type": 3,
+          "message": "csharp-ls: looking for .csproj/fsproj files on D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace.."
+        }
+      },
+      {
+        "method": "$/progress",
+        "params": {
+          "token": "492edbab-7bca-49c0-97e8-c493323b6d46",
+          "value": {
+            "kind": "report",
+            "cancellable": false,
+            "message": "Loading 1 project(s)...",
+            "percentage": 0
+          }
+        }
+      },
+      {
+        "method": "window/logMessage",
+        "params": {
+          "type": 3,
+          "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace\\Broken.csproj\".."
+        }
+      },
+      {
+        "method": "$/progress",
+        "params": {
+          "token": "492edbab-7bca-49c0-97e8-c493323b6d46",
+          "value": {
+            "kind": "report",
+            "cancellable": false,
+            "message": "Broken.csproj 1/1",
+            "percentage": 100
+          }
+        }
+      },
+      {
+        "method": "$/progress",
+        "params": {
+          "token": "492edbab-7bca-49c0-97e8-c493323b6d46",
+          "value": {
+            "kind": "end",
+            "message": "Finished loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace\""
+          }
+        }
+      }
+    ],
+    "workspaceSymbolOutcome": {
+      "kind": "resolved",
+      "count": 1
+    },
+    "emptySemanticResults": {
+      "completionCount": 0,
+      "hoverWasNull": true,
+      "definitionCount": 0,
+      "diagnosticCount": 2
+    },
+    "reliableMachineWorkspaceLoadFailureSignalObserved": false,
+    "session": {
+      "name": "invalid-workspace",
+      "root": "D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace",
+      "args": [
+        "--loglevel",
+        "error"
+      ],
+      "processId": 32504,
+      "initializeMs": 906,
+      "readyMs": 0,
+      "exitCode": 0,
+      "capabilities": {
+        "hoverProvider": false,
+        "typeDefinitionProvider": true,
+        "implementationProvider": true,
+        "referencesProvider": true,
+        "documentHighlightProvider": true,
+        "documentSymbolProvider": true,
+        "codeActionProvider": true,
+        "codeLensProvider": {
+          "resolveProvider": true
+        },
+        "workspaceSymbolProvider": true,
+        "documentFormattingProvider": true,
+        "documentRangeFormattingProvider": true,
+        "documentOnTypeFormattingProvider": {
+          "firstTriggerCharacter": ";",
+          "moreTriggerCharacter": [
+            "}",
+            ")"
+          ]
+        },
+        "renameProvider": true,
+        "foldingRangeProvider": true,
+        "callHierarchyProvider": true,
+        "semanticTokensProvider": {
+          "legend": {
+            "tokenTypes": [
+              "class",
+              "comment",
+              "constant",
+              "enumMember",
+              "enum",
+              "event",
+              "method",
+              "field",
+              "variable",
+              "interface",
+              "jsonArray",
+              "jsonComment",
+              "jsonConstructorName",
+              "jsonKeyword",
+              "jsonNumber",
+              "jsonObject",
+              "jsonOperator",
+              "jsonPropertyName",
+              "jsonPunctuation",
+              "jsonString",
+              "jsonText",
+              "keyword",
+              "namespace",
+              "number",
+              "operator",
+              "parameter",
+              "property",
+              "struct",
+              "regexAlternation",
+              "regexAnchor",
+              "regexCharacterClass",
+              "regexComment",
+              "regexGrouping",
+              "regexOtherEscape",
+              "regexQuantifier",
+              "regexSelfEscapedCharacter",
+              "regexText",
+              "string",
+              "stringEscapeCharacter",
+              "typeParameter"
+            ],
+            "tokenModifiers": [
+              "static"
+            ]
+          },
+          "range": true,
+          "full": true
+        },
+        "typeHierarchyProvider": true,
+        "inlayHintProvider": {
+          "resolveProvider": false
+        },
+        "workspace": {
+          "workspaceFolders": {
+            "supported": true,
+            "changeNotifications": true
+          }
+        }
+      },
+      "registrations": [
+        {
+          "method": "textDocument/completion",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              ".",
+              "'"
+            ],
+            "resolveProvider": true
+          }
+        },
+        {
+          "method": "textDocument/definition",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/diagnostic",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "interFileDependencies": false,
+            "workspaceDiagnostics": true
+          }
+        },
+        {
+          "method": "textDocument/hover",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/signatureHelp",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "triggerCharacters": [
+              "(",
+              ",",
+              "<",
+              "{",
+              "["
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didOpen",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "textDocument/didChange",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "syncKind": 2
+          }
+        },
+        {
+          "method": "textDocument/didSave",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ],
+            "includeText": true
+          }
+        },
+        {
+          "method": "textDocument/didClose",
+          "registerOptions": {
+            "documentSelector": [
+              {
+                "language": "csharp",
+                "scheme": "file",
+                "pattern": "**/*.cs"
+              }
+            ]
+          }
+        },
+        {
+          "method": "workspace/didChangeWatchedFiles",
+          "registerOptions": {
+            "watchers": [
+              {
+                "globPattern": "**/*.{cs,cshtml,csproj,sln,slnx}",
+                "kind": 7
+              }
+            ]
+          }
+        }
+      ],
+      "serverRequests": {
+        "workspace/configuration": 1,
+        "client/registerCapability": 1,
+        "workspace/diagnostic/refresh": 1,
+        "window/workDoneProgress/create": 1
+      },
+      "notifications": {
+        "window/logMessage": 7,
+        "$/progress": 4
+      },
+      "protocolEvents": [
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: initializing, version 0.27.0 (Vartai)+d48ab7781176d2d369ceeb31d986503c2ad493e2"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: csharp-ls is released under MIT license and is not affiliated with Microsoft Corp.; see https://github.com/razzmatazz/csharp-language-server"
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "492edbab-7bca-49c0-97e8-c493323b6d46",
+            "value": {
+              "kind": "begin",
+              "title": "Loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace\".."
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: attempting to find and load solution on path \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace\".."
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: 0 solution(s) found: []"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: no single preferred .sln/.slnx file found on D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace; fill load project files manually"
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: looking for .csproj/fsproj files on D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace.."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "492edbab-7bca-49c0-97e8-c493323b6d46",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Loading 1 project(s)...",
+              "percentage": 0
+            }
+          }
+        },
+        {
+          "method": "window/logMessage",
+          "params": {
+            "type": 3,
+            "message": "csharp-ls: loading project \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace\\Broken.csproj\".."
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "492edbab-7bca-49c0-97e8-c493323b6d46",
+            "value": {
+              "kind": "report",
+              "cancellable": false,
+              "message": "Broken.csproj 1/1",
+              "percentage": 100
+            }
+          }
+        },
+        {
+          "method": "$/progress",
+          "params": {
+            "token": "492edbab-7bca-49c0-97e8-c493323b6d46",
+            "value": {
+              "kind": "end",
+              "message": "Finished loading workspace folder \"D:\\coding-ide\\spikes\\csharp-lsp-compatibility\\fixtures\\invalid-workspace\""
+            }
+          }
+        }
+      ],
+      "stderrBytes": 0,
+      "ownedProcessesBeforeShutdown": [
+        {
+          "ProcessId": 32504,
+          "ParentProcessId": 43808,
+          "Name": "csharp-ls.exe"
+        },
+        {
+          "ProcessId": 7408,
+          "ParentProcessId": 32504,
+          "Name": "conhost.exe"
+        }
+      ],
+      "survivingOwnedProcessesAfterShutdown": []
+    }
+  }
+}

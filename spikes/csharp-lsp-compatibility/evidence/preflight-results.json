@@ -1,0 +1,605 @@
+{
+  "mechanism": {
+    "solution": "dotnet sln <selected> list exit code plus bounded project discovery",
+    "project": "dotnet msbuild evaluation-only getProperty/getItem JSON plus Main-owned ProjectReference checks",
+    "executesTargets": false,
+    "invokesRestore": false,
+    "writesWorkspace": false
+  },
+  "results": {
+    "valid-sln": {
+      "state": "READY",
+      "reason": null,
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 2100,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "solution-parse",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 894,
+          "timedOut": false,
+          "stdoutBytes": 50,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 1821,
+          "timedOut": false,
+          "stdoutBytes": 230,
+          "stderrBytes": 0
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "SpikeApp/SpikeApp.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 0,
+            "signal": null,
+            "elapsedMs": 1821,
+            "timedOut": false,
+            "stdoutBytes": 230,
+            "stderrBytes": 0
+          },
+          "jsonParsed": true,
+          "targetFramework": "net10.0",
+          "targetFrameworkIdentifier": ".NETCoreApp",
+          "targetFrameworkVersion": "v10.0",
+          "projectReferences": []
+        }
+      ],
+      "discoveredProjects": [
+        "SpikeApp/SpikeApp.csproj"
+      ],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "invalid-sln": {
+      "state": "PREFLIGHT_FAILED",
+      "reason": "SOLUTION_PARSE_FAILED",
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 164,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "solution-parse",
+          "exitCode": 1,
+          "signal": null,
+          "elapsedMs": 298,
+          "timedOut": false,
+          "stdoutBytes": 0,
+          "stderrBytes": 300
+        }
+      ],
+      "evaluatedProjects": [],
+      "discoveredProjects": [],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "missing-sln-project": {
+      "state": "PREFLIGHT_FAILED",
+      "reason": "PROJECT_REFERENCE_MISSING",
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 159,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "solution-parse",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 300,
+          "timedOut": false,
+          "stdoutBytes": 74,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 626,
+          "timedOut": false,
+          "stdoutBytes": 230,
+          "stderrBytes": 0
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "Existing/Existing.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 0,
+            "signal": null,
+            "elapsedMs": 626,
+            "timedOut": false,
+            "stdoutBytes": 230,
+            "stderrBytes": 0
+          },
+          "jsonParsed": true,
+          "targetFramework": "net10.0",
+          "targetFrameworkIdentifier": ".NETCoreApp",
+          "targetFrameworkVersion": "v10.0",
+          "projectReferences": []
+        }
+      ],
+      "discoveredProjects": [
+        "Existing/Existing.csproj",
+        "Missing/Missing.csproj"
+      ],
+      "missingProjectReferences": [
+        "Missing/Missing.csproj"
+      ],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "valid-slnx": {
+      "state": "READY",
+      "reason": null,
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 161,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "solution-parse",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 333,
+          "timedOut": false,
+          "stdoutBytes": 50,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 602,
+          "timedOut": false,
+          "stdoutBytes": 230,
+          "stderrBytes": 0
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "SpikeApp/SpikeApp.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 0,
+            "signal": null,
+            "elapsedMs": 602,
+            "timedOut": false,
+            "stdoutBytes": 230,
+            "stderrBytes": 0
+          },
+          "jsonParsed": true,
+          "targetFramework": "net10.0",
+          "targetFrameworkIdentifier": ".NETCoreApp",
+          "targetFrameworkVersion": "v10.0",
+          "projectReferences": []
+        }
+      ],
+      "discoveredProjects": [
+        "SpikeApp/SpikeApp.csproj"
+      ],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "invalid-slnx": {
+      "state": "PREFLIGHT_FAILED",
+      "reason": "SOLUTION_PARSE_FAILED",
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 157,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "solution-parse",
+          "exitCode": 1,
+          "signal": null,
+          "elapsedMs": 300,
+          "timedOut": false,
+          "stdoutBytes": 0,
+          "stderrBytes": 399
+        }
+      ],
+      "evaluatedProjects": [],
+      "discoveredProjects": [],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "valid-csproj": {
+      "state": "READY",
+      "reason": null,
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 151,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 677,
+          "timedOut": false,
+          "stdoutBytes": 230,
+          "stderrBytes": 0
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "SpikeApp.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 0,
+            "signal": null,
+            "elapsedMs": 677,
+            "timedOut": false,
+            "stdoutBytes": 230,
+            "stderrBytes": 0
+          },
+          "jsonParsed": true,
+          "targetFramework": "net10.0",
+          "targetFrameworkIdentifier": ".NETCoreApp",
+          "targetFrameworkVersion": "v10.0",
+          "projectReferences": []
+        }
+      ],
+      "discoveredProjects": [
+        "SpikeApp.csproj"
+      ],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "malformed-csproj": {
+      "state": "PREFLIGHT_FAILED",
+      "reason": "PROJECT_EVALUATION_FAILED",
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 159,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 1,
+          "signal": null,
+          "elapsedMs": 297,
+          "timedOut": false,
+          "stdoutBytes": 0,
+          "stderrBytes": 291
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "Broken.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 1,
+            "signal": null,
+            "elapsedMs": 297,
+            "timedOut": false,
+            "stdoutBytes": 0,
+            "stderrBytes": 291
+          },
+          "jsonParsed": false,
+          "targetFramework": null,
+          "targetFrameworkIdentifier": null,
+          "targetFrameworkVersion": null,
+          "projectReferences": []
+        }
+      ],
+      "discoveredProjects": [
+        "Broken.csproj"
+      ],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "missing-project-reference": {
+      "state": "PREFLIGHT_FAILED",
+      "reason": "PROJECT_REFERENCE_MISSING",
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 157,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 672,
+          "timedOut": false,
+          "stdoutBytes": 1409,
+          "stderrBytes": 0
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "MissingReference.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 0,
+            "signal": null,
+            "elapsedMs": 672,
+            "timedOut": false,
+            "stdoutBytes": 1409,
+            "stderrBytes": 0
+          },
+          "jsonParsed": true,
+          "targetFramework": "net10.0",
+          "targetFrameworkIdentifier": ".NETCoreApp",
+          "targetFrameworkVersion": "v10.0",
+          "projectReferences": [
+            "Missing\\DoesNotExist.csproj"
+          ]
+        }
+      ],
+      "discoveredProjects": [
+        "MissingReference.csproj"
+      ],
+      "missingProjectReferences": [
+        "Missing/DoesNotExist.csproj"
+      ],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "unknown-project-sdk": {
+      "state": "PREFLIGHT_FAILED",
+      "reason": "PROJECT_EVALUATION_FAILED",
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 151,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 1,
+          "signal": null,
+          "elapsedMs": 2768,
+          "timedOut": false,
+          "stdoutBytes": 0,
+          "stderrBytes": 1045
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "UnknownSdk.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 1,
+            "signal": null,
+            "elapsedMs": 2768,
+            "timedOut": false,
+            "stdoutBytes": 0,
+            "stderrBytes": 1045
+          },
+          "jsonParsed": false,
+          "targetFramework": null,
+          "targetFrameworkIdentifier": null,
+          "targetFrameworkVersion": null,
+          "projectReferences": []
+        }
+      ],
+      "discoveredProjects": [
+        "UnknownSdk.csproj"
+      ],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "unavailable-targeting-pack": {
+      "state": "READY",
+      "reason": null,
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 185,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 701,
+          "timedOut": false,
+          "stdoutBytes": 230,
+          "stderrBytes": 0
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "UnavailableTarget.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 0,
+            "signal": null,
+            "elapsedMs": 701,
+            "timedOut": false,
+            "stdoutBytes": 230,
+            "stderrBytes": 0
+          },
+          "jsonParsed": true,
+          "targetFramework": "net99.0",
+          "targetFrameworkIdentifier": ".NETCoreApp",
+          "targetFrameworkVersion": "v99.0",
+          "projectReferences": []
+        }
+      ],
+      "discoveredProjects": [
+        "UnavailableTarget.csproj"
+      ],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "unavailable-global-json-sdk": {
+      "state": "PREFLIGHT_FAILED",
+      "reason": "SDK_SELECTION_FAILED",
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 2147516571,
+          "signal": null,
+          "elapsedMs": 51,
+          "timedOut": false,
+          "stdoutBytes": 70,
+          "stderrBytes": 733
+        }
+      ],
+      "evaluatedProjects": [],
+      "discoveredProjects": [
+        "UnavailableSdk.csproj"
+      ],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    },
+    "multiple-csproj-project-mode": {
+      "state": "READY",
+      "reason": null,
+      "commands": [
+        {
+          "operation": "sdk-probe",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 178,
+          "timedOut": false,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 750,
+          "timedOut": false,
+          "stdoutBytes": 230,
+          "stderrBytes": 0
+        },
+        {
+          "operation": "project-evaluation",
+          "exitCode": 0,
+          "signal": null,
+          "elapsedMs": 604,
+          "timedOut": false,
+          "stdoutBytes": 230,
+          "stderrBytes": 0
+        }
+      ],
+      "evaluatedProjects": [
+        {
+          "project": "First/First.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 0,
+            "signal": null,
+            "elapsedMs": 750,
+            "timedOut": false,
+            "stdoutBytes": 230,
+            "stderrBytes": 0
+          },
+          "jsonParsed": true,
+          "targetFramework": "net10.0",
+          "targetFrameworkIdentifier": ".NETCoreApp",
+          "targetFrameworkVersion": "v10.0",
+          "projectReferences": []
+        },
+        {
+          "project": "Second/Second.csproj",
+          "command": {
+            "operation": "project-evaluation",
+            "exitCode": 0,
+            "signal": null,
+            "elapsedMs": 604,
+            "timedOut": false,
+            "stdoutBytes": 230,
+            "stderrBytes": 0
+          },
+          "jsonParsed": true,
+          "targetFramework": "net10.0",
+          "targetFrameworkIdentifier": ".NETCoreApp",
+          "targetFrameworkVersion": "v10.0",
+          "projectReferences": []
+        }
+      ],
+      "discoveredProjects": [
+        "First/First.csproj",
+        "Second/Second.csproj"
+      ],
+      "missingProjectReferences": [],
+      "workspaceMutations": [],
+      "targetExecutionMarkerCreated": false,
+      "targetingAvailabilityVerified": false
+    }
+  }
+}

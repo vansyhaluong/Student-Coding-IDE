@@ -5,7 +5,7 @@
 This document converts the accepted Student Coding IDE requirements and
 architecture into an ordered execution plan. It defines ownership, dependencies,
 decision gates, tests, acceptance criteria, and phase exit conditions from Phase
-2 through Phase 7.
+2 through Phase 7, including the newly authorized Phase 5.5 C# extension.
 
 It is not a replacement for requirements or architecture, does not authorize
 implementation by itself, and does not resolve decisions that remain open. All
@@ -78,8 +78,8 @@ does not reopen those choices.
 3. Keep preload narrow, typed, capability-scoped, and free of business state.
 4. Runtime-validate every renderer-to-main request before domain services receive
    it. Type assertions are not validation (ADR-003 and ADR-016).
-5. Keep Terminal and Run as separate lifecycle domains; any future authorized
-   external Language Server process remains a third separate domain (ADR-008).
+5. Keep Terminal, Run, and the Phase 5.5 Main-owned C# LanguageServiceManager as
+   three separate lifecycle domains (ADR-008 and ADR-022).
 6. Use one active local folder project in V1 (ADR-004).
 7. Preserve version-aware editor state and main-owned disk access (ADR-006).
 8. Treat Windows 10 and Windows 11 as V1 acceptance platforms.
@@ -115,6 +115,7 @@ before affected work continues.
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
 | Phase 5 — Git Integration | `COMPLETE` | Corrective Phase 5C native-test portability fix and Phase 5F re-verification passed locally |
+| Phase 5.5 — C# Language Intelligence | `IN_PROGRESS` | 5.5A–5.5D complete; 5.5E–5.5H not started |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -155,7 +156,12 @@ native, performance, security, and documentation gates. Phase 3A architecture
 and feasibility audit, Phase 3B language foundation, Phase 3C production JS/TS
 synchronization, Phase 3D HTML/CSS/JSON intelligence, Phase 3E Problems
 aggregation/navigation, and Phase 3F final verification are `COMPLETE`; all
-later phases remain `NOT_STARTED`.
+Phase 4 and Phase 5 packages are also `COMPLETE`. Phase 5.5A is complete. Phase
+5.5B and its corrective structured workspace-readiness spike passed on Windows.
+Exact provider/transport versions are selected and the 5.5C contracts and
+dependency foundation and 5.5D Main LSP core are complete; 5.5E–5.5H have not
+started and still require explicit authorization.
+Phases 6–7 have not started.
 
 ## 7. Dependency graph
 
@@ -176,8 +182,11 @@ Phase 2B + 2C + 2D + 2E ---> Phase 2F integration and stabilization
 Phase 2 complete ---> Phase 3 Language Intelligence
 Phase 3 complete ---> Phase 4 Run & Output
 Phase 4 complete ---> Phase 5 Git Integration
-Phase 5 complete ---> Phase 6 Settings & UX
-Phases 2–6 complete ---> Phase 7 final V1 acceptance and packaging
+Phase 5 complete ---> Phase 5.5 C# Language Intelligence
+Phase 5.5A complete ---> Phase 5.5B compatibility spike (hard gate)
+Phase 5.5B PASS ---> Phase 5.5C–5.5H
+Phase 5.5 complete ---> Phase 6 Settings & UX
+Phases 2–6 including 5.5 complete ---> Phase 7 final V1 acceptance and packaging
 ```
 
 Service work may be prepared only when its prerequisite contracts exist. The
@@ -2648,6 +2657,385 @@ GitService (ADR-009).
 - Typecheck, lint, build, defined tests, and representative local-repository smoke
   checks pass.
 
+## 11.5 Phase 5.5 — C# Language Intelligence
+
+Phase 5.5 is a newly authorized V1 scope extension after Phase 3 completed C#
+syntax-only support. It does not rewrite Phase 3 history. It adds C# completion,
+hover, signature help, go to definition, open-document pull diagnostics, and
+Problems integration. C# Run and the deferred capabilities listed below are not
+part of this phase.
+
+### Phase status
+
+- Phase 5.5A — Documentation & Design Baseline: `COMPLETE`.
+- Phase 5.5B — Compatibility Spike: `COMPLETE`; **HARD GATE PASSED**.
+- Phase 5.5C — Contracts + Dependency Foundation: `COMPLETE`.
+- Phase 5.5D — Main LSP Core + C# Adapter: `COMPLETE`.
+- Phase 5.5E — Workspace + Document Synchronization: `NOT_STARTED`.
+- Phase 5.5F — IPC + Preload + Monaco Semantic Providers: `NOT_STARTED`.
+- Phase 5.5G — Diagnostics + Problems + Status UX: `NOT_STARTED`.
+- Phase 5.5H — Stabilization + Final Verification: `NOT_STARTED`.
+
+Phase 5.5 overall is `IN_PROGRESS`. The 2026-09-10 corrective spike resolved the
+5.5B blocker with a structured Main-owned preflight and honest readiness
+semantics. Phase 5.5C and the separately authorized 5.5D implementation are
+complete. Phase 5.5E–H production implementation has not begun.
+
+### Goal and capability scope
+
+- Preserve C# syntax through Monaco tokenization.
+- Add completion, hover, signature help, definition, diagnostics, and Problems
+  through Main-owned `csharp-ls` and a thin semantic LSP↔Monaco adapter.
+- Keep Runtime, C# language-service dependency, language-service lifecycle, and
+  Run as independent states/domains.
+- Keep editor/view/save available for missing dependencies, startup/loading
+  delay, `CRASHED`, unsupported workspace, and all provider failures.
+
+### Explicitly deferred
+
+- References, rename, code actions/quick fix, refactoring, formatter, advanced
+  semantic tokens, Razor, and metadata/BCL/generated virtual-document navigation.
+- Debugger, C# Run, workspace diagnostics, and loose `.cs` full intelligence.
+- Public start/stop/restart, automatic restart loop, raw provider logs, configured
+  SDK/provider paths, and temporary solution creation.
+- Packaged/installed `csharp-ls` acceptance, retained by Phase 7.
+
+### Dependencies and accepted decisions
+
+- Completed Phase 2 project/filesystem/editor/lifecycle/security foundations,
+  completed Phase 3 Monaco/Problems foundation, and completed Phase 5 roadmap
+  prerequisite.
+- ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-008, ADR-012, ADR-013,
+  ADR-015 historical scope, ADR-016, ADR-021, and ADR-022.
+- .NET SDK 10 or newer is required to run current `csharp-ls`; .NET 10 LTS is
+  the Windows V1 acceptance baseline. Main detection uses process PATH plus
+  `dotnet --list-sdks`.
+- Phase 5.5B selected `csharp-ls` 0.27.0,
+  `vscode-languageserver-protocol` 3.18.3, and `vscode-jsonrpc/node` 9.0.2.
+
+### Architecture and security constraints
+
+- Main owns LanguageServiceManager, process/protocol lifecycle, real paths,
+  workspace selection, cancellation, diagnostic result IDs, completion-resolve
+  handles, and bounded descendant cleanup.
+- Renderer owns Monaco providers, UI state, dirty models, marker projection, and
+  Problems presentation. FileSystemService remains the only disk authority.
+- Public language IPC uses `projectId` and project-relative paths only. Main
+  derives owner identity from the trusted Electron sender/document and validates
+  payload, project, path, session, document, and action before dispatch.
+- Renderer receives no raw LSP/JSON-RPC, PID, executable path, cwd, spawn args,
+  canonical project root, raw log stream, or generic process capability.
+- Completion resolve uses opaque Main-owned handles. Definition results accept
+  only `file:` URIs contained by the canonical active project root. External and
+  metadata targets are unsupported.
+- Preserve `contextIsolation: true`, `nodeIntegration: false`, and `sandbox: true`.
+
+### Workspace and document policy
+
+- `.sln` and `.slnx` are both supported solution candidates.
+- Reuse a saved valid selection; auto-select exactly one candidate; require user
+  selection and remember it per project when multiple candidates exist.
+- With no solution and one or more `.csproj` files, use project mode. Main may do
+  bounded discovery for preflight/UX, while current `csharp-ls` owns recursive
+  project discovery/loading. Do not claim Main controls the exact loaded set.
+- With no solution or project, remain syntax-only. Never create a temporary
+  solution.
+- Track workspace readiness separately as `READY`, `SELECTION_REQUIRED`,
+  `NO_CSHARP_WORKSPACE`, or `PREFLIGHT_FAILED`. Before provider startup, Main
+  performs the structured SDK/solution/project-evaluation/reference preflight
+  recorded in ADR-022. It requests no target, build, or restore and must not
+  mutate the workspace. `READY` is bounded preflight success, not proof of an
+  equivalent provider-internal Roslyn workspace.
+- Start lazily with one C# session for the active project. Perform `initialize`
+  then `initialized`; negotiate/use UTF-16.
+- `RUNNING` means process plus LSP initialization only. Never infer workspace
+  failure from empty completion/definition, null hover, no diagnostics, or
+  human-readable provider logs.
+- Monaco dirty content is authoritative. Send `didOpen`, ordered incremental
+  `didChange`, `didSave`, and `didClose`; use Monaco model version as document
+  version. Batching may preserve order but must never drop changes. Flush pending
+  changes before semantic requests.
+- Reuse FileSystemService watcher events. Open/dirty sync wins over disk watcher
+  content. Reject stale project/session/document/model-version results.
+- Pull diagnostics cover open documents; workspace diagnostics are deferred.
+- Graceful shutdown orders invalidate/cancel → `shutdown` → response → `exit` →
+  bounded cleanup. Unexpected exit becomes `CRASHED`; no V1 restart loop.
+
+### 5.5A — Documentation & Design Baseline
+
+#### Scope
+
+- Update the authoritative documents and repository instructions so the newly
+  authorized C# scope, history, ownership, security, workspace, lifecycle,
+  synchronization, dependency, phase sequence, and hard gate agree.
+- Add only planned module locations to `CODEBASE-MAP.md`.
+- Do not create the compatibility spike, production source, tests, dependencies,
+  package changes, or changelog implementation claims.
+
+#### Exit gate
+
+- All authoritative documents are mutually consistent and preserve Phase 3
+  syntax-only history.
+- Phase 5.5B is visibly a hard gate for every 5.5C+ package.
+- Searches find no stale claim that C# is permanently syntax-only or that all
+  external language servers remain unspecified future scope.
+- Searches find no accidental inclusion of C# Run, Razor, metadata navigation,
+  formatter, rename, references, code actions, refactoring, advanced semantic
+  tokens, loose-file full intelligence, or workspace diagnostics.
+- Git diff contains documentation/agent-instruction files only; package files,
+  production source, tests, and `CHANGELOG-THESIS.md` are unchanged.
+- `git diff --check` passes.
+
+#### 5.5A acceptance record (2026-09-09)
+
+The authority consistency review passed across `REQUIREMENT.md`,
+`ARCHITECTURE.md`, `DECISIONS.md`, `CODEBASE-MAP.md`, `LANGUAGE-SUPPORT.md`, and
+this plan. Stale-claim searches left only explicitly historical Phase 3 evidence,
+the current pre-5.5B source state, and the approved syntax-only fallback when no
+solution/project exists. Deferred-capability review found no claim that C# Run,
+Razor, metadata navigation, formatter, references, rename, code actions,
+refactoring, advanced semantic tokens, workspace diagnostics, or loose-file full
+intelligence is included. The final changed-file scope contains only the six
+authoritative documents and `AGENTS.md`; package files, production source, tests,
+and `CHANGELOG-THESIS.md` are unchanged. `git diff --check` passed. Phase 5.5A is
+`COMPLETE`; at that acceptance point Phase 5.5 remained `IN_PROGRESS` and 5.5B
+was the next hard gate. The current post-spike status is recorded below.
+
+### 5.5B — Compatibility Spike — HARD GATE
+
+#### Goal
+
+Produce reproducible Windows evidence for the actual server, protocol libraries,
+workspace behavior, synchronization, process lifecycle, and current build stack
+before selecting exact versions or writing production 5.5C+ code.
+
+#### Required evidence
+
+- Dependency/version probe for .NET SDK 10+ and candidate `csharp-ls` versions.
+- Real stdio JSON-RPC/LSP `initialize` → `initialized` → `shutdown` → `exit`.
+- Advertised capability capture and comparison with required V1 capabilities.
+- Dirty-buffer `didOpen`/incremental `didChange`/`didSave`/`didClose`, ordered
+  flush, document versions, UTF-16, and representative Unicode behavior.
+- Completion, completion resolve, request cancellation, hover, signature help,
+  definition, and open-document pull diagnostics.
+- `.sln`, `.slnx`, project mode, and no-solution recursive discovery behavior
+  and representative performance. Record that `csharp-ls`, not Main, owns the
+  actual recursive loaded-project set in project mode.
+- Windows paths containing spaces, `#`, and Unicode.
+- Dynamic watched-file registration and integration implications for the existing
+  FileSystemService watcher.
+- Workspace-load failure detection through machine-meaningful protocol/process
+  state without parsing human log strings.
+- Unexpected crash, graceful shutdown ordering, bounded descendant cleanup, and
+  no orphaned owned process.
+- Compatibility with electron-vite, TypeScript typecheck, and production build.
+
+#### Gate result
+
+A PASS records exact pinned versions and the evidence above in ADR-022 and the
+plan before 5.5C begins. A failure sets Phase 5.5B and Phase 5.5 to `BLOCKED` and
+requires a user decision; it does not silently substitute a provider, transport,
+or architecture. This spike is not packaged/installed acceptance.
+
+#### 2026-09-10 gate result — COMPLETE
+
+The Windows spike exercised `csharp-ls` 0.27.0 with .NET SDK 10.0.401/runtime
+10.0.12, `vscode-languageserver-protocol` 3.18.3, `vscode-jsonrpc` 9.0.2,
+Electron 44.0.0, electron-vite 5.0.0, Vite 7.3.6, and TypeScript 6.0.3. Semantic
+capabilities, dirty incremental sync, UTF-16/Unicode, `.sln`, `.slnx`, recursive
+project mode, watched-file registration, lifecycle cleanup, Electron imports,
+typecheck, and production bundling passed.
+
+The hard gate failed because a malformed project resolved initialization,
+registered normal capabilities, kept the process alive, resolved a semantic
+request with an empty result, and ended work-done progress normally. No JSON-RPC
+error, nonzero exit, or structured protocol failure identified the load failure;
+only human log/progress strings did. The authorized corrective spike retained
+`csharp-ls` and verified a structured Main-owned preflight across valid/broken
+`.sln`, `.slnx`, and `.csproj`; reference, SDK, targeting, and multi-project
+cases. It uses exit codes, evaluation JSON, and Main path checks without parsing
+provider log text, running MSBuild targets/build/restore, generating solutions,
+or changing workspace files.
+
+The preflight deliberately does not certify provider-internal Roslyn health:
+an unavailable targeting pack passed evaluation, and the provider may still fail
+after preflight. `READY` and `RUNNING` therefore have bounded meanings recorded
+in ADR-022. Valid and broken workspaces both produced legitimate empty/null
+semantic results, proving those cannot be health signals. This residual risk is
+accepted for V1 without a false public claim. Exact versions are selected and
+5.5B is `COMPLETE`; Phase 5.5C subsequently completed under separate
+authorization. Phase 5.5D later began under separate authorization; 5.5E–5.5H
+remain `NOT_STARTED`.
+See `spikes/csharp-lsp-compatibility/REPORT.md`.
+
+Final verification passed 12/12 structured preflight cases, the full provider
+harness, spike TypeScript/Electron/electron-vite gates, root typecheck, lint,
+production/native build, 811/811 tests on the unchanged rerun, and
+`git diff --check`.
+
+### 5.5C — Contracts + Dependency Foundation
+
+- Define side-effect-free semantic C# request/result/event contracts and exact
+  runtime validators, including opaque resolve handles and normalized diagnostics.
+- Implement Main PATH plus `dotnet --list-sdks` detection and selected provider
+  resolution according to versions proven by 5.5B.
+- Keep dependency state separate from service lifecycle: dependency
+  `MISSING`/`INVALID_CONFIGURATION`; service
+  `STOPPED`/`STARTING`/`RUNNING`/`CRASHED`; reserve `NOT_CONFIGURED` for future
+  configured paths.
+- Add focused contract, validation, dependency, Windows path, and redaction tests.
+
+#### 2026-09-10 implementation record — COMPLETE
+
+- Added side-effect-free shared provider/capability, dependency, service,
+  workspace, project-relative document, position/range/version/request,
+  completion/hover/signature/definition/diagnostic, and opaque completion-handle
+  contracts with exact runtime validators for Renderer-originated shapes and
+  safe status serialization. C# syntax remains Monaco-owned; the five semantic
+  capabilities map to `csharp-ls`.
+- Added Main-only Windows executable validation, a finite bounded probe,
+  PATH-only `dotnet.exe` resolution, strict `dotnet --list-sdks` inventory
+  parsing, SDK 10+ classification, and prerelease-only warning metadata.
+- Added development private-first then PATH `csharp-ls` resolution and packaged
+  app-owned-only resolution. A trusted Main caller supplies the private/app-owned
+  executable candidate; no unproven packaged payload directory was invented.
+  The real 5.5B provider output was probed and exact version 0.27.0 is enforced.
+- Added exact runtime dependencies `vscode-languageserver-protocol` 3.18.3 and
+  `vscode-jsonrpc` 9.0.2. Focused tests cover validation limits/redaction, PATH
+  safety, SDK inventory states, probe failures, provider priority, packaged PATH
+  exclusion, version mismatch, corrupt output, and missing providers.
+- Verified focused tests 19/19, the full `npm test` command, typecheck, lint,
+  production/native build, and `git diff --check`. The existing jsdom canvas
+  diagnostic remained non-blocking. No timeout, retry, worker, or assertion was
+  weakened. No workspace preflight execution, language session/LSP connection,
+  provider spawn lifecycle, document sync, IPC/Preload, Monaco semantic provider,
+  diagnostics integration, Problems/UI, or Phase 5.5D+ work was added.
+
+### 5.5D — Main LSP Core + C# Adapter
+
+Authorized on 2026-09-10, including the dedicated C# native pipe entry point,
+atomic Windows Job ownership and hard-kill-root descendant verification recorded
+in ADR-022. Phase 5.5E+ remains `NOT_STARTED`.
+
+- Implement Main-owned JSON-RPC/LSP transport, initialize/capability negotiation,
+  request cancellation, semantic capability mapping, opaque completion resolve,
+  protocol/error normalization, crash state, and graceful bounded cleanup.
+- Keep stderr/logging separate from diagnostics and Main-only.
+- Verify malformed payload isolation, capability absence, cancellation races,
+  unexpected exit, cleanup failure retention, and no generic process API.
+
+#### 2026-09-10 implementation and verification evidence
+
+- Added Main-only LspConnection, CSharpLsAdapter, LanguageServiceManager,
+  safe language errors and a resolver-backed native C# process factory.
+  The built language-runtime entry is an internal verification/composition
+  seam; application, workspace and language IPC wiring are not introduced.
+- The adapter captures initialize capabilities, enforces UTF-16 and required
+  V1 support, maps completion/resolve/hover/signature/definition/pull diagnostics,
+  and retains resolve data/result IDs in Main. Notification primitives have no
+  production document queue, watcher hookup, or Monaco ownership.
+- Dedicated native C# entry points reuse atomic Job creation/finalization and
+  provide asynchronous stdin writes. Existing Run/Git entry behavior and
+  ProcessManager implementation are unchanged.
+- Deterministic fake-server coverage: 33/33 tests passed, including protocol
+  order, server requests, allowlisted/rejected registrations, malformed data,
+  correlation, errors, cancellation/late response/deadlines, stale generations,
+  startup/crash/shutdown and retained cleanup failures.
+- Production Electron native smoke passed on Windows x64: hard-killed root
+  PID 27124 left descendant 19404 alive in the Job; premature release failed;
+  termination emptied the Job and removed that descendant while an unrelated
+  control survived. A blocked 8-MiB stdin write settled on Job termination
+  before release. Repeated release was safe.
+- Real csharp-ls 0.27.0 initialized with the minimal production client
+  capabilities using .NET SDK 10.0.401. Completion, resolve, hover, signature,
+  definition, pull diagnostics and incremental sync were all observed.
+  Graceful shutdown reached STOPPED and released all registered ownership.
+  RUNNING still makes no Roslyn workspace-health guarantee.
+- Typecheck, lint, production/native build and git diff --check passed.
+  Phase 5.5D was initially BLOCKED because the final full npm test run
+  passed 862/863 with one 5000-ms timeout in
+  tests/main/git-local.integration.test.ts:91, "snapshots @ and switches exact @
+  with a detached native hook, preserving harmless local data".
+  That test uses the unchanged GitCommandRunner, not the C# native entry point,
+  and passed in the focused diagnostic run. Its full-suite timing was unresolved
+  at that point; a focused pass did not replace the required full-suite gate.
+  No LSP architecture decision remains open. Do not start 5.5E.
+  The initial concurrent build/test run encountered old TEMP casing assertions
+  and timeouts. TEMP/TMP were scoped to canonical C:\Windows\Temp for subsequent
+  test processes; no assertions, workers, timeouts, retries or production
+  filesystem behavior were changed. A subsequent suite reached 861/863 with
+  two existing Git timeouts; both passed in a focused diagnostic run.
+- Corrective investigation then reproduced the timeout without the new language
+  tests: the Phase 5C case took 4044 ms alone but timed out at 5024 ms when the
+  real Git suites ran together. Language + Git passed at 3881 ms, process/native
+  + Git passed at 3490 ms, and no Git, csharp-ls or Electron child survived.
+  Repeated repository setup subprocesses contending across four workers caused
+  the failure; no Phase 5.5D resource or native Job leak was found.
+- The three real-Git harnesses now prepare one baseline repository per suite and
+  copy it into an isolated temporary directory for each test. Production Git
+  behavior and assertions are unchanged; no timeout, worker, retry, sleep or skip
+  policy changed. The formerly failing case took 2575 ms focused; the exact Git
+  reproduction passed 266/266 at 4176 ms; the affected harnesses passed 55/55.
+- Two consecutive canonical-TEMP full npm test runs passed 863/863 in 51.31 s
+  and 48.96 s. Typecheck, lint, production/native build, whitespace checks and
+  final process inspection passed. Phase 5.5D is COMPLETE. Do not start 5.5E
+  without separate authorization.
+
+### 5.5E — Workspace + Document Synchronization
+
+- Implement saved `.sln`/`.slnx` choice, single-candidate selection,
+  multi-candidate decision persistence, project mode, and syntax-only fallback.
+- Implement lazy one-active-project session and ordered incremental document sync
+  with flush-before-request and stale result rejection.
+- Reuse FileSystemService watcher events with dirty/open precedence and dynamic
+  watched-file registrations proven by 5.5B.
+- Verify project switch/close, root unavailability, rename/delete, renderer loss,
+  dirty buffers, batching, Unicode/version order, and cleanup.
+
+### 5.5F — IPC + Preload + Monaco Semantic Providers
+
+- Add exact-validated semantic IPC and narrow Preload bridge using project IDs,
+  relative paths, trusted sender/document ownership, and cancellation.
+- Register separate Monaco completion, hover, signature help, and definition
+  providers for C#. Convert UTF-16 LSP ranges and enums explicitly rather than
+  casting protocol objects to Monaco types.
+- Reject definition targets outside the active project and stale responses after
+  edits, project/session replacement, owner loss, or provider disposal.
+
+### 5.5G — Diagnostics + Problems + Status UX
+
+- Pull diagnostics for open documents, retain result IDs only in Main, normalize
+  results, and publish version/generation-safe Monaco markers to the existing
+  Problems store and navigation flow.
+- Present dependency and service states separately, including syntax-only
+  fallback, workspace selection, loading/failure, and `CRASHED`, without a public
+  restart or raw-log API.
+- Verify update/clear/dispose/navigation, dirty-model preservation, severity/code/
+  source mapping, unsupported targets, and failure isolation from other languages.
+
+### 5.5H — Stabilization + Final Verification
+
+- Run focused and full automated suites, typecheck, lint, production build,
+  `git diff --check`, Windows Electron smoke, security/lifecycle review, repeated
+  project/session cycles, representative solution/project performance, and
+  documentation/traceability review.
+- Confirm all Phase 5.5 capabilities and failure states while C# Run and every
+  deferred capability remain absent.
+- Update actual codebase paths and `CHANGELOG-THESIS.md` only for implemented,
+  verified work. Do not claim packaged/installed provider acceptance before
+  Phase 7.
+
+### Phase 5.5 exit gate
+
+- 5.5B passed before 5.5C began and exact versions match its evidence.
+- Syntax, completion, hover, signature, definition, open-document diagnostics,
+  Problems, workspace policy, synchronization, cancellation, status, lifecycle,
+  cleanup, security, Windows paths, and failure isolation pass.
+- Editor/save remain available in every dependency/service failure state.
+- Defined focused/full tests, typecheck, lint, build, Windows Electron smoke, and
+  `git diff --check` pass.
+- Phase 7 remains responsible for packaged/installed `csharp-ls` acceptance.
+
 ## 12. Phase 6 — Settings & UX
 
 ### Goal
@@ -2658,7 +3046,7 @@ persistence UX without changing the main-owned versioned JSON strategy.
 ### Dependencies
 
 - Persistence foundation and minimal recent metadata from Phase 2.
-- Actual runtime, language-service, and Git configuration needs from Phases 3–5.
+- Actual runtime, language-service, and Git configuration needs from Phases 3–5.5.
 
 ### Decision gates
 
@@ -2671,7 +3059,9 @@ persistence UX without changing the main-owned versioned JSON strategy.
 - SettingsService validation/default/update and Settings UI.
 - Theme, editor font size, tab size, Auto Save, and keyboard-shortcut UX within
   current requirements.
-- Runtime, language-service, and Git executable/configuration paths where needed.
+- Runtime and Git executable/configuration paths where needed. Configured C# SDK
+  or provider paths remain deferred; `NOT_CONFIGURED` is reserved for that future
+  scope.
 - User-facing Recent Projects UX and management using Phase 2 metadata.
 - Dependency-state guidance and recoverable configuration errors.
 - Versioned JSON with `schemaVersion`, serialized atomic writes, backup/recovery,
@@ -2699,7 +3089,7 @@ dependency packaging, application packaging, installer, and documentation review
 
 ### Dependencies
 
-- All Phase 2–6 exit gates and recorded decisions.
+- All Phase 2–6 exit gates, including Phase 5.5, and recorded decisions.
 
 ### Decision gates
 
@@ -2707,14 +3097,16 @@ dependency packaging, application packaging, installer, and documentation review
   record any architecture/dependency decision they require.
 - Phase 2 `node-pty` compatibility evidence is prerequisite but does not replace
   packaged-app and installer verification.
+- Phase 5.5B C# compatibility evidence is prerequisite but does not replace
+  packaged/installed `csharp-ls`, resource, process, and installer verification.
 
 ### Key deliverables
 
 - Full integration/regression suite and manual Electron workflow smoke tests.
 - Windows 10 and Windows 11 acceptance.
 - Production build, full application packaging, native dependency inclusion,
-  packaged `node-pty` verification, release artifact, installer, and installer
-  smoke test.
+  packaged `node-pty` and app-owned pinned `csharp-ls` verification, release
+  artifact, installer, and installer smoke test.
 - Startup, project open, edit/save, terminal, language services, Run, Git,
   provider/resource discovery, settings persistence, and process cleanup
   verification in the fully packaged and installed app.
@@ -2748,6 +3140,7 @@ dependency packaging, application packaging, installer, and documentation review
 | IPC runtime validation mechanism | ADR-016, ADR-003 | Production IPC handlers multiply in early Phase 2 | RESOLVED Phase 2A — explicit validators | Current contracts are small; validators provide normalized issues and audited narrowing without schema runtime cost |
 | React Monaco integration | ADR-006, ADR-019 | Phase 2C Editor implementation | RESOLVED Phase 2C — thin `@monaco-editor/react` mount over local `monaco-editor` | Model/view ownership remains with EditorModelManager; local workers, development/build behavior, and disposal must pass the Phase 2C gate |
 | JS/TS/HTML/CSS/JSON providers | ADR-013, ADR-015 | Phase 3B implementation | RESOLVED Phase 3A — Monaco-native workers/providers | Matrix capabilities, bounded cross-file behavior, sync, worker lifecycle, development/production-build behavior, resource discovery; full packaged/installed verification is Phase 7 |
+| C# external provider/transport versions | ADR-022 | Before Phase 5.5C | RESOLVED Phase 5.5B — `csharp-ls` 0.27.0, protocol 3.18.3, JSON-RPC 9.0.2, structured Main preflight and bounded readiness semantics | Real Windows `csharp-ls`, protocol/library compatibility, capabilities, workspace selection/preflight, sync, Unicode, cancellation, diagnostics, dynamic registration, lifecycle, cleanup, and electron-vite/build compatibility |
 | Python/Java providers | ADR-013, ADR-015 | Future explicitly authorized language phase | DEFERRED — no provider selected | Re-evaluate capabilities, distribution, executable/config discovery, Main-owned lifecycle, narrow IPC, Windows behavior, license, and packaging only when future scope is authorized |
 | Large-file language thresholds | Architecture §8 | Phase 3 acceptance for expensive features | RESOLVED Phase 3B — initial 500 files / 5 MiB total / 256 KiB per file | Re-measure during 3C integration while edit/save remains available; lower bounds if live responsiveness requires it |
 | TypeScript Run strategy | ADR-014 | Future authorized TypeScript execution | Deferred; not a Phase 4 V1 blocker | Node versions, ESM/CJS, `tsconfig`, errors/maps, startup, Windows paths, stop/tree cleanup |
@@ -2770,7 +3163,8 @@ decision register. This plan does not select any unresolved option.
 | Windows filesystem/path handling | 2A–2D | Escape, wrong file, failed operations | Root containment, canonicalization, symlink policy, Windows path/lock tests |
 | IPC privilege boundary | 2A onward | Arbitrary privileged access | ADR-016 validation, narrow preload, ownership checks, security regression |
 | Process-tree cleanup | 2E, 4, 7 | Orphans or unrelated process termination | Owned registry, bounded escalation, Windows descendant tests |
-| Language-provider packaging | 3, 7 | Intelligence works only in development or fails after distribution | Phase 3 provider distribution-feasibility gate and minimal spike if needed; Phase 7 full packaged/installed provider/resource verification |
+| Language-provider packaging | 3, 5.5, 7 | Intelligence works only in development or fails after distribution | Phase 3 worker evidence; Phase 5.5B C# development compatibility gate; Phase 7 full packaged/installed provider/resource verification |
+| C# workspace and protocol behavior | 5.5 | Wrong solution, stale semantics, UI stalls, or orphaned server | ADR-022 policies; 5.5B real Windows hard gate; ordered/versioned sync, containment, cancellation, machine-readable failures, and bounded cleanup tests |
 | Future Python/Java provider distribution | Future language phase, 7 | Future intelligence may require external process/distribution work | Deferred provider decision; preserve Main ownership, narrow validated IPC, Windows lifecycle, and packaged verification gates |
 | TypeScript Run strategy | Future | Inconsistent execution/config behavior | ADR-014 decision and verification before future authorized TypeScript execution |
 | Large-project search responsiveness | 2D, 2F | Frozen UI or memory growth | Async bounded batches, exclusions, cancellation, representative performance smoke |
@@ -2795,9 +3189,8 @@ produced by the named implementation phase.
   search states, Problems navigation, and dependency/status UX. Trivial visual
   presentation does not require excessive tests.
 - **Windows integration:** paths, locks, executable detection, shell launch,
-  `node-pty`, process trees, current Monaco worker resources, Git, and persistence
-  replacement. External provider processes belong only to a future authorized
-  language phase.
+  `node-pty`, process trees, current Monaco worker resources, Git, persistence,
+  and the Phase 5.5 C# provider/process after its hard gate.
 - **Manual Electron smoke:** complete user workflows in development and, during
   Phase 7, packaged/installed operation.
 
@@ -2838,9 +3231,8 @@ Every privileged work package must verify:
   or arbitrary child-process capability;
 - executable plus argument arrays and `shell: false` where possible;
 - redacted logs without secrets, environment dumps, credentials, or file content;
-- cleanup of watchers, models, PTYs, Run processes, and current provider workers
-  by their owner; future external provider processes must satisfy the same
-  ownership rule if authorized.
+- cleanup of watchers, models, PTYs, Run processes, current provider workers, and
+  the Main-owned Phase 5.5 C# process by their owner.
 
 An API equivalent to `window.api.execute(command)` is prohibited.
 
@@ -2856,6 +3248,9 @@ V1 acceptance targets Windows 10 and Windows 11. Relevant packages must test:
 - PowerShell and `cmd.exe` with their distinct argument/quoting behavior;
 - native `node-pty` Electron ABI compatibility;
 - descendant process cleanup without broad process-name killing;
+- `.NET 10 LTS`, `csharp-ls` stdio/lifecycle, `.sln`/`.slnx`/project mode,
+  UTF-16/Unicode, paths with spaces/`#`/Unicode, and bounded descendants for
+  Phase 5.5;
 - atomic-replace fallbacks and persistence recovery.
 
 The design should avoid unnecessary Windows-only coupling, but Linux/macOS
@@ -2914,6 +3309,20 @@ acceptance work is not a V1 exit requirement.
 - Authentication remains delegated to Git/OS; hosted/remote/worktree features are
   absent.
 - Defined tests, typecheck, lint, and build pass.
+
+### Phase 5.5 Definition of Done
+
+- The 5.5B real-Windows compatibility hard gate passes before 5.5C and records
+  exact `csharp-ls`, `vscode-languageserver-protocol`, and `vscode-jsonrpc`
+  versions.
+- C# syntax, completion, hover, signature help, definition, open-document pull
+  diagnostics, and Problems/navigation pass for supported solution/project mode.
+- Workspace selection, dirty incremental sync, UTF-16, cancellation, stale-result
+  rejection, dependency/status separation, crash behavior, and bounded cleanup
+  pass without weakening editor/save or privileged boundaries.
+- Deferred C# capabilities and C# Run remain absent.
+- Defined tests, Windows Electron smoke, typecheck, lint, build, and
+  `git diff --check` pass. Phase 7 retains packaged/installed acceptance.
 
 ### Phase 6 Definition of Done
 
