@@ -630,7 +630,10 @@ bounded-discovers projects in project mode, and evaluates each selected/discover
 validates evaluated `ProjectReference` paths for containment and existence. All
 commands use executable/argument arrays, bounded discovery/output/time, and no
 requested build, restore, or target. A preflight failure leaves the semantic
-service stopped. The preflight must not write the workspace or create a solution.
+service stopped. The IDE must not intentionally write the workspace or create a
+solution during preflight. V1 evaluation supports user-trusted projects only:
+MSBuild evaluates project/import logic and is not a sandbox. No side-effect-free
+guarantee is made for arbitrary untrusted projects (ADR-022, 2026-09-11).
 
 `READY` guarantees only that SDK selection, solution parsing where applicable,
 bounded project evaluation, and explicit project-reference checks passed. It

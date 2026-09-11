@@ -536,7 +536,11 @@ list`, extract các listed `.csproj` path tokens mà không match localized pros
 bounded-discover `.csproj` trong project mode, rồi evaluation-only từng project bằng
 `dotnet msbuild` với `-getProperty`/`-getItem` JSON và Main-owned containment/
 existence checks cho `ProjectReference`. Preflight không được request target,
-build, restore, generate solution, chạy user code, hoặc ghi vào workspace.
+build, restore, generate solution, chạy user program, hoặc chủ động ghi vào workspace.
+Theo quyết định được duyệt 2026-09-11 (ADR-022), V1 chỉ hỗ trợ evaluation cho
+user-trusted projects. MSBuild evaluation không phải sandbox và có thể thực thi
+evaluation-time logic từ project/import; không bảo đảm không có side effect
+cho arbitrary untrusted projects. Phase 5.5E không thêm sandbox hoặc trust UX.
 `PREFLIGHT_FAILED` không start semantic service. `READY` chỉ xác nhận các check
 cấu trúc/evaluation nói trên; nó không claim Roslyn workspace tương đương sẽ load
 hoàn hảo trong `csharp-ls`.

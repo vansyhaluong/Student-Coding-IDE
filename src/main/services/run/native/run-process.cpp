@@ -316,9 +316,10 @@ static napi_value init(napi_env env, napi_value exports) {
     {"control", nullptr, control, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"createGit", nullptr, create, nullptr, nullptr, nullptr, napi_default, &gitMode},
     {"createCsharp", nullptr, create, nullptr, nullptr, nullptr, napi_default, &csharpMode},
+    {"createCsharpPreflight", nullptr, create, nullptr, nullptr, nullptr, napi_default, &gitMode},
     {"writeCsharp", nullptr, writeCsharp, nullptr, nullptr, nullptr, napi_default, nullptr},
   };
-  napi_define_properties(env, exports, 5, methods);
+  napi_define_properties(env, exports, 6, methods);
   napi_set_named_property(env, exports, "capability", text(env, "student-ide-piped-job-v1"));
   return exports;
 }

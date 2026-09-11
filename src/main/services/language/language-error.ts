@@ -3,6 +3,7 @@ import { DomainError } from '../../errors/app-error'
 export type LanguageFailure = 'cancelled' | 'stale-session' | 'closed' | 'protocol-error'
   | 'timeout' | 'capability-mismatch' | 'invalid-response' | 'startup-failed'
   | 'cleanup-failed' | 'not-running' | 'busy' | 'invalid-context' | 'invalid-handle'
+  | 'persistence-failed' | 'preflight-failed' | 'invalid-version' | 'stale-document'
 
 /** No provider messages, paths, JSON-RPC IDs, or process details in domain errors. */
 export class LanguageError extends DomainError {

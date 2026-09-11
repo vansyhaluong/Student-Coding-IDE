@@ -14,7 +14,7 @@ adds isolated compatibility evidence. Phase 5.5C adds shared semantic contracts,
 runtime validators, and Main-only .NET/provider dependency foundations without
 starting the language service.
 
-## Current source tree through Phase 5.5D
+## Current source tree through Phase 5.5E
 
 | Current path | Role | Status |
 |---|---|---|
@@ -97,12 +97,18 @@ There is no Orca source tree, submodule, runtime dependency, or copied Orca modu
 | Common process internals | ProcessManager | `src/main/services/process/` | Owned-process registry and safe cleanup primitives | 2/4 |
 | Current language intelligence | LanguageProviderManager and Monaco adapters | `src/renderer/src/features/language/` | Renderer-owned Phase 3 provider registry/capabilities, bounded source sync, Monaco workers, diagnostics, status, and cleanup; no external process | 3 |
 | C# compatibility evidence | Isolated `csharp-ls`/LSP Windows spike | `spikes/csharp-lsp-compatibility/` | Actual 5.5B harness, structured workspace-preflight fixtures, report, and machine evidence; not production code; hard gate passed | 5.5B actual |
-| C# external language service | LanguageServiceManager and C# adapter | `src/main/services/language/` | Actual Main LSP core, C# adapter, generation/cancellation, dependency-backed session lifecycle and retained Job cleanup; workspace orchestration/document synchronization remain planned | 5.5D implemented; 5.5E not started |
+| C# external language service | LanguageServiceManager and C# adapter | `src/main/services/language/` | Actual Main LSP core, C# adapter, workspace/preflight orchestration, ordered document sync and retained Job cleanup | 5.5D–5.5E implemented |
 | Internal LSP transport | LspConnection | `src/main/services/language/lsp-connection.ts` | Pinned JSON-RPC streams, correlation, cancellation, deadlines, safe errors, server handlers and disposal | 5.5D actual |
-| C# protocol mapping | CSharpLsAdapter | `src/main/services/language/csharp-ls-adapter.ts` | UTF-16 initialize/capability capture; semantic methods and notification primitives; private completion/result-ID caches; watched-registration allowlist | 5.5D actual; no synchronization controller |
+| C# protocol mapping | CSharpLsAdapter | `src/main/services/language/csharp-ls-adapter.ts` | UTF-16 initialize/capability capture; semantic methods and notification primitives; private completion/result-ID caches; watched-registration allowlist | 5.5D adapter; 5.5E synchronization controller actual |
 | C# process ownership | WindowsCsharpProcessFactory | `src/main/services/language/csharp-process.ts` | Resolver-selected provider, fixed args, native stdin/stdout/stderr, retained atomic Job ownership and bounded finalization | 5.5D actual |
-| C# manager and errors | LanguageServiceManager | `src/main/services/language/language-service-manager.ts`, `src/main/services/language/language-error.ts` | One session, separate dependency/lifecycle state, no automatic restart, safe errors and cleanup retry retention | 5.5D actual; not wired to app/IPC |
-| C# native entry point | Main-only pipe/Job binding | `src/main/services/run/native/run-process.cpp` | Dedicated `createCsharp` and asynchronous `writeCsharp`; existing Run/Git entry paths retained | 5.5D actual |
+| C# manager and errors | LanguageServiceManager | `src/main/services/language/language-service-manager.ts`, `src/main/services/language/language-error.ts` | One session, separate dependency/lifecycle state, no automatic restart, safe errors and cleanup retry retention | 5.5D core; 5.5E lazy app/lifecycle composition; IPC remains 5.5F |
+| C# native entry point | Main-only pipe/Job binding | `src/main/services/run/native/run-process.cpp` | Dedicated `createCsharp`, asynchronous `writeCsharp` and finite-command `createCsharpPreflight`; existing Run/Git entry paths retained | 5.5D actual |
+| C# workspace and selection | CsharpWorkspace / CsharpWorkspaceStore | `src/main/services/language/csharp-workspace.ts`, `src/main/services/language/csharp-workspace-store.ts` | Bounded discovery, per-project selection, project/syntax-only mode and structured preflight | 5.5E actual |
+| C# preflight process | CsharpPreflightProcess | `src/main/services/language/csharp-preflight-process.ts` | Fixed SDK/solution/evaluation commands, bounded output/deadlines and retained native Job cleanup | 5.5E actual |
+| C# workspace lifecycle | CsharpWorkspaceSession / CsharpOwnerLifecycle | `src/main/services/language/csharp-workspace-session.ts`, `src/main/services/language/csharp-owner-lifecycle.ts` | Lazy active-project session, project/root/owner invalidation and shutdown; composed in Main index | 5.5E actual |
+| C# document synchronization | CsharpDocumentSync / DocumentSyncQueue | `src/main/services/language/csharp-document-sync.ts`, `src/main/services/language/document-sync-queue.ts` | Ordered incremental UTF-16 versions, dirty shadow, FileSystemService save ordering, flush/stale guards | 5.5E actual; no Renderer entry yet |
+| C# file awareness | CsharpWatchedFiles | `src/main/services/language/csharp-watched-files.ts` | Existing FileSystemService events, dynamic glob/kind registration, open-buffer precedence and stale cancellation | 5.5E actual |
+| C# workspace verification | Focused tests and real Electron smoke | `tests/main/csharp-workspace-sync.test.ts`, `tests/main/csharp-preflight-process.test.ts`, `scripts/smoke-csharp-preflight.mjs`, `scripts/smoke-csharp-workspace.mjs` | 47 focused tests, real native preflight and provider workspace/document/cleanup cycles | 5.5E verified |
 | C# verification | Fake LSP and Windows smoke | `tests/main/language-lsp.test.ts`, `tests/fixtures/csharp-native-child.mjs`, `scripts/smoke-csharp-native.mjs` | Protocol/lifecycle tests; real Electron hard-killed root/surviving descendant, blocked stdin, and provider initialize/shutdown | 5.5D actual |
 | C# dependency detection | C# dependency/provider resolver | `src/main/services/dependencies/` | Actual PATH-only .NET SDK inventory and private/app-owned `csharp-ls` resolver/version-probe foundation in `dotnet-sdk.ts`, `csharp-ls.ts`, `language-probe.ts`, and `windows-executable.ts`; no session or preflight orchestration | 5.5C actual |
 | C# language contracts | Semantic language contracts | `src/shared/contracts/language.ts`, `src/shared/contracts/language-validation.ts` | Actual project-relative semantic DTOs, capability/state/workspace foundations, opaque completion handles, exact request/status validation, and no raw protocol/process fields | 5.5C actual |
@@ -162,8 +168,9 @@ Main domain services must not import renderer code. Renderer features must not i
 
 No planned V1 directory exists for AI agents, Codex/Claude providers, worktrees, remote execution, cloud sync, mobile, collaboration, extension host/marketplace, formatter, or debugger.
 
-Phase 5.5D adds the internal Main C# LSP core and adapter. No C# workspace
-selection/preflight orchestration, production document synchronization, language
-IPC/Preload bridge, Renderer provider, or diagnostics/Problems integration exists.
+Phase 5.5D–5.5E provide the internal Main C# LSP core, workspace/preflight
+orchestration, document synchronization and lazy application lifecycle wiring.
+No language IPC/Preload bridge, Renderer semantic provider, or C# diagnostics/
+Problems integration exists.
 C# and PHP still have tokenization only at the editor surface. No Python, Java,
 or custom/alternate HTML diagnostics provider was added.

@@ -115,7 +115,7 @@ before affected work continues.
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
 | Phase 5 — Git Integration | `COMPLETE` | Corrective Phase 5C native-test portability fix and Phase 5F re-verification passed locally |
-| Phase 5.5 — C# Language Intelligence | `IN_PROGRESS` | 5.5A–5.5D complete; 5.5E–5.5H not started |
+| Phase 5.5 — C# Language Intelligence | `IN_PROGRESS` | 5.5A–5.5E complete; 5.5F–5.5H not started |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -159,8 +159,8 @@ aggregation/navigation, and Phase 3F final verification are `COMPLETE`; all
 Phase 4 and Phase 5 packages are also `COMPLETE`. Phase 5.5A is complete. Phase
 5.5B and its corrective structured workspace-readiness spike passed on Windows.
 Exact provider/transport versions are selected and the 5.5C contracts and
-dependency foundation and 5.5D Main LSP core are complete; 5.5E–5.5H have not
-started and still require explicit authorization.
+dependency foundation, 5.5D Main LSP core and 5.5E workspace/document sync are
+complete; 5.5F–5.5H have not started and still require explicit authorization.
 Phases 6–7 have not started.
 
 ## 7. Dependency graph
@@ -2671,7 +2671,7 @@ part of this phase.
 - Phase 5.5B — Compatibility Spike: `COMPLETE`; **HARD GATE PASSED**.
 - Phase 5.5C — Contracts + Dependency Foundation: `COMPLETE`.
 - Phase 5.5D — Main LSP Core + C# Adapter: `COMPLETE`.
-- Phase 5.5E — Workspace + Document Synchronization: `NOT_STARTED`.
+- Phase 5.5E — Workspace + Document Synchronization: `COMPLETE`.
 - Phase 5.5F — IPC + Preload + Monaco Semantic Providers: `NOT_STARTED`.
 - Phase 5.5G — Diagnostics + Problems + Status UX: `NOT_STARTED`.
 - Phase 5.5H — Stabilization + Final Verification: `NOT_STARTED`.
@@ -2679,7 +2679,8 @@ part of this phase.
 Phase 5.5 overall is `IN_PROGRESS`. The 2026-09-10 corrective spike resolved the
 5.5B blocker with a structured Main-owned preflight and honest readiness
 semantics. Phase 5.5C and the separately authorized 5.5D implementation are
-complete. Phase 5.5E–H production implementation has not begun.
+complete. The separately authorized 5.5E workspace/document synchronization is
+complete; 5.5F–H production implementation has not begun.
 
 ### Goal and capability scope
 
@@ -2744,7 +2745,9 @@ complete. Phase 5.5E–H production implementation has not begun.
   `NO_CSHARP_WORKSPACE`, or `PREFLIGHT_FAILED`. Before provider startup, Main
   performs the structured SDK/solution/project-evaluation/reference preflight
   recorded in ADR-022. It requests no target, build, or restore and must not
-  mutate the workspace. `READY` is bounded preflight success, not proof of an
+  intentionally mutate the workspace. V1 evaluates user-trusted projects only;
+  MSBuild evaluation is not a sandbox (ADR-022, 2026-09-11).
+  `READY` is bounded preflight success, not proof of an
   equivalent provider-internal Roslyn workspace.
 - Start lazily with one C# session for the active project. Perform `initialize`
   then `initialized`; negotiate/use UTF-16.
@@ -2983,6 +2986,9 @@ in ADR-022. Phase 5.5E+ remains `NOT_STARTED`.
 
 ### 5.5E — Workspace + Document Synchronization
 
+Status: `COMPLETE` — authorized after committed 5.5D and the 2026-09-11
+trusted-workspace clarification. No sandbox, trust UX, or 5.5F+ work is included.
+
 - Implement saved `.sln`/`.slnx` choice, single-candidate selection,
   multi-candidate decision persistence, project mode, and syntax-only fallback.
 - Implement lazy one-active-project session and ordered incremental document sync
@@ -2991,6 +2997,51 @@ in ADR-022. Phase 5.5E+ remains `NOT_STARTED`.
   watched-file registrations proven by 5.5B.
 - Verify project switch/close, root unavailability, rename/delete, renderer loss,
   dirty buffers, batching, Unicode/version order, and cleanup.
+
+#### 2026-09-11 resumed implementation and verification evidence
+
+- Implemented Main-owned bounded workspace discovery, saved valid .sln/.slnx
+  selection, opaque multi-candidate choices, project mode and syntax-only fallback.
+  Per-project selection uses versioned atomic persistence and backup recovery.
+  Preflight uses fixed evaluation-only commands, structured exit/JSON results,
+  canonical containment and ProjectReference checks. No target/build/restore or
+  intentional workspace write is requested; the trusted-project limitation is
+  unchanged.
+- Added finite native preflight commands with bounded output/deadlines and
+  terminate/drain/empty/release Job ownership. Cleanup failure is retained and
+  blocks conflicting commands. Main composes the lazy session with project,
+  root, renderer-owner and application lifecycle.
+- Internal document synchronization retains authoritative text and ordered
+  incremental UTF-16/model versions, flushes before semantic work, rejects stale
+  results and orders saves through FileSystemService. Watcher events honor
+  open-document precedence and dynamic registration/kind masks.
+- Real Electron smoke found expected stale watcher cancellation being reported
+  as cleanup failure on project close. Only stale-session errors from a replaced
+  watcher are now suppressed; live I/O/protocol/cleanup failures remain visible.
+- Focused tests: 47/47 PASS, covering workspace policy/persistence, malformed
+  evaluation and reference failures, canonical escape, dirty buffers, Unicode,
+  batching/version order, save races, rename/delete, switch/close/root loss,
+  close during provider startup, renderer loss, stale results, crash/no restart
+  and retained cleanup failures.
+- Standard npm test: 910/910 tests in 70 files PASS (53.34 s), without altered
+  workers/timeouts/assertions/retries or environment overrides. Four existing
+  filesystem/project/search test fixture helpers canonicalize TEMP with realpath;
+  assertions are unchanged. Existing jsdom canvas noise remains non-blocking.
+- Typecheck, lint, production/native build and git diff --check PASS.
+  scripts/smoke-csharp-preflight.mjs passed real Electron/native SDK 10.0.401
+  .sln/.slnx evaluation, unchanged fixture hashes and malformed-project rejection.
+  scripts/smoke-csharp-workspace.mjs passed real csharp-ls 0.27.0 solution/.slnx/
+  project-mode cycles with Unicode/space/# paths, dirty UTF-16 versions,
+  flush-before-request, FileSystemService save, close/stale-handle rejection,
+  zero retained provider registrations and syntax-only fallback without a process.
+  Smoke exercises production Main modules; user-facing integration remains 5.5F–G.
+- Existing scripts/smoke-csharp-native.mjs also PASS: hard-killed root 11104,
+  surviving descendant 21660 retained until Job termination, empty-before-release,
+  unrelated control preserved, blocked stdin settled and real provider shutdown.
+- No new dependency/ADR resolution, architecture deviation, language IPC/Preload,
+  Renderer provider, diagnostics/Problems/status UX, C# Run or trust UX. Phase 7
+  retains packaged/installed acceptance. 5.5E is COMPLETE; 5.5F still requires
+  separate authorization.
 
 ### 5.5F — IPC + Preload + Monaco Semantic Providers
 

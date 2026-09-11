@@ -20,7 +20,7 @@ import type { RecentProjectMetadata } from '../../src/shared/contracts'
 const temporaryRoots: string[] = []
 
 async function temporaryDirectory(): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), 'student-ide-project-'))
+  const path = await realpath(await mkdtemp(join(tmpdir(), 'student-ide-project-')))
   temporaryRoots.push(path)
   return path
 }

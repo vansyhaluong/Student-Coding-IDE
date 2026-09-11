@@ -360,8 +360,16 @@ or a passed Windows feasibility gate. ADR-014 remains deferred as stated above.
     prose, bounded-discovers projects in project mode, runs evaluation-only MSBuild
     `-getProperty`/`-getItem` JSON for each project, and validates evaluated
     `ProjectReference` containment/existence. It requests no build, restore, or
-    target and does not create or modify workspace files. `PREFLIGHT_FAILED`
+    target and does not intentionally create or modify workspace files. `PREFLIGHT_FAILED`
     prevents provider startup; a pass becomes `READY`.
+  - Authorized 5.5E trust clarification (2026-09-11): V1 C# workspace evaluation
+    supports user-trusted projects only. MSBuild evaluation is not a sandbox;
+    trusted project/import sources may execute evaluation-time logic. The IDE
+    must not intentionally build, restore, invoke targets, create temporary
+    solutions, or modify the workspace during preflight. There is no guarantee
+    of side-effect-free evaluation for arbitrary untrusted projects. Keep the
+    approved preflight sequence and bounded READY/RUNNING meanings. No sandbox
+    architecture or trust UX is added in 5.5E; new trust UX needs a user decision.
   - Start lazily with one C# session for the active project. Initialize with LSP
     `initialize` then `initialized` and UTF-16. Treat Monaco dirty content as
     authoritative; send `didOpen`, ordered incremental `didChange`, `didSave`,

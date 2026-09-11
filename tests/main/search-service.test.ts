@@ -423,7 +423,7 @@ function fileStats(size: number) {
 }
 
 async function temporaryDirectory(): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), 'student-ide-search-'))
+  const path = await realpath(await mkdtemp(join(tmpdir(), 'student-ide-search-')))
   temporaryRoots.push(path)
   return path
 }

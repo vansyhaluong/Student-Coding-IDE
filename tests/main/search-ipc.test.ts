@@ -166,7 +166,7 @@ describe('Phase 2D search IPC', () => {
 })
 
 async function temporaryDirectory(): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), 'student-ide-search-ipc-'))
+  const path = await realpath(await mkdtemp(join(tmpdir(), 'student-ide-search-ipc-')))
   temporaryRoots.push(path)
   return path
 }

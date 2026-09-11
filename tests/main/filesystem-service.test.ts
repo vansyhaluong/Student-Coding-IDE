@@ -26,7 +26,7 @@ import type { FileChangedEvent, ProjectId } from '../../src/shared/contracts'
 const temporaryRoots: string[] = []
 
 async function temporaryDirectory(): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), 'student-ide-files-'))
+  const path = await realpath(await mkdtemp(join(tmpdir(), 'student-ide-files-')))
   temporaryRoots.push(path)
   return path
 }

@@ -1406,3 +1406,51 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   production/native build and whitespace checks passed.
 - No workspace selection/preflight orchestration, language IPC/Preload, Renderer
   providers, Problems/status UI, or Phase 5.5E+ work was started.
+
+## Phase 5.5E — Workspace and document synchronization (2026-09-11) — COMPLETE
+
+- Implemented Main-owned bounded workspace discovery, saved valid .sln/.slnx
+  selection, opaque multi-candidate choices, project mode and syntax-only fallback.
+  Per-project selection uses versioned atomic persistence and backup recovery.
+  Preflight uses fixed evaluation-only commands, structured exit/JSON results,
+  canonical containment and ProjectReference checks. No target/build/restore or
+  intentional workspace write is requested; the trusted-project limitation is
+  unchanged.
+- Added finite native preflight commands with bounded output/deadlines and
+  terminate/drain/empty/release Job ownership. Cleanup failure is retained and
+  blocks conflicting commands. Main composes the lazy session with project,
+  root, renderer-owner and application lifecycle.
+- Internal document synchronization retains authoritative text and ordered
+  incremental UTF-16/model versions, flushes before semantic work, rejects stale
+  results and orders saves through FileSystemService. Watcher events honor
+  open-document precedence and dynamic registration/kind masks.
+- Real Electron smoke found expected stale watcher cancellation being reported
+  as cleanup failure on project close. Only stale-session errors from a replaced
+  watcher are now suppressed; live I/O/protocol/cleanup failures remain visible.
+- Focused tests: 47/47 PASS, covering workspace policy/persistence, malformed
+  evaluation and reference failures, canonical escape, dirty buffers, Unicode,
+  batching/version order, save races, rename/delete, switch/close/root loss,
+  close during provider startup, renderer loss, stale results, crash/no restart
+  and retained cleanup failures.
+- Standard npm test: 910/910 tests in 70 files PASS (53.34 s), without altered
+  workers/timeouts/assertions/retries or environment overrides. Four existing
+  filesystem/project/search test fixture helpers canonicalize TEMP with realpath;
+  assertions are unchanged. Existing jsdom canvas noise remains non-blocking.
+- Typecheck, lint, production/native build and git diff --check PASS.
+  scripts/smoke-csharp-preflight.mjs passed real Electron/native SDK 10.0.401
+  .sln/.slnx evaluation, unchanged fixture hashes and malformed-project rejection.
+  scripts/smoke-csharp-workspace.mjs passed real csharp-ls 0.27.0 solution/.slnx/
+  project-mode cycles with Unicode/space/# paths, dirty UTF-16 versions,
+  flush-before-request, FileSystemService save, close/stale-handle rejection,
+  zero retained provider registrations and syntax-only fallback without a process.
+  Smoke exercises production Main modules; user-facing integration remains 5.5F–G.
+- Existing scripts/smoke-csharp-native.mjs also PASS: hard-killed root 11104,
+  surviving descendant 21660 retained until Job termination, empty-before-release,
+  unrelated control preserved, blocked stdin settled and real provider shutdown.
+- No new dependency/ADR resolution, architecture deviation, language IPC/Preload,
+  Renderer provider, diagnostics/Problems/status UX, C# Run or trust UX. Phase 7
+  retains packaged/installed acceptance. 5.5E is COMPLETE; 5.5F still requires
+  separate authorization.
+
+- Updated actual module map and implementation/language status. No commit, push
+  or merge was performed.
