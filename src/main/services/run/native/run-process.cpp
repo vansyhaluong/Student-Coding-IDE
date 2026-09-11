@@ -18,7 +18,9 @@ struct Handle {
   void close() { if (value) { check(CloseHandle(value) != 0, "Native handle release failed"); value = nullptr; } }
 };
 struct Session {
-  Handle job, root, out, err;
+  Handle job, root, out, err, inputWrite;
+  bool csharp = false;
+  unsigned pendingWrites = 0;
   DWORD pid = 0;
   napi_threadsafe_function events = nullptr;
   napi_ref callback = nullptr;
@@ -82,9 +84,9 @@ static void join(Session* s) {
 }
 static void release(Session* s) {
   if (s->released) return;
-  check(s->drained && active(s) == 0 && WaitForSingleObject(s->root.value, 0) == WAIT_OBJECT_0,
+  check(s->pendingWrites == 0 && s->drained && active(s) == 0 && WaitForSingleObject(s->root.value, 0) == WAIT_OBJECT_0,
     "Native process is not ready for release");
-  s->out.close(); s->err.close(); s->root.close(); s->job.close(); s->released = true;
+  s->inputWrite.close(); s->out.close(); s->err.close(); s->root.close(); s->job.close(); s->released = true;
 }
 static void finalizeEvents(napi_env env, void* data, void*) {
   auto s = static_cast<Session*>(data);
@@ -139,6 +141,7 @@ static napi_value create(napi_env env, napi_callback_info info) {
     size_t argc = 5; napi_value argv[5]; void* mode = nullptr;
     napiCheck(napi_get_cb_info(env, info, &argc, argv, nullptr, &mode));
     check(argc == 5, "Expected executable, target, cwd, environment, observer");
+    s->csharp = mode && *static_cast<int*>(mode) == 2;
     auto executable = string(env, argv[0]), cwd = string(env, argv[2]);
     auto command = quote(executable);
     if (mode) {
@@ -163,7 +166,10 @@ static napi_value create(napi_env env, napi_callback_info info) {
     check(CreatePipe(&s->err.value, &errWrite.value, &sa, 0), "stderr pipe failed");
     check(SetHandleInformation(s->out.value, HANDLE_FLAG_INHERIT, 0), "stdout inherit failed");
     check(SetHandleInformation(s->err.value, HANDLE_FLAG_INHERIT, 0), "stderr inherit failed");
-    input.value = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+    if (s->csharp) {
+      check(CreatePipe(&input.value, &s->inputWrite.value, &sa, 0), "C# stdin pipe failed");
+      check(SetHandleInformation(s->inputWrite.value, HANDLE_FLAG_INHERIT, 0), "C# stdin inherit failed");
+    } else input.value = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
       &sa, OPEN_EXISTING, 0, nullptr);
     check(input.value != INVALID_HANDLE_VALUE, "stdin creation failed");
     s->job.value = CreateJobObjectW(nullptr, nullptr); check(s->job.value != nullptr, "Job creation failed");
@@ -247,14 +253,72 @@ static napi_value control(napi_env env, napi_callback_info info) {
     return result;
   } catch (const std::exception& error) { napi_throw_error(env, nullptr, error.what()); return nullptr; }
 }
+// Only the dedicated C# entry point has writable stdin. Writable's callback
+// serializes writes in Main; blocking pipe IO runs off the JS thread.
+struct CsharpWrite {
+  Session* session;
+  std::string bytes;
+  napi_async_work work = nullptr;
+  napi_ref owner = nullptr, callback = nullptr;
+  bool success = false;
+};
+static napi_value writeCsharp(napi_env env, napi_callback_info info) {
+  auto write = std::make_unique<CsharpWrite>();
+  try {
+    size_t argc = 3; napi_value argv[3];
+    napiCheck(napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
+    check(argc == 3, "Expected C# session, bytes, callback");
+    napiCheck(napi_get_value_external(env, argv[0], reinterpret_cast<void**>(&write->session)));
+    auto s = write->session;
+    check(s->csharp && !s->released && !s->teardown && s->pendingWrites == 0, "C# stdin unavailable");
+    void* data; size_t size;
+    napiCheck(napi_get_buffer_info(env, argv[1], &data, &size));
+    check(size <= 16 * 1024 * 1024, "C# stdin chunk exceeds bound");
+    write->bytes.assign(static_cast<char*>(data), size);
+    napiCheck(napi_create_reference(env, argv[0], 1, &write->owner));
+    napiCheck(napi_create_reference(env, argv[2], 1, &write->callback));
+    napiCheck(napi_create_async_work(env, nullptr, text(env, "C# stdin"),
+      [](napi_env, void* value) {
+        auto w = static_cast<CsharpWrite*>(value); size_t offset = 0;
+        while (offset < w->bytes.size()) {
+          DWORD count = 0;
+          if (!WriteFile(w->session->inputWrite.value, w->bytes.data() + offset,
+            static_cast<DWORD>(w->bytes.size() - offset), &count, nullptr) || !count) return;
+          offset += count;
+        }
+        w->success = true;
+      }, [](napi_env env, napi_status status, void* value) {
+        std::unique_ptr<CsharpWrite> w(static_cast<CsharpWrite*>(value));
+        --w->session->pendingWrites;
+        napi_value callback, receiver, result, ignored;
+        napi_get_reference_value(env, w->callback, &callback);
+        napi_get_undefined(env, &receiver);
+        napi_get_boolean(env, status == napi_ok && w->success, &result);
+        napi_call_function(env, receiver, callback, 1, &result, &ignored);
+        napi_delete_reference(env, w->callback); napi_delete_reference(env, w->owner);
+        napi_delete_async_work(env, w->work);
+      }, write.get(), &write->work));
+    napiCheck(napi_queue_async_work(env, write->work));
+    ++s->pendingWrites; write.release();
+    napi_value result; napi_get_undefined(env, &result); return result;
+  } catch (const std::exception& error) {
+    if (write->work) napi_delete_async_work(env, write->work);
+    if (write->callback) napi_delete_reference(env, write->callback);
+    if (write->owner) napi_delete_reference(env, write->owner);
+    napi_throw_error(env, nullptr, error.what()); return nullptr;
+  }
+}
 static napi_value init(napi_env env, napi_value exports) {
   static int gitMode = 1;
+  static int csharpMode = 2;
   napi_property_descriptor methods[] = {
     {"create", nullptr, create, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"control", nullptr, control, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"createGit", nullptr, create, nullptr, nullptr, nullptr, napi_default, &gitMode},
+    {"createCsharp", nullptr, create, nullptr, nullptr, nullptr, napi_default, &csharpMode},
+    {"writeCsharp", nullptr, writeCsharp, nullptr, nullptr, nullptr, napi_default, nullptr},
   };
-  napi_define_properties(env, exports, 3, methods);
+  napi_define_properties(env, exports, 5, methods);
   napi_set_named_property(env, exports, "capability", text(env, "student-ide-piped-job-v1"));
   return exports;
 }

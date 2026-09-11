@@ -35,7 +35,9 @@
     "node-pty": "1.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "vscode-jsonrpc": "9.0.2",
+    "vscode-languageserver-protocol": "3.18.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,0 +1,24 @@
+{
+  "name": "csharp-lsp-compatibility-spike",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:electron-vite": "electron-vite build --config electron.vite.config.ts",
+    "probe:node": "node dist/harness.js",
+    "probe:preflight": "node dist/preflight-probe.js",
+    "probe:electron": "electron dist/electron-probe.js"
+  },
+  "dependencies": {
+    "vscode-jsonrpc": "9.0.2",
+    "vscode-languageserver-protocol": "3.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.0",
+    "electron": "44.0.0",
+    "electron-vite": "^5.0.0",
+    "typescript": "6.0.3",
+    "vite": "^7.3.6"
+  }
+}

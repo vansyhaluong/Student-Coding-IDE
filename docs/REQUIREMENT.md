@@ -75,7 +75,7 @@ Stack đã được xác lập qua Phase 0 và các ADR được chấp nhận t
 | Styling | Tailwind CSS |
 | Local persistence | Versioned JSON dưới Electron user data, với atomic write, backup và recovery |
 | Git | Local Git CLI phía sau typed GitService |
-| Language Intelligence | Monaco-native providers cho JavaScript/TypeScript/HTML/CSS/JSON trong Phase 3 V1; external language servers được defer cho future language scope |
+| Language Intelligence | Monaco-native providers cho JavaScript/TypeScript/HTML/CSS/JSON trong Phase 3; C# intelligence qua Main-owned `csharp-ls` được authorize cho Phase 5.5 sau compatibility hard gate |
 
 Student Coding IDE là Electron desktop application, không phải Next.js web
 application. Các lựa chọn còn TBD hợp lệ, bao gồm renderer shared state library,
@@ -376,7 +376,14 @@ highlighting:
 * C#.
 * PHP.
 
-Language Intelligence và Run cho Tier 3 không phải acceptance criteria của V1.
+Đây là phạm vi lịch sử đã hoàn tất của Phase 3. Phase 5.5 mở rộng C# thành V1
+Language Intelligence với syntax highlighting, Completion, Hover, Signature
+Help, Go to Definition, Diagnostics và Problems integration. PHP vẫn syntax-only.
+
+C# Run không thuộc Phase 5.5. Find References, Rename Symbol, Code Actions/Quick
+Fix, refactoring, formatter, advanced semantic tokens, Razor, metadata/BCL/
+generated virtual-document navigation, debugger và full intelligence cho loose
+`.cs` files đều được defer.
 
 #### Deferred — Future language support
 
@@ -497,6 +504,43 @@ Phase 3 V1 phải dùng các Monaco/browser-worker provider API chuẩn ở Rend
 JavaScript, TypeScript, HTML, CSS và JSON; không triển khai logic IntelliSense
 đặc thù rải rác trong editor và không yêu cầu external language-server process.
 
+Phase 5.5 C# V1 dùng provider-per-capability: Monaco tokenization tiếp tục sở hữu
+syntax; Main-owned `csharp-ls` cung cấp Completion, Hover, Signature Help, Go to
+Definition và Diagnostics qua thin semantic LSP↔Monaco adapter. Renderer chỉ
+nhận typed semantic API; không nhận raw LSP/JSON-RPC, PID, executable path, cwd,
+spawn arguments hoặc canonical project root. `vscode-languageserver-protocol`
+3.18.3 và `vscode-jsonrpc/node` 9.0.2 là transport/protocol versions được Phase
+5.5B verify cùng `csharp-ls` 0.27.0.
+
+C# workspace chọn solution theo thứ tự: reuse lựa chọn `.sln`/`.slnx` hợp lệ đã
+lưu; tự chọn khi có đúng một candidate; yêu cầu người dùng chọn và nhớ theo
+project khi có nhiều candidate; không có solution nhưng có `.csproj` thì dùng
+project mode; không có solution/project thì syntax-only. Không tạo temporary
+solution. Trong project mode, Main chỉ được bounded discovery cho preflight/UX;
+`csharp-ls` hiện tại sở hữu recursive project discovery/loading thực tế nên IDE
+không claim kiểm soát chính xác tập project được load.
+
+Workspace readiness là state riêng với dependency và service lifecycle:
+
+```text
+READY
+SELECTION_REQUIRED
+NO_CSHARP_WORKSPACE
+PREFLIGHT_FAILED
+```
+
+Sau workspace selection, Main phải chạy structured preflight trước khi start
+`csharp-ls`: kiểm tra effective SDK selection bằng exit code của `dotnet
+--version`, parse selected `.sln`/`.slnx` bằng exit code của `dotnet sln <path>
+list`, extract các listed `.csproj` path tokens mà không match localized prose,
+bounded-discover `.csproj` trong project mode, rồi evaluation-only từng project bằng
+`dotnet msbuild` với `-getProperty`/`-getItem` JSON và Main-owned containment/
+existence checks cho `ProjectReference`. Preflight không được request target,
+build, restore, generate solution, chạy user code, hoặc ghi vào workspace.
+`PREFLIGHT_FAILED` không start semantic service. `READY` chỉ xác nhận các check
+cấu trúc/evaluation nói trên; nó không claim Roslyn workspace tương đương sẽ load
+hoàn hảo trong `csharp-ls`.
+
 Runtime và dependency detection phải dùng các trạng thái khái niệm:
 
 ```text
@@ -507,18 +551,23 @@ INVALID_CONFIGURATION
 ```
 
 Provider abstraction hiện tại phải biểu diễn capability/status phù hợp với
-Monaco workers. Nếu một future phase authorize external LanguageServiceManager,
-manager đó phải expose ít nhất các trạng thái khái niệm:
+Monaco workers. Với Phase 5.5 C#, dependency failure dùng `MISSING` hoặc
+`INVALID_CONFIGURATION`, còn service lifecycle dùng:
 
 ```text
-NOT_CONFIGURED
-MISSING
+STOPPED
 STARTING
 RUNNING
-STOPPED
 CRASHED
-INVALID_CONFIGURATION
 ```
+
+`NOT_CONFIGURED` được reserve cho future configured paths. Dependency state và
+service lifecycle không được gộp hoặc suy diễn từ nhau.
+`RUNNING` chỉ có nghĩa process `csharp-ls` còn sống và LSP initialize thành công;
+nó không chứng nhận Roslyn workspace health. Empty completion, null hover, empty
+definition hoặc không có diagnostics không được dùng để suy ra workspace failure.
+Human-readable provider messages/logs chỉ là Main-owned diagnostic evidence,
+không phải readiness/state-machine input.
 
 Tên hiển thị thực tế có thể khác nhưng behavior phải tương đương với loại provider
 đang dùng. Current Monaco provider phải báo availability/failure có thể hành động
@@ -553,6 +602,10 @@ criteria hiện tại.
 
 Diagnostics từ language service phải được tách khỏi stderr và exit code của
 chức năng Run Code.
+
+Phase 5.5 áp dụng các behavior editor/Problems tương đương cho C# bằng pull
+diagnostics trên open documents. Workspace diagnostics được defer; diagnostic
+`resultId` không vượt qua public IPC.
 
 HTML diagnostics và HTML Problems contribution được defer khỏi V1 hiện tại vì
 approved Monaco HTML provider không triển khai validation. V1 không bổ sung
@@ -986,8 +1039,9 @@ Source code Student Coding IDE phải:
 
 ### NFR-006 — Language Provider Reliability
 
-Current V1 Monaco/browser-worker providers phải chạy tách biệt với luồng giao
-diện chính. Khi provider khởi tạo chậm, bị lỗi hoặc bị dừng:
+Current Monaco/browser-worker providers và Phase 5.5 C# external provider phải
+chạy tách biệt với luồng giao diện chính. Khi provider khởi tạo chậm, bị lỗi hoặc
+bị dừng:
 
 * Editor vẫn phải cho phép xem, sửa và lưu file.
 * IDE phải biểu diễn trạng thái/failure của provider bằng contract hiện có và
@@ -1000,9 +1054,8 @@ diện chính. Khi provider khởi tạo chậm, bị lỗi hoặc bị dừng:
 * Lỗi của một ngôn ngữ không được làm hỏng provider của ngôn ngữ khác.
 
 Manual user-facing `Restart Language Service` không phải V1 requirement. V1
-không thêm restart button, command, menu item, IPC endpoint hoặc lifecycle UX
-mới cho Monaco/browser-worker providers. Manual start/stop/restart/crash UX cho
-external language servers thuộc future scope.
+không thêm public start/stop/restart API hoặc raw log API. C# unexpected exit
+chuyển service sang `CRASHED`; không có automatic restart loop trong V1.
 
 ---
 
@@ -1055,6 +1108,7 @@ Desktop Application
 ├── Code Editor
 │
 ├── Renderer Language Provider Manager
+├── Main LanguageServiceManager (Phase 5.5 C#)
 │
 ├── Problems Panel
 │
@@ -1071,8 +1125,9 @@ Desktop Application
 └── Local Persistence
 ```
 
-Một future external LanguageServiceManager có thể được thêm ở Main nếu được
-authorize; nó không phải component bắt buộc của V1 hiện tại.
+Phase 5.5 bổ sung Main-owned LanguageServiceManager cho `csharp-ls`. Manager này
+là lifecycle domain độc lập với Runtime và RunService, và chỉ expose semantic,
+typed, runtime-validated C# capabilities qua Preload.
 
 ---
 
@@ -1349,6 +1404,41 @@ Hoàn thiện:
 
 ---
 
+### Phase 5.5 — C# Language Intelligence
+
+Phase 5.5 là scope extension mới được authorize sau khi Phase 3 đã hoàn tất C#
+syntax-only. Phase này bổ sung Completion, Hover, Signature Help, Go to
+Definition, Diagnostics và Problems integration cho C# project/solution.
+
+Main sở hữu `csharp-ls`, LanguageServiceManager, real-path resolution, process
+lifecycle và cleanup. C# language service khởi động lazy, tối đa một session cho
+active project, dùng LSP `initialize` → `initialized`, UTF-16, và đồng bộ Monaco
+buffer theo `didOpen` → ordered incremental `didChange` → `didSave` → `didClose`.
+Monaco model version là document version; pending changes phải flush trước
+semantic requests và không được drop. Dirty/open buffer thắng disk watcher
+content; FileSystemService watcher hiện có được reuse.
+
+Public language IPC chỉ nhận `projectId` và project-relative path. Main suy ra
+owner từ trusted Electron sender/document identity, resolve/canonicalize path và
+reject stale project/session/document results. Completion resolve dùng opaque
+Main-owned handle. Definition chỉ được trả về `file:` URI nằm trong canonical
+active project root. Diagnostic `resultId` giữ Main-only. C# dùng pull
+diagnostics cho open documents; workspace diagnostics được defer.
+
+`.NET SDK 10+` là dependency để chạy `csharp-ls`; `.NET 10 LTS` là acceptance
+baseline. Main detection dùng process `PATH` và `dotnet --list-sdks`. Dependency
+state (`MISSING`, `INVALID_CONFIGURATION`) tách khỏi service lifecycle
+(`STOPPED`, `STARTING`, `RUNNING`, `CRASHED`); `NOT_CONFIGURED` được reserve cho
+future configured paths. Production `csharp-ls` phải app-owned và pinned ở
+version 0.27.0; development có thể dùng project-private provider rồi PATH fallback.
+
+Phase 5.5B compatibility hard gate đã verify `csharp-ls` 0.27.0,
+`vscode-languageserver-protocol` 3.18.3 và `vscode-jsonrpc` 9.0.2, gồm corrective
+workspace-readiness preflight. Packaged/installed `csharp-ls` acceptance vẫn
+thuộc Phase 7; Phase 5.5B không tự authorize bắt đầu 5.5C.
+
+---
+
 ### Phase 6 — Settings & UX
 
 Hoàn thiện:
@@ -1359,8 +1449,8 @@ Hoàn thiện:
 * User-facing Recent Projects UX và management, dựa trên metadata foundation của
   ProjectService.
 * Keyboard shortcuts.
-* Runtime path configuration nếu cần; external language-service path
-  configuration chỉ thuộc future scope được authorize.
+* Runtime path configuration nếu cần; configured C# language-service path vẫn
+  deferred và `NOT_CONFIGURED` được reserve cho future configured-path support.
 * Git path nếu cần.
 * UX states cho missing dependency và invalid configuration.
 
@@ -1389,7 +1479,8 @@ Không yêu cầu coverage percentage cao trong V1. Test phải ưu tiên:
 * Process tree cleanup khi Stop hoặc đóng application.
 * Git abstraction và Git dependency detection.
 * Current Monaco provider/worker lifecycle, availability và failure handling.
-* External language-server lifecycle chỉ khi một future phase authorize nó.
+* C# language-server lifecycle và cleanup đã implement qua Phase 5.5; Phase 7
+  chịu trách nhiệm packaged/installed verification.
 * Missing runtime.
 * Settings persistence.
 * Problems navigation.
@@ -1596,7 +1687,7 @@ Matrix khởi tạo có thể dùng cấu trúc:
 | HTML | Monaco | Monaco-native worker | N/A | No | Deferred | V1 | Current V1 syntax/completion/conditional hover; diagnostics deferred |
 | CSS | Monaco | Monaco-native worker | N/A | No | V1 | V1 | Current Phase 3 V1 |
 | JSON | Monaco | Monaco-native worker | N/A | No | V1 | V1 | Current Phase 3 V1 |
-| C# | Monaco | None in Phase 3 V1 | Future | Future | Future | Future | Syntax only |
+| C# | Monaco | Main-owned `csharp-ls` after Phase 5.5B PASS | Deferred | Deferred | Phase 5.5 V1 | Phase 5.5 V1 | Phase 3 syntax-only complete; Phase 5.5 intelligence newly authorized |
 | PHP | Monaco | None in Phase 3 V1 | Future | Future | Future | Future | Syntax only |
 | Python | Incidental Monaco recognition only | Deferred | Deferred | Deferred | Deferred | Deferred | Future language/run phase; outside V1 |
 | Java | Incidental Monaco recognition only | Deferred | Future | Future | Deferred | Deferred | Future language-support phase |
@@ -1655,6 +1746,13 @@ Một feature được xem là hoàn thành khi:
 12. Language service không block UI.
 13. Lỗi language service của một ngôn ngữ không làm hỏng ngôn ngữ khác.
 14. Missing provider resource hoặc invalid configuration không fail silent.
+
+Đối với C# Phase 5.5, completion chỉ được xem là hoàn thành sau khi 5.5B hard gate
+PASS và toàn bộ 5.5C–5.5H exit gates pass, bao gồm project/solution selection,
+dirty incremental synchronization, semantic capability mapping, open-document
+pull diagnostics, Problems integration, stale-result rejection, crash/shutdown
+cleanup và Windows path/Unicode verification. Packaged/installed acceptance chỉ
+được hoàn tất trong Phase 7.
 
 ---
 

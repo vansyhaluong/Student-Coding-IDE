@@ -1,0 +1,12 @@
+.dotnet/
+.tools/
+node_modules/
+dist/
+.npm-cache/
+artifacts/runtime/
+artifacts/temp/
+artifacts/electron-vite/
+!fixtures/project-mode/out/
+!fixtures/project-mode/out/**
+fixtures/**/bin/Debug/
+fixtures/**/obj/Debug/

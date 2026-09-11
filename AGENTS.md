@@ -42,7 +42,9 @@ choose an interpretation.
 ## 3. Phase and scope discipline
 
 Work only on the explicitly authorized phase and work package. The roadmap is
-Phase 2A–2F followed by Phases 3–7; consult the implementation plan for details.
+Phase 2A–2F, Phases 3–5, Phase 5.5A–5.5H, then Phases 6–7; consult the
+implementation plan for details. Phase 5.5B is a hard compatibility gate and
+must PASS before any Phase 5.5C+ production work.
 
 Complete the Task Start Checklist in Section 16. If any answer is unclear, report
 the ambiguity instead of expanding scope. Do not implement future work merely
@@ -66,7 +68,8 @@ If evidence requires an accepted decision to change:
 Do not silently resolve open decisions, including renderer shared state (ADR-011),
 IPC runtime validation (ADR-016), React Monaco integration, test tooling,
 language providers, Python/Pyright distribution/lifecycle, large-file thresholds,
-and TypeScript Run (ADR-014).
+TypeScript Run (ADR-014), and exact C# provider/protocol versions pending the
+Phase 5.5B hard gate (ADR-022).
 
 At a Decision Gate, perform only the authorized evidence/spike, compare required
 options, record the decision, and then implement dependent production code. Do
@@ -78,7 +81,8 @@ not install a candidate merely to bypass the gate.
 
 Main owns privileged operations and process lifecycles: application/window
 lifecycle, ProjectService, filesystem, search, PTYs, Run, Git CLI, persistence,
-dependency detection, external language servers, and owned-resource cleanup.
+dependency detection, the Phase 5.5 C# language server, any later authorized
+external language servers, and owned-resource cleanup.
 Main runtime-validates renderer input, validates project/path/session ownership,
 and serializes safe domain errors.
 
@@ -153,6 +157,14 @@ Use `docs/LANGUAGE-SUPPORT.md` as capability authority. Preserve
 `MISSING`, `AVAILABLE`, and `INVALID_CONFIGURATION`. Language Service states are
 `NOT_CONFIGURED`, `MISSING`, `STARTING`, `RUNNING`, `STOPPED`, `CRASHED`, and
 `INVALID_CONFIGURATION`.
+
+For Phase 5.5 C#, keep dependency failures (`MISSING`,
+`INVALID_CONFIGURATION`) separate from service lifecycle (`STOPPED`, `STARTING`,
+`RUNNING`, `CRASHED`); reserve `NOT_CONFIGURED` for future configured paths.
+Main owns `csharp-ls`; public language IPC uses only project IDs, relative paths,
+and semantic typed DTOs. Never expose raw LSP/JSON-RPC, provider process details,
+canonical project roots, completion-resolve state, diagnostic result IDs, or raw
+logs to Renderer.
 
 Do not infer one dependency state from another. Use provider/language-service
 architecture rather than language-specific IntelliSense logic embedded in the

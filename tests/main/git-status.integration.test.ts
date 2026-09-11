@@ -1,7 +1,7 @@
-import { mkdir, mkdtemp, readFile, realpath, rename, rm, writeFile, access } from 'node:fs/promises'
+import { access, appendFile, cp, mkdir, mkdtemp, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { join, resolve, sep } from 'node:path'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { GitExecutableDetector } from '../../src/main/services/dependencies/git-executable'
 import { GitCommandRunner } from '../../src/main/services/git/git-command-runner'
 import { GitService } from '../../src/main/services/git/git-service'
@@ -12,8 +12,15 @@ const dependency = process.platform === 'win32' ? await new GitExecutableDetecto
 const realGit = dependency.state === 'AVAILABLE' ? describe : describe.skip
 if (dependency.state !== 'AVAILABLE') console.warn('Phase 5B real Git SKIPPED: Windows PATH Git unavailable; no local acceptance evidence.')
 
+let baselineDirectory: string | undefined
+
+function assertSafeFixture(directory: string): void {
+  if (!resolve(directory).startsWith(resolve(tmpdir()) + sep)) throw new Error('Unsafe fixture cleanup')
+}
+
 async function fixture(run: (f: Awaited<ReturnType<typeof createFixture>>) => Promise<void>, withHead = true) {
   const directory = await mkdtemp(join(tmpdir(), 'student-ide-phase5b-test-'))
+  assertSafeFixture(directory)
   const f = await createFixture(directory, withHead)
   try { await run(f) } finally {
     await f.projects.stop()
@@ -32,13 +39,28 @@ async function createFixture(directory: string, withHead: boolean) {
     expect(result.exitCode, `fixture Git failed: ${args[0]}`).toBe(0)
     return result.stdout
   }
-  await git('init', '--quiet', '--initial-branch=main')
-  await git('config', 'user.name', 'Phase 5B Test')
-  await git('config', 'user.email', 'phase5b@example.invalid')
-  await git('config', 'core.autocrlf', 'false')
-  await git('config', 'commit.gpgsign', 'false')
   const put = (path: string, content: string) => writeFile(join(directory, path), content, 'utf8')
-  if (withHead) {
+  if (withHead && baselineDirectory && directory !== baselineDirectory) {
+    await cp(join(baselineDirectory, '.git'), join(directory, '.git'), { recursive: true })
+    await Promise.all([
+      cp(join(baselineDirectory, 'tracked.txt'), join(directory, 'tracked.txt')),
+      cp(join(baselineDirectory, 'other.txt'), join(directory, 'other.txt')),
+    ])
+  } else {
+    await git('init', '--quiet', '--initial-branch=main')
+    await appendFile(join(directory, '.git', 'config'), [
+      '',
+      '[user]',
+      '\tname = Phase 5B Test',
+      '\temail = phase5b@example.invalid',
+      '[commit]',
+      '\tgpgsign = false',
+      '[core]',
+      '\tautocrlf = false',
+      '',
+    ].join('\n'), 'utf8')
+  }
+  if (withHead && directory === baselineDirectory) {
     await put('tracked.txt', 'base')
     await put('other.txt', 'other base')
     await git('add', '--', 'tracked.txt', 'other.txt')
@@ -60,6 +82,18 @@ async function createFixture(directory: string, withHead: boolean) {
 }
 
 realGit('Phase 5B real Git status/stage/unstage', () => {
+  beforeAll(async () => {
+    baselineDirectory = await mkdtemp(join(tmpdir(), 'student-ide-phase5b-baseline-'))
+    assertSafeFixture(baselineDirectory)
+    const baseline = await createFixture(baselineDirectory, true)
+    await baseline.projects.stop()
+  })
+
+  afterAll(async () => {
+    if (baselineDirectory) await rm(baselineDirectory, { recursive: true, force: true })
+    baselineDirectory = undefined
+  })
+
   it('handles clean, modified, stage and staged+modified status', async () => {
     await fixture(async (f) => {
       expect(await f.git('--version')).toMatch(/^git version /)

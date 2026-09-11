@@ -1,10 +1,10 @@
 import { createRequire } from 'node:module'
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises'
+import { appendFile, cp, mkdtemp, writeFile, readFile, rm } from 'node:fs/promises'
 import { readFileSync } from 'node:fs'
 import { getEventListeners } from 'node:events'
 import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { GitExecutableDetector } from '../../src/main/services/dependencies/git-executable'
 import { GitOwnedCommandRunner, type GitNativeBinding } from '../../src/main/services/git/git-owned-command-runner'
 import { ProjectService } from '../../src/main/services/project/project-service'
@@ -14,14 +14,57 @@ import type { ProjectId } from '../../src/shared/contracts'
 
 const require = createRequire(import.meta.url)
 const executable = await new GitExecutableDetector().detect()
+let lifecycleBaseline: string | undefined
+
+function assertSafeFixture(directory: string): void {
+  expect(resolve(directory).startsWith(resolve(tmpdir()) + sep)).toBe(true)
+}
+
+async function configureRepository(directory: string, user: string, email: string, hooks = false): Promise<void> {
+  const hooksPath = join(directory, '.git', 'hooks').replaceAll('\\', '/')
+  await appendFile(join(directory, '.git', 'config'), [
+    '',
+    '[user]',
+    `\tname = ${user}`,
+    `\temail = ${email}`,
+    '[commit]',
+    '\tgpgsign = false',
+    ...(hooks ? ['[core]', `\thooksPath = ${hooksPath}`] : []),
+    '',
+  ].join('\n'), 'utf8')
+}
 
 // Portable CI cannot establish Windows native acceptance; Windows must run it.
 if (process.platform !== 'win32') console.warn('Phase 5D native Git tests SKIPPED: Windows Job ownership requires Windows; no native acceptance evidence.')
 describe.skipIf(process.platform !== 'win32')('Phase 5D real Git and Windows Job ownership', () => {
+  beforeAll(async () => {
+    if (executable.state !== 'AVAILABLE') throw new Error('Windows Git required for process-tree acceptance')
+    lifecycleBaseline = await mkdtemp(join(tmpdir(), 'student-ide-git-lifecycle-baseline-'))
+    assertSafeFixture(lifecycleBaseline)
+    const binding: GitNativeBinding = require(resolve('out/main/native/run-process.node'))
+    const runner = new GitOwnedCommandRunner(() => binding)
+    const git = async (...args: string[]) => {
+      const result = await runner.execute(executable.git.executable, args, lifecycleBaseline!)
+      expect(result.exitCode, result.stderr).toBe(0)
+    }
+    try {
+      await git('init', '--quiet', '--initial-branch=main')
+      await configureRepository(lifecycleBaseline, 'Git Lifecycle Test', 'lifecycle@example.invalid')
+      await writeFile(join(lifecycleBaseline, 'file.txt'), 'initial')
+      await git('add', '--', 'file.txt')
+      await git('commit', '-m', 'initial')
+    } finally { await runner.stop() }
+  })
+
+  afterAll(async () => {
+    if (lifecycleBaseline) await rm(lifecycleBaseline, { recursive: true, force: true })
+    lifecycleBaseline = undefined
+  })
+
   it('runs normal hooks and terminates a background hook descendant surviving root exit', async () => {
     if (executable.state !== 'AVAILABLE') throw new Error('Windows Git required for process-tree acceptance')
     const directory = await mkdtemp(join(tmpdir(), 'student-ide-git-job-'))
-    expect(resolve(directory).startsWith(resolve(tmpdir()) + sep)).toBe(true)
+    assertSafeFixture(directory)
     const binding: GitNativeBinding = require(resolve('out/main/native/run-process.node'))
     let descendant: number | undefined, observedAliveAfterRoot = false
     const rootProbes: string[] = []
@@ -46,10 +89,7 @@ describe.skipIf(process.platform !== 'win32')('Phase 5D real Git and Windows Job
     }
     try {
       await git('init', '--quiet', '--initial-branch=main')
-      await git('config', 'user.name', 'Git Job Test')
-      await git('config', 'user.email', 'job@example.invalid')
-      await git('config', 'commit.gpgsign', 'false')
-      await git('config', 'core.hooksPath', join(directory, '.git', 'hooks'))
+      await configureRepository(directory, 'Git Job Test', 'job@example.invalid', true)
       await writeFile(join(directory, 'file.txt'), 'first')
       await git('add', '--', 'file.txt')
       await writeFile(join(directory, '.git/hooks/pre-commit'), '#!/bin/sh\nprintf normal > normal-hook\n')
@@ -78,7 +118,10 @@ child.once('message',()=>{writeFileSync('child.pid',String(child.pid));child.dis
   it.each(['index/commit', 'branch/history'])('runs %s through the owned lifecycle', async (scenario) => {
     if (executable.state !== 'AVAILABLE') throw new Error('Windows Git required for process-tree acceptance')
     const directory = await mkdtemp(join(tmpdir(), 'student-ide-git-lifecycle-'))
-    expect(resolve(directory).startsWith(resolve(tmpdir()) + sep)).toBe(true)
+    assertSafeFixture(directory)
+    if (!lifecycleBaseline) throw new Error('Git lifecycle baseline unavailable')
+    await cp(join(lifecycleBaseline, '.git'), join(directory, '.git'), { recursive: true })
+    await cp(join(lifecycleBaseline, 'file.txt'), join(directory, 'file.txt'))
     const binding: GitNativeBinding = require(resolve('out/main/native/run-process.node'))
     const runner = new GitOwnedCommandRunner(() => binding)
     const git = async (...args: string[]) => {
@@ -88,14 +131,6 @@ child.once('message',()=>{writeFileSync('child.pid',String(child.pid));child.dis
       return result.stdout
     }
     try {
-      await git('init', '--quiet', '--initial-branch=main')
-      await git('config', 'user.name', 'Git Lifecycle Test')
-      await git('config', 'user.email', 'lifecycle@example.invalid')
-      await git('config', 'commit.gpgsign', 'false')
-      await git('config', 'core.hooksPath', join(directory, '.git', 'hooks'))
-      await writeFile(join(directory, 'file.txt'), 'initial')
-      await git('add', '--', 'file.txt')
-      await git('commit', '-m', 'initial')
       const projects = new ProjectService()
       const project = await projects.openRoot(directory)
       const files = { getStatus: (projectId: ProjectId) => ({ projectId, state: 'AVAILABLE' as const }), subscribeStatus: () => () => {} }
@@ -129,7 +164,7 @@ child.once('message',()=>{writeFileSync('child.pid',String(child.pid));child.dis
   it.each(['abort', 'timeout'] as const)('cleans the real Git Job on %s with a running shell child', async (mode) => {
     if (executable.state !== 'AVAILABLE') throw new Error('Windows Git required for process-tree acceptance')
     const directory = await mkdtemp(join(tmpdir(), 'student-ide-git-stop-'))
-    expect(resolve(directory).startsWith(resolve(tmpdir()) + sep)).toBe(true)
+    assertSafeFixture(directory)
     const binding: GitNativeBinding = require(resolve('out/main/native/run-process.node'))
     const controller = new AbortController()
     let pid: number | undefined
