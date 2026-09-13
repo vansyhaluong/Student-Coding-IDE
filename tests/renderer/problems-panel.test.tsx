@@ -17,6 +17,18 @@ const project = {
 afterEach(cleanup)
 
 describe('Phase 3E Problems panel', () => {
+  it('5.5G forwards a C# problem through the existing relative navigation callback', () => {
+    const store = new ProblemsStore(); store.activateProject(project.id)
+    const uri = projectDocumentUri(project.id, 'src/Program.cs')
+    store.replace('src/Program.cs', createProviderDiagnosticBatch(store.captureIdentity('csharp-ls', uri, 1)!, [{
+      severity: 'error', source: 'csharp-ls', code: 'CS1002', message: 'Expected ;',
+      range: { startLineNumber: 3, startColumn: 4, endLineNumber: 3, endColumn: 5 },
+    }]))
+    const navigate = vi.fn(); renderPanel(store, navigate)
+    fireEvent.click(screen.getByText('Expected ;'))
+    expect(navigate).toHaveBeenCalledWith(expect.objectContaining({ providerId: 'csharp-ls', projectId: project.id,
+      relativePath: 'src/Program.cs', range: { startLineNumber: 3, startColumn: 4, endLineNumber: 3, endColumn: 5 } }))
+  })
   it('shows the neutral empty state without claiming unsupported languages are clean', () => {
     const store = new ProblemsStore()
     store.activateProject(project.id)

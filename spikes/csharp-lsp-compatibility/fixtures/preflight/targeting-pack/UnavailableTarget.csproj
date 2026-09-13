@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net99.0</TargetFramework>
+  </PropertyGroup>
+  <Target Name="WouldMutate" BeforeTargets="Build">
+    <WriteLinesToFile File="preflight-must-not-create.txt" Lines="target executed" />
+  </Target>
+</Project>

@@ -9,13 +9,17 @@ Phase 5C adds staged-only commit, a local branch snapshot, safe existing-local
 branch switch and bounded HEAD history. Phase 5D adds coordinated owner lifecycle,
 stale reply guards and owned Windows Git process cleanup. Phase 5E adds the
 right-sidebar Source Control UI and Main-owned Names search; Phase 5F verified
-the integrated Phase 5 exit gate without adding production modules.
+the integrated Phase 5 exit gate without adding production modules. Phase 5.5B
+adds isolated compatibility evidence. Phase 5.5C adds shared semantic contracts
+and Main-only dependency foundations; Phase 5.5D–E add the provider lifecycle,
+workspace/preflight and document synchronization; Phase 5.5F adds the validated
+semantic IPC/Preload boundary and C# Monaco providers.
 
-## Current source tree through Phase 5
+## Current source tree through Phase 5.5F
 
 | Current path | Role | Status |
 |---|---|---|
-| `src/main/index.ts` | Electron readiness, secure BrowserWindow, unsaved/terminal coordination, Main Run/Git/Search composition, owner routing/navigation cleanup and fail-closed quit wiring | Implemented through Phase 5E; semantic Git operations use owned lifecycle and cleanup |
+| `src/main/index.ts` | Electron readiness, secure BrowserWindow, unsaved/terminal coordination, Main Run/Git/Search/C# language composition, owner routing/navigation cleanup and fail-closed quit wiring | Implemented through Phase 5.5F; privileged domains use owned lifecycle and cleanup |
 | `src/main/app/` | DesktopApplication startup/reverse shutdown ownership plus Main-only before-quit approval, in-flight cleanup sharing, retry, and final-quit coordination | Implemented through Phase 2E-J corrective Step 3 |
 | `src/main/window/` | Secure BrowserWindow ownership, accepted navigation/external-URL policy, and final-quit authorization that prevents the last window bypassing cleanup | Implemented through Phase 2E-J corrective Step 3 |
 | `src/main/ipc/` | Validated handler registration, safe result/error mapping, lifecycle/project/file/search/terminal/Run adapters, and identity-scoped semantic Git state/status/index/commit/branches/history handling | Implemented through Phase 5E |
@@ -53,20 +57,20 @@ the integrated Phase 5 exit gate without adding production modules.
 | `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-run-ui.mjs` | Deterministic UI/Preload/RunService integration and production Electron/native Run UI verification | 4E verification |
 | `tests/main/run-foundation.test.ts` | 4A contracts, path/authority rejection, strategy preparation, session ownership, IPC/preload validation and cleanup | 37 focused tests |
 | `src/main/services/terminal/` | Main-owned TerminalService registry/ownership/lifecycle/batching, project-transition leases, Windows shell resolution, environment policy, native-independent PTY port, sole production patched-node-pty adapter, retained natural-root ownership, and unified Job finalization | Implemented through Phase 2E-J corrective Step 2 |
-| `patches/` and `scripts/` | Inspectable node-pty Windows Job tooling plus the production-build Monaco worker discovery smoke | Implemented through Phase 3B |
-| `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, project, file/filesystem-status, search, terminal, Run, and Git state/status/mutation/branch/history/identity contracts | Implemented through Phase 5E |
-| `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed domain bridges including exact-validated semantic Git operations through commit/branches/history; identity and stale reply guards, normalized transport errors and subscription cleanup | Implemented through Phase 5E |
+| `patches/` and `scripts/` | Inspectable node-pty Windows Job tooling, production-build Monaco worker discovery smoke, and Phase 5.5 validated development dependency launcher | Implemented through corrective Phase 5.5F/G |
+| `src/shared/contracts/` | Side-effect-free error, validation, lifecycle, project, file/filesystem-status, search, terminal, Run, Git and C# language/status/diagnostic contracts | Implemented through Phase 5.5G |
+| `src/preload/index.ts` and `src/preload/bridge/` | Narrow typed domain bridges including exact-validated Git and C# semantic/diagnostic operations; identity and stale reply guards, normalized transport errors and subscription cleanup | Implemented through Phase 5.5G |
 | `src/renderer/src/main.tsx` | React renderer bootstrap, packaged Geist/xterm styles, and renderer-session editor/terminal/language/Problems disposal on real page unload | Implemented through Phase 3E |
-| `src/renderer/src/App.tsx` | Resizable Orca-aligned project/editor/tools shell, top-chrome editor tabs, Explorer/Search/Source Control coordination, Terminal/Problems Bottom Panel ownership, ordered dirty/terminal transition decisions, transition locks, unavailable-project UX, active-project language synchronization, and Problems navigation | Implemented through Phase 5E |
+| `src/renderer/src/App.tsx` | Resizable Orca-aligned project/editor/tools shell, top-chrome editor tabs, Explorer/Search/Source Control coordination, Terminal/Problems Bottom Panel ownership, ordered dirty/terminal transition decisions, transition locks, unavailable-project UX, active-project language synchronization, Problems navigation, and C# status presentation | Implemented through Phase 5.5G |
 | `src/renderer/src/components/` | Shared semantic buttons, focus-managed dialogs, and keyboard/pointer sidebar and Bottom Panel resizing | Implemented through Phase 2E-F |
 | `src/renderer/src/features/explorer/` | Lazy Explorer tree, local feature state, refresh, mutation controls, errors, confirmation, and trusted file-level Git decorations | Implemented through Phase 5E |
 | `src/renderer/src/features/editor/` | Renderer-session EditorModelManager/model owner, Monaco lifecycle/data safety, Search/Problems range navigation, deleted-file state, fail-closed dirty/terminal transition presentation, document lifecycle events, and adoption of existing provider models by canonical URI | Implemented through Phase 3E |
-| `src/renderer/src/features/language/` | Renderer-owned Monaco/browser-worker capability/provider/status contracts for JS/TS/HTML/CSS/JSON; safe virtual URI and diagnostic generation identity; worker routing/defaults; production bounded JS/TS discovery, snapshots, model synchronization, project/file lifecycle cleanup, and stale-work rejection; explicit HTML/CSS/JSON provider defaults with offline JSON schema policy. HTML diagnostics are deferred because the current provider has no validation support; C#/PHP are tokenization-only and no Python/Java/external provider exists | Implemented through Phase 3D |
-| `src/renderer/src/features/problems/` | Project/provider-generation-safe normalized diagnostic aggregation, Monaco marker consumption, grouped Problems presentation, cleanup, and file/range navigation requests | Implemented Phase 3E |
+| `src/renderer/src/features/language/` | Renderer-owned Monaco workers for JS/TS/HTML/CSS/JSON plus Main-backed C# semantic providers, open-document diagnostics, status presentation, safe URI/generation identity, synchronization, cleanup and stale-work rejection | Implemented through Phase 5.5G |
+| `src/renderer/src/features/problems/` | Project/provider-generation-safe normalized Monaco and C# diagnostic aggregation, marker consumption, grouped Problems presentation, cleanup, and file/range navigation requests | Implemented through Phase 5.5G |
 | `src/renderer/src/features/search/` | Shared Names/Contents query state, bounded results, cancellation, stale-event guards, navigation requests, and immediate-submit/project-reset lifecycle safety | Implemented through Phase 5E |
 | `src/renderer/src/features/terminal/` | Renderer-session TerminalController, xterm/FitAddon factory, stable session hosts, ordered writes, fitting/resizing, shared Bottom Panel tabs, and multiple-session controls | Implemented through Phase 3E |
-| `src/renderer/src/styles.css` | Semantic dark tokens and Orca-aligned shell, typography, controls, Explorer/Search/Source Control, editor, Terminal/Problems/Output Bottom Panel, dialogs, interaction states, and scrollbars | Implemented through Phase 5E |
-| `tests/` | Vitest contract, service, IPC, preload, security/lifecycle, Phase 2 feature coverage, Monaco capability/worker/URI/diagnostic tests, Run lifecycle/UI regression, Git foundation/status/local/lifecycle/UI integration, repeated cleanup, and Search race coverage | Implemented through Phase 5F |
+| `src/renderer/src/styles.css` | Semantic dark tokens and Orca-aligned shell, typography, controls, Explorer/Search/Source Control, editor, Terminal/Problems/Output Bottom Panel, C# status details, dialogs, interaction states, and scrollbars | Implemented through Phase 5.5G |
+| `tests/` | Vitest contract, service, IPC, preload, security/lifecycle, Monaco and C# language/diagnostic/status tests, Run lifecycle/UI regression, Git integration, repeated cleanup, and Search race coverage | Implemented through Phase 5.5G |
 | `electron.vite.config.ts` | main/preload/renderer build configuration | Existing foundation |
 | `docs/` | Requirements, reference, architecture, decisions, and thesis record | Existing and Phase 1 output |
 
@@ -93,9 +97,30 @@ There is no Orca source tree, submodule, runtime dependency, or copied Orca modu
 | Terminal UI | Terminal UI | `src/renderer/src/features/terminal/` | xterm views and session controls | 2 |
 | Common process internals | ProcessManager | `src/main/services/process/` | Owned-process registry and safe cleanup primitives | 2/4 |
 | Current language intelligence | LanguageProviderManager and Monaco adapters | `src/renderer/src/features/language/` | Renderer-owned Phase 3 provider registry/capabilities, bounded source sync, Monaco workers, diagnostics, status, and cleanup; no external process | 3 |
-| Future external language services | LanguageServiceManager | `src/main/services/language/` | Deferred Main-owned external provider executable/lifecycle/validated routing; no current Phase 3 module required | Future |
+| C# compatibility evidence | Isolated `csharp-ls`/LSP Windows spike | `spikes/csharp-lsp-compatibility/` | Actual 5.5B harness, structured workspace-preflight fixtures, report, and machine evidence; not production code; hard gate passed | 5.5B actual |
+| C# external language service | LanguageServiceManager and C# adapter | `src/main/services/language/` | Main LSP core, C# adapter, workspace/preflight, ordered document sync, semantic routing and retained Job cleanup | 5.5D–5.5F actual |
+| Internal LSP transport | LspConnection | `src/main/services/language/lsp-connection.ts` | Pinned JSON-RPC streams, correlation, cancellation, deadlines, safe errors, server handlers and disposal | 5.5D actual |
+| C# protocol mapping | CSharpLsAdapter | `src/main/services/language/csharp-ls-adapter.ts` | UTF-16 initialize/capability capture; semantic methods and notification primitives; private completion/result-ID caches; watched-registration allowlist | 5.5D adapter; 5.5E synchronization controller actual |
+| C# process ownership | WindowsCsharpProcessFactory | `src/main/services/language/csharp-process.ts` | Resolver-selected provider, fixed args, native stdin/stdout/stderr, retained atomic Job ownership and bounded finalization | 5.5D actual |
+| C# manager and errors | LanguageServiceManager | `src/main/services/language/language-service-manager.ts`, `src/main/services/language/language-error.ts` | One session, separate dependency/lifecycle state, effective capabilities, no automatic restart, safe errors and cleanup retry retention | 5.5D core; 5.5E–F composition |
+| C# native entry point | Main-only pipe/Job binding | `src/main/services/run/native/run-process.cpp` | Dedicated `createCsharp`, asynchronous `writeCsharp` and finite-command `createCsharpPreflight`; existing Run/Git entry paths retained | 5.5D actual |
+| C# workspace and selection | CsharpWorkspace / CsharpWorkspaceStore | `src/main/services/language/csharp-workspace.ts`, `src/main/services/language/csharp-workspace-store.ts` | Bounded discovery, per-project selection, project/syntax-only mode and structured preflight | 5.5E actual |
+| C# preflight process | CsharpPreflightProcess | `src/main/services/language/csharp-preflight-process.ts` | Fixed SDK/solution/evaluation commands, bounded output/deadlines and retained native Job cleanup | 5.5E actual |
+| C# workspace lifecycle | CsharpWorkspaceSession / CsharpOwnerLifecycle | `src/main/services/language/csharp-workspace-session.ts`, `src/main/services/language/csharp-owner-lifecycle.ts` | Lazy active-project session, project/root/owner invalidation and shutdown; composed in Main index | 5.5E actual |
+| C# document synchronization | CsharpDocumentSync / DocumentSyncQueue | `src/main/services/language/csharp-document-sync.ts`, `src/main/services/language/document-sync-queue.ts` | Ordered incremental UTF-16 versions, dirty shadow, editor-save notification, flush/stale guards and Renderer client entry | 5.5E–5.5F actual |
+| C# file awareness | CsharpWatchedFiles | `src/main/services/language/csharp-watched-files.ts` | Existing FileSystemService events, dynamic glob/kind registration, open-buffer precedence and stale cancellation | 5.5E actual |
+| C# workspace verification | Focused tests and real Electron smoke | `tests/main/csharp-workspace-sync.test.ts`, `tests/main/csharp-preflight-process.test.ts`, `scripts/smoke-csharp-preflight.mjs`, `scripts/smoke-csharp-workspace.mjs` | 47 focused tests, real native preflight and provider workspace/document/cleanup cycles | 5.5E verified |
+| C# verification | Fake LSP and Windows smoke | `tests/main/language-lsp.test.ts`, `tests/fixtures/csharp-native-child.mjs`, `scripts/smoke-csharp-native.mjs` | Protocol/lifecycle tests; real Electron hard-killed root/surviving descendant, blocked stdin, and provider initialize/shutdown | 5.5D actual |
+| C# dependency detection | C# dependency/provider resolver | `src/main/services/dependencies/` | Actual PATH-only .NET SDK inventory and private/app-owned `csharp-ls` resolver/version-probe foundation in `dotnet-sdk.ts`, `csharp-ls.ts`, `language-probe.ts`, and `windows-executable.ts`; no session or preflight orchestration | 5.5C actual |
+| C# language contracts | Semantic language contracts | `src/shared/contracts/language.ts`, `src/shared/contracts/language-validation.ts` | Project-relative semantic/document DTOs, truthful workspace modes, declared/effective capabilities, bounded opaque handles and exact validators without raw protocol/process fields | 5.5C foundation; 5.5F public contract actual |
+| C# semantic routing | CsharpSemanticService and mapping | `src/main/services/language/csharp-semantic-service.ts`, `src/main/services/language/csharp-semantic-mapping.ts`, `src/main/services/language/csharp-diagnostic-mapping.ts` | Trusted-frame/project/document/version authorization, flush-before-request, bounded safe mapping, completion-handle/result-ID retention, diagnostic serialization, cancellation and contained definition targets | 5.5F–5.5G actual |
+| C# language IPC | LanguageIpcService | `src/main/ipc/language-ipc-service.ts` | Exact request validation and capability-scoped workspace/document/semantic/status routing; no raw protocol/process or lifecycle-control channel | 5.5F actual |
+| C# preload bridge | Language bridge | `src/preload/bridge/language.ts` | Narrow typed semantic API, exact response/event validation and subscription cleanup; no raw IPC/LSP/process authority | 5.5F actual |
+| C# Monaco integration | C# client/providers/diagnostics/status/navigation | `src/renderer/src/features/language/csharp/` | Renderer-session document sync, four semantic providers, C# marker/Problems publication, bounded post-edit settling, separate dependency/workspace/service status UX, cancellation, stale-result rejection and contained navigation | 5.5F–5.5G actual |
+| C# real-app corrective verification | Production Electron stack with test-only observation | `scripts/smoke-csharp-acceptance.mjs` | Fresh console fixture, hover/completion/signature UI, diagnostic marker/Problems update and clear, effective capabilities and registration checks; automated acceptance only | F/G corrective evidence; user-confirmed manual acceptance and 5.5H COMPLETE |
+| C# semantic verification | Main/IPC/Preload/Renderer tests | `tests/main/csharp-semantic.test.ts`, `tests/main/language-lsp.test.ts`, `tests/renderer/csharp-semantic-providers.test.ts`, `tests/renderer/csharp-diagnostics.test.ts`, `tests/renderer/csharp-status.test.tsx`, `tests/contracts/language-validation.test.ts` | Ownership, exact validation, synchronization, mapping, private handles/result IDs, diagnostics, status, cancellation, provider registration and late-result disposal coverage | 5.5F–5.5G verified |
 | Problems | Problems UI/model | `src/renderer/src/features/problems/` | Normalized problems and file/range navigation | 3 |
-| Dependency detection | DependencyDetectionService | `src/main/services/dependencies/` | Runtime, Git, and future external-language executable state; current Phase 3 Monaco workers need no executable detection | 4–6/Future |
+| Dependency detection | DependencyDetectionService | `src/main/services/dependencies/` | Runtime, Git, and Phase 5.5C C# SDK/provider detection foundations; current Phase 3 Monaco workers need no executable detection | 4–6/5.5C actual |
 | Run execution | RunService / internal RunStrategy / JavaScriptRunStrategy | `src/main/services/run/` | 4A–4E execution, lifecycle and narrow UI composition exist. Future TS strategy remains behind ADR-014; Run Project/npm scripts/project entry deferred | 4/Future |
 | Output | Output UI | `src/renderer/src/features/output/` | Existing Bottom Panel sibling with stdout/stderr/exit/error output; single editor-header Run entry and contextual Stop | Implemented 4E |
 | Git | GitService | `src/main/services/git/` | Detection, status, stage, commit, branch, history | 5 |
@@ -147,8 +172,8 @@ Main domain services must not import renderer code. Renderer features must not i
 
 No planned V1 directory exists for AI agents, Codex/Claude providers, worktrees, remote execution, cloud sync, mobile, collaboration, extension host/marketplace, formatter, or debugger.
 
-No production `src/main/services/language/` module, external
-LanguageServiceManager process, Python provider, or Java provider exists in the
-current tree. No custom/alternate HTML diagnostics provider exists. C# and PHP
-have tokenization only. These future modules must not be described as implemented
-until a separately authorized scope creates and verifies them.
+Phase 5.5D–5.5G provide the Main C# LSP core, workspace/preflight and document
+synchronization, semantic/diagnostic IPC and Preload bridge, Renderer completion,
+hover, signature-help, definition and open-document diagnostics, Problems
+contribution, and separate dependency/workspace/service status UX. PHP remains tokenization-only.
+No Python, Java, or custom/alternate HTML diagnostics provider was added.
