@@ -1,4 +1,4 @@
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { Position, TextDocumentContentChangeEvent } from 'vscode-languageserver-protocol'
 import type { CSharpLsAdapter } from './csharp-ls-adapter'
 import type { FileSystemService } from '../filesystem/filesystem-service'
@@ -41,17 +41,19 @@ export class CsharpDocumentSync {
     }
     const file = await this.files.authorizeRunFile(this.projectId, relativePath)
     this.current()
-    const uri = pathToFileURL(process.platform === 'win32' ? file.canonicalFile.toLowerCase() : file.canonicalFile).href
-    if (this.uris.has(uri) || this.opening.has(uri)) throw new LanguageError('busy')
-    this.opening.add(uri)
+    // Roslyn document lookup needs canonical casing even on Windows.
+    const uri = pathToFileURL(file.canonicalFile).href
+    const key = uriKey(uri)
+    if (this.uris.has(key) || this.opening.has(key)) throw new LanguageError('busy')
+    this.opening.add(key)
     const handle = Object.freeze({ projectId: this.projectId, relativePath, token: Symbol() })
     const document = { handle, uri, version, text, savedVersion: dirty ? -1 : version, closing: false }
     try {
       await this.queue.enqueue(() => this.transport.didOpen({ textDocument: { uri, languageId: 'csharp', version, text } }))
       this.current()
-      this.documents.set(handle.token, document); this.uris.set(uri, document)
+      this.documents.set(handle.token, document); this.uris.set(key, document)
       return handle
-    } finally { this.opening.delete(uri) }
+    } finally { this.opening.delete(key) }
   }
 
   change(handle: SyncedDocument, version: number, changes: readonly TextDocumentContentChangeEvent[]): Promise<void> {
@@ -114,7 +116,7 @@ export class CsharpDocumentSync {
     const document = this.document(handle)
     document.closing = true
     try { await this.queue.enqueue(() => this.transport.didClose({ textDocument: { uri: document.uri } })) }
-    finally { this.documents.delete(handle.token); this.uris.delete(document.uri) }
+    finally { this.documents.delete(handle.token); this.uris.delete(uriKey(document.uri)) }
   }
 
   /** Internal hook for 5.5F semantic operations; never an IPC flush surface. */
@@ -127,7 +129,7 @@ export class CsharpDocumentSync {
     return result
   }
 
-  ownsUri(uri: string): boolean { return this.uris.has(uri) || this.opening.has(uri) }
+  ownsUri(uri: string): boolean { return this.uris.has(uriKey(uri)) || this.opening.has(uriKey(uri)) }
   snapshot(handle: SyncedDocument): { text: string; version: number; dirty: boolean } {
     const document = this.document(handle)
     return { text: document.text, version: document.version, dirty: document.savedVersion !== document.version }
@@ -151,6 +153,8 @@ export class CsharpDocumentSync {
     if (this.document(handle).version !== version) throw new LanguageError('stale-document')
   }
 }
+
+function uriKey(uri: string): string { return process.platform === 'win32' ? fileURLToPath(uri).toLowerCase() : uri }
 
 function offset(text: string, position: Position): number {
   if (!position || !Number.isSafeInteger(position.line) || position.line < 0

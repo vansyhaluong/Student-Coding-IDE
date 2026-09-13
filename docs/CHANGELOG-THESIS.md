@@ -1472,3 +1472,57 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
 - Diagnostics/Problems/status UX, C# Run, public restart/raw logs and all other
   deferred capabilities remain outside 5.5F. No dependency, ADR or architecture
   deviation was introduced.
+
+## Phase 5.5G — Diagnostics, Problems and status UX (2026-09-12) — COMPLETE
+
+- Added exact-validated open-document diagnostic IPC/Preload routing. Main
+  serializes pulls after document synchronization, retains `resultId` privately,
+  normalizes bounded severity/code/source/message/ranges, and rejects cancelled or
+  stale owner, project, session, document and model-version work.
+- Added the C# Renderer diagnostic controller with a dedicated Monaco marker
+  owner, existing Problems aggregation/navigation, dirty-model preservation,
+  provider/project generation guards, and scoped clear/disposal. Post-edit
+  `unchanged` reports use bounded settling pulls until a fresh full report arrives.
+- Added status-bar UX that presents dependency, workspace and service lifecycle
+  independently, including solution selection, loading/failure, syntax-only
+  fallback and `CRASHED`, without public restart, process or raw-log authority.
+- Focused diagnostics/Problems/status coverage passed 128/128. The full suite
+  passed 1004/1004 tests in 74 files; the existing jsdom canvas warning remained
+  non-blocking. Typecheck, lint and production/native build passed without
+  changing test workers, timeouts, assertions or retry policy.
+- No dependency, ADR or architecture deviation was introduced. C# Run, workspace
+  diagnostics, Razor, metadata navigation, public/manual restart, raw logs and all
+  other deferred capabilities remain absent. Windows Electron smoke, repeated
+  cycles/performance review and final Phase 5.5 verification remain Phase 5.5H.
+
+## Phase 5.5F/G corrective runtime verification (2026-09-12) — IN_PROGRESS
+
+- Reopened after failed manual hover/diagnostics acceptance. Preserved canonical
+  C# document/watcher URI casing on the wire, keeping decoded case-insensitive
+  Windows ownership checks and duplicate rejection. Previous adapter comparison
+  reproduced null hover/empty diagnostics only with lowercased wire identity.
+- Added `scripts/smoke-csharp-acceptance.mjs`: a fresh dotnet console fixture,
+  actual Electron application/Preload/Monaco/csharp-ls, private build-only trace,
+  capability/registration/security checks, marker/Problems checks and screenshots.
+  All five requested workflows passed in automated real-app verification.
+- Focused regression: 170/170; full suite: 1005/1005 in 74 files; typecheck, lint,
+  production/native build and diff-check passed. No production architecture,
+  public contract, scheduling or lifecycle change was needed in this resumption.
+- Manual pointer/keyboard reacceptance is still unverified because Windows
+  Computer Use's native pipe was unavailable. Automated evidence does not replace
+  that claim. F/G remain IN_PROGRESS; 5.5H remains NOT_STARTED.
+
+## Phase 5.5F/G development-launch correction (2026-09-13) — VERIFIED
+
+- Identified the first launch divergence: the real-app acceptance harness pinned
+  the Phase 5.5B private .NET 10.0.401/provider stack, while `npm run dev`
+  inherited its caller's `DOTNET_ROOT` and PATH. The inspected dev environment
+  resolved system .NET 10.0.112 and did not contain the project-private provider.
+- Added a development-only launcher that uses the complete validated private pair
+  when present and preserves PATH fallback otherwise. Production composition,
+  IPC, security, diagnostics, scheduling and lifecycle logic did not change.
+- A real `npm run dev` trace verified CS0029 from provider through Monaco and
+  Problems for `int b = "aaa";`, then verified CS0029 cleared for `int b = 123;`.
+  Focused tests passed 171/171; the final full suite passed 1009/1009; typecheck,
+  lint, production/native build and `git diff --check` passed. Phase 5.5H remains
+  NOT_STARTED.

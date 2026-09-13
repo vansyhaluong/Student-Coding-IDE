@@ -2,15 +2,18 @@ import type { ProjectId } from '../../../../shared/contracts'
 import type {
   NormalizedDiagnostic,
   ProviderDiagnosticBatch,
+  DiagnosticProviderId,
 } from '../language/diagnostic-identity'
-import type { Phase3ProviderId } from '../language/language-provider-contracts'
+import { isLanguageRelativePath } from '../../../../shared/contracts/language-validation'
+import { parseProjectDocumentUri } from '../language/project-uri'
+import { markerOwnerForProvider } from '../language/diagnostic-identity'
 
 export interface ProblemItem extends NormalizedDiagnostic {
   readonly id: string
   readonly projectId: ProjectId
   readonly relativePath: string
   readonly documentUri: string
-  readonly providerId: Phase3ProviderId
+  readonly providerId: DiagnosticProviderId
 }
 
 export interface ProblemFileGroup {
@@ -35,7 +38,8 @@ interface ProviderFileDiagnostics {
   readonly problems: readonly ProblemItem[]
 }
 
-const providers: readonly Phase3ProviderId[] = [
+const providers: readonly DiagnosticProviderId[] = [
+  'csharp-ls',
   'monaco-typescript',
   'monaco-css',
   'monaco-json',
@@ -43,7 +47,8 @@ const providers: readonly Phase3ProviderId[] = [
 
 export class ProblemsStore {
   private readonly listeners = new Set<() => void>()
-  private readonly providerGenerations = new Map<Phase3ProviderId, number>()
+  private readonly providerGenerations = new Map<DiagnosticProviderId, number>()
+  private readonly modelVersions = new Map<string, number>()
   private readonly diagnostics = new Map<string, ProviderFileDiagnostics>()
   private projectId: ProjectId | null = null
   private projectGeneration = 0
@@ -88,7 +93,7 @@ export class ProblemsStore {
   }
 
   captureIdentity(
-    providerId: Phase3ProviderId,
+    providerId: DiagnosticProviderId,
     documentUri: string,
     modelVersion: number,
   ): ProviderDiagnosticBatch['identity'] | null {
@@ -105,7 +110,13 @@ export class ProblemsStore {
 
   replace(relativePath: string, batch: ProviderDiagnosticBatch): boolean {
     if (!this.isCurrent(batch)) return false
+    const target = parseProjectDocumentUri(batch.identity.documentUri)
+    if (!isLanguageRelativePath(relativePath) || target?.projectId !== batch.identity.projectId
+      || target.relativePath !== relativePath || batch.markerOwner !== markerOwnerForProvider(batch.identity.providerId)) return false
     const key = scopeKey(batch.identity.providerId, batch.identity.documentUri)
+    const versionKey = `${batch.identity.projectGeneration}:${batch.identity.providerGeneration}:${key}`
+    if (batch.identity.modelVersion < (this.modelVersions.get(versionKey) ?? 0)) return false
+    this.modelVersions.set(versionKey, batch.identity.modelVersion)
     const unique = new Map<string, ProblemItem>()
     for (const diagnostic of batch.diagnostics) {
       const item: ProblemItem = {
@@ -132,6 +143,7 @@ export class ProblemsStore {
 
   clearDocument(projectId: ProjectId, documentUri: string): void {
     if (this.projectId !== projectId) return
+    for (const key of this.modelVersions.keys()) if (key.endsWith(`\n${documentUri}`)) this.modelVersions.delete(key)
     let changed = false
     for (const [key, entry] of this.diagnostics) {
       if (entry.documentUri !== documentUri) continue
@@ -141,7 +153,7 @@ export class ProblemsStore {
     if (changed) this.publish()
   }
 
-  disposeProvider(providerId: Phase3ProviderId): void {
+  disposeProvider(providerId: DiagnosticProviderId): void {
     this.incrementProviderGeneration(providerId)
     let changed = false
     for (const key of this.diagnostics.keys()) {
@@ -150,6 +162,12 @@ export class ProblemsStore {
       changed = true
     }
     if (changed) this.publish()
+  }
+  clearProviderDocument(providerId: DiagnosticProviderId, projectId: ProjectId, documentUri: string): void {
+    if (this.projectId !== projectId) return
+    const scope = scopeKey(providerId, documentUri)
+    for (const key of this.modelVersions.keys()) if (key.endsWith(`:${scope}`)) this.modelVersions.delete(key)
+    if (this.diagnostics.delete(scope)) this.publish()
   }
 
   dispose(): void {
@@ -169,7 +187,8 @@ export class ProblemsStore {
         === (this.providerGenerations.get(batch.identity.providerId) ?? -1)
   }
 
-  private incrementProviderGeneration(providerId: Phase3ProviderId): void {
+  private incrementProviderGeneration(providerId: DiagnosticProviderId): void {
+    for (const key of this.modelVersions.keys()) if (key.includes(`:${providerId}\n`)) this.modelVersions.delete(key)
     this.providerGenerations.set(
       providerId,
       (this.providerGenerations.get(providerId) ?? 0) + 1,
@@ -215,12 +234,12 @@ function emptySnapshot(projectId: ProjectId | null, projectGeneration: number): 
   }
 }
 
-function scopeKey(providerId: Phase3ProviderId, documentUri: string): string {
+function scopeKey(providerId: DiagnosticProviderId, documentUri: string): string {
   return `${providerId}\n${documentUri}`
 }
 
 function problemId(
-  providerId: Phase3ProviderId,
+  providerId: DiagnosticProviderId,
   relativePath: string,
   diagnostic: NormalizedDiagnostic,
 ): string {

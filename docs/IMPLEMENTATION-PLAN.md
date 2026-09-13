@@ -115,7 +115,7 @@ before affected work continues.
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
 | Phase 5 — Git Integration | `COMPLETE` | Corrective Phase 5C native-test portability fix and Phase 5F re-verification passed locally |
-| Phase 5.5 — C# Language Intelligence | `IN_PROGRESS` | 5.5A–5.5E complete; 5.5F–5.5H not started |
+| Phase 5.5 — C# Language Intelligence | `IN_PROGRESS` | 5.5A–5.5E complete; F/G reopened for failed runtime acceptance; H not started |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -2672,15 +2672,17 @@ part of this phase.
 - Phase 5.5C — Contracts + Dependency Foundation: `COMPLETE`.
 - Phase 5.5D — Main LSP Core + C# Adapter: `COMPLETE`.
 - Phase 5.5E — Workspace + Document Synchronization: `COMPLETE`.
-- Phase 5.5F — IPC + Preload + Monaco Semantic Providers: `COMPLETE`.
-- Phase 5.5G — Diagnostics + Problems + Status UX: `NOT_STARTED`.
+- Phase 5.5F — IPC + Preload + Monaco Semantic Providers: `IN_PROGRESS`.
+- Phase 5.5G — Diagnostics + Problems + Status UX: `IN_PROGRESS`.
 - Phase 5.5H — Stabilization + Final Verification: `NOT_STARTED`.
 
 Phase 5.5 overall is `IN_PROGRESS`. The 2026-09-10 corrective spike resolved the
 5.5B blocker with a structured Main-owned preflight and honest readiness
 semantics. Phase 5.5C and the separately authorized 5.5D implementation are
 complete. The separately authorized 5.5E workspace/document synchronization and
-5.5F semantic IPC/Monaco integration are complete; 5.5G–H have not begun.
+5.5F semantic IPC/Monaco integration and the separately authorized 5.5G
+diagnostics/Problems/status integration were reopened on 2026-09-12 after
+failed real-app hover and diagnostics acceptance. Phase 5.5H has not begun.
 
 ### Goal and capability scope
 
@@ -3045,9 +3047,12 @@ trusted-workspace clarification. No sandbox, trust UX, or 5.5F+ work is included
 
 ### 5.5F — IPC + Preload + Monaco Semantic Providers
 
-Status: `COMPLETE` — explicitly authorized; Option A contract reconciliation
+Status: `IN_PROGRESS` — reopened 2026-09-12 after real-app hover acceptance failed.
+Corrective work preserves canonical document URI casing; runtime revalidation is pending.
+Previously implemented Option A contract reconciliation
 is implemented with truthful workspace mode, optional failed selection and
-separate declared/effective capabilities. 5.5G+ is not started.
+separate declared/effective capabilities. F/G corrective verification is ongoing;
+5.5H is not started.
 
 - Add exact-validated semantic IPC and narrow Preload bridge using project IDs,
   relative paths, trusted sender/document ownership, and cancellation.
@@ -3087,6 +3092,197 @@ separate declared/effective capabilities. 5.5G+ is not started.
 
 ### 5.5G — Diagnostics + Problems + Status UX
 
+Status: `IN_PROGRESS` — reopened 2026-09-12 after real-app diagnostics acceptance failed.
+Corrective URI work and real-app revalidation are required before completion.
+Previously implemented open-document pull diagnostics,
+Problems/Monaco publication and separate dependency/workspace/service status UX
+are implemented; automated verification does not establish real-app acceptance.
+Phase 5.5H has not started.
+
+#### 2026-09-12 net10.0 runtime-identity investigation
+
+- Acceptance remains unaccepted: G is `IN_PROGRESS`; H is `NOT_STARTED`.
+  This investigation did not reproduce the reported missing diagnostics and
+  does not claim a production fix or identify the user's failing boundary.
+- Baseline: branch `feature/phase-5.5-csharp-language-intelligence`, HEAD
+  `abfe1f5b1f0bd859746dd038a13d0e94ed4bb7d1`, with existing uncommitted F/G work
+  preserved. No Electron or csharp-ls process was running at initial inspection.
+- A direct launch lacked csharp-ls on PATH. The controlled launch used the
+  existing private SDK/provider from `spikes/csharp-lsp-compatibility`, following
+  a successful `npm run build`. This PATH difference is not an explanation for
+  the user's completion-working reproduction; their original launch command
+  and environment have not yet been confirmed.
+- Actual entry: `node_modules/electron/dist/electron.exe . --inspect-brk=9230
+  --remote-debugging-port=9231`, cwd `D:/coding-ide`; normal application entry,
+  user-data and restored real `D:/Frontend-API/fe/TestCSharp` net10.0 project.
+  No alternate acceptance renderer, fixture, mocked IPC or modified project was
+  used. One Main process/window, its Chromium children and one owned csharp-ls
+  process were verified.
+- Debugger script-source SHA-256 values matched disk for Main index, language
+  runtime, isolated Preload and Renderer. All four also matched the initial
+  pre-rebuild runtime: no stale-bundle mismatch was found. The actual renderer
+  loaded `out/renderer/assets/index-BXfqPpqq.js`. Runtime security settings were
+  contextIsolation=true, nodeIntegration=false and sandbox=true.
+- Non-pausing debugger logpoints recorded safe identity/version/generation,
+  sync, flush, pull, wire count/codes, normalization, Preload validation,
+  Renderer stale acceptance, Problems replacement and marker publication.
+  At model version 115, client generation 1, project generation 1, provider
+  generation 5, Main session epoch 5 and adapter generation 7, `Program.cs`
+  reached didChange/flush/pull with version 115 throughout. csharp-ls returned
+  full `[CS0029]`; Preload accepted it; current Renderer identity accepted it;
+  Problems and Monaco each received CS0029.
+- Visible real-app input/inspection passed CS0029, CS0103 and CS1733/CS1002.
+  Corrected calls and syntax produced full empty results and cleared both
+  consumers. Exact `int b = 123;` removed CS0029 but correctly retained compiler
+  warning CS0219 for unused b; this is not an all-diagnostics-empty result.
+  C# completion popup also worked in the same session. Input used the real
+  Electron renderer; screenshots used its CDP capture because native capture
+  incorrectly returned the VS Code window. These are agent-operated real-app
+  observations, not a claim that the user's failing launch now passes.
+- Evidence: `out/runtime-diagnostics/` contains loaded-script identities,
+  process identity, per-case end-to-end traces and screenshots. Project source
+  was edited only in the unsaved editor buffer; no test save/restore/build or
+  project-file rewrite was performed. The editor buffer was restored afterward.
+- Automated checks on the existing source passed: focused 167/167, full suite
+  1006/1006 in 74 files, typecheck, lint and production/native build. No timeout,
+  retry, architecture, public contract or production source change was made.
+  The missing evidence remains a failing run under the user's actual launch
+  command/environment; the net9 targeting-pack hypothesis is not reused.
+
+#### 2026-09-12 net9.0 targeting-pack verification
+
+- The user's real net9.0 project is the reproduction baseline. Investigation
+  used copies only; no original project, installed SDK or production IDE source
+  was changed.
+- Private SDK 10.0.401 resolves net9.0 to Microsoft.NETCore.App.Ref 9.0.20.
+  That version is absent from its packs root and the user's default NuGet cache.
+  The machine has system pack 9.0.16, but that is neither the requested version
+  nor in the private SDK's default packs root. MSBuild ProcessFrameworkReferences
+  returned no resolved Path for the requested net9 pack.
+- The same probe for net10.0 resolved the installed private pack 10.0.12,
+  including System.Runtime.dll.
+- Causal control: a net9.0 copy explicitly selected the existing system pack
+  root and targeting-pack version 9.0.16, solely for this experiment. The
+  production csharp-ls/IDE pipeline then returned CS0029, CS1733/CS1002 and
+  CS0103 for the three cases, published markers/Problems before and after save,
+  and cleared corrected diagnostics. CS0518/CS1729 disappeared. This confirms
+  unresolved reference assemblies explain those compiler errors; it is not
+  evidence that IDE normalization/scheduling dropped the correct diagnostics.
+- A second copy retargeted to net10.0, with an offline local-only restore,
+  passed the same five automated cases using its default pack resolution.
+- No dependency was downloaded or installed. Fixture pack/version overrides
+  are experimental controls, not a shipped workaround or a change to the
+  user's target framework. Do not hide SDK errors or infer readiness from
+  provider logs/diagnostic codes. Production contract, scheduler, lifecycle,
+  timeouts, workers and retry policy remain unchanged.
+- Evidence and reproduction scripts are retained under
+  `out/target-pack-comparison/`. G remains IN_PROGRESS and manual acceptance
+  is not COMPLETE; H remains NOT_STARTED. This resolves the CS0518/CS1729
+  environment hypothesis, not the outstanding complete manual acceptance gate.
+
+#### 2026-09-12 diagnostics investigation after repeated manual FAIL
+
+- Manual acceptance remains FAIL / unaccepted. G remains IN_PROGRESS; H remains
+  NOT_STARTED. No new production fix or architecture/product decision is claimed.
+- Added build-time development tracing in `scripts/csharp-diagnostics-trace.mjs`
+  and extended `scripts/smoke-csharp-acceptance.mjs`. It observes document events,
+  scheduling, client synchronization, Main versions/flush, adapter and wire
+  responses, normalization, IPC/Preload validation, controller stale checks,
+  marker ownership, Problems replacement and cleanup. Provider result IDs/logs
+  remain Main-only test evidence; no public contract or production logging changed.
+- Fresh net10.0 console fixture: CS0029, CS1733/CS1002 and CS0103 reached
+  `student-ide.language.csharp-ls` markers and Problems provider `csharp-ls`,
+  before and after actual save notifications. Renderer/Main/sync versions matched.
+  Correcting to `int b = 123;` removes CS0029 but legitimately produces CS0219
+  when b is unused. Using b afterward produces a full empty report and clears
+  both consumers, still empty after settling. The harness now waits for a full
+  current-version DTO before accepting clear, avoiding a transient edit-clear pass.
+- Recent-project metadata identified `D:/Frontend-API/fe/TestCSharp`, targeting
+  net9.0 with the reported invalid assignment. Its source was read and copied to
+  an isolated fixture; original project files were not changed.
+- The net9.0 copy did NOT reproduce an entirely empty UI. Its version-2 pull
+  reached csharp-ls and returned full [CS0518, CS0518, CS0518, CS1729], not CS0029.
+  Main normalized all four; Preload accepted them; controller accepted the
+  current response; Monaco and Problems received all four. Thus the first
+  divergence from the expected CS0029 is the provider response, not dropped
+  data in the scheduler/Main/Renderer. The private SDK has only net10 reference
+  assemblies, while system net9 packs are outside that private root. This is
+  evidence of a reference-resolution problem in this test environment, not
+  proof of the user's original empty-UI root cause. READY/RUNNING semantics
+  were not changed or inferred from these diagnostics/logs.
+- A visible fixture captured a directly edited invalid assignment with a red
+  underline and a matching ProblemsStore entry. The correction step did not
+  complete. Native Computer Use capture/focus failures prevent claiming the
+  requested complete manual acceptance sequence.
+- Added a regression proving edit/save pulls wait for both synchronization
+  promises and publish only the current model version. Focused diagnostics:
+  164/164 passed. Full suite initially had one unrelated Git timeout (1005 pass,
+  1 fail); that test passed separately and the unchanged full suite rerun passed
+  1006/1006 in 74 files. Typecheck, lint and production/native build passed.
+  No timeout, worker, retry, lifecycle, scheduling or public API policy changed.
+- Remaining evidence needed: reproduce the original completely empty marker/
+  Problems behavior using the user's actual launch environment and complete
+  the error-to-correction manual sequence. Do not treat this investigation as
+  a resolved production defect or authorize 5.5H.
+
+#### 2026-09-12 corrective runtime evidence (acceptance still pending)
+
+- A fresh `dotnet new console -n TestCSharp` fixture with the pinned private
+  SDK/provider reproduced hover `null` and diagnostics `full: []` for 12 pulls
+  through the production adapter when the canonical URI was lowercased.
+  Preserving URI casing, with identical buffer and capabilities, returned
+  Console documentation, CS0029, and 50 completion items on the first attempt.
+- Main document synchronization now preserves canonical URI casing on the wire;
+  Windows ownership comparison decodes the URI before case folding. Watched-file
+  notifications also preserve canonical casing. No public contract, scheduling,
+  lifecycle policy, security boundary, dependency or ADR was changed.
+- Focused regression passed 160/160; full suite passed 1005/1005 in 74 files.
+  Typecheck and lint passed. Added coverage verifies open/change/save/close and
+  semantic URI consistency, Unicode Windows aliases, duplicate rejection and
+  ownership release. Existing stale/cancelled and diagnostics tests also pass.
+- Electron was launched, but UI automation repeatedly reported user input between
+  observation and action, preventing reliable fixture selection. Completion,
+  hover, signature help, marker/Problems publication and clearing have NOT been
+  accepted in the real app. Adapter evidence is not a substitute for those cases.
+- F/G remain IN_PROGRESS until those runtime cases and the complete requested
+  end-to-end trace are verified. H remains NOT_STARTED.
+
+#### 2026-09-12 resumed end-to-end verification
+
+- `scripts/smoke-csharp-acceptance.mjs` creates a fresh `dotnet new console -n
+  TestCSharp` fixture and runs the actual application Main, secure Preload,
+  Renderer, Monaco providers and pinned csharp-ls. Test-only source transforms
+  under `out/` observe adapter/service/flush results and Renderer provider
+  replies; no debug IPC or production tracing is introduced. A hidden window
+  isolates the test fixture from unrelated desktop input.
+- All five automated real-app cases passed: completion popup with WriteLine,
+  Console hover documentation, signature popup when typing `(` through Monaco
+  (including its normal automatic closing parenthesis), CS0029 marker plus
+  Problems entry, and clearing both after correcting the assignment.
+- Effective hover/diagnostic capabilities are enabled. Each observed semantic
+  provider has one registration. The trace shows synchronized requests reaching
+  the adapter, nonempty hover reaching a valid untrusted Monaco Hover, and full
+  diagnostic reports reaching the current model version and Problems provider
+  `csharp-ls`. Marker owner is `student-ide.language.csharp-ls`; the corrected
+  buffer receives full empty diagnostics and remains clear after settling.
+- The shared failure point was lowercasing the canonical document URI before
+  didOpen and semantic/pull requests. Roslyn returned null hover/empty diagnostics
+  for that differently cased identity. Preserve wire casing while case-folding
+  only decoded Windows ownership keys. No additional production fix, contract,
+  scheduling policy, lifecycle, dependency or ADR was needed on resumption.
+- Focused tests: 170/170; full suite: 1005/1005 in 74 files. Typecheck, lint,
+  production/native build and diff-check passed. Existing unit coverage also
+  exercises full/unchanged results, stale/cancelled generations, disposal and
+  Windows URI alias rejection.
+- Final trace and screenshots are retained locally under
+  `out/csharp-acceptance-evidence/`. Intermediate runs emitted an intermittent
+  generic synchronization/cleanup warning; the final run's Main report trace
+  was empty. Its cause was not established, so this is not a claim that the
+  broader lifecycle acceptance gate has passed.
+- This is automated real-app acceptance, not a claim of manual pointer/keyboard
+  acceptance. Windows Computer Use failed with an unavailable native pipe;
+  human/manual acceptance remains outstanding. F/G stay IN_PROGRESS, H stays
+  NOT_STARTED, and no next package is authorized by these results.
 - Pull diagnostics for open documents, retain result IDs only in Main, normalize
   results, and publish version/generation-safe Monaco markers to the existing
   Problems store and navigation flow.
@@ -3095,6 +3291,65 @@ separate declared/effective capabilities. 5.5G+ is not started.
   restart or raw-log API.
 - Verify update/clear/dispose/navigation, dirty-model preservation, severity/code/
   source mapping, unsupported targets, and failure isolation from other languages.
+- Main now serializes per-document pulls after pending synchronization, retains
+  provider result IDs privately, bounds and sanitizes diagnostic DTOs, and rejects
+  cancelled or stale owner/project/session/document/version results. The adapter
+  sends the provider identifier verified by 5.5B and propagates provider refresh
+  requests without exposing raw LSP state.
+- Renderer publishes a dedicated C# marker owner into the existing Problems
+  store, clears only C# state on edit/close/switch/crash/disposal, preserves dirty
+  editor models during navigation, and performs bounded settling pulls when the
+  provider temporarily returns `unchanged` after an edit. Existing JS/TS/CSS/JSON
+  diagnostic owners remain isolated.
+- Status-bar UX presents dependency, workspace and service lifecycle separately,
+  supports bounded solution selection/loading/failure feedback, and retains
+  syntax/edit availability without adding restart, process or raw-log controls.
+- Focused 5.5G tests passed 128/128. The full suite passed 1004/1004 tests in 74
+  files; the existing jsdom canvas warning remained non-blocking. Typecheck, lint
+  and production/native build passed. No test worker, timeout, assertion or retry
+  policy changed; no dependency, ADR or architecture deviation was introduced.
+- C# Run, workspace diagnostics, public/manual restart, raw logs, Razor, metadata
+  navigation and all other deferred capabilities remain absent. Phase 5.5H retains
+  Windows Electron smoke, repeated-cycle/performance review and final Phase 5.5
+  stabilization.
+
+#### 2026-09-13 development-launch environment correction
+
+- Scope remains corrective Phase 5.5F/G. Phase 5.5H is `NOT_STARTED` and was not
+  started by this work.
+- Side-by-side launch evidence found the first meaningful divergence before
+  Electron composition: the acceptance harness prepended the Phase 5.5B private
+  .NET SDK 10.0.401 and private `csharp-ls` 0.27.0 and set `DOTNET_ROOT`; the
+  prior `npm run dev` command inherited the caller environment. In the inspected
+  shell that meant system .NET SDK 10.0.112, no `DOTNET_ROOT`, and no provider on
+  PATH. A controlled hybrid run supplied the same private provider while retaining
+  system .NET and reproduced a window where completion/service readiness preceded
+  the expected diagnostic publication.
+- Main entry (`out/main/index.js`), Preload (`out/preload/index.js`), development
+  Renderer source modules, Electron entry/cwd, project/workspace selection,
+  native binding, one main frame/provider process, service state and provider
+  registration were otherwise current and healthy. Vite performed one initial
+  dependency-optimization reload; ownership cleanup/reacquisition completed and
+  no duplicate frame, session, provider registration, or unexpected Main restart
+  remained. The diagnostic scheduler started for the current open-document
+  version; traced provider replies reached Main, Preload and Renderer, then Monaco
+  and ProblemsStore.
+- `npm run dev` now uses a narrow Node launcher. On Windows it prefers the complete
+  project-private Phase 5.5B SDK/provider pair only when both executables exist;
+  otherwise it preserves the accepted inherited PATH fallback. Electron/Main,
+  Preload, Renderer, public contracts, security boundaries, diagnostics logic,
+  scheduling and lifecycle architecture are unchanged.
+- Real fixed development launch verification used SDK 10.0.401 and the private
+  provider category. `int b = "aaa";` at model version 85 produced a full CS0029
+  provider reply, Renderer DTO, Monaco marker and one Problems error. Changing to
+  `int b = 123;` at version 86 produced only CS0219 and removed CS0029 from both
+  Monaco and Problems.
+- Regression coverage passed 3/3 for complete-pair preference, incomplete-pair
+  fallback and non-Windows preservation. Focused Phase 5.5 coverage passed
+  171/171. The final full suite passed 1009/1009 in 75 files; an earlier parallel
+  run had one unrelated 5-second Git integration timeout, whose full 32-test file
+  passed immediately before the clean full rerun. Typecheck, lint and
+  production/native build and `git diff --check` passed.
 
 ### 5.5H — Stabilization + Final Verification
 

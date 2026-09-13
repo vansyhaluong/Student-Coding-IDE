@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, rename } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { ProjectService } from '../../src/main/services/project/project-service'
 import { FileSystemService } from '../../src/main/services/filesystem/filesystem-service'
 import { CsharpWorkspace, type WorkspaceCommands } from '../../src/main/services/language/csharp-workspace'
@@ -151,6 +152,25 @@ async function documentFixture() {
 }
 const edit = (text: string) => [{ range: { start: { line: 0, character: 1 }, end: { line: 0, character: 3 } }, text }]
 describe('ordered document synchronization', () => {
+  it('preserves canonical URI casing across sync and semantic requests while rejecting Windows aliases', async () => {
+    const f = await documentFixture()
+    const file = await f.files.authorizeRunFile(f.project.id, f.handle.relativePath)
+    const uri = pathToFileURL(file.canonicalFile).href
+    expect(f.transport.didOpen.mock.calls[0][0].textDocument.uri).toBe(uri)
+    expect(await f.sync.withFlushedDocument(f.handle, async (target) => target)).toBe(uri)
+    if (process.platform === 'win32') {
+      expect(f.sync.ownsUri(uri.toLowerCase())).toBe(true)
+      await expect(f.sync.open(f.handle.relativePath.toUpperCase(), 1, '', false)).rejects.toMatchObject({ reason: 'busy' })
+    }
+    await f.sync.change(f.handle, 2, edit('AB'))
+    await f.sync.saved(f.handle, 2)
+    await f.sync.close(f.handle)
+    for (const transport of [f.transport.didChange, f.transport.didSave, f.transport.didClose]) {
+      expect(transport.mock.calls[0][0].textDocument.uri).toBe(uri)
+    }
+    expect(f.sync.ownsUri(uri)).toBe(false)
+    await expect(f.sync.open(f.handle.relativePath, 3, '', false)).resolves.toBeDefined()
+  })
   it('retains a deleted dirty buffer, rejects save, and reopens a renamed document with a fresh identity', async () => {
     const f = await documentFixture()
     await rename(join(f.root, f.handle.relativePath), join(f.root, 'Moved.cs'))
@@ -178,10 +198,9 @@ describe('ordered document synchronization', () => {
     await watcher.accept({ projectId: f.project.id, relativePath: 'Closed.cs', kind: 'renamed' })
     await watcher.accept({ projectId: f.project.id, relativePath: 'Renamed.cs', kind: 'renamed' })
     expect(notifications).toEqual([
-      { changes: [{ uri: expect.stringContaining('/closed.cs'), type: 3 }] },
-      { changes: [{ uri: expect.stringContaining('/renamed.cs'), type: 1 }] },
-    ].map((item) => process.platform === 'win32' ? item : { changes: item.changes.map((change) => ({ ...change,
-      uri: expect.stringContaining(change.type === 3 ? '/Closed.cs' : '/Renamed.cs') })) }))
+      { changes: [{ uri: expect.stringContaining('/Closed.cs'), type: 3 }] },
+      { changes: [{ uri: expect.stringContaining('/Renamed.cs'), type: 1 }] },
+    ])
     watched.watchedFileRegistrations.set('registration', { watchers: [{ globPattern: '**/*.cs', kind: 2 }] })
     await writeFile(join(f.root, 'New.cs'), 'new')
     await watcher.accept({ projectId: f.project.id, relativePath: 'New.cs', kind: 'renamed' })

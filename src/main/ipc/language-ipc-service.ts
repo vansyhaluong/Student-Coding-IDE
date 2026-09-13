@@ -1,7 +1,7 @@
 ﻿import { LANGUAGE_CHANNELS } from '../../shared/contracts/language'
 import { validateLanguageProject, validateLanguageDocument, validateLanguageCancel,
   validateSelectLanguageWorkspaceRequest, validateCompletionRequest, validateCompletionResolveRequest,
-  validateHoverRequest, validateSignatureHelpRequest, validateDefinitionRequest } from '../../shared/contracts/language-validation'
+  validateHoverRequest, validateSignatureHelpRequest, validateDefinitionRequest, validateDiagnosticRequest } from '../../shared/contracts/language-validation'
 import type { CsharpSemanticService } from '../services/language/csharp-semantic-service'
 import type { IpcHandlerRegistry } from './ipc-handler-registry'
 
@@ -24,6 +24,7 @@ export class LanguageIpcService {
       r.register({ channel: c.getHover, validate: validateHoverRequest, handle: (v, ctx) => s.semantic('hover', v, ctx) }),
       r.register({ channel: c.getSignatureHelp, validate: validateSignatureHelpRequest, handle: (v, ctx) => s.semantic('signature', v, ctx) }),
       r.register({ channel: c.getDefinition, validate: validateDefinitionRequest, handle: (v, ctx) => s.semantic('definition', v, ctx) }),
+      r.register({ channel: c.getDiagnostics, validate: validateDiagnosticRequest, handle: (v, ctx) => s.diagnostics(v, ctx) }),
       r.register({ channel: c.cancel, validate: validateLanguageCancel, handle: (v, ctx) => s.cancel(v.requestId, ctx) }),
     )
   }

@@ -20,12 +20,96 @@ import type { LanguageServiceManager } from '../../src/main/services/language/la
 import type { CSharpLsAdapter } from '../../src/main/services/language/csharp-ls-adapter'
 import { completionItem, markdown, signatureResult, triggers } from '../../src/main/services/language/csharp-semantic-mapping'
 import { validateLanguageStatus, validateLanguageWorkspaceStatus } from '../../src/shared/contracts/language-validation'
+import { normalizeCsharpDiagnostics } from '../../src/main/services/language/csharp-diagnostic-mapping'
 
 const cleanup: Array<() => Promise<unknown> | void> = []
 afterEach(async () => { for (const clean of cleanup.splice(0).reverse()) await clean() })
 const v = (n: number) => n as DocumentVersion
 const id = (s: string) => ('language_' + s) as SemanticRequestId
 const range = { start: { line: 0, character: 0 }, end: { line: 0, character: 3 } }
+
+describe('5.5G diagnostic normalization', () => {
+  it.each([[1, 'error'], [2, 'warning'], [3, 'information'], [4, 'hint'], [undefined, 'error']])('maps severity %s explicitly to %s', (severity, expected) => {
+    expect(normalizeCsharpDiagnostics([{ range, severity, message: 'message' }])[0].severity).toBe(expected)
+  })
+  it('keeps only semantic fields and safe code/source, redacting whole private-path messages', () => {
+    const [diagnostic] = normalizeCsharpDiagnostics([{ range, message: 'Expected ;', code: 'CS1002', source: 'csharp-ls',
+      data: { private: true }, relatedInformation: [{ location: { uri: 'file:///secret' } }] }])
+    expect(diagnostic).toEqual({ range, severity: 'error', message: 'Expected ;', code: 'CS1002', source: 'csharp-ls' })
+    for (const path of ['C:\\private space\\secret.cs', '\\\\server\\share\\file.cs', '/home/private/file.cs', 'file:///private.cs']) {
+      expect(normalizeCsharpDiagnostics([{ range, message: `Failure in ${path}`, code: path, source: path }])).toEqual([
+        { range, severity: 'error', message: 'C# diagnostic details contain a private path.', code: null, source: null },
+      ])
+    }
+    expect(normalizeCsharpDiagnostics([{ range, message: 'numeric', code: 123 }])[0].code).toBe(123)
+  })
+  it.each([null, {}, [{ range, message: 3 }], [{ range, message: 'x', severity: 9 }], [{ message: 'x', range: { start: { line: 2, character: 0 }, end: { line: 1, character: 0 } } }]])('rejects malformed diagnostics %j', input => {
+    expect(() => normalizeCsharpDiagnostics(input)).toThrow()
+  })
+})
+
+describe('5.5G diagnostic IPC and Main ordering', () => {
+  it.each(['resultId', 'diagnosticData'])('preload rejects raw diagnostic reply fields: %s', async field => {
+    const request = { requestId: id('boundary'), document: { projectId: 'project_1234567890abcdef12345678', relativePath: 'Open.cs' }, documentVersion: v(1) }
+    const reply = { requestId: request.requestId, documentVersion: request.documentVersion, kind: 'full',
+      diagnostics: [{ range, message: 'safe', severity: 'error', code: null, source: null,
+        ...(field === 'diagnosticData' ? { data: { uri: 'file:///private' } } : {}) }],
+      ...(field === 'resultId' ? { resultId: 'main-only' } : {}) }
+    const api = createLanguageBridge({ invoke: async () => ({ ok: true, value: reply }), on: () => {}, removeListener: () => {} })
+    expect(await api.getDiagnostics(request as Parameters<typeof api.getDiagnostics>[0])).toMatchObject({ ok: false })
+  })
+  it('returns full, unchanged and empty semantic reports without raw provider fields', async () => {
+    const f = await fixture(); value(await f.open())
+    const request = { requestId: id('diagnostics'), document: f.request().document, documentVersion: v(1) }
+    const first = value(await f.api.getDiagnostics(request))
+    expect(first).toMatchObject({ kind: 'full', documentVersion: 1, diagnostics: [{ severity: 'error', code: 'CS1002', source: 'csharp-ls' }] })
+    f.adapter.documentDiagnosticReport.mockResolvedValue({ kind: 'unchanged', items: [{ range, message: 'CS test', severity: 1, code: 'CS1002', source: 'csharp-ls' }] })
+    expect(value(await f.api.getDiagnostics(request))).toEqual({ ...first, kind: 'unchanged' })
+    f.adapter.documentDiagnosticReport.mockResolvedValue({ kind: 'full', items: [] })
+    expect(value(await f.api.getDiagnostics(request)).diagnostics).toEqual([])
+    expect(JSON.stringify(first)).not.toMatch(/resultId|data|file:\/\/|canonicalRoot|pid|operation/)
+    expect(await f.send(LANGUAGE_CHANNELS.getDiagnostics, { ...request, uri: 'file:///secret' })).toMatchObject({ ok: false })
+  })
+  it('flushes every prior change before pulling the current version', async () => {
+    const f = await fixture(); value(await f.open()); const order: string[] = []
+    f.adapter.didChange.mockImplementation(async () => { order.push('change') })
+    f.adapter.documentDiagnosticReport.mockImplementation(async () => { order.push('diagnostics'); return { kind: 'full', items: [] } })
+    const first = f.api.changeDocument({ ...f.document, modelVersion: v(2), changes: [{ range, text: 'def' }] })
+    const second = f.api.changeDocument({ ...f.document, modelVersion: v(3), changes: [{ range, text: 'ghi' }] })
+    const pull = f.api.getDiagnostics({ requestId: id('flush'), document: f.request().document, documentVersion: v(3) })
+    value(await first); value(await second); value(await pull)
+    expect(order).toEqual(['change', 'change', 'diagnostics'])
+  })
+  it('serializes overlapping pulls and cancels queued work before adapter dispatch', async () => {
+    const f = await fixture(); value(await f.open())
+    const entered = deferred<void>(), response = deferred<Awaited<ReturnType<CSharpLsAdapter['documentDiagnosticReport']>>>()
+    f.adapter.documentDiagnosticReport.mockImplementation(() => { entered.resolve(); return response.promise })
+    const request = { requestId: id('first-pull'), document: f.request().document, documentVersion: v(1) }
+    const first = f.api.getDiagnostics(request); await entered.promise
+    const secondRequest = { ...request, requestId: id('queued-pull') }, second = f.api.getDiagnostics(secondRequest)
+    value(await f.api.cancel(secondRequest.requestId))
+    expect(f.adapter.documentDiagnosticReport).toHaveBeenCalledOnce()
+    response.resolve({ kind: 'full', items: [] }); value(await first)
+    expect(await second).toMatchObject({ ok: false })
+    expect(f.adapter.documentDiagnosticReport).toHaveBeenCalledOnce()
+  })
+  it.each(['change', 'close', 'session', 'crash', 'owner', 'project', 'cancel'])('rejects a late pull after %s', async cause => {
+    const f = await fixture(); value(await f.open())
+    const entered = deferred<void>(), response = deferred<Awaited<ReturnType<CSharpLsAdapter['documentDiagnosticReport']>>>()
+    f.adapter.documentDiagnosticReport.mockImplementation(() => { entered.resolve(); return response.promise })
+    const request = { requestId: id('late-pull'), document: f.request().document, documentVersion: v(1) }
+    const pull = f.api.getDiagnostics(request); await entered.promise
+    if (cause === 'change') value(await f.api.changeDocument({ ...f.document, modelVersion: v(2), changes: [{ range, text: 'def' }] }))
+    if (cause === 'close') value(await f.api.closeDocument(f.document))
+    if (cause === 'session') await f.session.invalidate()
+    if (cause === 'crash') { f.manager.state = 'CRASHED'; for (const notify of f.listeners) notify() }
+    if (cause === 'owner') f.owner.emit('render-process-gone')
+    if (cause === 'project') await f.projects.closeProject()
+    if (cause === 'cancel') value(await f.api.cancel(request.requestId))
+    response.resolve({ kind: 'full', items: [{ range, message: 'stale' }] })
+    expect(await pull).toMatchObject({ ok: false })
+  })
+})
 function deferred<T>() { let resolve!: (v: T) => void; const promise = new Promise<T>(done => { resolve = done }); return { promise, resolve } }
 const frame = (token: string) => ({ frameToken: token, processId: 10, routingId: 1, detached: false, isDestroyed: () => false })
 async function fixture() {
@@ -37,6 +121,7 @@ async function fixture() {
   const commands = { stop: vi.fn(async () => {}), execute: vi.fn(async (args: readonly string[]) => ({ exitCode: 0,
     stdout: args[0] === '--version' ? '10.0.401' : JSON.stringify({ Properties: { TargetFramework: 'net10.0', TargetFrameworks: '', TargetFrameworkIdentifier: '.NETCoreApp', TargetFrameworkVersion: 'v10.0' }, Items: { ProjectReference: [] } }) })) }
   const adapter = {
+    documentDiagnosticReport: vi.fn< CSharpLsAdapter['documentDiagnosticReport'] >(async () => ({ kind: 'full', items: [{ range, message: 'CS test', severity: 1, code: 'CS1002', source: 'csharp-ls' }] })),
     didOpen: vi.fn(async () => {}), didChange: vi.fn(async () => {}), didSave: vi.fn(async () => {}), didClose: vi.fn(async () => {}),
     watchedFileRegistrations: new Map(), didChangeWatchedFiles: vi.fn(async () => {}),
     serverCapabilities: { completionResolve: true }, initializeResult: { capabilities: { completionProvider: { triggerCharacters: ['.', '.', '\n', 'bad'] },
@@ -102,7 +187,7 @@ describe('5.5F IPC/preload ownership and synchronization', () => {
     expect(result.items[0]).toMatchObject({ label: 'Method', kind: 'method', insertText: 'Method()', replacementRange: range })
     expect(result.items[0].handle).toMatch(/^completion_/)
     expect(JSON.stringify(result)).not.toMatch(/private|data|canonicalRoot|pid|file:\/\//)
-    expect(Object.keys(f.api).sort()).toEqual(['cancel','changeDocument','closeDocument','getCompletion','getDefinition','getHover','getSignatureHelp','getStatus','getWorkspaceState','onStatus','openDocument','resolveCompletion','saveDocument','selectWorkspace'].sort())
+    expect(Object.keys(f.api).sort()).toEqual(['cancel','changeDocument','closeDocument','getCompletion','getDefinition','getDiagnostics','getHover','getSignatureHelp','getStatus','getWorkspaceState','onStatus','openDocument','resolveCompletion','saveDocument','selectWorkspace'].sort())
   })
   it.each(['../Open.cs', 'C:/private.cs', '/outside.cs', 'Open.ts'])('rejects malformed/open path %s before dispatch', async path => {
     const f = await fixture()

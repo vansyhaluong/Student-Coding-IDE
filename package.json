@@ -13,7 +13,7 @@
     "node-pty:smoke": "node scripts/run-windows-terminal-job-smoke.mjs",
     "node-pty:smoke-service": "node scripts/run-windows-terminal-service-smoke.mjs",
     "postinstall": "npm run node-pty:patch && npm run node-pty:rebuild",
-    "dev": "electron-vite dev",
+    "dev": "node scripts/run-development.mjs",
     "build": "electron-vite build",
     "smoke:monaco-workers": "electron scripts/smoke-monaco-workers.mjs",
     "preview": "electron-vite preview",

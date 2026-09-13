@@ -15,7 +15,7 @@ are recorded only after their implementing work packages pass.
 | HTML | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Deferred | Deferred | No | N/A | Monaco HTML worker | V1 syntax/completion/hover; diagnostics deferred because provider has no validation support |
 | CSS | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Yes | Yes | No | N/A | Monaco CSS worker | Accepted and verified for Phase 3 V1 |
 | JSON | 2 | Yes | Yes, local schema-free behavior | No useful result without a configured local schema | Not required | Not required | Yes | Yes | No | N/A | Monaco JSON worker | Accepted and verified for current local-only configuration |
-| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Yes | Yes | Yes | Yes | Phase 5.5G | Phase 5.5G | Deferred | Independent; no C# Run selected | Monaco tokenization + Main-owned `csharp-ls` semantic providers | Phase 3 syntax complete; 5.5B passed and 5.5C–F complete; diagnostics/status integration remains 5.5G |
+| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Yes | Yes | Yes | Yes | Yes, open documents | Yes | Deferred | Independent; no C# Run selected | Monaco tokenization + Main-owned `csharp-ls` semantic providers | Phase 3 syntax and 5.5B–5.5E complete; F/G reopened for runtime acceptance; H not started |
 | PHP | Syntax-only | Yes | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Future | Monaco tokenization only | Accepted syntax-only scope |
 
 ## Deferred future language support
@@ -89,7 +89,8 @@ does not retroactively change Phase 3 implementation or acceptance evidence.
   dependencies. Phase 5.5D–E implement internal transport, sessions, workspace
   preflight and document synchronization. Phase 5.5F implements semantic
   IPC/Preload and Renderer completion, hover, signature-help and definition
-  providers; diagnostics/Problems/status integration remains Phase 5.5G.
+  providers. Phase 5.5G implements open-document diagnostics, Problems and
+  separate dependency/workspace/service status UX.
 - Renderer sees only typed semantic APIs. It never sees raw LSP/JSON-RPC, PID,
   executable path, cwd, spawn arguments, canonical project root, raw logs, or
   diagnostic `resultId`.
@@ -160,8 +161,8 @@ mode; no-solution recursive discovery behavior/performance; paths with spaces,
 detection without parsing human log strings; crash/shutdown and descendant
 cleanup; and electron-vite/typecheck/build compatibility. The 2026-09-10 spike
 and corrective workspace-readiness probe passed this hard gate. Phase 5.5C
-and Phase 5.5D–F subsequently completed under explicit authorization.
-Phase 5.5G–H still require separate authorization.
+and Phase 5.5D–G subsequently implemented under explicit authorization. F/G were reopened after failed manual runtime acceptance; automated real-app regression now passes, but manual reacceptance remains outstanding.
+Phase 5.5H still requires separate authorization.
 
 ## Current provider decisions and Phase 3 acceptance evidence
 
