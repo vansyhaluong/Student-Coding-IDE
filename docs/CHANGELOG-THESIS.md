@@ -1526,3 +1526,21 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   Focused tests passed 171/171; the final full suite passed 1009/1009; typecheck,
   lint, production/native build and `git diff --check` passed. Phase 5.5H remains
   NOT_STARTED.
+
+## Phase 5.5H — Stabilization and final verification (2026-09-13) — COMPLETE
+
+- Final verification passed: focused 227/227 tests (14 files), full 1009/1009
+  (75 files), typecheck, lint, production/native build and git diff --check.
+- Real Windows native ownership/descendant cleanup, blocked stdin settlement,
+  provider lifecycle, workspace/preflight, Unicode/UTF-16, document sync/save
+  and repeated cleanup passed. Controlled real-provider crash reached CRASHED,
+  rejected the old adapter and released all test-owned resources.
+- Final security audit confirmed sandbox settings, runtime validation, trusted
+  frame/project/path/version ownership and Main-only protocol/process authority.
+- The user confirmed manual completion, hover, signature help, definition,
+  markers/Problems, correction clearing, project switching, document reopening
+  and npm run dev acceptance PASS, and confirmed all remaining H gates satisfied.
+  This supersedes the historical manual-pending F/G and H records above.
+- Phase 5.5A–5.5H and overall Phase 5.5 are COMPLETE. Final closure changed
+  documentation only; no production code or architecture changed. Phase 6/7
+  remain NOT_STARTED. Packaged/installed C# acceptance remains Phase 7.

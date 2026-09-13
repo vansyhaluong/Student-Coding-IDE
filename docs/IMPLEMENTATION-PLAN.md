@@ -115,7 +115,7 @@ before affected work continues.
 | Phase 3 — Language Intelligence | `COMPLETE` | 3A–3F complete; current V1 acceptance passed |
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
 | Phase 5 — Git Integration | `COMPLETE` | Corrective Phase 5C native-test portability fix and Phase 5F re-verification passed locally |
-| Phase 5.5 — C# Language Intelligence | `IN_PROGRESS` | 5.5A–5.5E complete; F/G reopened for failed runtime acceptance; H not started |
+| Phase 5.5 — C# Language Intelligence | `COMPLETE` | 5.5A–5.5H complete; automated verification and user-confirmed manual acceptance PASS |
 | Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
@@ -160,7 +160,7 @@ Phase 4 and Phase 5 packages are also `COMPLETE`. Phase 5.5A is complete. Phase
 5.5B and its corrective structured workspace-readiness spike passed on Windows.
 Exact provider/transport versions are selected and the 5.5C contracts and
 dependency foundation, 5.5D Main LSP core and 5.5E workspace/document sync are
-complete; 5.5F–5.5H have not started and still require explicit authorization.
+complete. 5.5F–5.5H are COMPLETE after corrective runtime verification and user-confirmed manual acceptance.
 Phases 6–7 have not started.
 
 ## 7. Dependency graph
@@ -2672,17 +2672,16 @@ part of this phase.
 - Phase 5.5C — Contracts + Dependency Foundation: `COMPLETE`.
 - Phase 5.5D — Main LSP Core + C# Adapter: `COMPLETE`.
 - Phase 5.5E — Workspace + Document Synchronization: `COMPLETE`.
-- Phase 5.5F — IPC + Preload + Monaco Semantic Providers: `IN_PROGRESS`.
-- Phase 5.5G — Diagnostics + Problems + Status UX: `IN_PROGRESS`.
-- Phase 5.5H — Stabilization + Final Verification: `NOT_STARTED`.
+- Phase 5.5F — IPC + Preload + Monaco Semantic Providers: `COMPLETE`.
+- Phase 5.5G — Diagnostics + Problems + Status UX: `COMPLETE`.
+- Phase 5.5H — Stabilization + Final Verification: `COMPLETE`.
 
-Phase 5.5 overall is `IN_PROGRESS`. The 2026-09-10 corrective spike resolved the
-5.5B blocker with a structured Main-owned preflight and honest readiness
-semantics. Phase 5.5C and the separately authorized 5.5D implementation are
-complete. The separately authorized 5.5E workspace/document synchronization and
-5.5F semantic IPC/Monaco integration and the separately authorized 5.5G
-diagnostics/Problems/status integration were reopened on 2026-09-12 after
-failed real-app hover and diagnostics acceptance. Phase 5.5H has not begun.
+Phase 5.5 overall is `COMPLETE`. The 5.5B hard gate passed with the pinned
+provider/transport stack and structured preflight. The F/G corrective URI and
+development-launch work passed automated verification and user-confirmed manual
+reacceptance. Phase 5.5H final verification is complete. Dated investigation
+entries below retain their historical status; this summary and the final 5.5H
+acceptance record supersede earlier pending/reopened statements.
 
 ### Goal and capability scope
 
@@ -3047,12 +3046,7 @@ trusted-workspace clarification. No sandbox, trust UX, or 5.5F+ work is included
 
 ### 5.5F — IPC + Preload + Monaco Semantic Providers
 
-Status: `IN_PROGRESS` — reopened 2026-09-12 after real-app hover acceptance failed.
-Corrective work preserves canonical document URI casing; runtime revalidation is pending.
-Previously implemented Option A contract reconciliation
-is implemented with truthful workspace mode, optional failed selection and
-separate declared/effective capabilities. F/G corrective verification is ongoing;
-5.5H is not started.
+Status: `COMPLETE` — corrective runtime verification and user-confirmed manual acceptance PASS on 2026-09-13. Canonical URI casing and the accepted semantic contract remain preserved.
 
 - Add exact-validated semantic IPC and narrow Preload bridge using project IDs,
   relative paths, trusted sender/document ownership, and cancellation.
@@ -3092,12 +3086,7 @@ separate declared/effective capabilities. F/G corrective verification is ongoing
 
 ### 5.5G — Diagnostics + Problems + Status UX
 
-Status: `IN_PROGRESS` — reopened 2026-09-12 after real-app diagnostics acceptance failed.
-Corrective URI work and real-app revalidation are required before completion.
-Previously implemented open-document pull diagnostics,
-Problems/Monaco publication and separate dependency/workspace/service status UX
-are implemented; automated verification does not establish real-app acceptance.
-Phase 5.5H has not started.
+Status: `COMPLETE` — corrective diagnostics/Problems verification and user-confirmed manual acceptance PASS on 2026-09-13. Earlier investigation entries below are historical.
 
 #### 2026-09-12 net10.0 runtime-identity investigation
 
@@ -3352,6 +3341,36 @@ Phase 5.5H has not started.
   production/native build and `git diff --check` passed.
 
 ### 5.5H — Stabilization + Final Verification
+
+Status: `COMPLETE` — final automated verification and user-confirmed manual acceptance PASS on 2026-09-13.
+
+#### 2026-09-13 final-verification evidence — PASS
+
+- Preserved prior passing evidence: focused 227/227 (14 files), full 1009/1009
+  (75 files), production/native build, real native/preflight/workspace/sync smoke.
+- Collected the interrupted typecheck and lint processes: both exited 0.
+- Final source audit confirmed contextIsolation=true, nodeIntegration=false,
+  sandbox=true; exact language request/response validation; committed owner/frame,
+  project/path/version checks; contained definition targets; private wire IDs,
+  completion data, diagnostic result IDs and process authority stay Main-owned.
+- An isolated real-provider controlled-crash check used production manager/native
+  factory with a test-only binding observer: STOPPED -> STARTING -> RUNNING ->
+  CRASHED, retired adapter rejected, server PID exited, cleanupPending=false and
+  zero registered owned resources. The temporary harness is under ignored out/.
+  It does not replace renderer crash-state acceptance in the real application.
+- User-confirmed manual acceptance PASS: completion, hover, signature help,
+  go to definition, diagnostic markers, Problems, clearing after correction,
+  project-switch stale-state cleanup, document close/reopen recovery and the
+  `npm run dev` runtime. The user explicitly confirms all remaining 5.5H
+  acceptance gates are satisfied. This closes the earlier Computer Use tooling
+  limitation; manual results are user-provided, not agent-observed UI evidence.
+- Typecheck, lint, build, focused/full tests, Windows smoke, security/lifecycle
+  verification and final documentation diff-check passed. Phase 5.5A–5.5H and
+  overall Phase 5.5 are COMPLETE.
+- No production code, dependency, test policy or architecture changed during
+  final documentation closure. Phase 6 and Phase 7 remain NOT_STARTED.
+  Packaged/installed provider discovery, resource placement and installer
+  verification remain Phase 7; they are not claimed by Phase 5.5.
 
 - Run focused and full automated suites, typecheck, lint, production build,
   `git diff --check`, Windows Electron smoke, security/lifecycle review, repeated

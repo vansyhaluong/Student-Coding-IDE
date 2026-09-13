@@ -15,7 +15,7 @@ are recorded only after their implementing work packages pass.
 | HTML | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Deferred | Deferred | No | N/A | Monaco HTML worker | V1 syntax/completion/hover; diagnostics deferred because provider has no validation support |
 | CSS | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Yes | Yes | No | N/A | Monaco CSS worker | Accepted and verified for Phase 3 V1 |
 | JSON | 2 | Yes | Yes, local schema-free behavior | No useful result without a configured local schema | Not required | Not required | Yes | Yes | No | N/A | Monaco JSON worker | Accepted and verified for current local-only configuration |
-| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Yes | Yes | Yes | Yes | Yes, open documents | Yes | Deferred | Independent; no C# Run selected | Monaco tokenization + Main-owned `csharp-ls` semantic providers | Phase 3 syntax and 5.5B–5.5E complete; F/G reopened for runtime acceptance; H not started |
+| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Yes | Yes | Yes | Yes | Yes, open documents | Yes | Deferred | Independent; no C# Run selected | Monaco tokenization + Main-owned `csharp-ls` semantic providers | Phase 3 syntax and Phase 5.5A–5.5H COMPLETE; automated verification and user-confirmed manual acceptance PASS |
 | PHP | Syntax-only | Yes | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Future | Monaco tokenization only | Accepted syntax-only scope |
 
 ## Deferred future language support
@@ -161,8 +161,7 @@ mode; no-solution recursive discovery behavior/performance; paths with spaces,
 detection without parsing human log strings; crash/shutdown and descendant
 cleanup; and electron-vite/typecheck/build compatibility. The 2026-09-10 spike
 and corrective workspace-readiness probe passed this hard gate. Phase 5.5C
-and Phase 5.5D–G subsequently implemented under explicit authorization. F/G were reopened after failed manual runtime acceptance; automated real-app regression now passes, but manual reacceptance remains outstanding.
-Phase 5.5H still requires separate authorization.
+and Phase 5.5D–G subsequently implemented under explicit authorization. Corrective F/G runtime verification and user-confirmed manual acceptance passed on 2026-09-13. Phase 5.5H and overall Phase 5.5 are COMPLETE. Phase 6/7 remain NOT_STARTED; packaged/installed acceptance remains Phase 7.
 
 ## Current provider decisions and Phase 3 acceptance evidence
 
