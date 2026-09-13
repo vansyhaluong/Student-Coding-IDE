@@ -33,8 +33,8 @@ Main Process
   |-- Settings / Persistence / Git
   `-- Terminal / Run / Process Manager
 
-Future external language providers, if authorized:
-Main-owned LanguageServiceManager -> managed language-server child processes
+Phase 5.5 C# language intelligence after the 5.5B hard gate:
+Main-owned LanguageServiceManager -> app-owned pinned csharp-ls child process
 ```
 
 The application starts as one main window in V1. The main process owns application readiness, window creation, dependency/service initialization, shutdown coordination, and cleanup of IDE-owned processes. Multi-window, deep links, custom protocols, and background/tray behavior are not V1 requirements.
@@ -51,7 +51,7 @@ The application starts as one main window in V1. The main process owns applicati
 | Settings and persistence | Main | Controlled local storage and atomic writes |
 | Runtime/dependency detection | Main | PATH and configured executable validation |
 | Current Phase 3 Monaco language providers | Renderer browser workers | No external process or privileged authority required |
-| Future language-server processes | Main child processes | Isolation, lifecycle, logging, restart |
+| Phase 5.5 C# language-server process | Main child process | Isolation, project scope, lifecycle, protocol routing, and cleanup |
 | Monaco and its browser workers | Renderer | Editor is a browser UI concern |
 | Tabs, dirty state, view state | Renderer | Interactive editor state |
 | Explorer, Problems, Terminal, Output, Git UI | Renderer | Presentation and user interaction |
@@ -65,10 +65,10 @@ The main process may access Node and Electron privileged APIs. It:
 
 - creates and secures application windows;
 - validates project roots and all filesystem paths;
-- owns ProjectService, FileSystemService, SearchService, SettingsService, PersistenceService, TerminalService, RunService, GitService, DependencyDetectionService, ProcessManager, and any future external-language-service lifecycle;
+- owns ProjectService, FileSystemService, SearchService, SettingsService, PersistenceService, TerminalService, RunService, GitService, DependencyDetectionService, ProcessManager, and the Phase 5.5 C# LanguageServiceManager lifecycle;
 - serializes domain errors across IPC;
 - forwards scoped events only to live renderer subscribers;
-- coordinates shutdown and cleans up PTYs, run processes, watchers, and any future language servers.
+- coordinates shutdown and cleans up PTYs, run processes, watchers, and the C# language server.
 
 The main process must not expose a generic shell runner to the renderer. Long operations must be asynchronous and cancellable where required.
 
@@ -89,9 +89,10 @@ window.studentIde.settings
 window.studentIde.lifecycle
 ```
 
-Current Phase 3 does not expose a language IPC domain. A future external
-provider may add a narrow `window.studentIde.language` surface only after its
-scope, contracts, and runtime validation are authorized.
+Phase 5.5 adds a narrow `window.studentIde.language` semantic surface. It exposes
+typed C# capability requests, document synchronization, diagnostics/status
+events, and cancellation only. It never exposes raw LSP/JSON-RPC, process
+controls, executable details, cwd, spawn arguments, or canonical project roots.
 
 ### Renderer
 
@@ -122,8 +123,8 @@ The renderer modules are:
 | ProcessManager | Internal registry and common child-process cleanup primitives | Generic renderer command execution |
 | GitService | Typed local Git operations and error mapping | Hosted PRs, credentials UI, arbitrary Git command bridge |
 | Renderer LanguageProviderManager | Current Monaco provider registry, capabilities, bounded source synchronization, diagnostics, status | Disk access, runtime execution, external process ownership, Problems presentation |
-| Future Main LanguageServiceManager | External provider registry, lifecycle, validated routing, diagnostics, status | Runtime execution and Problems presentation |
-| DependencyDetectionService | Detect runtimes, Git, and future language-service executables independently | Starting those services/processes |
+| Main LanguageServiceManager | Phase 5.5 C# session registry, `csharp-ls` lifecycle, validated semantic routing, synchronization, diagnostics, status, and cleanup | Runtime execution, Monaco presentation, Problems presentation, or generic process control |
+| DependencyDetectionService | Detect runtimes, Git, and C# language-service dependencies independently | Starting those services/processes |
 | SettingsService | Validate/default/update user and workspace settings | Renderer-only transient state |
 | PersistenceService | Versioned local serialization, atomic writes, recovery | Feature-specific policy |
 
@@ -135,7 +136,7 @@ IPC contracts live in a shared, side-effect-free contract layer. Each domain def
 
 - **Request/response:** finite operations such as `file:read`, `file:write`, `git:status`, or `settings:get`.
 - **Event stream:** repeated output such as `terminal:data`, `run:stdout`, diagnostics, and watcher changes.
-- **Lifecycle event:** service/session transitions such as `terminal:exit` and `run:exit`; a future external provider may add a scoped language-status event.
+- **Lifecycle event:** service/session transitions such as `terminal:exit` and `run:exit`; Phase 5.5 C# adds scoped language-status events.
 - **Cancellation:** an operation starts with an opaque operation/session ID and is cancelled through a domain-specific endpoint.
 
 ### Naming convention
@@ -157,8 +158,9 @@ run:exit                git:status
 settings:update
 ```
 
-No `language:start`, `language:restart`, or external-provider process channel is
-part of Phase 3 V1.
+No public `language:start`, `language:stop`, `language:restart`, raw-log, or
+external-provider process channel is part of V1. Phase 5.5 language IPC uses
+semantic operations and Main-owned lazy lifecycle only.
 
 Event subscriptions return an unsubscribe function. Main removes listeners when a WebContents or session is destroyed. Event payloads include a session/operation ID so stale output cannot update a replacement session.
 
@@ -195,7 +197,7 @@ Messages are safe for users; developer details and stack traces remain in logs. 
 | Workspace state | open tabs, active tab, panel visibility, optional cursor/view snapshots | Versioned state keyed by canonical project path |
 | Editor state | Monaco models, dirty buffers, disk-missing/conflict state, selections, undo stack | EditorModelManager in renderer; never blindly overwritten by disk |
 | Ephemeral UI state | dialogs, hover/loading state, menu state | React component/feature store only |
-| Process state | terminal/run session IDs and lifecycle; future external-language sessions only if authorized | Owning main-process service |
+| Process state | terminal/run session IDs and lifecycle; one active-project C# language session | Owning main-process service |
 
 React local state and focused feature stores are sufficient initially. Selection of a renderer store library is `TBD` until Phase 2 demonstrates cross-feature needs; Redux/Zustand is not selected solely because Orca uses Zustand.
 
@@ -429,7 +431,7 @@ all-domain store or new ADR-011 selection is introduced.
 RunSession/event DTOs carry no executable, native handle, cwd, args,
 environment, or canonical root. Internal PreparedRun is never a wire DTO.
 
-Stop terminates the IDE-owned process tree on Windows, waits for exit, then escalates within a bounded timeout. Application shutdown performs the same cleanup. The low-level ProcessManager may share process tracking and tree-termination utilities, but cannot erase semantic differences among run and PTY processes or any future external language-server process.
+Stop terminates the IDE-owned process tree on Windows, waits for exit, then escalates within a bounded timeout. Application shutdown performs the same cleanup. The low-level ProcessManager may share process tracking and tree-termination utilities, but cannot erase semantic differences among run, PTY, and external language-server processes such as Phase 5.5 C#.
 
 Phase 4 V1 runs only the current authorized JavaScript `.js` file inside the
 active project via Node.js. Built-in Run Project, npm/package-manager scripts,
@@ -513,8 +515,9 @@ Renderer LanguageProviderManager (Phase 3 V1)
   `-- Worker Status and Cleanup
 ```
 
-Phase 3 V1 selects Monaco-native workers/providers for JavaScript, TypeScript,
-HTML, CSS, and JSON. C# and PHP use Monaco tokenization only. Each current
+Phase 3 V1 selected Monaco-native workers/providers for JavaScript, TypeScript,
+HTML, CSS, and JSON. C# and PHP used Monaco tokenization only in that completed
+phase. Each current
 provider declares supported language IDs, capabilities, worker availability, and
 document synchronization. Provider failure must not stop the editor or another
 provider. Diagnostics from JavaScript, TypeScript, CSS, and JSON are normalized
@@ -564,7 +567,7 @@ dispose synchronized sources, worker subscriptions, and stale markers scoped to
 the prior project.
 
 No external language-server process, Python dependency detection, or
-process-control language IPC is authorized in current V1. If bounded project
+process-control language IPC was authorized in Phase 3. If bounded project
 snapshot data cannot reuse an existing project/file capability, it must use a
 narrow project-scoped and runtime-validated Main/Preload contract; it grants no
 canonical-root or arbitrary filesystem access. All Python and Java support is
@@ -579,11 +582,119 @@ JSON schema resolution is offline and deny-by-default in current Phase 3. Phase
 register only explicitly bundled or application-trusted schemas; network schema
 fetching requires a future recorded trust decision.
 
+### Phase 5.5 C# external-provider design
+
+Phase 5.5 is a newly authorized V1 extension; it does not rewrite the completed
+Phase 3 C# syntax-only history. Syntax remains Monaco tokenization. Completion,
+hover, signature help, definition, and diagnostics use `csharp-ls` through a thin
+semantic LSP↔Monaco adapter. References, rename, code actions/quick fixes,
+refactoring, formatter, advanced semantic tokens, Razor, metadata/BCL/generated
+virtual-document navigation, debugger, C# Run, workspace diagnostics, and loose
+`.cs` full intelligence remain deferred.
+
+Main owns `LanguageServiceManager`, the `csharp-ls` child process, JSON-RPC/LSP
+connection, real workspace paths, session state, request cancellation, opaque
+completion-resolve handles, diagnostics result IDs, and bounded shutdown/cleanup.
+The Phase 5.5B verified stack is `csharp-ls` 0.27.0,
+`vscode-languageserver-protocol` 3.18.3, and `vscode-jsonrpc/node` 9.0.2.
+Production uses the app-owned pinned server. Development may first use a
+project-private provider and then PATH fallback.
+
+The renderer registers Monaco providers per semantic capability and maps only
+typed semantic DTOs. Public requests carry `projectId` and project-relative path;
+Main resolves and canonicalizes the real path and derives ownership from trusted
+Electron sender/document identity. The public bridge contains no raw LSP or
+JSON-RPC message, PID, executable path, cwd, spawn argument, canonical project
+root, diagnostic `resultId`, or general process control. Definition targets are
+accepted only when they are `file:` URIs inside the canonical active project
+root. Metadata and external targets return an unsupported result in V1.
+
+#### Workspace selection
+
+Both `.sln` and `.slnx` are solution candidates. A saved valid selection is
+reused. Exactly one candidate is selected automatically. Multiple candidates
+require a user selection which is remembered per project. When there is no
+solution but one or more `.csproj` files exist, the session uses project mode.
+Main may perform bounded discovery only for preflight and UX in project mode;
+the current `csharp-ls` owns actual recursive project discovery/loading, so Main
+does not claim control over the exact loaded project set. With no solution or
+project, C# remains syntax-only. The IDE never creates a temporary solution.
+
+Workspace readiness is an independent Main-owned state: `READY`,
+`SELECTION_REQUIRED`, `NO_CSHARP_WORKSPACE`, or `PREFLIGHT_FAILED`. After
+selection and before provider startup, Main probes the effective SDK with
+`dotnet --version`, parses a selected `.sln`/`.slnx` with `dotnet sln <path>
+list`, extracts listed `.csproj` path tokens without matching localized prose,
+bounded-discovers projects in project mode, and evaluates each selected/discovered
+`.csproj` with evaluation-only MSBuild `-getProperty`/`-getItem` JSON. Main also
+validates evaluated `ProjectReference` paths for containment and existence. All
+commands use executable/argument arrays, bounded discovery/output/time, and no
+requested build, restore, or target. A preflight failure leaves the semantic
+service stopped. The IDE must not intentionally write the workspace or create a
+solution during preflight. V1 evaluation supports user-trusted projects only:
+MSBuild evaluates project/import logic and is not a sandbox. No side-effect-free
+guarantee is made for arbitrary untrusted projects (ADR-022, 2026-09-11).
+
+`READY` guarantees only that SDK selection, solution parsing where applicable,
+bounded project evaluation, and explicit project-reference checks passed. It
+does not guarantee that `csharp-ls` later creates or loads an equivalent Roslyn
+workspace. In particular, evaluation-only MSBuild does not prove targeting-pack
+availability. This bounded false-positive risk is accepted for V1 and is kept
+honest in the public state rather than inferred from provider log text.
+
+#### Dependency and lifecycle
+
+The C# language-service dependency requires .NET SDK 10 or newer, with .NET 10
+LTS as the V1 acceptance baseline. Main probes the effective process PATH and
+uses `dotnet --list-sdks`; Renderer cannot choose or probe executables. Dependency
+state is independent of service lifecycle: `MISSING` and
+`INVALID_CONFIGURATION` describe dependency failures, while `STOPPED`,
+`STARTING`, `RUNNING`, and `CRASHED` describe a usable dependency's service.
+`NOT_CONFIGURED` is reserved for future configured-path support.
+
+`RUNNING` means only that the owned `csharp-ls` process is alive and its LSP
+session initialized successfully. It does not assert Roslyn workspace health.
+Empty completion, null hover, empty definition, or no diagnostics are valid
+semantic outcomes and never drive workspace readiness. Human-readable provider
+messages remain redacted Main-only diagnostics and never drive the production
+state machine.
+
+Startup is lazy with at most one C# session for the active project. Main performs
+LSP `initialize`, then `initialized`, and negotiates UTF-16. Unexpected process
+exit transitions the service to `CRASHED`; V1 has no automatic restart loop or
+public manual start/stop/restart surface. Project close/switch, renderer owner
+loss, root unavailability, and application shutdown invalidate session work and
+reject stale results. Graceful shutdown orders invalidate/cancel → LSP
+`shutdown` → response → `exit` → bounded process and descendant cleanup.
+
+The authorized 5.5D C# native entry point supplies stdin/stdout/stderr pipes and
+atomic Windows Job membership at creation. Root exit does not release ownership.
+Finalization terminates the Job, confirms it empty, drains I/O, and releases;
+failure retains ownership for a later cleanup attempt. This is Main-only and
+does not change Terminal, Run, or Git behavior.
+
+#### Document synchronization and diagnostics
+
+The Monaco dirty buffer is authoritative. An open C# model sends `didOpen`, then
+ordered incremental `didChange`, optional `didSave`, and `didClose`; Monaco model
+version is the LSP document version. Ordered batching is allowed, but changes may
+never be dropped, and pending changes must flush before semantic requests. Every
+response is guarded by project, session, document, and where applicable model
+version. Existing FileSystemService watcher events supply filesystem awareness;
+open/dirty document synchronization wins over watcher disk content.
+
+C# V1 uses pull diagnostics for open documents. Diagnostic `resultId` stays in
+Main, while normalized typed diagnostics feed Monaco markers and the existing
+Problems aggregation/navigation path. Workspace diagnostics are deferred.
+Provider and document disposal clear only their owned C# markers and reject late
+results without changing editor/save ownership.
+
 HTML, CSS, and JSON remain model-local Monaco providers rather than project
 indexes. HTML supplies syntax, completion, and provider-supported hover. CSS and
 JSON additionally supply diagnostics from current in-memory Monaco content;
 their marker lifecycle follows model/provider disposal and feeds the renderer-
-owned Phase 3E aggregation boundary. HTML has no current diagnostic source.
+owned Phase 3E aggregation boundary. HTML has no current diagnostic source. C#
+diagnostics join that aggregation boundary only through Phase 5.5.
 
 Phase 3D verifies this model-local path against the actual Monaco workers. HTML
 completion (tags and attributes) and hover use the dirty in-memory model. CSS
@@ -601,7 +712,8 @@ normalizes provider/file replacement scopes, rejects stale project/provider
 generations and model versions, groups by project-relative file identity, and
 sorts deterministically by file and range. Project switch/close, root
 unavailability, provider disposal, and renderer disposal remove their owned
-state. HTML, C#, PHP, Python, and Java contribute no Problems diagnostics.
+state. In completed Phase 3, HTML, C#, PHP, Python, and Java contributed no
+Problems diagnostics. Phase 5.5 adds C# diagnostics without altering that history.
 
 The existing Bottom Panel hosts Terminal and Problems as sibling tabs. Selecting
 a problem uses the existing editor workspace flow to open or reuse the canonical
@@ -614,18 +726,18 @@ Current renderer providers expose only capability/status states that apply to
 Monaco workers. The broader language-service state vocabulary
 `NOT_CONFIGURED`, `MISSING`, `STARTING`, `RUNNING`, `STOPPED`, `CRASHED`, and
 `INVALID_CONFIGURATION` is retained for providers where those states genuinely
-apply, including a future external provider; external process discovery,
-start/stop/restart/crash handling is not a Phase 3 V1 gate. Runtime detection
+apply. Phase 5.5 applies the external-service subset documented above; external
+process discovery and lifecycle were not a Phase 3 V1 gate. Runtime detection
 remains independent, with dependency states `NOT_CONFIGURED`, `MISSING`,
 `AVAILABLE`, and `INVALID_CONFIGURATION`. `RunService` and Phase 4 have no
 lifecycle coupling to language providers.
 
-Current V1 has no user-facing language-service restart button, command, menu,
-IPC endpoint, or new lifecycle UX. Renderer-owned providers may be disposed and
+Current V1 has no user-facing language-service restart button, command, menu, or
+IPC endpoint. Renderer-owned providers may be disposed and
 reinitialized when Monaco's existing architecture naturally supports recovery.
 Recovery must preserve authoritative dirty EditorModelManager buffers and reject
-stale project/provider generations. Manual external-server
-start/stop/restart/crash UX remains future scope.
+stale project/provider generations. The Phase 5.5 C# service exposes status UX
+but no public manual lifecycle API or automatic restart loop.
 
 ## 13. Persistence
 
@@ -642,7 +754,7 @@ Writes use temporary-file plus replace semantics, are serialized per document, a
 - Run stop is a lifecycle transition with process-tree termination and final exit event.
 - Terminal close terminates one PTY session; application shutdown closes all sessions.
 - Git reads accept cancellation/timeout; mutating Git operations are not reported cancelled unless process exit and repository outcome are known.
-- Current language requests may be cancelled when the Monaco provider supports it; worker recovery remains renderer-owned. External-provider stop/restart is a future lifecycle action.
+- Current Monaco-worker requests may be cancelled when supported; worker recovery remains renderer-owned. Phase 5.5 C# semantic requests support cancellation while service lifecycle remains Main-owned.
 
 Cancellation is domain-specific. There is no public generic cancellation or command API.
 
@@ -672,11 +784,11 @@ fallback.
 
 ## 15. Logging
 
-Main, renderer, run/terminal, and current provider diagnostics have separate
-sources and relevant operation IDs. Main owns persistent diagnostic logs and
-rotation policy; renderer forwards structured diagnostics through a narrow
-logging method if needed. External language-server process logs are a future
-concern. Terminal content and run output remain user-visible session data rather
+Main, renderer, run/terminal, and provider diagnostics have separate sources and
+relevant operation IDs. Main owns persistent diagnostic logs and rotation policy;
+renderer forwards structured diagnostics through a narrow logging method if
+needed. Phase 5.5 keeps `csharp-ls` logs Main-only and redacted; no raw log API is
+public. Terminal content and run output remain user-visible session data rather
 than general application logs.
 
 User-facing errors explain action and recovery. Developer diagnostics include timestamps, component, operation/session ID, state transition, and redacted technical cause. Do not log secrets, environment dumps, file contents, Git credentials, or access tokens.
@@ -704,6 +816,12 @@ The Phase 0 foundation already enables `contextIsolation`, disables `nodeIntegra
   effective `PATH`, and distinguishes invalid configuration from missing dependency.
 - PTY selection and shell arguments are Windows-aware; PowerShell and `cmd.exe` quoting are not interchangeable.
 - Run/Git use executable plus argument arrays and avoid `shell: true`.
+- Phase 5.5 C# dependency detection uses Main's PATH plus `dotnet --list-sdks`;
+  .NET 10 LTS is the acceptance baseline for running `csharp-ls`.
+- Phase 5.5 C# workspace preflight uses `dotnet`/MSBuild without shell execution,
+  build, restore, or targets; Windows exit codes, timeouts, path containment, and
+  bounded discovery/output are interpreted structurally rather than by matching
+  localized human-readable error text.
 - Process stop validates ownership and terminates descendants without broad process-name killing.
 - The Phase 2 native compatibility spike must confirm that `node-pty` installs, matches the Electron ABI, starts inside Electron, handles PowerShell/cmd, input/output, resize, close, and owned-process cleanup on Windows.
 - Phase 2E-H recorded actual Windows x64/ConPTY behavior and implemented ADR-020's verified targeted owned-root process-tree termination. V1 intentionally retains the Windows 10/11 x64 label without deriving a minimum build from the evidence host. Phase 2E-I retains Ubuntu CI as the portable automated gate and requires recorded actual-Windows Electron evidence for terminal-affecting work; Phase 7 owns packaged/installed Windows CI and release acceptance.
@@ -723,6 +841,10 @@ Formatter integrates through an editor command/provider boundary; debugger throu
   deferred to a future authorized phase.
 - Phase 4 implements trusted run strategies and Windows process-tree cleanup.
 - Phase 5 implements GitService.
+- Phase 5.5 extends C# from its completed Phase 3 syntax-only baseline with a
+  Main-owned `csharp-ls` service and semantic Monaco providers. Phase 5.5B is a
+  hard compatibility gate before 5.5C–5.5H; packaged/installed acceptance stays
+  in Phase 7.
 - Phase 6 completes settings, dependency configuration UX, and the user-facing Recent Projects UX and management experience.
 
 Any required deviation must be recorded in `DECISIONS.md` before implementation changes the architecture.

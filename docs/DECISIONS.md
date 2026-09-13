@@ -136,13 +136,13 @@ This log records decisions for Student Coding IDE. It does not describe Orca dec
 ## ADR-013 — Language intelligence boundary
 
 - **Status:** Accepted
-- **Context:** Tier 1/2 capabilities must survive provider failure and remain independent of runtimes. Phase 3B confirmed that every current V1 intelligence language can use Monaco/browser workers without an external process.
+- **Context:** Tier 1/2 capabilities must survive provider failure and remain independent of runtimes. Phase 3B confirmed that every Phase 3 intelligence language could use Monaco/browser workers without an external process. Phase 5.5 later authorizes C# as the first external-provider extension under this boundary.
 - **Options:** Feature code talks directly to individual workers/servers; a renderer provider manager for browser workers; one Main LanguageServiceManager for external processes; a provider boundary spanning both execution models.
-- **Selected option:** Current V1 uses a renderer-owned LanguageProviderManager and Monaco/browser-worker adapters. Main-owned LanguageServiceManager is reserved only for a future authorized external provider and is not a Phase 3 implementation requirement.
+- **Selected option:** Phase 3 uses a renderer-owned LanguageProviderManager and Monaco/browser-worker adapters. Phase 5.5 adds a separate Main-owned LanguageServiceManager for C#; it was not a Phase 3 implementation requirement.
 - **Rationale:** Providers differ, but diagnostics, capability checks, status UX, and isolation must be consistent.
-- **Consequences:** Runtime/dependency detection uses `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`, and `INVALID_CONFIGURATION`. Current workers expose only applicable capability/status and renderer-owned recovery/cleanup behavior. The broader external-service lifecycle vocabulary is retained for future providers, not imposed as a current Phase 3 exit gate. Provider registry, document sync, normalized diagnostics, status, and cleanup remain required for current Monaco providers. Future external providers remain Main-owned and independent of runtime execution.
-- **V1 recovery clarification:** Manual user-facing `Restart Language Service` is not required. Current Monaco/browser-worker providers use safe disposal and natural renderer-owned reinitialization/recovery where supported, without a restart button, command, menu item, IPC endpoint, or new lifecycle UX. Dirty buffers remain authoritative and stale project/provider generations remain rejected. Manual external-server start/stop/restart/crash UX is future scope.
-- **Phase:** Phase 1 boundary, resolved for current V1 by ADR-015 and Phase 3B evidence; future external-provider gate remains deferred.
+- **Consequences:** Runtime/dependency detection uses `NOT_CONFIGURED`, `MISSING`, `AVAILABLE`, and `INVALID_CONFIGURATION`. Current workers expose only applicable capability/status and renderer-owned recovery/cleanup behavior. The broader external-service lifecycle vocabulary was not imposed as a Phase 3 exit gate; ADR-022 applies it to C# with dependency/lifecycle separation. Provider registry, document sync, normalized diagnostics, status, and cleanup remain required for current Monaco providers. C# and later external providers remain Main-owned and independent of runtime execution.
+- **V1 recovery clarification:** Manual user-facing `Restart Language Service` is not required. Current Monaco/browser-worker providers use safe disposal and natural renderer-owned reinitialization/recovery where supported, without a restart button, command, menu item, IPC endpoint, or new lifecycle UX. Dirty buffers remain authoritative and stale project/provider generations remain rejected. ADR-022 retains no public manual lifecycle API or automatic restart loop for C#.
+- **Phase:** Phase 1 boundary, resolved for Phase 3 by ADR-015 and Phase 3B evidence; extended for C# Phase 5.5 by ADR-022.
 
 ## ADR-014 — TypeScript execution strategy
 
@@ -188,7 +188,7 @@ or a passed Windows feasibility gate. ADR-014 remains deferred as stated above.
 
 ## ADR-015 — Phase 3 V1 language scope and providers
 
-- **Status:** Accepted — current Phase 3 V1 scope resolved; Python, Java, and external language servers Deferred
+- **Status:** Accepted — Phase 3 V1 scope resolved; C# external-provider extension is governed by ADR-022
 - **Context:** The original candidate scope included Python intelligence and Java syntax. Phase 3A confirmed that the web-language requirements can use Monaco-native providers while Python would introduce a materially different external-service dependency and lifecycle. The approved V1 scope is JavaScript/TypeScript, HTML/CSS/JSON, and syntax-only C#/PHP; Python and Java are intentionally deferred rather than permanently removed.
 - **Options:** Monaco built-in workers; external LSP/language services; a mixed architecture; reduce current scope while preserving the provider boundary for future languages.
 - **Selected option:**
@@ -211,11 +211,11 @@ or a passed Windows feasibility gate. ADR-014 remains deferred as stated above.
   - Defer Python provider selection and all Python LSP lifecycle work. No Pyright, basedpyright, python-lsp-server, `vscode-jsonrpc`, Python interpreter detection for intelligence, or Python document synchronization is approved in current Phase 3.
   - Defer Python runtime integration and Python Run from current V1.
   - Defer all Java support from current V1, including required syntax acceptance, language intelligence, Run, and Java-specific provider/runtime infrastructure.
-  - Defer every external language-server process implementation from current V1. Preserve Main ownership as a future extension boundary only.
+  - Defer every external language-server process implementation from Phase 3. Preserve Main ownership as a future extension boundary only.
 - **Rationale:** This is the smallest architecture that meets the approved current capabilities without adding an external process, new privileged bridge, or language-runtime coupling. The provider boundary keeps later Python and Java additions possible without redesigning Editor, Project, or Language ownership.
-- **Consequences:** Phase 3B established snapshot thresholds, exclusions, safe virtual URI mapping, dirty-model precedence, trusted/offline JSON schema policy, provider status contracts, and cleanup rules before production intelligence implementation. It verified editor, JavaScript/TypeScript, HTML, CSS, and JSON workers from local hashed production-renderer assets; JS/TS same-file, cross-file, mixed-language, JSX/TSX, definition and diagnostics feasibility; dirty-model precedence; project cleanup; and stale project/provider generation protection. Phase 3C converted the JS/TS path into bounded production synchronization. Phase 3D verified model-local HTML completion/hover, CSS completion/hover/diagnostics, and local schema-free JSON completion/diagnostics while disabling schema requests; JSON hover produces no useful result without a configured local schema. Current providers stay Renderer/Monaco-worker based. Current V1 diagnostic inputs are JavaScript, TypeScript, CSS, and JSON; HTML diagnostics require a future separately approved provider decision. No Python or Java provider exists, and C#/PHP remain tokenization-only. Any future external provider must be Main-owned, project-scoped, exposed only through a narrow typed and runtime-validated Preload bridge, and remain independent from `RunService`. Full packaged/installed acceptance remains Phase 7 and is not claimed by Phase 3B-3D.
-- **Rejected for current V1:** Wholesale `node_modules` mirroring; arbitrary package discovery or unrestricted external type loading; canonical project-root exposure to Renderer for TypeScript resolution; generic language IPC; Renderer-owned filesystem/process authority; Python/Java providers; every external language-server process.
-- **Phase:** Phase 3A provider gate resolved and Phase 3B evidence recorded; the current V1 scope was clarified before 3C. Deferred-language/external-provider gates belong to a future authorized phase.
+- **Consequences:** Phase 3B established snapshot thresholds, exclusions, safe virtual URI mapping, dirty-model precedence, trusted/offline JSON schema policy, provider status contracts, and cleanup rules before production intelligence implementation. It verified editor, JavaScript/TypeScript, HTML, CSS, and JSON workers from local hashed production-renderer assets; JS/TS same-file, cross-file, mixed-language, JSX/TSX, definition and diagnostics feasibility; dirty-model precedence; project cleanup; and stale project/provider generation protection. Phase 3C converted the JS/TS path into bounded production synchronization. Phase 3D verified model-local HTML completion/hover, CSS completion/hover/diagnostics, and local schema-free JSON completion/diagnostics while disabling schema requests; JSON hover produces no useful result without a configured local schema. Phase 3 providers stay Renderer/Monaco-worker based. Phase 3 diagnostic inputs were JavaScript, TypeScript, CSS, and JSON; HTML diagnostics require a future separately approved provider decision. No Python or Java provider exists, and C#/PHP remained tokenization-only in Phase 3. ADR-022 newly authorizes the C# external-provider extension without rewriting that history. Full packaged/installed acceptance remains Phase 7 and is not claimed by Phase 3B-3D or Phase 5.5A–5.5H.
+- **Rejected for Phase 3:** Wholesale `node_modules` mirroring; arbitrary package discovery or unrestricted external type loading; canonical project-root exposure to Renderer for TypeScript resolution; generic language IPC; Renderer-owned filesystem/process authority; Python/Java providers; every external language-server process.
+- **Phase:** Phase 3A provider gate resolved and Phase 3B evidence recorded; the Phase 3 scope was clarified before 3C. ADR-022 governs the separately authorized Phase 5.5 C# extension.
 
 ## ADR-016 — IPC runtime validation
 
@@ -318,9 +318,137 @@ or a passed Windows feasibility gate. ADR-014 remains deferred as stated above.
   removal, ProcessManager release, and unrelated-process survival.
 - **Phase:** 2E-J corrective Step 3.
 
+## ADR-022 — Phase 5.5 C# language intelligence
+
+- **Status:** Accepted; Phase 5.5B compatibility gate passed on 2026-09-10.
+- **Context:** C# completed Phase 3 as syntax-only. A newly authorized Phase 5.5
+  extends C# V1 with completion, hover, signature help, go to definition,
+  diagnostics, and Problems integration while preserving the sandboxed Renderer,
+  one-active-project model, editor data safety, and independent Run lifecycle.
+- **Options:** Integrate a full VS Code compatibility layer in Renderer; expose
+  raw LSP/JSON-RPC through Preload; or use a Main-owned `csharp-ls` process with a
+  thin semantic LSP↔Monaco adapter and typed capability-specific APIs.
+- **Selected option:**
+  - Main owns `LanguageServiceManager`, `csharp-ls`, JSON-RPC/LSP transport,
+    executable selection, workspace paths, lifecycle, cancellation, and cleanup.
+  - Use provider-per-capability: Monaco tokenization for C# syntax;
+    `csharp-ls` for completion, hover, signature help, definition, and diagnostics.
+  - Use pinned `csharp-ls` 0.27.0 with `vscode-languageserver-protocol` 3.18.3
+    and `vscode-jsonrpc/node` 9.0.2, the exact stack verified by Phase 5.5B.
+    Phase 5.5B itself installs nothing into the production application.
+  - The public language API is semantic and typed. It carries `projectId` plus
+    project-relative paths and exposes no raw LSP/JSON-RPC, PID, executable path,
+    cwd, spawn arguments, canonical project root, or raw logs. Main derives the
+    owner from trusted Electron sender/document identity and performs runtime
+    validation, path resolution, canonicalization, and containment checks.
+  - Completion resolve uses opaque Main-owned handles. Diagnostic `resultId`
+    remains Main-only. Definition targets are limited to `file:` URIs inside the
+    canonical active project root; metadata/BCL/generated and external targets
+    are unsupported in V1.
+  - Support `.sln` and `.slnx`. Reuse a saved valid selection; auto-select one
+    candidate; request and remember a per-project selection for multiple
+    candidates; use project mode when no solution and one or more `.csproj`
+    files exist; fall back to syntax-only when neither exists. Never create a
+    temporary solution. Main may use bounded discovery for project-mode
+    preflight/UX, while current `csharp-ls` owns recursive project discovery and
+    actual loading; Main does not claim the exact loaded project set.
+  - Keep workspace readiness independent from dependency and service lifecycle.
+    Workspace states are `READY`, `SELECTION_REQUIRED`, `NO_CSHARP_WORKSPACE`,
+    and `PREFLIGHT_FAILED`. After selection, Main preflights the effective SDK
+    with `dotnet --version`, parses a selected solution with `dotnet sln <path>
+    list`, extracts listed `.csproj` path tokens without matching localized
+    prose, bounded-discovers projects in project mode, runs evaluation-only MSBuild
+    `-getProperty`/`-getItem` JSON for each project, and validates evaluated
+    `ProjectReference` containment/existence. It requests no build, restore, or
+    target and does not intentionally create or modify workspace files. `PREFLIGHT_FAILED`
+    prevents provider startup; a pass becomes `READY`.
+  - Authorized 5.5E trust clarification (2026-09-11): V1 C# workspace evaluation
+    supports user-trusted projects only. MSBuild evaluation is not a sandbox;
+    trusted project/import sources may execute evaluation-time logic. The IDE
+    must not intentionally build, restore, invoke targets, create temporary
+    solutions, or modify the workspace during preflight. There is no guarantee
+    of side-effect-free evaluation for arbitrary untrusted projects. Keep the
+    approved preflight sequence and bounded READY/RUNNING meanings. No sandbox
+    architecture or trust UX is added in 5.5E; new trust UX needs a user decision.
+  - Start lazily with one C# session for the active project. Initialize with LSP
+    `initialize` then `initialized` and UTF-16. Treat Monaco dirty content as
+    authoritative; send `didOpen`, ordered incremental `didChange`, `didSave`,
+    and `didClose`, using Monaco model version as document version. Batching may
+    preserve order but cannot drop changes; flush before semantic requests.
+  - Reuse FileSystemService watcher events. Open/dirty document sync wins over
+    disk watcher content. Reject stale project/session/document results. Use
+    pull diagnostics for open documents; defer workspace diagnostics.
+  - Shutdown in this order: invalidate/cancel, LSP `shutdown`, await response,
+    send `exit`, then bounded child/descendant cleanup. Unexpected exit becomes
+    `CRASHED`; V1 has no automatic restart loop or public start/stop/restart API.
+  - Require .NET SDK 10 or newer to run current `csharp-ls`; use .NET 10 LTS as
+    the V1 acceptance baseline. Main detection uses process PATH plus
+    `dotnet --list-sdks`. Dependency state (`MISSING`,
+    `INVALID_CONFIGURATION`) remains separate from service lifecycle (`STOPPED`,
+    `STARTING`, `RUNNING`, `CRASHED`); `NOT_CONFIGURED` is reserved for future
+    configured paths.
+  - `RUNNING` means the owned process is alive and LSP initialization succeeded;
+    it does not certify an equivalent Roslyn workspace. Empty completion, null
+    hover, empty definition, and no diagnostics are never workspace-health
+    signals. Provider log/progress text is diagnostic evidence only and never a
+    correctness or readiness dependency.
+  - After 5.5B passes, production uses an app-owned pinned `csharp-ls`.
+    Development may use a project-private provider before PATH fallback.
+- **Rationale:** This retains Monaco and the existing Problems/editor ownership,
+  keeps protocol and process authority in Main, avoids a broad VS Code runtime
+  surface, and gives each supported feature an auditable semantic contract.
+- **Deferred:** References, rename, code actions/quick fix, refactoring,
+  formatter, advanced semantic tokens, Razor, metadata/BCL/generated virtual
+  documents, debugger, C# Run, loose `.cs` full intelligence, workspace
+  diagnostics, configured provider paths, and public/manual restart UX.
+- **Hard-gate evidence required:** Phase 5.5B must exercise real `csharp-ls` on
+  Windows and verify dependency/version probing; stdio JSON-RPC/LSP lifecycle;
+  advertised capabilities; dirty/incremental sync; UTF-16/Unicode; completion,
+  resolve, and cancellation; hover/signature/definition; pull diagnostics;
+  `.sln`, `.slnx`, and project mode; no-solution recursive discovery behavior
+  and performance; paths containing spaces, `#`, and Unicode; dynamic watched-
+  file registration; workspace-load failure detection without parsing human log
+  strings; crash/shutdown and descendant cleanup; and electron-vite, typecheck,
+  and build compatibility. Phase 5.5C–5.5H cannot begin unless this gate passes.
+- **Consequences:** Phase 7 retains full packaged/installed provider and Windows
+  installer acceptance. A failed 5.5B gate blocks production implementation and
+  requires recorded reevaluation; it does not authorize silently changing the
+  provider, transport, security boundary, or capability scope.
+- **Phase 5.5B evidence (2026-09-10):** The Windows stack
+  (`csharp-ls` 0.27.0, .NET SDK 10.0.401/runtime 10.0.12,
+  `vscode-languageserver-protocol` 3.18.3, `vscode-jsonrpc` 9.0.2, Electron
+  44.0.0, and electron-vite 5.0.0) passed capability, synchronization, Unicode,
+  workspace-mode, lifecycle, cleanup, import, typecheck, and build probes. The
+  original malformed-project probe proved that provider initialization and
+  semantic emptiness cannot detect workspace health: the process stayed alive
+  and only human text reported the load problem.
+- **Corrective Phase 5.5B evidence (2026-09-10):** An isolated structured
+  preflight produced deterministic exit/JSON/path-check outcomes for valid and
+  broken `.sln`, `.slnx`, and `.csproj`; missing `ProjectReference`; unknown
+  project SDK; unavailable `global.json` SDK; unavailable targeting framework;
+  and multi-project project mode. It made no workspace changes and did not run
+  the fixture's mutation target. An unavailable targeting pack still passed,
+  proving the documented residual false-positive boundary. A valid workspace
+  also legitimately returned empty completion, null hover, empty definition,
+  and no diagnostics, while the broken workspace returned similarly empty/null
+  semantic results and could still produce local diagnostics. Therefore semantic
+  results and human logs remain excluded from readiness. The revised bounded
+  readiness policy is sufficient for V1 without claiming perfect Roslyn health.
+  Full evidence is in
+  `spikes/csharp-lsp-compatibility/REPORT.md`.
+- **Phase:** 5.5A design baseline; 5.5B hard gate; 5.5C–5.5H implementation and
+  verification only after PASS.
+- **Authorized 5.5D process decision (2026-09-10):** A dedicated Main-only native
+  C# entry point supplies stdin/stdout/stderr pipes and atomic Windows Job
+  ownership at creation. Retain ownership after root exit through terminate,
+  confirmed empty, and release. Verify hard-killed root/surviving descendants.
+  Terminal, Run, Git, public authority and bounded readiness remain unchanged.
+
 ## Dependency candidate register
 
-No package is installed by this analysis.
+Phase 5.5A installed no package. Phase 5.5B installed trial dependencies only in
+the isolated compatibility spike. Authorized Phase 5.5C then added the exact
+verified protocol and JSON-RPC versions as production runtime dependencies.
 
 | Area | Candidate | Pros | Cons / maintenance risk | Native/Windows impact | Status |
 |---|---|---|---|---|---|
@@ -332,6 +460,7 @@ No package is installed by this analysis.
 | Git | Direct CLI behind internal wrapper | Transparent, predictable, easy to diagnose | Must parse output and map failures | External Git detection required | SELECTED |
 | JS/TS intelligence | Existing Monaco TypeScript worker with bounded project snapshot | Meets accepted capability scope without external process | Snapshot thresholds, exclusions, and project fidelity require verification | Browser-worker packaging only | SELECTED Phase 3A; no new dependency |
 | HTML/CSS/JSON intelligence | Existing Monaco workers | Built for editor integration | Confirm HTML completion/hover, CSS/JSON diagnostics, and trusted/offline JSON schema behavior; HTML diagnostics are deferred | Browser-worker packaging only | SELECTED Phase 3A; no new dependency |
+| C# intelligence | `csharp-ls` 0.27.0 + `vscode-languageserver-protocol` 3.18.3 + `vscode-jsonrpc/node` 9.0.2 | Roslyn-based external provider behind standard typed protocol libraries; verified structured preflight | Preflight is intentionally not proof of equivalent Roslyn workspace health; distribution remains a later gate | Windows process/lifecycle and Phase 7 packaging impact | SELECTED by Phase 5.5B; exact runtime libraries installed by Phase 5.5C |
 | Python intelligence | Future provider decision; Pyright/basedpyright/python-lsp-server remain unselected candidates | Deferred evaluation can use future requirements and packaging evidence | Would add external-service distribution, IPC, lifecycle, and security cost | Future Windows/process gate required | DEFERRED; no current Phase 3 dependency |
 | Java intelligence | Future provider decision | Preserves future extensibility | Would add provider/runtime/process complexity if an external server is selected | Future Windows/process gate required | DEFERRED; no current Phase 3 dependency |
 | TypeScript Run | `tsx`, `ts-node`, `tsc` + Node, native Node TS | Future comparison only; no V1 selection | Semantics/version/config trade-offs | Must test Windows invocation/stop before future execution | DEFERRED; future ADR-014 gate |

@@ -23,11 +23,11 @@ const project = {
 afterEach(cleanup)
 
 describe('Phase 3E diagnostic navigation', () => {
-  it('reuses and activates the canonical dirty model without reading or overwriting it', async () => {
+  it.each(['src/app.ts', 'src/App.cs'])('reuses the canonical dirty diagnostic target %s without disk reads', async relativePath => {
     const read = vi.fn(async () => success('disk content'))
     installStudentIde(read)
     const manager = new EditorModelManager(new FakeModelHost())
-    const dirty = manager.openDocument(project.id, 'src/app.ts', 'disk content')
+    const dirty = manager.openDocument(project.id, relativePath, 'disk content')
     dirty.model.setValue('unsaved dirty content')
     const other = manager.openDocument(project.id, 'other.ts', 'other')
     expect(manager.getActiveDocument()).toBe(other)
@@ -35,7 +35,7 @@ describe('Phase 3E diagnostic navigation', () => {
 
     await act(async () => result.current.navigateToLocation({
       projectId: project.id,
-      relativePath: 'src/app.ts',
+      relativePath,
       startLineNumber: 4,
       startColumn: 3,
       endLineNumber: 5,
@@ -48,7 +48,7 @@ describe('Phase 3E diagnostic navigation', () => {
     expect(dirty.dirty).toBe(true)
     expect(result.current.navigation).toMatchObject({
       projectId: project.id,
-      relativePath: 'src/app.ts',
+      relativePath,
       startLineNumber: 4,
       startColumn: 3,
       endLineNumber: 5,

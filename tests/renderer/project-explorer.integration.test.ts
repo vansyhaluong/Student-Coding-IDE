@@ -1,3 +1,4 @@
+import { unavailableLanguageApi } from '../helpers/language-api'
 /** @vitest-environment jsdom */
 
 import { StrictMode, createElement } from 'react'
@@ -2048,6 +2049,7 @@ function installApi(overrides: {
   git?: Partial<GitApi>
 } = {}): StudentIdeApi {
   const api: StudentIdeApi = {
+    language: unavailableLanguageApi,
     git: {
       getState: async () => failure('Not configured'),
       getStatus: async () => failure('Not configured'),

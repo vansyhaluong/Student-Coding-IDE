@@ -1,0 +1,6 @@
+{
+  "electron": "44.0.0",
+  "node": "24.18.1",
+  "modules": "149",
+  "commonjsImports": true
+}

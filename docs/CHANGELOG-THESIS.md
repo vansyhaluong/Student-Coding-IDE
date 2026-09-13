@@ -1299,3 +1299,248 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   returned to `COMPLETE` after local corrective verification.
 - The corrected Ubuntu GitHub Actions run remains pending until this uncommitted
   change is pushed. No CI pass, commit, push, merge or tag is claimed here.
+
+## Phase 5.5B C# compatibility hard gate (2026-09-10) — COMPLETE
+
+- Built an isolated Windows spike for real `csharp-ls` stdio LSP behavior using
+  trial versions 0.27.0, .NET SDK 10.0.401/runtime 10.0.12,
+  `vscode-languageserver-protocol` 3.18.3, and `vscode-jsonrpc` 9.0.2. No
+  production dependency or C# service code was added.
+- Verified `.sln`, `.slnx`, recursive multi-project mode, paths with spaces/`#`/
+  Unicode, UTF-16 dirty incremental sync, completion/resolve/cancellation,
+  hover/signature/definition, pull diagnostics, dynamic watched-file
+  registration, graceful/unexpected exit, and zero surviving owned processes.
+- Verified strict TypeScript, Electron 44 runtime imports, and electron-vite 5.0.0
+  production bundling. Project mode also demonstrated that current `csharp-ls`
+  recursively loads project files under `bin`, `obj`, `build`, and `out`; Main
+  cannot claim ownership of the actual loaded set.
+- The initial machine-readable workspace-load failure check did not pass. A
+  malformed project initialized and registered normally, stayed alive, returned
+  an empty semantic result, and ended work-done progress normally. Only human
+  log/progress strings exposed the failure.
+- The authorized corrective spike retained `csharp-ls` and verified a structured
+  Main-owned preflight: effective SDK exit state, `.sln`/`.slnx` parse exit state,
+  bounded `.csproj` discovery, evaluation-only MSBuild property/item JSON, and
+  contained/existing `ProjectReference` checks. Valid/broken solution and project,
+  unknown/missing SDK, missing reference, targeting, and multi-project cases all
+  produced their expected deterministic state without build, restore, target
+  execution, temporary solutions, or workspace mutation.
+- An unavailable targeting pack intentionally remained a preflight false positive,
+  recording the bounded guarantee: `READY` does not certify equivalent Roslyn
+  workspace health, and `RUNNING` means only an alive initialized LSP session.
+  Valid and broken workspaces both returned empty/null semantic outcomes, so
+  semantic emptiness and human log text are excluded from readiness.
+- ADR-022 now selects `csharp-ls` 0.27.0, protocol 3.18.3, and JSON-RPC 9.0.2.
+  Phase 5.5B is `COMPLETE`, Phase 5.5 is `IN_PROGRESS`, and 5.5C–5.5H remain
+  `NOT_STARTED`; no production C# language implementation was added.
+- Final verification passed 12/12 structured preflight cases, the full provider
+  harness including valid/invalid semantic checks, spike TypeScript/Electron/
+  electron-vite gates,
+  root typecheck, lint, production/native build, 811/811 tests, and
+  `git diff --check`. The first full test attempt had one timing-only Monaco
+  timeout; its focused run and the unchanged full rerun passed.
+
+## Phase 5.5C — Contracts + Dependency Foundation (2026-09-10) — COMPLETE
+
+- Added side-effect-free shared contracts and exact validators for C# provider/
+  capability ownership, dependency/service/workspace states, safe reason codes,
+  project-relative documents, positions/ranges/versions, semantic requests,
+  completion/hover/signature/definition/diagnostic DTOs, and opaque completion
+  handles. Public shapes expose no executable, canonical-root, process, cwd,
+  spawn, raw LSP/JSON-RPC, raw completion-data, or Electron authority.
+- Added Main-only PATH resolution and canonical executable validation, finite
+  bounded dependency probing, `dotnet --list-sdks` inventory parsing with SDK
+  10+ and prerelease-only semantics, and `csharp-ls --version` enforcement for
+  the exact approved 0.27.0 provider.
+- Enforced development private-provider-first then PATH fallback and packaged
+  app-owned-only resolution with no packaged PATH fallback. The packaged
+  candidate is supplied by trusted Main composition; Phase 5.5C did not invent
+  a payload directory, and Phase 7 retains packaged/installed verification.
+- Added exact runtime dependencies `vscode-languageserver-protocol` 3.18.3 and
+  `vscode-jsonrpc` 9.0.2 plus 19 focused validation/dependency tests. The full
+  test command, typecheck, lint, production/native build, and whitespace gate
+  passed without weakening worker, timeout, retry, assertion, or test policy.
+- Added no workspace preflight execution, long-running language session, LSP
+  connection, provider spawn lifecycle, document synchronization, IPC/Preload,
+  Monaco semantic integration, diagnostics/Problems UI, or Phase 5.5D+ work.
+
+## Phase 5.5D — Main LSP core and C# adapter (2026-09-10) — COMPLETE
+
+- Implemented Main-only pinned JSON-RPC stdio transport, request correlation,
+  cancellation/deadlines, server handlers, protocol error normalization and
+  disposal. The C# adapter captures UTF-16 initialize capabilities and maps
+  completion/resolve, hover, signature, definition and pull document diagnostics.
+  Completion data and diagnostic result IDs remain in Main.
+- Implemented the dependency-backed one-session manager, generation/stale-result
+  guards, crash handling without automatic restart, graceful shutdown and
+  retained cleanup failure ownership. Added only low-level document/watched-file
+  notification primitives; no production synchronization orchestration.
+- Applied the separately authorized native C# process decision: writable stdin,
+  stdout/stderr pipes, atomic Windows Job creation and terminate/empty/release
+  ownership. Run, Git, Terminal and ProcessManager behavior are unchanged.
+- Verified 33 deterministic LSP/adapter/lifecycle tests. Production Electron
+  smoke proved surviving descendant ownership after hard-killing root 27124,
+  rejected early release, descendant 19404 termination, an unaffected unrelated
+  control, and blocked stdin write settlement before release. Real csharp-ls
+  0.27.0 on SDK 10.0.401 advertised all required V1 capabilities with the minimal
+  client and shut down with zero retained registrations.
+- Typecheck, lint, production/native build and whitespace checks passed.
+  The initial final full suite passed 862/863; one unchanged Phase 5C Git integration
+  test timed out at 5000 ms despite passing in isolation. Full-suite acceptance
+  was BLOCKED at that point. No assertion, timeout, worker setting or retry was weakened;
+  canonical TEMP casing was used for the test process after diagnosing existing
+  case-sensitive fixture expectations.
+- Corrective investigation reproduced the Git timeout in the existing real-Git
+  harness: the affected case took 4044 ms alone and 5024 ms under concurrent Git
+  suites, while language + Git passed at 3881 ms and no C#, native or Git child
+  survived. Repeated repository setup subprocesses across four workers caused
+  resource contention; no Phase 5.5D lifecycle leak was found.
+- The Phase 5B/5C/5D real-Git harnesses now reuse one prepared baseline per suite
+  while copying an isolated repository for each test. This retains every real
+  Git operation and assertion while removing redundant init/config/add/commit
+  setup. No timeout, retry, sleep, worker, skip, assertion or production Git
+  behavior changed.
+- Focused local Git passed 32/32; the exact Git-suite reproduction passed
+  266/266; the combined changed harnesses passed 55/55. Two consecutive canonical-
+  TEMP full suites passed 863/863 in 51.31 s and 48.96 s. Typecheck, lint,
+  production/native build and whitespace checks passed.
+- No workspace selection/preflight orchestration, language IPC/Preload, Renderer
+  providers, Problems/status UI, or Phase 5.5E+ work was started.
+
+## Phase 5.5E — Workspace and document synchronization (2026-09-11) — COMPLETE
+
+- Implemented Main-owned bounded workspace discovery, saved valid .sln/.slnx
+  selection, opaque multi-candidate choices, project mode and syntax-only fallback.
+  Per-project selection uses versioned atomic persistence and backup recovery.
+  Preflight uses fixed evaluation-only commands, structured exit/JSON results,
+  canonical containment and ProjectReference checks. No target/build/restore or
+  intentional workspace write is requested; the trusted-project limitation is
+  unchanged.
+- Added finite native preflight commands with bounded output/deadlines and
+  terminate/drain/empty/release Job ownership. Cleanup failure is retained and
+  blocks conflicting commands. Main composes the lazy session with project,
+  root, renderer-owner and application lifecycle.
+- Internal document synchronization retains authoritative text and ordered
+  incremental UTF-16/model versions, flushes before semantic work, rejects stale
+  results and orders saves through FileSystemService. Watcher events honor
+  open-document precedence and dynamic registration/kind masks.
+- Real Electron smoke found expected stale watcher cancellation being reported
+  as cleanup failure on project close. Only stale-session errors from a replaced
+  watcher are now suppressed; live I/O/protocol/cleanup failures remain visible.
+- Focused tests: 47/47 PASS, covering workspace policy/persistence, malformed
+  evaluation and reference failures, canonical escape, dirty buffers, Unicode,
+  batching/version order, save races, rename/delete, switch/close/root loss,
+  close during provider startup, renderer loss, stale results, crash/no restart
+  and retained cleanup failures.
+- Standard npm test: 910/910 tests in 70 files PASS (53.34 s), without altered
+  workers/timeouts/assertions/retries or environment overrides. Four existing
+  filesystem/project/search test fixture helpers canonicalize TEMP with realpath;
+  assertions are unchanged. Existing jsdom canvas noise remains non-blocking.
+- Typecheck, lint, production/native build and git diff --check PASS.
+  scripts/smoke-csharp-preflight.mjs passed real Electron/native SDK 10.0.401
+  .sln/.slnx evaluation, unchanged fixture hashes and malformed-project rejection.
+  scripts/smoke-csharp-workspace.mjs passed real csharp-ls 0.27.0 solution/.slnx/
+  project-mode cycles with Unicode/space/# paths, dirty UTF-16 versions,
+  flush-before-request, FileSystemService save, close/stale-handle rejection,
+  zero retained provider registrations and syntax-only fallback without a process.
+  Smoke exercises production Main modules; user-facing integration remains 5.5F–G.
+- Existing scripts/smoke-csharp-native.mjs also PASS: hard-killed root 11104,
+  surviving descendant 21660 retained until Job termination, empty-before-release,
+  unrelated control preserved, blocked stdin settled and real provider shutdown.
+- No new dependency/ADR resolution, architecture deviation, language IPC/Preload,
+  Renderer provider, diagnostics/Problems/status UX, C# Run or trust UX. Phase 7
+  retains packaged/installed acceptance. 5.5E is COMPLETE; 5.5F still requires
+  separate authorization.
+
+- Updated actual module map and implementation/language status. No commit, push
+  or merge was performed.
+
+## Phase 5.5F — IPC, Preload and Monaco semantic providers (2026-09-11) — COMPLETE
+
+- Added exact-validated, committed-frame-owned C# language IPC and a narrow
+  Preload API for workspace selection, document synchronization, completion,
+  completion resolve, hover, signature help, definition and cancellation.
+- Added Main semantic mapping with bounded opaque completion handles, safe
+  presentation text, stale-result guards and canonical active-project
+  containment for definition targets.
+- Added Renderer-session synchronization and separate Monaco completion, hover,
+  signature-help and definition providers using negotiated capabilities/triggers
+  and explicit UTF-16 range/enum conversion.
+- Focused 5.5E–F regression tests passed 150/150; the full suite passed 947/947
+  in 72 files. Typecheck, lint, production/native build and `git diff --check`
+  passed without changing test policy.
+- Diagnostics/Problems/status UX, C# Run, public restart/raw logs and all other
+  deferred capabilities remain outside 5.5F. No dependency, ADR or architecture
+  deviation was introduced.
+
+## Phase 5.5G — Diagnostics, Problems and status UX (2026-09-12) — COMPLETE
+
+- Added exact-validated open-document diagnostic IPC/Preload routing. Main
+  serializes pulls after document synchronization, retains `resultId` privately,
+  normalizes bounded severity/code/source/message/ranges, and rejects cancelled or
+  stale owner, project, session, document and model-version work.
+- Added the C# Renderer diagnostic controller with a dedicated Monaco marker
+  owner, existing Problems aggregation/navigation, dirty-model preservation,
+  provider/project generation guards, and scoped clear/disposal. Post-edit
+  `unchanged` reports use bounded settling pulls until a fresh full report arrives.
+- Added status-bar UX that presents dependency, workspace and service lifecycle
+  independently, including solution selection, loading/failure, syntax-only
+  fallback and `CRASHED`, without public restart, process or raw-log authority.
+- Focused diagnostics/Problems/status coverage passed 128/128. The full suite
+  passed 1004/1004 tests in 74 files; the existing jsdom canvas warning remained
+  non-blocking. Typecheck, lint and production/native build passed without
+  changing test workers, timeouts, assertions or retry policy.
+- No dependency, ADR or architecture deviation was introduced. C# Run, workspace
+  diagnostics, Razor, metadata navigation, public/manual restart, raw logs and all
+  other deferred capabilities remain absent. Windows Electron smoke, repeated
+  cycles/performance review and final Phase 5.5 verification remain Phase 5.5H.
+
+## Phase 5.5F/G corrective runtime verification (2026-09-12) — IN_PROGRESS
+
+- Reopened after failed manual hover/diagnostics acceptance. Preserved canonical
+  C# document/watcher URI casing on the wire, keeping decoded case-insensitive
+  Windows ownership checks and duplicate rejection. Previous adapter comparison
+  reproduced null hover/empty diagnostics only with lowercased wire identity.
+- Added `scripts/smoke-csharp-acceptance.mjs`: a fresh dotnet console fixture,
+  actual Electron application/Preload/Monaco/csharp-ls, private build-only trace,
+  capability/registration/security checks, marker/Problems checks and screenshots.
+  All five requested workflows passed in automated real-app verification.
+- Focused regression: 170/170; full suite: 1005/1005 in 74 files; typecheck, lint,
+  production/native build and diff-check passed. No production architecture,
+  public contract, scheduling or lifecycle change was needed in this resumption.
+- Manual pointer/keyboard reacceptance is still unverified because Windows
+  Computer Use's native pipe was unavailable. Automated evidence does not replace
+  that claim. F/G remain IN_PROGRESS; 5.5H remains NOT_STARTED.
+
+## Phase 5.5F/G development-launch correction (2026-09-13) — VERIFIED
+
+- Identified the first launch divergence: the real-app acceptance harness pinned
+  the Phase 5.5B private .NET 10.0.401/provider stack, while `npm run dev`
+  inherited its caller's `DOTNET_ROOT` and PATH. The inspected dev environment
+  resolved system .NET 10.0.112 and did not contain the project-private provider.
+- Added a development-only launcher that uses the complete validated private pair
+  when present and preserves PATH fallback otherwise. Production composition,
+  IPC, security, diagnostics, scheduling and lifecycle logic did not change.
+- A real `npm run dev` trace verified CS0029 from provider through Monaco and
+  Problems for `int b = "aaa";`, then verified CS0029 cleared for `int b = 123;`.
+  Focused tests passed 171/171; the final full suite passed 1009/1009; typecheck,
+  lint, production/native build and `git diff --check` passed. Phase 5.5H remains
+  NOT_STARTED.
+
+## Phase 5.5H — Stabilization and final verification (2026-09-13) — COMPLETE
+
+- Final verification passed: focused 227/227 tests (14 files), full 1009/1009
+  (75 files), typecheck, lint, production/native build and git diff --check.
+- Real Windows native ownership/descendant cleanup, blocked stdin settlement,
+  provider lifecycle, workspace/preflight, Unicode/UTF-16, document sync/save
+  and repeated cleanup passed. Controlled real-provider crash reached CRASHED,
+  rejected the old adapter and released all test-owned resources.
+- Final security audit confirmed sandbox settings, runtime validation, trusted
+  frame/project/path/version ownership and Main-only protocol/process authority.
+- The user confirmed manual completion, hover, signature help, definition,
+  markers/Problems, correction clearing, project switching, document reopening
+  and npm run dev acceptance PASS, and confirmed all remaining H gates satisfied.
+  This supersedes the historical manual-pending F/G and H records above.
+- Phase 5.5A–5.5H and overall Phase 5.5 are COMPLETE. Final closure changed
+  documentation only; no production code or architecture changed. Phase 6/7
+  remain NOT_STARTED. Packaged/installed C# acceptance remains Phase 7.

@@ -1,3 +1,5 @@
+import { registerCsharpNavigation } from './features/language/csharp/csharp-navigation'
+import { CsharpStatus } from './features/language/csharp/CsharpStatus'
 import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
@@ -54,6 +56,7 @@ export default function App() {
   const run = useProjectRun(project, editor.fileSystemUnavailable)
   useProjectLanguage(project, editorModelManager)
   useProjectProblems(project)
+  useEffect(() => registerCsharpNavigation(editor.navigateToLocation), [editor.navigateToLocation])
 
   useEffect(() => {
     let active = true
@@ -433,6 +436,7 @@ export default function App() {
                 : 'No project open'}
         </span>
         <span className="status-actions">
+          <CsharpStatus key={project?.id ?? 'none'} projectId={project?.id ?? null} />
           <span>{error || editor.error ? 'Action failed' : 'Ready'}</span>
           <button
             type="button"

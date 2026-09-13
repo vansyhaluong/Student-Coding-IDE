@@ -1,10 +1,12 @@
 # Language Support Matrix
 
 This is the authoritative language capability contract and decision register. It
-records the approved Phase 3 V1 scope and its verified implementation status.
+records the verified Phase 3 scope and the newly authorized Phase 5.5 C# V1
+extension. Phase 5.5A established the design baseline; production capabilities
+are recorded only after their implementing work packages pass.
 `Runtime` and `Language Service` remain independent lifecycles.
 
-## Current Phase 3 V1 matrix
+## V1 capability matrix and implementation status
 
 | Language | Tier | Syntax | Completion | Hover | Signature Help | Definition | Diagnostics | Problems | Run | Runtime | Language Service | Decision status |
 |---|---:|---|---|---|---|---|---|---|---|---|---|---|
@@ -13,7 +15,7 @@ records the approved Phase 3 V1 scope and its verified implementation status.
 | HTML | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Deferred | Deferred | No | N/A | Monaco HTML worker | V1 syntax/completion/hover; diagnostics deferred because provider has no validation support |
 | CSS | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Yes | Yes | No | N/A | Monaco CSS worker | Accepted and verified for Phase 3 V1 |
 | JSON | 2 | Yes | Yes, local schema-free behavior | No useful result without a configured local schema | Not required | Not required | Yes | Yes | No | N/A | Monaco JSON worker | Accepted and verified for current local-only configuration |
-| C# | Syntax-only | Yes | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Future | Monaco tokenization only | Accepted syntax-only scope |
+| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Yes | Yes | Yes | Yes | Yes, open documents | Yes | Deferred | Independent; no C# Run selected | Monaco tokenization + Main-owned `csharp-ls` semantic providers | Phase 3 syntax and Phase 5.5A–5.5H COMPLETE; automated verification and user-confirmed manual acceptance PASS |
 | PHP | Syntax-only | Yes | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Future | Monaco tokenization only | Accepted syntax-only scope |
 
 ## Deferred future language support
@@ -25,13 +27,17 @@ records the approved Phase 3 V1 scope and its verified implementation status.
 
 Python and Java are not permanently unsupported. A future authorized phase may
 add them through the same provider architecture without redesigning Editor,
-Project, or Language ownership. Any future external language-server process is
+Project, or Language ownership. Any additional future external language-server process is
 Main-owned and reachable only through a narrow, typed, runtime-validated Preload
 bridge; Renderer never gains raw filesystem or process authority.
 
-Find References is optional/future. Rename Symbol, advanced refactoring, Call Hierarchy, Test Explorer, Formatter, and Debugger are not V1 acceptance criteria.
+For C#, References, Rename Symbol, code actions/quick fix, refactoring,
+formatter, advanced semantic tokens, Razor, metadata/BCL/generated virtual-
+document navigation, debugger, C# Run, loose `.cs` full intelligence, and
+workspace diagnostics are deferred. Existing optional/future treatment for Find
+References and other languages remains unchanged.
 
-## Current provider status and future service states
+## Provider, dependency, and service states
 
 Runtime and executable detection uses:
 
@@ -43,25 +49,119 @@ INVALID_CONFIGURATION
 ```
 
 Current renderer-owned Monaco providers expose only the capability/status states
-that apply to browser workers. If a future phase authorizes an external language
-server, its lifecycle vocabulary includes:
+that apply to browser workers. Phase 5.5 C# separates dependency state from
+service lifecycle. Dependency failures use `MISSING` or
+`INVALID_CONFIGURATION`; `NOT_CONFIGURED` is reserved for future configured
+paths. A usable dependency's service uses:
 
 ```text
-NOT_CONFIGURED
-MISSING
 STARTING
 RUNNING
 STOPPED
 CRASHED
-INVALID_CONFIGURATION
 ```
 
-The UI must never infer one dependency from another. The Python examples below
+The UI must never infer one dependency from another. C# Language Intelligence
+requires .NET SDK 10 or newer and uses .NET 10 LTS as its acceptance baseline;
+this does not authorize C# Run. Main probes its process PATH and
+`dotnet --list-sdks`. The Python examples below
 describe only a possible future architecture invariant; neither side is V1 scope:
 
 - Python runtime `AVAILABLE`, Python language service `MISSING`: a future Run capability could remain available while future intelligence reports the missing service.
 - Python runtime `MISSING`, Python language service `RUNNING`: future intelligence could remain available while future Run reports the missing runtime.
 - Git `MISSING`: editor and language features remain available; Source Control reports Git unavailable.
+
+## Phase 5.5 C# design baseline
+
+Phase 3 completed C# syntax highlighting through Monaco tokenization only. Phase
+5.5 is a newly authorized scope extension for completion, hover, signature help,
+go to definition, open-document pull diagnostics, and Problems integration. It
+does not retroactively change Phase 3 implementation or acceptance evidence.
+
+### Provider and protocol boundary
+
+- Syntax remains a Monaco tokenization capability.
+- Completion, hover, signature help, definition, and diagnostics are provided by
+  Main-owned `csharp-ls` through a thin semantic LSP↔Monaco adapter.
+- Phase 5.5B selected `csharp-ls` 0.27.0,
+  `vscode-languageserver-protocol` 3.18.3, and `vscode-jsonrpc/node` 9.0.2.
+  Phase 5.5C adds the exact protocol and JSON-RPC versions as production runtime
+  dependencies. Phase 5.5D–E implement internal transport, sessions, workspace
+  preflight and document synchronization. Phase 5.5F implements semantic
+  IPC/Preload and Renderer completion, hover, signature-help and definition
+  providers. Phase 5.5G implements open-document diagnostics, Problems and
+  separate dependency/workspace/service status UX.
+- Renderer sees only typed semantic APIs. It never sees raw LSP/JSON-RPC, PID,
+  executable path, cwd, spawn arguments, canonical project root, raw logs, or
+  diagnostic `resultId`.
+- Completion resolution uses an opaque Main-owned handle. Definition accepts
+  only `file:` targets inside the canonical active project root; external,
+  metadata, BCL, and generated virtual-document targets are unsupported in V1.
+
+### Workspace policy
+
+Both `.sln` and `.slnx` are supported solution candidates. A saved selection is
+reused only while valid. One candidate is auto-selected. Multiple candidates
+require user selection which is remembered per project. With no solution and at
+least one `.csproj`, the provider uses project mode. Main may perform bounded
+project discovery for preflight and UX, but current `csharp-ls` owns recursive
+discovery and actual loading; the IDE does not claim Main controls the exact
+loaded project set. With no solution or project, C# stays syntax-only. The IDE
+does not create temporary solutions. Loose `.cs` full intelligence is deferred.
+
+Workspace readiness is independent: `READY`, `SELECTION_REQUIRED`,
+`NO_CSHARP_WORKSPACE`, or `PREFLIGHT_FAILED`. After selection, Main uses
+structured `dotnet`/MSBuild exit codes, evaluation JSON, and path checks:
+effective SDK selection, selected `.sln`/`.slnx` parse plus listed `.csproj`
+path tokens, bounded project-mode discovery, evaluation-only properties/items,
+and `ProjectReference`
+containment/existence. It requests no target, build, or restore and does not
+intentionally modify workspace files. V1 supports user-trusted projects only;
+MSBuild project/import evaluation is not sandboxed and is not guaranteed free
+of side effects for arbitrary untrusted projects (ADR-022, 2026-09-11).
+A failure does not start `csharp-ls`; a pass is `READY`, not
+proof that an equivalent Roslyn workspace will load inside the provider.
+
+### Lifecycle and synchronization
+
+- Start lazily and retain at most one C# session for the active project.
+- Main performs `initialize` then `initialized` and uses UTF-16 positions.
+- `RUNNING` means the owned process is alive and LSP initialization succeeded;
+  it does not certify workspace health. Empty/null semantic results and absence
+  of diagnostics never determine readiness. Human-readable logs remain
+  diagnostic evidence only.
+- Monaco dirty content is authoritative. Synchronization is `didOpen`, ordered
+  incremental `didChange`, `didSave`, then `didClose`; Monaco model version is
+  the document version.
+- Ordered batching is allowed but cannot drop changes. Pending changes flush
+  before completion, completion resolve, hover, signature, definition, and
+  diagnostic requests.
+- Project, session, document, and applicable model-version identities reject
+  stale results. FileSystemService watcher events are reused; open/dirty document
+  sync wins over disk watcher content.
+- Pull diagnostics cover open documents only. Main retains diagnostic
+  `resultId`; Renderer receives normalized diagnostics for Monaco markers and the
+  existing Problems store. Workspace diagnostics are deferred.
+- Graceful stop orders invalidate/cancel → `shutdown` → response → `exit` →
+  bounded process and descendant cleanup. Unexpected exit becomes `CRASHED`.
+  There is no V1 automatic restart loop or public start/stop/restart/raw-log API.
+
+### Distribution policy and compatibility gate
+
+Production `csharp-ls` is app-owned and pinned to 0.27.0. Development
+may use a project-private provider and then PATH fallback. Full packaged and
+installed provider acceptance remains Phase 7.
+
+Phase 5.5B must verify a real `csharp-ls` on Windows: dependency/version probe;
+stdio JSON-RPC/LSP lifecycle; advertised capabilities; dirty buffer and
+incremental synchronization; UTF-16/Unicode; completion, resolve, cancellation,
+hover, signature, definition, and pull diagnostics; `.sln`, `.slnx`, and project
+mode; no-solution recursive discovery behavior/performance; paths with spaces,
+`#`, and Unicode; dynamic watched-file registration; workspace-load failure
+detection without parsing human log strings; crash/shutdown and descendant
+cleanup; and electron-vite/typecheck/build compatibility. The 2026-09-10 spike
+and corrective workspace-readiness probe passed this hard gate. Phase 5.5C
+and Phase 5.5D–G subsequently implemented under explicit authorization. Corrective F/G runtime verification and user-confirmed manual acceptance passed on 2026-09-13. Phase 5.5H and overall Phase 5.5 are COMPLETE. Phase 6/7 remain NOT_STARTED; packaged/installed acceptance remains Phase 7.
 
 ## Current provider decisions and Phase 3 acceptance evidence
 
@@ -108,7 +208,8 @@ Worker recovery means safe disposal and renderer-owned reinitialization where
 Monaco naturally supports it. Current V1 does not require a manual restart
 button, command, menu item, IPC endpoint, or new lifecycle UX. Recovery must
 preserve authoritative dirty buffers and reject stale project/provider
-generations. Manual external-server lifecycle UX remains future scope.
+generations. Manual lifecycle UX remains deferred for C# and any later external
+provider.
 
 Phase 3B verified the local Monaco worker foundation, safe project URI model,
 bounded JS/TS cross-file feasibility, provider/project generation identity,
@@ -145,9 +246,11 @@ schema-free configuration. Remote `$schema` values do not cause network fetches,
 and removing a model removes its worker mirror and diagnostic lifetime. HTML
 diagnostics remain deferred; no substitute provider or validator was added.
 
-Current V1 introduces no Pyright, basedpyright, python-lsp-server,
+Phase 3 introduced no Pyright, basedpyright, python-lsp-server,
 `vscode-jsonrpc`, Python interpreter detection for intelligence, Python LSP
-lifecycle, or Java-specific provider infrastructure. Provider selection and
+lifecycle, C# external provider, or Java-specific provider infrastructure.
+Phase 5.5C now includes `vscode-jsonrpc/node` only for the approved future C#
+transport; no transport/session is part of 5.5C. Provider selection and
 distribution gates for Python and Java remain deferred until their future scope
 is explicitly authorized.
 

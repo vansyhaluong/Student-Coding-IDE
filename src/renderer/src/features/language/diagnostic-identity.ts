@@ -1,10 +1,11 @@
 import type { ProjectId } from '../../../../shared/contracts'
 import type { Phase3ProviderId } from './language-provider-contracts'
 
-export type ProviderMarkerOwner = `student-ide.language.${Phase3ProviderId}`
+export type DiagnosticProviderId = Phase3ProviderId | 'csharp-ls'
+export type ProviderMarkerOwner = `student-ide.language.${DiagnosticProviderId}`
 
 export interface DiagnosticIdentity {
-  readonly providerId: Phase3ProviderId
+  readonly providerId: DiagnosticProviderId
   readonly projectId: ProjectId
   readonly documentUri: string
   readonly modelVersion: number
@@ -34,7 +35,7 @@ export interface ProviderDiagnosticBatch {
 }
 
 export function markerOwnerForProvider(
-  providerId: Phase3ProviderId,
+  providerId: DiagnosticProviderId,
 ): ProviderMarkerOwner {
   return `student-ide.language.${providerId}`
 }
