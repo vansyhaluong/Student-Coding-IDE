@@ -3,7 +3,7 @@ import { validateAppError } from '../../shared/contracts/app-error'
 import { LANGUAGE_CHANNELS, LANGUAGE_LIMITS, type LanguageApi, type LanguageStatusEvent } from '../../shared/contracts/language'
 import { validateLanguageProject, validateLanguageDocument, validateLanguageCancel, validateLanguageStatus,
   validateLanguageWorkspaceStatus, validateSelectLanguageWorkspaceRequest, validateCompletionRequest,
-  validateCompletionResolveRequest, validateHoverRequest, validateSignatureHelpRequest, validateDefinitionRequest,
+  validateCompletionResolveRequest, validateHoverRequest, validateSignatureHelpRequest, validateDefinitionRequest, validateDiagnosticRequest,
   isCompletionHandle, isLanguageRelativePath, isSemanticRequestId, isDocumentVersion } from '../../shared/contracts/language-validation'
 import { isProjectId } from '../../shared/contracts/project'
 import { validateExactObject, type ValidationResult } from '../../shared/contracts/validation'
@@ -29,10 +29,15 @@ function reply(method: keyof typeof LANGUAGE_CHANNELS, v: unknown): boolean {
   if (method === 'resolveCompletion') return item(v)
   if (v === null && (method === 'getHover' || method === 'getSignatureHelp')) return true
   const fields = method === 'getCompletion' ? ['isIncomplete', 'items'] : method === 'getHover' ? ['contents', 'range']
-    : method === 'getSignatureHelp' ? ['signatures', 'activeSignature', 'activeParameter'] : ['targets']
+    : method === 'getSignatureHelp' ? ['signatures', 'activeSignature', 'activeParameter'] : method === 'getDiagnostics' ? ['kind', 'diagnostics'] : ['targets']
   if (!exact(v, ['requestId', 'documentVersion', ...fields]) || !isSemanticRequestId(v.requestId) || !isDocumentVersion(v.documentVersion)) return false
   if (method === 'getCompletion') return typeof v.isIncomplete === 'boolean' && Array.isArray(v.items) && v.items.length <= LANGUAGE_LIMITS.maximumCompletionItems && v.items.every(item)
   if (method === 'getHover') return text(v.contents) && (v.range === null || range(v.range))
+  if (method === 'getDiagnostics') return (v.kind === 'full' || v.kind === 'unchanged')
+    && Array.isArray(v.diagnostics) && v.diagnostics.length <= LANGUAGE_LIMITS.maximumDiagnostics
+    && v.diagnostics.every(d => exact(d, ['range', 'severity', 'code', 'source', 'message']) && range(d.range)
+      && ['error', 'warning', 'information', 'hint'].includes(String(d.severity)) && text(d.message)
+      && nullableText(d.source) && (d.code === null || text(d.code) || typeof d.code === 'number' && Number.isFinite(d.code)))
   if (method === 'getSignatureHelp') return Array.isArray(v.signatures) && v.signatures.length <= LANGUAGE_LIMITS.maximumSignatures
     && [v.activeSignature, v.activeParameter].every(i => i === null || Number.isSafeInteger(i) && Number(i) >= 0)
     && v.signatures.every(s => exact(s, ['label', 'documentation', 'parameters']) && text(s.label) && nullableText(s.documentation)
@@ -65,6 +70,7 @@ export function createLanguageBridge(ipc: IpcRendererLike): LanguageApi {
     getHover: request => call('getHover', validateHoverRequest(request)),
     getSignatureHelp: request => call('getSignatureHelp', validateSignatureHelpRequest(request)),
     getDefinition: request => call('getDefinition', validateDefinitionRequest(request)),
+    getDiagnostics: request => call('getDiagnostics', validateDiagnosticRequest(request)),
     cancel: requestId => call('cancel', validateLanguageCancel({ requestId })),
     onStatus(listener) {
       const receive = (_event: unknown, payload: unknown) => {

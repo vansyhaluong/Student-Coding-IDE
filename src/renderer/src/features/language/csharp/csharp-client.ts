@@ -4,7 +4,7 @@ import type { LanguageApi, LanguageStatus, SemanticRequestId, DocumentVersion, C
 import type { EditorModelManager, EditorDocumentLifecycleEvent, EditorDocument } from '../../editor/models/editor-model-manager'
 import { documentUri } from '../../editor/models/editor-model-manager'
 
-interface Document { model: EditorDocument['model']; relativePath: string; version: number; text: string; opened: boolean; tail: Promise<void> }
+interface Document { model: EditorDocument['model']; relativePath: string; version: number; syncedVersion: number; text: string; opened: boolean; tail: Promise<void> }
 /** Renderer-session client, independent of React mount/unmount. No protocol or disk authority. */
 export class CsharpClient {
   private projectId: ProjectId | null = null
@@ -35,6 +35,9 @@ export class CsharpClient {
   }
   private updateStatus(status: LanguageStatus | null): void {
     if (status?.service.state !== 'RUNNING') for (const cancel of this.pending.values()) cancel()
+    if (this.statusValue?.service.state === 'RUNNING' && status?.service.state !== 'RUNNING') {
+      this.generation++; this.documents.clear()
+    }
     this.statusValue = status
     for (const listener of this.listeners) listener(status)
     // Selection can make previously unsynchronized buffers available without a UI dependency.
@@ -48,10 +51,13 @@ export class CsharpClient {
     const projectId = this.projectId, generation = this.generation, key = documentUri(projectId, source.relativePath)
     if (this.documents.has(key)) return
     const document: Document = { model: source.model, relativePath: source.relativePath, version: source.model.getVersionId(),
+      syncedVersion: source.model.getVersionId(),
       text: source.model.getValue(), opened: false, tail: Promise.resolve() }
     this.documents.set(key, document)
     document.tail = this.api.openDocument({ projectId, relativePath: source.relativePath, modelVersion: document.version as DocumentVersion,
       text: document.text, dirty: source.dirty }).then(result => {
+      // A close queued during didOpen must still send didClose after the open completes.
+      if (generation === this.generation && result.ok) document.opened = result.value.service.state === 'RUNNING' && result.value.workspace.state === 'READY'
       if (!this.current(generation, key, document)) return
       const status = this.unwrap(result)
       document.opened = status.service.state === 'RUNNING' && status.workspace.state === 'READY'
@@ -83,7 +89,9 @@ export class CsharpClient {
       const changes = [incrementalChange(document.text, source.model.getValue())]
       document.text = source.model.getValue(); document.version = version
       document.tail = document.tail.then(async () => {
-        if (this.current(generation, key, document) && document.opened) this.unwrap(await this.api.changeDocument({ ...identity, changes }))
+        if (this.current(generation, key, document) && document.opened) {
+          this.unwrap(await this.api.changeDocument({ ...identity, changes })); document.syncedVersion = version
+        }
       }).catch(error => { document.opened = false; this.failure(error) })
     }
   }
@@ -94,7 +102,7 @@ export class CsharpClient {
     const projectId = this.projectId, generation = this.generation
     this.documents.delete(key)
     void document.tail.then(async () => {
-      if (generation === this.generation && document.opened) this.unwrap(await this.api.closeDocument({ projectId, relativePath, modelVersion: document.version as DocumentVersion }))
+      if (generation === this.generation && document.opened) this.unwrap(await this.api.closeDocument({ projectId, relativePath, modelVersion: document.syncedVersion as DocumentVersion }))
     }).catch(error => this.failure(error))
   }
   async request<T>(model: editor.ITextModel, position: { lineNumber: number; column: number }, token: CancellationToken,

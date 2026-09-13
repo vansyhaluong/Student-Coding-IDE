@@ -1266,3 +1266,12 @@ input:focus-visible,
   *::before,
   *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
+
+.csharp-status { position: relative; min-width: 0; }
+.csharp-status summary { cursor: pointer; list-style: none; }
+.csharp-status summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px; }
+.csharp-status-details { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 30; width: min(340px, 80vw); padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--sidebar); color: var(--foreground); box-shadow: 0 4px 16px rgb(0 0 0 / 20%); white-space: normal; }
+.csharp-status-details p { margin: 8px 0; }
+.csharp-status-details label { display: grid; gap: 6px; }
+.csharp-status-details select { width: 100%; min-width: 0; padding: 6px; background: var(--editor-surface); color: var(--foreground); border: 1px solid var(--input); border-radius: var(--radius-sm); font: inherit; }
+.csharp-status summary:focus-visible, .csharp-status-details select:focus-visible { outline: 1px solid var(--ring); outline-offset: 1px; }

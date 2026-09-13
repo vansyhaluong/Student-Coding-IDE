@@ -60,6 +60,11 @@ export class CSharpLsAdapter {
   private readonly revisions = new Map<string, number>()
   private readonly registrations = new Map<string, Lsp.DidChangeWatchedFilesRegistrationOptions>()
   private refreshRevision = 0
+  private readonly diagnosticListeners = new Set<() => void>()
+  subscribeDiagnosticsRefresh(listener: () => void): () => void {
+    this.diagnosticListeners.add(listener)
+    return () => { this.diagnosticListeners.delete(listener) }
+  }
 
   constructor(private readonly connection: LspConnection, readonly generation: number,
     private readonly isCurrent: () => boolean) {}
@@ -177,9 +182,13 @@ export class CSharpLsAdapter {
   }
 
   async documentDiagnostics(operation: string, uri: string): Promise<readonly Lsp.Diagnostic[]> {
+    return (await this.documentDiagnosticReport(operation, uri)).items
+  }
+  async documentDiagnosticReport(operation: string, uri: string): Promise<{ kind: 'full' | 'unchanged'; items: readonly Lsp.Diagnostic[] }> {
     const cached = this.diagnostics.get(uri)
     const result = await this.request<Lsp.DocumentDiagnosticReport>(operation, 'textDocument/diagnostic',
-      { textDocument: { uri }, ...(cached?.resultId ? { previousResultId: cached.resultId } : {}) }, uri)
+      { textDocument: { uri }, identifier: 'csharp-ls',
+        ...(cached?.resultId ? { previousResultId: cached.resultId } : {}) }, uri)
     if (!object(result) || (result.resultId !== undefined && typeof result.resultId !== 'string')) {
       throw new LanguageError('invalid-response')
     }
@@ -189,10 +198,11 @@ export class CSharpLsAdapter {
     } else if (result.kind === 'unchanged' && cached) {
       this.diagnostics.set(uri, { ...cached, resultId: result.resultId })
     } else throw new LanguageError('invalid-response')
-    return structuredClone(this.diagnostics.get(uri)!.items)
+    return { kind: result.kind, items: structuredClone(this.diagnostics.get(uri)!.items) }
   }
 
   didOpen(params: Lsp.DidOpenTextDocumentParams): Promise<void> {
+    this.diagnostics.delete(params.textDocument.uri)
     this.invalidateDocument(params.textDocument.uri)
     return this.notify('textDocument/didOpen', params)
   }
@@ -205,6 +215,7 @@ export class CSharpLsAdapter {
     return this.notify('textDocument/didSave', params)
   }
   didClose(params: Lsp.DidCloseTextDocumentParams): Promise<void> {
+    this.diagnostics.delete(params.textDocument.uri)
     this.invalidateDocument(params.textDocument.uri)
     return this.notify('textDocument/didClose', params)
   }
@@ -218,12 +229,12 @@ export class CSharpLsAdapter {
     this.valid = false
     this.connection.cancelAll()
     this.completions.clear(); this.diagnostics.clear(); this.revisions.clear(); this.registrations.clear()
+    this.diagnosticListeners.clear()
   }
 
   private invalidateDocument(uri: string): void {
     this.revisions.set(uri, (this.revisions.get(uri) ?? 0) + 1)
     this.clearCompletions(uri)
-    this.diagnostics.delete(uri)
   }
   private clearCompletions(uri: string): void {
     for (const [handle, item] of this.completions) if (item.uri === uri) this.completions.delete(handle)
@@ -293,6 +304,7 @@ export class CSharpLsAdapter {
       this.refreshRevision++
       this.diagnostics.clear()
       for (const uri of this.revisions.keys()) this.invalidateDocument(uri)
+      for (const listener of this.diagnosticListeners) listener()
       return null
     })
     this.connection.onRequest('workspace/semanticTokens/refresh', () => null)

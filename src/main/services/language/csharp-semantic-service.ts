@@ -6,7 +6,7 @@ import { CSHARP_LS_CAPABILITIES, LANGUAGE_LIMITS, LANGUAGE_REASON_CODES,
   type LanguageStatus, type LanguageWorkspaceStatus, type LanguageReasonCode, type LanguageModelIdentity,
   type OpenLanguageDocumentRequest, type ChangeLanguageDocumentRequest, type CompletionRequest,
   type CompletionResolveRequest, type CompletionHandle, type CompletionItem, type DefinitionTarget,
-  type SemanticRequestId, type SelectLanguageWorkspaceRequest } from '../../../shared/contracts/language'
+  type SemanticRequestId, type SelectLanguageWorkspaceRequest, type DiagnosticRequest, type DiagnosticResult } from '../../../shared/contracts/language'
 import type { IpcRequestContext } from '../../ipc/ipc-handler-registry'
 import type { ProjectService } from '../project/project-service'
 import { isPathWithinRoot, type FileSystemService } from '../filesystem/filesystem-service'
@@ -16,6 +16,7 @@ import type { CsharpOwnerLifecycle } from './csharp-owner-lifecycle'
 import type { SyncedDocument, CsharpDocumentSync } from './csharp-document-sync'
 import { LanguageError } from './language-error'
 import { completionItem, markdown, safeRange, signatureResult, triggers } from './csharp-semantic-mapping'
+import { normalizeCsharpDiagnostics } from './csharp-diagnostic-mapping'
 
 type Document = { handle: SyncedDocument; sync: CsharpDocumentSync; owner: string; epoch: number; version: number }
 type Operation = { owner: string; operation: string; cancelled: boolean; cancel(): void }
@@ -26,6 +27,9 @@ export class CsharpSemanticService {
   private readonly handles = new Map<CompletionHandle, Handle>()
   private readonly pending = new Map<SemanticRequestId, Operation>()
   private documentTail: Promise<unknown> = Promise.resolve()
+  private readonly diagnosticTails = new Map<string, Promise<unknown>>()
+  private removeDiagnosticRefresh?: () => void
+  private diagnosticAdapter?: LanguageServiceManager['adapter']
   private readonly removers: Array<() => void> = []
   private observers = new Map<string, { context: IpcRequestContext; projectId: ProjectId }>()
   constructor(private readonly projects: ProjectService, private readonly files: FileSystemService,
@@ -198,6 +202,27 @@ export class CsharpSemanticService {
     if (pending) { pending.cancelled = true; pending.cancel() }
     return null
   }
+  async diagnostics(request: DiagnosticRequest, context: IpcRequestContext): Promise<DiagnosticResult> {
+    const current = this.capture(context, request.document.projectId), key = this.key(request.document)
+    const prior = this.diagnosticTails.get(key) ?? Promise.resolve()
+    const task = this.operation(request.requestId, context, async (operation, check) => {
+      await prior; await this.documentTail; current(); check()
+      const identity = { ...request.document, modelVersion: request.documentVersion }
+      const document = this.document(identity, context), adapter = this.manager.adapter
+      return document.sync.withFlushedDocument(document.handle, async uri => {
+        current(); check()
+        const report = await adapter.documentDiagnosticReport(operation, uri)
+        current(); check()
+        if (this.document(identity, context) !== document || this.manager.adapter !== adapter) throw new LanguageError('stale-document')
+        return { requestId: request.requestId, documentVersion: request.documentVersion,
+          kind: report.kind, diagnostics: normalizeCsharpDiagnostics(report.items) }
+      })
+    })
+    const tail = task.catch(() => {})
+    this.diagnosticTails.set(key, tail)
+    try { return await task }
+    finally { if (this.diagnosticTails.get(key) === tail) this.diagnosticTails.delete(key) }
+  }
   private async operation<T>(id: SemanticRequestId, context: IpcRequestContext,
     run: (operation: string, check: () => void) => Promise<T>): Promise<T> {
     if (this.pending.has(id)) throw new LanguageError('busy')
@@ -240,6 +265,12 @@ export class CsharpSemanticService {
       ? source.reason as LanguageReasonCode : 'WORKSPACE_PREFLIGHT_FAILED' }
     const running = this.manager.state === 'RUNNING'
     const adapter = running ? this.manager.adapter : undefined, caps = adapter?.initializeResult?.capabilities
+    if (adapter !== this.diagnosticAdapter) {
+      this.removeDiagnosticRefresh?.(); this.diagnosticAdapter = adapter
+      this.removeDiagnosticRefresh = adapter?.subscribeDiagnosticsRefresh?.(() => {
+        if (this.manager.state === 'RUNNING' && this.manager.adapter === adapter) this.statusChanged()
+      })
+    }
     return { providerId: 'csharp-ls', capabilities: CSHARP_LS_CAPABILITIES,
       effectiveCapabilities: this.manager.capabilities, completionResolve: running && adapter?.serverCapabilities?.completionResolve === true,
       completionTriggers: triggers(caps?.completionProvider?.triggerCharacters),
@@ -252,5 +283,5 @@ export class CsharpSemanticService {
       catch { this.observers.delete(owner) /* No status can be delivered to retired ownership. */ }
     }
   }
-  stop(): void { this.cancelAll(); for (const remove of this.removers.splice(0)) remove(); this.documents.clear(); this.handles.clear(); this.observers.clear() }
+  stop(): void { this.cancelAll(); this.removeDiagnosticRefresh?.(); for (const remove of this.removers.splice(0)) remove(); this.documents.clear(); this.handles.clear(); this.observers.clear() }
 }

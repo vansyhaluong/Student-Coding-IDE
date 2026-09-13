@@ -191,6 +191,8 @@ export interface LanguageDiagnostic {
 export interface DiagnosticResult {
   readonly requestId: SemanticRequestId
   readonly documentVersion: DocumentVersion
+  readonly kind: 'full' | 'unchanged'
+  /** Complete semantic snapshot, including on unchanged, for a newly attached consumer. */
   readonly diagnostics: readonly LanguageDiagnostic[]
 }
 
@@ -213,6 +215,7 @@ export interface LanguageApi {
   getHover(request: HoverRequest): Promise<AppResult<HoverResult | null>>
   getSignatureHelp(request: SignatureHelpRequest): Promise<AppResult<SignatureHelpResult | null>>
   getDefinition(request: DefinitionRequest): Promise<AppResult<DefinitionResult>>
+  getDiagnostics(request: DiagnosticRequest): Promise<AppResult<DiagnosticResult>>
   cancel(requestId: SemanticRequestId): Promise<AppResult<null>>
   onStatus(listener: (event: LanguageStatusEvent) => void): () => void
 }
@@ -222,4 +225,5 @@ export const LANGUAGE_CHANNELS = {
   closeDocument: 'language:close-document', getCompletion: 'language:get-completion', resolveCompletion: 'language:resolve-completion',
   getHover: 'language:get-hover', getSignatureHelp: 'language:get-signature-help', getDefinition: 'language:get-definition',
   cancel: 'language:cancel', status: 'language:status',
+  getDiagnostics: 'language:get-diagnostics',
 } as const

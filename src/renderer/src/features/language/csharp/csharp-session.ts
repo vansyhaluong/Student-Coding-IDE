@@ -4,11 +4,16 @@ import { CsharpClient } from './csharp-client'
 import { CsharpMonacoProviders } from './csharp-monaco-providers'
 import { parseProjectDocumentUri } from '../project-uri'
 import { navigateCsharp } from './csharp-navigation'
+import { CsharpDiagnosticsController } from './csharp-diagnostics-controller'
+import { problemsStore } from '../../problems/problems-session'
+import { csharpStatusStore } from './csharp-status-store'
 
 export function startCsharpSession(): () => void {
   const client = new CsharpClient(window.studentIde.language, editorModelManager,
     message => console.error(message))
   const providers = new CsharpMonacoProviders(monaco, client)
+  const diagnostics = new CsharpDiagnosticsController(monaco.editor, client, editorModelManager, problemsStore)
+  const removeLanguageStatus = client.subscribe(status => csharpStatusStore.set(client.project, status))
   let projectRevision = 0, stopped = false, navigationId = 0
   const removeProject = window.studentIde.project.onChanged(({ activeProject }) => {
     projectRevision++; client.setProject(activeProject?.id ?? null)
@@ -29,5 +34,5 @@ export function startCsharpSession(): () => void {
     }
     return navigateCsharp({ id: ++navigationId, ...target, ...range })
   } })
-  return () => { stopped = true; removeProject(); removeStatus(); opener.dispose(); providers.dispose(); client.dispose() }
+  return () => { stopped = true; removeProject(); removeStatus(); removeLanguageStatus(); csharpStatusStore.set(null, null); opener.dispose(); diagnostics.dispose(); providers.dispose(); client.dispose() }
 }

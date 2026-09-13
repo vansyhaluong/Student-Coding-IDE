@@ -101,4 +101,4 @@ export class CsharpWatchedFiles {
   }
   private check(): void { if (!this.valid) throw new LanguageError('stale-session'); this.current() }
 }
-function uri(path: string): string { return pathToFileURL(process.platform === 'win32' ? path.toLowerCase() : path).href }
+function uri(path: string): string { return pathToFileURL(path).href }

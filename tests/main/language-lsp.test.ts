@@ -312,6 +312,31 @@ describe('CSharpLsAdapter', () => {
     await expect(adapter.hover('next', document)).rejects.toMatchObject({ reason: 'stale-session' })
     expect(adapter.effectiveCapabilities(true)).toEqual([])
   })
+  it('5.5G retains result IDs across changes, replaces full reports, and resets on close/refresh', async () => {
+    const { server, adapter } = await adapterPair(), uri = document.textDocument.uri
+    const item = { range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } }, message: 'Expected ;', severity: 1 }
+    const received: Array<{ identifier?: string; previousResultId?: string }> = []
+    let report: unknown = { kind: 'full', resultId: 'main-only', items: [item] }
+    server.onRequest('textDocument/diagnostic', params => { received.push(params); return report })
+    expect(await adapter.documentDiagnosticReport('full', uri)).toEqual({ kind: 'full', items: [item] })
+    expect(received[0].identifier).toBe('csharp-ls')
+    await adapter.didChange({ textDocument: { uri, version: 2 }, contentChanges: [] })
+    report = { kind: 'unchanged', resultId: 'next-main-only' }
+    expect(await adapter.documentDiagnosticReport('unchanged', uri)).toEqual({ kind: 'unchanged', items: [item] })
+    expect(received.at(-1)?.previousResultId).toBe('main-only')
+    report = { kind: 'full', resultId: 'empty', items: [] }
+    expect(await adapter.documentDiagnosticReport('empty', uri)).toEqual({ kind: 'full', items: [] })
+    const refresh = vi.fn(), remove = adapter.subscribeDiagnosticsRefresh(refresh)
+    await server.sendRequest('workspace/diagnostic/refresh')
+    expect(refresh).toHaveBeenCalledOnce()
+    await adapter.documentDiagnosticReport('refresh', uri)
+    expect(received.at(-1)?.previousResultId).toBeUndefined()
+    remove(); await server.sendRequest('workspace/diagnostic/refresh'); expect(refresh).toHaveBeenCalledOnce()
+    await adapter.documentDiagnosticReport('before-close', uri)
+    await adapter.didClose({ textDocument: { uri } })
+    await adapter.documentDiagnosticReport('after-close', uri)
+    expect(received.at(-1)?.previousResultId).toBeUndefined()
+  })
   it('rejects malformed completion and diagnostic reports', async () => {
     const { server, adapter } = await adapterPair()
     server.onRequest('textDocument/completion', () => ({ items: [null] }))
