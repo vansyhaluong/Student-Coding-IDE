@@ -1,3 +1,4 @@
+import { createSettingsBridge } from './settings'
 import { createLanguageBridge } from './language'
 import type { StudentIdeApi } from '../../shared/contracts'
 import { createFileBridge } from './file'
@@ -15,6 +16,7 @@ export function createPreloadApi(
   ipcRenderer: IpcRendererLike,
 ): StudentIdeApi {
   return {
+    settings: createSettingsBridge(ipcRenderer),
     language: createLanguageBridge(ipcRenderer),
     file: createFileBridge(ipcRenderer),
     git: createGitBridge(ipcRenderer),

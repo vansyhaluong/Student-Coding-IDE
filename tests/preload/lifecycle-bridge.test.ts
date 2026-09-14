@@ -44,6 +44,7 @@ describe('lifecycle preload bridge', () => {
       'project',
       'run',
       'search',
+      'settings',
       'terminal',
     ])
     expect(Object.keys(api.lifecycle).sort()).toEqual([

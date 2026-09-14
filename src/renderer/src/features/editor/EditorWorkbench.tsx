@@ -7,6 +7,8 @@ import type { EditorModelManager } from './models/editor-model-manager'
 import type { EditorNavigationRequest } from './editor-navigation'
 
 interface EditorWorkbenchProps {
+  settings?: { fontSize: number; tabSize: 2 | 4 }
+  dark?: boolean
   manager: EditorModelManager
   onSave(key: string): Promise<boolean>
   navigation: EditorNavigationRequest | null
@@ -15,6 +17,8 @@ interface EditorWorkbenchProps {
 
 export function EditorWorkbench({
   manager,
+  settings = { fontSize: 13, tabSize: 2 },
+  dark = true,
   onSave,
   navigation,
   readOnly,
@@ -28,6 +32,11 @@ export function EditorWorkbench({
   useEffect(() => manager.subscribe(() => {
     setRevision((revision) => revision + 1)
   }), [manager])
+
+  useEffect(() => {
+    const apply = () => { for (const doc of manager.getOpenDocuments()) (doc.model as editor.ITextModel).updateOptions({ tabSize: settings.tabSize }) }
+    apply(); return manager.subscribe(apply)
+  }, [manager, settings.tabSize])
 
   const active = manager.getActiveDocument()
 
@@ -114,18 +123,18 @@ export function EditorWorkbench({
             height="100%"
             defaultValue=""
             defaultLanguage="plaintext"
-            theme="vs-dark"
+            theme={dark ? 'vs-dark' : 'vs'}
             saveViewState={false}
             keepCurrentModel
             onMount={onMount}
             options={{
               readOnly,
               automaticLayout: true,
-              fontSize: 13,
+              fontSize: settings.fontSize,
               lineNumbers: 'on',
               minimap: { enabled: false },
               scrollBeyondLastLine: false,
-              tabSize: 2,
+              tabSize: settings.tabSize,
             }}
           />
         ) : (

@@ -180,9 +180,12 @@ export function useEditorWorkspace(
     )
   }, [])
 
-  const save = useCallback(async (key: string): Promise<boolean> => {
+  const save = useCallback(async (key: string, automatic = false): Promise<boolean> => {
     if (interactionLockedRef.current || fileSystemUnavailableRef.current) return false
     const document = manager.getOpenDocuments().find((item) => item.key === key)
+    if (automatic && document?.externalConflict) {
+      setError('Auto Save stopped because this file changed on disk. Review the conflict and save manually.'); return false
+    }
     if (document?.diskState === 'missing') {
       setError('This file no longer exists on disk. Close the buffer or restore the file outside the IDE.')
       return false
@@ -480,6 +483,7 @@ export function useEditorWorkspace(
   }, [])
 
   return {
+    reportAutoSaveError: () => setError('Auto Save could not complete. Your changes remain unsaved.'),
     manager,
     dialog,
     terminalTransitionDialog,

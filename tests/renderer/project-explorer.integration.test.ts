@@ -43,6 +43,7 @@ vi.mock('../../src/renderer/src/features/editor/monaco', () => ({
         version: 1,
         disposed: false,
         listeners,
+        updateOptions: vi.fn(),
         getValue() { return this.value },
         setValue(next: string) {
           this.value = next
@@ -2028,6 +2029,26 @@ describe('App project integration', () => {
   })
 })
 
+describe('Phase 6 Auto Save failure integration', () => {
+  it.each(['write error', 'external conflict'])('preserves dirty content after %s without retrying', async kind => {
+    const write = vi.fn<FileApi['write']>(async () => failure('Save failed'))
+    const api = installApi({ project: { getActive: async () => success(project) }, file: { write } })
+    api.settings.get = async () => success({ settings: { theme: 'dark', fontSize: 13, tabSize: 2, autoSave: true }, recovered: false })
+    render(createElement(App))
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Settings' }) as HTMLButtonElement).disabled).toBe(false))
+    let key = ''
+    act(() => {
+      const doc = editorModelManager.openDocument(project.id, 'main.ts', 'disk')
+      key = doc.key
+      doc.model.setValue('unsaved content')
+      if (kind === 'external conflict') editorModelManager.markExternalConflict(key)
+    })
+    await waitFor(() => expect(screen.getAllByRole('alert').map(element => element.textContent).join(' ')).toContain(kind === 'write error' ? 'Save failed' : 'Auto Save stopped'), { timeout: 3000 })
+    expect(editorModelManager.findDocument(project.id, 'main.ts')).toMatchObject({ dirty: true })
+    expect(editorModelManager.findDocument(project.id, 'main.ts')?.model.getValue()).toBe('unsaved content')
+    expect(write).toHaveBeenCalledTimes(kind === 'write error' ? 1 : 0)
+  })
+})
 function renderExplorer(): void {
   render(createElement(ProjectExplorer, explorerProps()))
 }
@@ -2048,7 +2069,13 @@ function installApi(overrides: {
   search?: Partial<SearchApi>
   git?: Partial<GitApi>
 } = {}): StudentIdeApi {
+  window.matchMedia = vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
   const api: StudentIdeApi = {
+    settings: {
+      get: async () => success({ settings: { theme: 'dark', fontSize: 13, tabSize: 2, autoSave: false }, recovered: false }),
+      update: async settings => success({ settings, recovered: false }),
+      dependencies: async () => success({ node: 'AVAILABLE', git: 'AVAILABLE' }),
+    },
     language: unavailableLanguageApi,
     git: {
       getState: async () => failure('Not configured'),
@@ -2089,6 +2116,9 @@ function installApi(overrides: {
       ...overrides.lifecycle,
     },
     project: {
+      listRecent: async () => success([]),
+      openRecent: async () => success(null),
+      removeRecent: async () => success(null),
       getActive: async () => success(null),
       open: async () => success(null),
       create: async () => success(null),

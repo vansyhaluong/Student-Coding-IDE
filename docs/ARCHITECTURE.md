@@ -748,6 +748,28 @@ Use versioned JSON under Electron's per-user application-data directory, separat
 
 Writes use temporary-file plus replace semantics, are serialized per document, and retain a last-known-good backup. Documents include `schemaVersion`; migrations are ordered, small, and tested. Invalid/corrupt state is quarantined or backed up, defaults are loaded, and the user receives a recoverable warning. Workspace state is convenience data and must never be the only copy of source content.
 
+### Phase 6 implemented settings boundary
+
+The app document uses schema version 2: recent-project metadata plus the exact
+`theme`, `fontSize`, `tabSize`, and `autoSave` preferences. Version 1 migrates
+existing history and supplies approved defaults. Settings and history updates
+transform the latest state inside one write queue, avoiding lost metadata from
+concurrent updates. Invalid primary JSON is preserved as `.corrupt` before a
+successful replacement; recovery is reported to the renderer as a safe flag.
+
+Settings and Recent Projects requests validate payloads and the current Main
+frame. Recent paths are display metadata only; opening/removal accepts an opaque
+history ID, and opening still passes the existing canonical-root and unsaved
+transition guards. Removal changes history without closing the project or
+deleting its files.
+
+Per the user-approved Phase 6 clarification in DECISIONS.md, dependency UX is
+guidance only: existing Node/Git PATH detection and the existing C# status policy.
+Custom runtime, Git, shell and C# executable selection remain deferred. There are
+no workspace-specific preference overrides or remappable shortcuts in this phase.
+Auto Save follows ADR-023 and calls the existing editor save flow; no source
+buffers are placed in app persistence and Run retains Save-first behavior.
+
 ## 14. Cancellation and lifecycle
 
 - Search uses an operation ID and cooperative cancellation; late result events are ignored.

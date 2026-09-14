@@ -35,6 +35,7 @@ export interface PersistenceStoreOptions<T> {
   schemaVersion: number
   defaultValue(): T
   validate(value: unknown): value is T
+  migrate?(version: number, data: unknown): unknown
   fileSystem?: PersistenceFileSystem
 }
 
@@ -53,6 +54,7 @@ export class PersistenceService<T> implements ManagedService {
   private writeSequence = 0
   private readonly fileSystem: PersistenceFileSystem
   private currentValue: T | undefined
+  recovered = false
 
   constructor(private readonly options: PersistenceStoreOptions<T>) {
     this.fileSystem = options.fileSystem ?? nodeFileSystem
@@ -61,15 +63,27 @@ export class PersistenceService<T> implements ManagedService {
   async start(): Promise<void> {
     const loaded = await this.load()
     this.currentValue = loaded.value
+    this.recovered = loaded.recovered
   }
 
   getValue(): T {
-    return this.currentValue ?? this.options.defaultValue()
+    return structuredClone(this.currentValue ?? this.options.defaultValue())
   }
 
   async update(value: T): Promise<void> {
-    await this.save(value)
-    this.currentValue = value
+    const snapshot = structuredClone(value)
+    await this.updateWith(() => snapshot)
+  }
+
+  updateWith(change: (current: T) => T): Promise<void> {
+    const run = this.writeQueue.then(async () => {
+      const next = structuredClone(change(this.getValue()))
+      if (!this.options.validate(next)) throw new Error('Invalid persisted state')
+      await this.writeDocument(next)
+      this.currentValue = next
+    })
+    this.writeQueue = run.catch(() => undefined)
+    return run
   }
 
   async load(): Promise<PersistenceLoadResult<T>> {
@@ -99,7 +113,11 @@ export class PersistenceService<T> implements ManagedService {
   }
 
   save(value: T): Promise<void> {
-    const run = this.writeQueue.then(() => this.writeDocument(value))
+    const snapshot = structuredClone(value)
+    const run = this.writeQueue.then(() => {
+      if (!this.options.validate(snapshot)) throw new Error('Invalid persisted state')
+      return this.writeDocument(snapshot)
+    })
     this.writeQueue = run.catch(() => undefined)
     return run
   }
@@ -131,6 +149,7 @@ export class PersistenceService<T> implements ManagedService {
           this.backupPath,
         )
       }
+      if (current.status === 'invalid') await this.fileSystem.copyFile(this.options.filePath, this.options.filePath + '.corrupt')
       await this.fileSystem.rename(temporaryPath, this.options.filePath)
     } catch (error) {
       await this.fileSystem.unlink(temporaryPath).catch(() => undefined)
@@ -146,6 +165,12 @@ export class PersistenceService<T> implements ManagedService {
       const parsed: unknown = JSON.parse(
         await this.fileSystem.readFile(path, 'utf8'),
       )
+      if (typeof parsed === 'object' && parsed !== null && 'schemaVersion' in parsed && 'data' in parsed
+        && Number.isInteger(parsed.schemaVersion) && Number(parsed.schemaVersion) >= 1 && Number(parsed.schemaVersion) < this.options.schemaVersion && this.options.migrate) {
+        let version = Number(parsed.schemaVersion)
+        while (version < this.options.schemaVersion) { parsed.data = this.options.migrate(version, parsed.data); version++ }
+        parsed.schemaVersion = version
+      }
       if (!isVersionedDocument(parsed, this.options.schemaVersion)) {
         return { status: 'invalid' }
       }

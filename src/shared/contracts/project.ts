@@ -22,6 +22,9 @@ export interface RecentProjectMetadata extends ProjectIdentity {
 }
 
 export const PROJECT_CHANNELS = {
+  listRecent: 'project:list-recent',
+  openRecent: 'project:open-recent',
+  removeRecent: 'project:remove-recent',
   getActive: 'project:get-active',
   open: 'project:open',
   create: 'project:create',
@@ -41,7 +44,11 @@ export interface ProjectChangedEvent {
   activeProject: ProjectIdentity | null
 }
 
+export interface RecentProject { id: ProjectId; name: string; displayPath: string; lastOpenedAt: string }
 export interface ProjectApi {
+  listRecent(): Promise<AppResult<RecentProject[]>>
+  openRecent(id: ProjectId): Promise<AppResult<ProjectIdentity | null>>
+  removeRecent(id: ProjectId): Promise<AppResult<null>>
   getActive(): Promise<AppResult<ProjectIdentity | null>>
   open(): Promise<AppResult<ProjectIdentity | null>>
   create(name: string): Promise<AppResult<ProjectIdentity | null>>
@@ -81,4 +88,19 @@ function isValidProjectName(name: string): boolean {
     && !/[\\/<>:"|?*]/.test(name)
     && !/[. ]$/.test(name)
     && !/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/.test(baseName)
+}
+
+export function validateRecentRequest(v: unknown): ValidationResult<{ id: ProjectId }> {
+  const r = validateExactObject(v, ['id'])
+  if (!r.ok) return r
+  return isProjectId(r.value.id) ? { ok: true, value: { id: r.value.id } }
+    : { ok: false, issues: [{ path: '$.id', message: 'Invalid recent project' }] }
+}
+export function isRecentProjects(v: unknown): v is RecentProject[] {
+  return Array.isArray(v) && v.every(item => {
+    const r = validateExactObject(item, ['id', 'name', 'displayPath', 'lastOpenedAt'])
+    return r.ok && isProjectId(r.value.id) && typeof r.value.name === 'string'
+      && typeof r.value.displayPath === 'string' && typeof r.value.lastOpenedAt === 'string'
+      && Number.isFinite(Date.parse(r.value.lastOpenedAt))
+  })
 }
