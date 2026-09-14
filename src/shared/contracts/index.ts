@@ -1,3 +1,4 @@
+export * from './settings'
 export * from './app-error'
 export * from './file'
 export * from './git'

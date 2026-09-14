@@ -116,7 +116,7 @@ before affected work continues.
 | Phase 4 — Run & Output | `COMPLETE` | 4A–4F complete; final stabilization and Phase 4 exit gate passed |
 | Phase 5 — Git Integration | `COMPLETE` | Corrective Phase 5C native-test portability fix and Phase 5F re-verification passed locally |
 | Phase 5.5 — C# Language Intelligence | `COMPLETE` | 5.5A–5.5H complete; automated verification and user-confirmed manual acceptance PASS |
-| Phase 6 — Settings & UX | `NOT_STARTED` | Settings, dependency configuration, and Recent Projects UX |
+| Phase 6 — Settings & UX | `COMPLETE` | Settings, dependency guidance and Recent Projects; verified 2026-09-14 |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
@@ -3436,6 +3436,65 @@ persistence UX without changing the main-owned versioned JSON strategy.
 - Phase 6 Definition of Done in Section 19 passes.
 - Persistence recovery/migration, UX, typecheck, lint, build, and defined tests
   pass.
+
+### Phase 6 completion evidence — 2026-09-14
+
+Status: `COMPLETE`. The user authorized continuation of the in-progress Phase 6
+branch. Phases 2–5.5 prerequisites are complete. ADR-023 and the user-approved
+2026-09-13 UX clarification define the delivered scope: fixed shortcuts,
+unbounded MRU history, approved preference defaults/ranges, and dependency
+guidance only. No custom executable path or shortcut remapping was introduced.
+
+- FR-003: list/open/remove Recent Projects using opaque IDs; reopening passes
+  canonical-root and unsaved transition guards. Missing folders retain history
+  and provide recovery guidance. Removing history preserves the active project
+  and source files.
+- FR-012 / FR-033–FR-036 / keyboard shortcuts: Light/Dark/System, 8–40 px integer
+  editor font, 2/4 spaces and Auto Save OFF by default. Enabled Auto Save uses
+  ADR-023's 1000 ms idle delay and the existing version-aware save flow. Failed
+  or conflicting writes preserve dirty content without an automatic retry loop.
+  Timers follow rename and are disposed with their owning editor session.
+  Dialogs and terminal/editor key ownership retain priority.
+- FR-037: app schema v2 migrates v1 recent metadata; Settings and history updates
+  share serialized atomic writes. Backup/default recovery surfaces a warning,
+  and invalid primary JSON is preserved before replacement. Source buffers
+  remain outside app-state persistence.
+- Node/Git detection gives installation/PATH/restart guidance. C# keeps its
+  existing SDK/provider policy and active-project status surface. Runtime,
+  language-service, Terminal and Run ownership remain separate.
+
+Verification:
+
+- `npm test`: **1032/1032 tests, 78/78 files PASS**.
+- `npm run typecheck`, `npm run lint`, `npm run build` and `git diff --check`:
+  **PASS**. The final full-suite run followed the native/production build;
+  a prior concurrent run hit existing 5-second real-Git timeouts. No timeout
+  threshold was weakened; all tests passed when rerun without the build load.
+- Windows Electron 44.0.0: `scripts/smoke-settings.mjs` stages `initial`,
+  `restart` and `recovery` all **PASS**. Main/Preload are production output;
+  the renderer has a test-only model observation point for hidden-window edits.
+  Real Settings controls apply and persist preferences; Auto Save writes the
+  actual fixture source. Separate process launches verify restored preferences,
+  recent reopen/removal, backup recovery, the visible warning and preserved
+  source. Light/Dark screenshots were visually reviewed with no horizontal
+  dialog overflow.
+- `npm run node-pty:smoke-service`: **PASS** for live-root and natural-root
+  Windows scenarios; owned descendants exited, the control process survived,
+  and application shutdown reached STOPPED with one final quit.
+- Security/lifecycle: exact payload validation, current-main-frame authorization,
+  handler/timer/theme-listener disposal, dirty/conflict preservation and existing
+  project transition guards are covered. Smoke asserts contextIsolation=true,
+  nodeIntegration=false and sandbox=true.
+- Reproduction after `npm run build`: run
+  `electron scripts/smoke-settings.mjs --stage=initial`, then `--stage=restart`,
+  then `--stage=recovery` using `node_modules/.bin/electron`. Fixture evidence is
+  stored only under ignored `out/phase6-smoke/`.
+- Non-blocking diagnostics: existing jsdom canvas warning, smoke renderer chunk
+  size warning, and GPU teardown messages after successful Electron assertions.
+
+Exit gate: **PASS**. Architecture deviations: **NONE**. New dependencies:
+**NONE**. Remaining Phase 6 blockers: **NONE**. Phase 7 is ready for authorization
+and remains `NOT_STARTED`; Windows installer/packaged acceptance is not claimed.
 
 ## 13. Phase 7 — Testing, Stabilization & Windows Packaging
 
