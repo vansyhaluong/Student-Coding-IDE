@@ -22,7 +22,6 @@ import {
   type ProjectFileSystemStatus,
   type ProjectChangedEvent,
   type ProjectTransitionSettledEvent,
-  type RecentProjectMetadata,
   type SearchEvent,
   type NamesSearchEvent,
   type UnsavedTransitionRequestEvent,
@@ -32,12 +31,13 @@ import { ApplicationQuitCoordinator } from './app/application-quit-coordinator'
 import { FoundationIpcService } from './ipc/foundation-ipc-service'
 import { FileIpcService } from './ipc/file-ipc-service'
 import { GitLifecycleIpcService } from './ipc/git-lifecycle-ipc-service'
-import { IpcHandlerRegistry } from './ipc/ipc-handler-registry'
+import { IpcHandlerRegistry, type IpcRequestContext } from './ipc/ipc-handler-registry'
 import { ProjectIpcService } from './ipc/project-ipc-service'
 import { SearchIpcService } from './ipc/search-ipc-service'
 import { TerminalIpcService } from './ipc/terminal-ipc-service'
 import { FileSystemService } from './services/filesystem/filesystem-service'
-import { PersistenceService } from './services/persistence/persistence-service'
+import { createAppPersistence, SettingsService } from './services/settings/settings-service'
+import { SettingsIpcService } from './ipc/settings-ipc-service'
 import { ProcessManager } from './services/process/process-manager'
 import { WindowsProcessTreeTerminator } from './services/process/windows-process-tree-terminator'
 import { UnsavedTransitionService } from './services/lifecycle/unsaved-transition-service'
@@ -65,10 +65,6 @@ import { CsharpWorkspace } from './services/language/csharp-workspace'
 import { CsharpWorkspaceSession } from './services/language/csharp-workspace-session'
 import { CsharpOwnerLifecycle } from './services/language/csharp-owner-lifecycle'
 
-interface AppMetadata {
-  recentProjects: RecentProjectMetadata[]
-}
-
 let desktopApplication: DesktopApplication | undefined
 let windowManager: WindowManager | undefined
 let unsavedTransitionService: UnsavedTransitionService | undefined
@@ -77,21 +73,14 @@ let removeLifecyclePublisher: (() => void) | undefined
 
 void app.whenReady().then(async () => {
   const processManager = new ProcessManager()
-  const persistenceService = new PersistenceService<AppMetadata>({
-    filePath: join(app.getPath('userData'), 'app-state.json'),
-    schemaVersion: 1,
-    defaultValue: () => ({ recentProjects: [] }),
-    validate: isAppMetadata,
-  })
+  const persistenceService = createAppPersistence(join(app.getPath('userData'), 'app-state.json'))
+  const settingsService = new SettingsService(persistenceService)
   const projectService = new ProjectService(
     undefined,
     process.platform,
     {
       getRecentProjects: () => persistenceService.getValue().recentProjects,
-      updateRecentProjects: (recentProjects) => persistenceService.update({
-        ...persistenceService.getValue(),
-        recentProjects,
-      }),
+      updateRecentProjects: (recentProjects) => persistenceService.updateWith(current => ({ ...current, recentProjects })),
     },
     () => {
       console.error('A project state listener failed unexpectedly.')
@@ -221,6 +210,7 @@ void app.whenReady().then(async () => {
     ipcRegistry,
     projectService,
     {
+      authorizeRecent: authorizePreferencesFrame,
       selectDirectory: async (purpose) => {
         const result = await dialog.showOpenDialog({
           title: purpose === 'open-project'
@@ -253,10 +243,17 @@ void app.whenReady().then(async () => {
     (status) => publishToWindows(FILE_CHANNELS.statusChanged, status),
   )
   const gitLifecycle = new GitOperationLifecycle(projectService, fileSystemService, new GitOwnedCommandRunner())
+  const gitDetector = new GitExecutableDetector()
+  const settingsIpc = new SettingsIpcService(ipcRegistry, settingsService, authorizePreferencesFrame, async () => {
+    const node = await nodeRuntime.detect()
+    let git: 'AVAILABLE' | 'MISSING' | 'INVALID_CONFIGURATION'
+    try { git = (await gitDetector.detect()).state } catch { git = 'INVALID_CONFIGURATION' }
+    return { node: node.state, git }
+  })
   const gitService = new GitService(
     projectService,
     fileSystemService,
-    new GitExecutableDetector(),
+    gitDetector,
     gitLifecycle.commands,
   )
   const gitDocuments = new GitDocumentOwners(gitLifecycle)
@@ -337,6 +334,7 @@ void app.whenReady().then(async () => {
     searchService,
     terminalService,
     foundationIpc,
+    settingsIpc,
     unsavedTransitionService,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
     runLifecycle,
@@ -451,25 +449,15 @@ app.on('window-all-closed', () => {
   }
 })
 
-function isAppMetadata(value: unknown): value is AppMetadata {
-  return typeof value === 'object'
-    && value !== null
-    && 'recentProjects' in value
-    && Array.isArray(value.recentProjects)
-    && value.recentProjects.every(isRecentProjectMetadata)
-}
-
-function isRecentProjectMetadata(
-  value: unknown,
-): value is RecentProjectMetadata {
-  return typeof value === 'object'
-    && value !== null
-    && 'id' in value
-    && typeof value.id === 'string'
-    && 'name' in value
-    && typeof value.name === 'string'
-    && 'rootPath' in value
-    && typeof value.rootPath === 'string'
-    && 'lastOpenedAt' in value
-    && typeof value.lastOpenedAt === 'string'
+function authorizePreferencesFrame(context: IpcRequestContext): void {
+  const owner = webContents.fromId(context.senderId)
+  const frame = context.senderFrame
+  if (!owner || owner.isDestroyed() || !frame || frame.detached || frame.isDestroyed()
+    || owner.mainFrame.frameToken !== frame.frameToken || owner.mainFrame.processId !== frame.processId) {
+    throw new DomainError({
+      code: 'PERMISSION_DENIED',
+      message: 'The application window is no longer available.',
+      retryable: false,
+    })
+  }
 }

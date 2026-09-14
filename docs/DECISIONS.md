@@ -465,3 +465,29 @@ verified protocol and JSON-RPC versions as production runtime dependencies.
 | Java intelligence | Future provider decision | Preserves future extensibility | Would add provider/runtime/process complexity if an external server is selected | Future Windows/process gate required | DEFERRED; no current Phase 3 dependency |
 | TypeScript Run | `tsx`, `ts-node`, `tsc` + Node, native Node TS | Future comparison only; no V1 selection | Semantics/version/config trade-offs | Must test Windows invocation/stop before future execution | DEFERRED; future ADR-014 gate |
 | Automated tests | `vitest` | Reuses Vite/TypeScript transform; unit, service, and adapter integration support | Keep Electron E2E separate until required | No native ABI; CI Node 22 compatible | SELECTED Phase 2A |
+
+## ADR-023 — Phase 6 Auto Save semantics
+
+- **Status:** Accepted — explicitly approved by the user on 2026-09-13.
+- **Context:** FR-012 and FR-036 require an Auto Save toggle but did not specify
+  scheduling or failure behavior. Phase 6 stopped at this product decision gate.
+- **Selected option:** Auto Save defaults to OFF. When ON, a dirty file is saved
+  through the existing save flow after 1000 ms without a new edit. A new edit
+  before the deadline resets the timer. Save failure or conflict preserves dirty
+  state and reports the error; no force overwrite and no automatic retry loop.
+- **Alternatives considered:** Save after an idle delay, or save on focus loss.
+  The user selected the 1000 ms idle-delay behavior.
+- **Consequences:** Preserve existing version-aware save, conflict protection and
+  owning-domain boundaries. Run retains its existing Save-first policy; this
+  decision does not authorize Run-triggered saving or stale-buffer execution.
+- **Phase:** 6. Implemented and verified 2026-09-14; see Phase 6 completion evidence in IMPLEMENTATION-PLAN.md. The accepted decision is unchanged.
+
+### Phase 6 UX clarification — Accepted (2026-09-13)
+
+User-approved: fixed V1 shortcuts, no remapping; dialogs have priority; Terminal
+retains its keys except terminal toggle; editor Ctrl+S/Ctrl+F do not steal input.
+Recent Projects is unbounded MRU. Removal deletes history only. Missing paths
+produce actionable errors and retain entries for explicit removal.
+Defaults: Dark, font 13 px, tab size 2, Auto Save OFF. Font integers 8–40; tabs
+2/4; theme Light/Dark/System. Dependencies are guidance only, with no custom
+executable paths. Existing runtime/Git/C# authority remains unchanged.

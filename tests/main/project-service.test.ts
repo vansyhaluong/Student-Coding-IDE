@@ -487,3 +487,46 @@ function nodeProjectFileSystem(
 function nameOf(path: string): string {
   return path.split(/[\\/]/).at(-1) ?? path
 }
+
+describe('Phase 6 Recent Projects', () => {
+  it('keeps MRU unique, routes reopen through guards, and removes history without deleting source', async () => {
+    const first = await temporaryDirectory()
+    const second = await temporaryDirectory()
+    await writeFile(join(first, 'source.ts'), 'keep me')
+    let recent: RecentProjectMetadata[] = []
+    const service = new ProjectService(undefined, process.platform, {
+      getRecentProjects: () => recent,
+      updateRecentProjects: async value => { recent = value },
+    })
+    const a = await service.openRoot(first)
+    const b = await service.openRoot(second)
+    await service.openRecent(a.id)
+    expect(service.listRecent().map(p => p.id)).toEqual([a.id, b.id])
+    const guard = service.registerTransitionGuard(() => false)
+    await expect(service.openRecent(b.id)).rejects.toMatchObject({ code: 'PROCESS_CANCELLED' })
+    expect(service.getActiveProject()?.id).toBe(a.id)
+    guard()
+    await service.removeRecent(a.id)
+    expect(service.listRecent().map(p => p.id)).toEqual([b.id])
+    expect(service.getActiveProject()?.id).toBe(a.id)
+    await expect(stat(join(first, 'source.ts'))).resolves.toBeDefined()
+    await expect(service.openRecent(a.id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    await service.stop()
+  })
+
+  it('retains missing folders for explicit removal and keeps the active project', async () => {
+    const first = await temporaryDirectory()
+    const missing = await temporaryDirectory()
+    let recent: RecentProjectMetadata[] = []
+    const service = new ProjectService(undefined, process.platform, {
+      getRecentProjects: () => recent, updateRecentProjects: async value => { recent = value },
+    })
+    const old = await service.openRoot(missing)
+    const active = await service.openRoot(first)
+    await rmdir(missing)
+    await expect(service.openRecent(old.id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    expect(service.getActiveProject()?.id).toBe(active.id)
+    expect(service.listRecent().some(p => p.id === old.id)).toBe(true)
+    await service.stop()
+  })
+})

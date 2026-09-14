@@ -56,6 +56,7 @@ describe('Phase 2B IPC adapters', () => {
     const projectService = new ProjectService()
     const selectDirectory = vi.fn(async () => root)
     const projectIpc = new ProjectIpcService(registry, projectService, {
+      authorizeRecent: vi.fn(),
       selectDirectory,
       publishChanged: vi.fn(),
     })
@@ -165,6 +166,7 @@ describe('Phase 2B IPC adapters', () => {
       },
     })
     const projectIpc = new ProjectIpcService(registry, projectService, {
+      authorizeRecent: vi.fn(),
       selectDirectory: async () => parent,
       publishChanged: vi.fn(),
     })
@@ -184,5 +186,27 @@ describe('Phase 2B IPC adapters', () => {
     })
 
     projectIpc.stop()
+  })
+})
+
+describe('Phase 6 history boundary', () => {
+  it('validates opaque history IDs before authorization and blocks denied callers', async () => {
+    const ipc = new FakeIpcMain()
+    const registry = new IpcHandlerRegistry(ipc)
+    const project = new ProjectService()
+    const list = vi.spyOn(project, 'listRecent')
+    const authorizeRecent = vi.fn(() => { throw new Error('owner unavailable') })
+    const service = new ProjectIpcService(registry, project, {
+      authorizeRecent, selectDirectory: async () => null, publishChanged: vi.fn(),
+    })
+    service.start()
+    await expect(ipc.invoke(PROJECT_CHANNELS.openRecent, { id: '../outside' }))
+      .resolves.toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
+    expect(authorizeRecent).not.toHaveBeenCalled()
+    await expect(ipc.invoke(PROJECT_CHANNELS.listRecent, {})).resolves.toMatchObject({ ok: false })
+    expect(authorizeRecent).toHaveBeenCalledOnce()
+    expect(list).not.toHaveBeenCalled()
+    service.stop()
+    expect(ipc.handlers.size).toBe(0)
   })
 })

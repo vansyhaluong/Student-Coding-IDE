@@ -125,9 +125,9 @@ There is no Orca source tree, submodule, runtime dependency, or copied Orca modu
 | Output | Output UI | `src/renderer/src/features/output/` | Existing Bottom Panel sibling with stdout/stderr/exit/error output; single editor-header Run entry and contextual Stop | Implemented 4E |
 | Git | GitService | `src/main/services/git/` | Detection, status, stage, commit, branch, history | 5 |
 | Source Control | Git UI | `src/renderer/src/features/git/SourceControl.tsx` | Project-session Git status, selected-row stage/unstage, commit draft, local branch switch, bounded history, unavailable/unknown/applied recovery | Implemented 5E |
-| Settings | SettingsService | `src/main/services/settings/` | Schema/defaults/validation/update | 6 |
-| Persistence | PersistenceService | `src/main/services/persistence/` | Versioned JSON, atomic writes, migration/recovery | 2/6 |
-| Settings UI | Settings UI | `src/renderer/src/features/settings/` | Theme/editor/path settings, validation UX, and user-facing Recent Projects management | 6 |
+| Settings | SettingsService | `src/main/services/settings/settings-service.ts`, `src/main/ipc/settings-ipc-service.ts`, `src/shared/contracts/settings.ts`, `src/preload/bridge/settings.ts` | Exact schema/default/update, trusted-frame IPC, Node/Git dependency guidance | 6 actual |
+| Persistence | PersistenceService | `src/main/services/persistence/persistence-service.ts` | Serialized atomic updates, v1-to-v2 app metadata migration, backup/corruption recovery | 2/6 actual |
+| Settings UI | Settings UI | `src/renderer/src/features/settings/` | Light/Dark/System, editor preferences, fixed shortcuts, dependency guidance and Recent Projects management | 6 actual |
 | Test support | Service/IPC fixtures | `tests/` or colocated `*.test.ts` | Critical unit and integration gates | 2–7 |
 
 ## Phase 5E actual UI and verification paths
@@ -177,3 +177,21 @@ synchronization, semantic/diagnostic IPC and Preload bridge, Renderer completion
 hover, signature-help, definition and open-document diagnostics, Problems
 contribution, and separate dependency/workspace/service status UX. PHP remains tokenization-only.
 No Python, Java, or custom/alternate HTML diagnostics provider was added.
+
+## Phase 6 actual integration and verification paths
+
+- `src/renderer/src/features/editor/auto-save.ts` schedules the existing
+  version-aware save flow after 1000 ms without an edit; owning models and
+  `use-editor-workspace.ts` retain dirty/conflict decisions.
+- `EditorWorkbench.tsx` applies font/tab/theme settings to retained Monaco models.
+  `features/terminal/xterm-factory.ts` follows theme changes and releases its
+  observer with the terminal view.
+- Project history remains Main-owned in `project-service.ts`; list/open/remove
+  use opaque IDs through `project-ipc-service.ts` and the project preload bridge.
+- `tests/main/settings-service.test.ts`, `tests/renderer/settings.test.tsx`,
+  `tests/renderer/auto-save.test.ts` and expanded project/IPC/editor/preload tests
+  cover persistence, boundary validation, lifecycle, failure handling and UX.
+- `scripts/smoke-settings.mjs` uses production Main/Preload and a renderer build
+  with a test-only model observation point. Isolated fixtures, JSON evidence and
+  screenshots live under ignored `out/phase6-smoke/`. No observation capability
+  is included in the production renderer build.

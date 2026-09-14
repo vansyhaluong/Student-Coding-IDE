@@ -1,9 +1,14 @@
+import { useSettings, useTheme } from './features/settings/use-settings'
+import { SettingsDialog } from './features/settings/SettingsDialog'
+import { RecentProjects } from './features/settings/RecentProjects'
+import { shellShortcut } from './features/settings/shortcuts'
+import { AutoSave } from './features/editor/auto-save'
 import { registerCsharpNavigation } from './features/language/csharp/csharp-navigation'
 import { CsharpStatus } from './features/language/csharp/CsharpStatus'
 import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
-import type { AppResult, GitStatus, ProjectIdentity } from '../../shared/contracts'
+import type { AppResult, GitStatus, ProjectIdentity, ProjectId } from '../../shared/contracts'
 import { SidebarResizer } from './components/SidebarResizer'
 import { Button } from './components/ui/Button'
 import { Dialog, PromptDialog } from './components/ui/Dialog'
@@ -35,6 +40,10 @@ const MIN_EDITOR_WIDTH = 360
 const DEFAULT_TERMINAL_HEIGHT = 260
 
 export default function App() {
+  const preferences = useSettings()
+  const dark = useTheme(preferences.settings.theme)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const closeSettings = useCallback(() => setSettingsOpen(false), [])
   const [project, setProject] = useState<ProjectIdentity | null>(null)
   const [gitDecorationSnapshot, setGitDecorationSnapshot] = useState<{ project: ProjectIdentity; status: GitStatus | null } | null>(null)
   const publishGitSnapshot = useCallback((owner: ProjectIdentity, status: GitStatus | null) => {
@@ -53,6 +62,15 @@ export default function App() {
   const sidebarWidths = useRef({ left: leftWidth, right: rightWidth })
   sidebarWidths.current = { left: leftWidth, right: rightWidth }
   const editor = useEditorWorkspace(project, editorModelManager)
+  const saveContext = useRef(editor)
+  saveContext.current = editor
+  useEffect(() => {
+    if (!preferences.settings.autoSave) return
+    const scheduler = new AutoSave(editorModelManager, key => saveContext.current.save(key, true),
+      () => !saveContext.current.interactionLocked && !saveContext.current.fileSystemUnavailable,
+      () => saveContext.current.reportAutoSaveError())
+    return () => scheduler.dispose()
+  }, [preferences.settings.autoSave, project?.id])
   const run = useProjectRun(project, editor.fileSystemUnavailable)
   useProjectLanguage(project, editorModelManager)
   useProjectProblems(project)
@@ -108,14 +126,14 @@ export default function App() {
     return () => window.removeEventListener('resize', fitSidebarsToWindow)
   }, [])
 
-  const openProject = async (): Promise<void> => {
+  const openProject = async (recentId?: ProjectId): Promise<void> => {
     if (editor.interactionLocked) return
     const requestGeneration = projectGeneration.current
     setLoading(true)
     setError(null)
     let completedAuthoritatively = false
     try {
-      const result = await window.studentIde.project.open()
+      const result = await (recentId ? window.studentIde.project.openRecent(recentId) : window.studentIde.project.open())
       completedAuthoritatively = !isAmbiguousBoundaryFailure(result)
       if (requestGeneration !== projectGeneration.current) return
       if (!result.ok) {
@@ -204,10 +222,32 @@ export default function App() {
     setBottomPanel((current) => current === 'problems' ? null : 'problems')
   }
 
+  useEffect(() => {
+    const receive = (event: KeyboardEvent) => {
+      const action = shellShortcut(event, !!document.querySelector('[role="dialog"][aria-modal="true"]'))
+      if (!action || loading || editor.interactionLocked) return
+      if (action === 'terminal') { event.preventDefault(); event.stopPropagation(); toggleTerminal(); return }
+      if (action === 'open') { event.preventDefault(); void openProject(); return }
+      if (!project || editor.fileSystemUnavailable) return
+      event.preventDefault()
+      setSidebarTab('explorer')
+      requestAnimationFrame(() => {
+        if (action === 'new') document.querySelector<HTMLButtonElement>('[aria-label="New file"]')?.click()
+        else {
+          document.getElementById('search-mode-contents')?.click()
+          document.getElementById('project-search-input')?.focus()
+        }
+      })
+    }
+    window.addEventListener('keydown', receive, true)
+    return () => window.removeEventListener('keydown', receive, true)
+  })
+
   return (
     <main className="ide-shell" style={shellStyle}>
       <header className="app-chrome">
         <div className="chrome-left">
+          <Button variant="ghost" onClick={() => setSettingsOpen(true)} disabled={preferences.loading || editor.interactionLocked}>Settings</Button>
           <div className="app-identity">
             <span className="app-mark" aria-hidden="true">S</span>
             <span>Student Coding IDE</span>
@@ -277,6 +317,7 @@ export default function App() {
           ) : !loading && (
             <p className="project-empty">No folder is currently open.</p>
           )}
+          <RecentProjects revision={project} disabled={loading || editor.interactionLocked} onOpen={openProject} />
           <SidebarResizer side="left" width={leftWidth} onResize={setLeftWidth} getMaximum={leftMaximum} />
         </aside>
 
@@ -285,6 +326,8 @@ export default function App() {
             {project ? (
               <EditorWorkbench
                 manager={editor.manager}
+                settings={preferences.settings}
+                dark={dark}
                 onSave={editor.save}
                 navigation={editor.navigation}
                 readOnly={editor.interactionLocked || editor.fileSystemUnavailable}
@@ -473,6 +516,9 @@ export default function App() {
           onChoose={editor.chooseTerminalTransition}
         />
       )}
+      {settingsOpen && <SettingsDialog value={preferences.settings} recovered={preferences.recovered} error={preferences.error} onSave={preferences.update} onClose={closeSettings} />}
+      {!settingsOpen && preferences.recovered && <div className="editor-error" role="status">Application preferences were recovered. Open Settings to review them. Project files were not changed.</div>}
+      {!settingsOpen && preferences.error && <div className="editor-error" role="alert">{preferences.error}</div>}
       {editor.error && <div className="editor-error" role="alert">{editor.error}</div>}
     </main>
   )
