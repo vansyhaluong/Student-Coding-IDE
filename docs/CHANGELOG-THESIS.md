@@ -1544,3 +1544,28 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
 - Phase 5.5A–5.5H and overall Phase 5.5 are COMPLETE. Final closure changed
   documentation only; no production code or architecture changed. Phase 6/7
   remain NOT_STARTED. Packaged/installed C# acceptance remains Phase 7.
+
+## Phase 6 — Settings & UX (2026-09-14) — COMPLETE
+
+- Completed the existing SettingsService/IPC/preload and Settings dialog work:
+  Light/Dark/System, editor font/tab preferences, fixed shortcut guidance and
+  dispatch, and the user-approved dependency guidance scope.
+- Implemented ADR-023 Auto Save through existing version-aware saves, with
+  1000 ms debounce, rename/disposal handling and dirty/conflict preservation.
+- Completed unbounded MRU Recent Projects list/open/remove. Missing folders
+  provide recovery guidance; history removal does not delete source or close
+  the active project. New history and settings endpoints authorize the current
+  Main frame and validate exact payloads.
+- Migrated app metadata v1 to v2, preserving history and applying defaults.
+  Queued state transformations prevent concurrent Settings/history lost updates;
+  backup/default recovery is visible and corrupt primary evidence is preserved.
+- Added service/IPC/preload, renderer settings/shortcut, Auto Save and project
+  regression coverage. Full suite: 1032/1032 tests in 78 files PASS; typecheck,
+  lint, production/native build and diff checks PASS.
+- Windows Electron 44 production-stack smoke passed initial save/Auto Save,
+  separate-process restart and corrupt-JSON recovery. Light/Dark screenshots
+  were inspected. The test-only model observation point and fixture artifacts
+  remain under ignored out directories, outside the shipped application.
+- No dependency, accepted architecture change, executable-path selection, source
+  persistence authority or Phase 7 packaging work was introduced. Phase 7
+  remains NOT_STARTED and ready for separate authorization.

@@ -1,5 +1,6 @@
 import {
   PROJECT_CHANNELS,
+  validateRecentRequest,
   validateCloseProjectRequest,
   validateCreateProjectRequest,
   validateGetActiveProjectRequest,
@@ -8,9 +9,10 @@ import {
 } from '../../shared/contracts'
 import type { ManagedService } from '../app/desktop-application'
 import { ProjectService } from '../services/project/project-service'
-import { IpcHandlerRegistry } from './ipc-handler-registry'
+import { IpcHandlerRegistry, type IpcRequestContext } from './ipc-handler-registry'
 
 export interface ProjectIpcServiceOptions {
+  authorizeRecent(context: IpcRequestContext): void
   selectDirectory(purpose: 'open-project' | 'create-parent'): Promise<string | null>
   publishChanged(event: ProjectChangedEvent): void
 }
@@ -27,6 +29,9 @@ export class ProjectIpcService implements ManagedService {
 
   start(): void {
     this.cleanup.push(
+      this.registry.register({ channel: PROJECT_CHANNELS.listRecent, validate: validateGetActiveProjectRequest, handle: (_, context) => { this.options.authorizeRecent(context); return this.projectService.listRecent() } }),
+      this.registry.register({ channel: PROJECT_CHANNELS.openRecent, validate: validateRecentRequest, handle: ({ id }, context) => { this.options.authorizeRecent(context); return this.projectService.openRecent(id) } }),
+      this.registry.register({ channel: PROJECT_CHANNELS.removeRecent, validate: validateRecentRequest, handle: async ({ id }, context) => { this.options.authorizeRecent(context); await this.projectService.removeRecent(id); return null } }),
       this.registry.register({
         channel: PROJECT_CHANNELS.getActive,
         validate: validateGetActiveProjectRequest,

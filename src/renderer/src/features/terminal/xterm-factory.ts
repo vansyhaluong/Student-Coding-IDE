@@ -25,6 +25,14 @@ export const xtermViewFactory: TerminalViewFactory = {
         selectionBackground: color('--accent', '#404040'),
       },
     })
+    const updateTheme = () => {
+      const current = getComputedStyle(document.documentElement)
+      const value = (token: string) => current.getPropertyValue(token).trim()
+      terminal.options.theme = { background: value('--editor-surface'), foreground: value('--foreground'),
+        cursor: value('--foreground'), cursorAccent: value('--editor-surface'), selectionBackground: value('--accent') }
+    }
+    const observer = new MutationObserver(updateTheme)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     const fitAddon = new FitAddon()
     return {
       fitAddon,
@@ -36,7 +44,7 @@ export const xtermViewFactory: TerminalViewFactory = {
         focus: () => terminal.focus(),
         write: (data, callback) => terminal.write(data, callback),
         onData: (listener) => terminal.onData(listener),
-        dispose: () => terminal.dispose(),
+        dispose: () => { observer.disconnect(); terminal.dispose() },
       },
     }
   },

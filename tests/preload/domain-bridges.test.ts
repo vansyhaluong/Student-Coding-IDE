@@ -83,6 +83,7 @@ describe('Phase 2B preload bridges', () => {
       'project',
       'run',
       'search',
+      'settings',
       'terminal',
     ])
     expect(api).not.toHaveProperty('ipcRenderer')

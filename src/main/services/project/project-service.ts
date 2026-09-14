@@ -147,6 +147,30 @@ export class ProjectService implements ManagedService {
     return this.activeProject
   }
 
+  listRecent() {
+    return [...(this.recentProjectStore?.getRecentProjects() ?? [])]
+      .sort((a, b) => Date.parse(b.lastOpenedAt) - Date.parse(a.lastOpenedAt))
+      .map(p => ({ id: p.id, name: p.name, displayPath: p.rootPath, lastOpenedAt: p.lastOpenedAt }))
+  }
+
+  openRecent(id: string): Promise<ProjectIdentity> {
+    const entry = this.recentProjectStore?.getRecentProjects().find(p => p.id === id)
+    if (!entry) return Promise.reject(new DomainError({ code: 'NOT_FOUND', message: 'This recent project is no longer listed. Open the folder again.', retryable: true }))
+    return this.openRoot(entry.rootPath).catch((error: unknown) => {
+      if (error instanceof Error && 'code' in error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')) {
+        throw new DomainError({ code: 'NOT_FOUND', message: 'This project folder is missing. Restore it, open its new location, or remove it from recent projects.', retryable: true })
+      }
+      throw error
+    })
+  }
+
+  removeRecent(id: string): Promise<void> {
+    return this.runTransition('project:remove-recent', async () => {
+      if (this.recentProjectStore) await this.recentProjectStore.updateRecentProjects(
+        this.recentProjectStore.getRecentProjects().filter(p => p.id !== id))
+    })
+  }
+
   closeProject(): Promise<void> {
     return this.runTransition('project:close', async () => {
       if (!this.activeProject) {

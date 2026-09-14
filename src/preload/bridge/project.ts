@@ -3,13 +3,22 @@ import type {
   ProjectChangedEvent,
   ProjectIdentity,
 } from '../../shared/contracts'
-import { PROJECT_CHANNELS } from '../../shared/contracts'
+import { PROJECT_CHANNELS, validateRecentRequest, isRecentProjects } from '../../shared/contracts'
 import type { IpcRendererLike } from './lifecycle'
 import { invokeSafely } from './invoke'
 import { isRecord, parseAppResult } from './result'
 
 export function createProjectBridge(ipcRenderer: IpcRendererLike): ProjectApi {
   return {
+    async listRecent() { return parseAppResult(await invokeSafely(ipcRenderer, PROJECT_CHANNELS.listRecent, {}), isRecentProjects, PROJECT_CHANNELS.listRecent) },
+    async openRecent(id) {
+      if (!validateRecentRequest({ id }).ok) return { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid recent project.', retryable: false } }
+      return parseAppResult(await invokeSafely(ipcRenderer, PROJECT_CHANNELS.openRecent, { id }), isNullableProjectIdentity, PROJECT_CHANNELS.openRecent)
+    },
+    async removeRecent(id) {
+      if (!validateRecentRequest({ id }).ok) return { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid recent project.', retryable: false } }
+      return parseAppResult(await invokeSafely(ipcRenderer, PROJECT_CHANNELS.removeRecent, { id }), (v): v is null => v === null, PROJECT_CHANNELS.removeRecent)
+    },
     async getActive() {
       return parseAppResult(
         await invokeSafely(ipcRenderer, PROJECT_CHANNELS.getActive, {}),
