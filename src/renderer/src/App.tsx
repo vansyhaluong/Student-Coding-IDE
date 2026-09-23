@@ -5,7 +5,7 @@ import { shellShortcut } from './features/settings/shortcuts'
 import { AutoSave } from './features/editor/auto-save'
 import { registerCsharpNavigation } from './features/language/csharp/csharp-navigation'
 import { CsharpStatus } from './features/language/csharp/CsharpStatus'
-import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, SquareTerminal, X } from 'lucide-react'
+import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, Settings, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import type { AppResult, GitStatus, ProjectIdentity, ProjectId } from '../../shared/contracts'
@@ -247,7 +247,6 @@ export default function App() {
     <main className="ide-shell" style={shellStyle}>
       <header className="app-chrome">
         <div className="chrome-left">
-          <Button variant="ghost" onClick={() => setSettingsOpen(true)} disabled={preferences.loading || editor.interactionLocked}>Settings</Button>
           <div className="app-identity">
             <span className="app-mark" aria-hidden="true">S</span>
             <span>Student Coding IDE</span>
@@ -294,30 +293,45 @@ export default function App() {
             </div>
           </header>
 
-          {loading && <p className="project-status">Loading project…</p>}
-          {error && <p className="project-error" role="alert">{error}</p>}
+          <div className="project-sidebar-content">
+            {loading && <p className="project-status">Loading project…</p>}
+            {error && <p className="project-error" role="alert">{error}</p>}
 
-          {project ? (
-            <div className="active-project-row" data-current="true">
-              <span className="project-status-dot active" aria-hidden="true" />
-              <Folder className="project-icon" />
-              <span className="active-project-copy" title={project.name}>
-                <strong>{project.name}</strong>
-                <small>{editor.fileSystemUnavailable ? 'Project unavailable' : 'Active workspace'}</small>
-              </span>
-              <Button
-                variant="ghost"
-                size="iconSmall"
-                onClick={() => void closeProject()}
-                disabled={loading || editor.interactionLocked}
-                title="Close project"
-                aria-label="Close project"
-              ><X /></Button>
-            </div>
-          ) : !loading && (
-            <p className="project-empty">No folder is currently open.</p>
-          )}
-          <RecentProjects revision={project} disabled={loading || editor.interactionLocked} onOpen={openProject} />
+            {project ? (
+              <div className="active-project-row" data-current="true">
+                <span className="project-status-dot active" aria-hidden="true" />
+                <Folder className="project-icon" />
+                <span className="active-project-copy" title={project.name}>
+                  <strong>{project.name}</strong>
+                  <small>{editor.fileSystemUnavailable ? 'Project unavailable' : 'Active workspace'}</small>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="iconSmall"
+                  onClick={() => void closeProject()}
+                  disabled={loading || editor.interactionLocked}
+                  title="Close project"
+                  aria-label="Close project"
+                ><X /></Button>
+              </div>
+            ) : !loading && (
+              <p className="project-empty">No folder is currently open.</p>
+            )}
+            <RecentProjects revision={project} disabled={loading || editor.interactionLocked} onOpen={openProject} />
+          </div>
+          <footer className="project-sidebar-footer">
+            <Button
+              className="sidebar-settings"
+              variant="ghost"
+              size="iconSmall"
+              onClick={() => setSettingsOpen(true)}
+              disabled={preferences.loading || editor.interactionLocked}
+              title="Settings"
+              aria-label="Settings"
+            >
+              <Settings aria-hidden="true" />
+            </Button>
+          </footer>
           <SidebarResizer side="left" width={leftWidth} onResize={setLeftWidth} getMaximum={leftMaximum} />
         </aside>
 

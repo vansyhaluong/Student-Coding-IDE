@@ -127,7 +127,7 @@ export function TerminalPanel({
   return (
     <section
       ref={panelRef}
-      className="terminal-panel"
+      className="terminal-panel terminal-panel-compact"
       aria-label="Terminal panel"
       hidden={!open}
       style={{ height }}

@@ -252,6 +252,22 @@ input:focus-visible,
   color: var(--sidebar-foreground);
 }
 
+.project-sidebar-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.project-sidebar-content .recent-projects { overflow: visible; }
+
+.project-sidebar-footer {
+  flex: none;
+  padding: 8px;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.sidebar-settings { color: var(--sidebar-foreground); }
+
 .explorer-sidebar {
   border-left: 1px solid var(--border);
   background: var(--card);
@@ -1147,6 +1163,91 @@ input:focus-visible,
 .terminal-state-line.error {
   border-color: color-mix(in srgb, var(--destructive) 28%, transparent);
   color: color-mix(in srgb, var(--destructive) 65%, var(--foreground));
+}
+
+/* Terminal-only chrome; Problems and Output retain the shared panel styles. */
+.terminal-panel-compact .terminal-panel-header {
+  height: 26px;
+  min-height: 26px;
+  border-bottom: 0;
+  background: var(--editor-surface);
+}
+
+.terminal-panel-compact .bottom-panel-tabs button {
+  gap: 4px;
+  padding: 0 7px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.terminal-panel-compact .bottom-panel-tabs button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--foreground) 4%, var(--editor-surface));
+}
+
+.terminal-panel-compact .bottom-panel-tabs button:hover,
+.terminal-panel-compact .terminal-tab:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--editor-surface));
+}
+
+.terminal-panel-compact .bottom-panel-tabs button[aria-selected="true"]::after,
+.terminal-panel-compact .terminal-tab[data-active="true"]::after {
+  content: none;
+}
+
+.terminal-panel-compact .terminal-tab {
+  border-right: 0;
+  font-size: 11px;
+}
+
+.terminal-panel-compact .terminal-tab[data-active="true"] {
+  background: var(--editor-surface);
+}
+
+.terminal-panel-compact .terminal-tab > button:first-child {
+  gap: 4px;
+  padding-left: 6px;
+}
+
+.terminal-panel-compact .terminal-panel-actions {
+  gap: 0;
+  padding: 0 4px;
+}
+
+.terminal-panel-compact .terminal-panel-actions .ui-button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+}
+
+.terminal-panel-compact .terminal-panel-actions .ui-button svg {
+  width: 12px;
+  height: 12px;
+}
+
+.terminal-panel-compact .terminal-panel-actions .ui-button:hover:not(:disabled),
+.terminal-panel-compact .terminal-tab-close:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 8%, var(--editor-surface));
+}
+
+.terminal-panel-compact .terminal-xterm-host { padding: 4px; }
+.terminal-panel-compact .terminal-empty { top: 26px; }
+
+.terminal-panel-compact .xterm-viewport {
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent) transparent;
+}
+
+.terminal-panel-compact .xterm-viewport::-webkit-scrollbar { width: 8px; }
+.terminal-panel-compact .xterm-viewport::-webkit-scrollbar-thumb {
+  border-width: 2px;
+  background-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+}
+
+.terminal-panel-compact .xterm-scrollable-element > .scrollbar > .slider {
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background-clip: padding-box;
 }
 
 .problems-summary {
