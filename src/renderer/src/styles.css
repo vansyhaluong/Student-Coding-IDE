@@ -362,9 +362,9 @@ input:focus-visible,
 .editor-run-actions svg { width: 14px; height: 14px; }
 .output-context {
   display: flex;
-  gap: 16px;
+  gap: 8px;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-bottom: 1px solid var(--border);
   color: var(--muted-foreground);
   font-size: 12px;
@@ -375,7 +375,7 @@ input:focus-visible,
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 8px 12px;
+  padding: 4px 8px;
   font: 12px/1.6 var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -1165,7 +1165,7 @@ input:focus-visible,
   color: color-mix(in srgb, var(--destructive) 65%, var(--foreground));
 }
 
-/* Terminal-only chrome; Problems and Output retain the shared panel styles. */
+/* Shared compact panel chrome; session-tab and xterm rules remain Terminal-specific. */
 .terminal-panel-compact .terminal-panel-header {
   height: 26px;
   min-height: 26px;
@@ -1234,12 +1234,30 @@ input:focus-visible,
 .terminal-panel-compact .terminal-xterm-host { padding: 4px; }
 .terminal-panel-compact .terminal-empty { top: 26px; }
 
-.terminal-panel-compact .xterm-viewport {
+.terminal-panel-compact .xterm-viewport,
+.terminal-panel-compact .problems-list,
+.terminal-panel-compact .output-log {
   scrollbar-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent) transparent;
 }
 
-.terminal-panel-compact .xterm-viewport::-webkit-scrollbar { width: 8px; }
-.terminal-panel-compact .xterm-viewport::-webkit-scrollbar-thumb {
+.terminal-panel-compact .xterm-viewport::-webkit-scrollbar,
+.terminal-panel-compact .problems-list::-webkit-scrollbar,
+.terminal-panel-compact .output-log::-webkit-scrollbar { width: 8px; }
+.terminal-panel-compact .problems-list,
+.terminal-panel-compact .output-log { scrollbar-width: thin; }
+.terminal-panel-compact .problems-list::-webkit-scrollbar,
+.terminal-panel-compact .output-log::-webkit-scrollbar { height: 8px; }
+.terminal-panel-compact .problems-list::-webkit-scrollbar-track,
+.terminal-panel-compact .output-log::-webkit-scrollbar-track { background: transparent; }
+.terminal-panel-compact .problems-list::-webkit-scrollbar-thumb,
+.terminal-panel-compact .output-log::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+.terminal-panel-compact .xterm-viewport::-webkit-scrollbar-thumb,
+.terminal-panel-compact .problems-list::-webkit-scrollbar-thumb,
+.terminal-panel-compact .output-log::-webkit-scrollbar-thumb {
   border-width: 2px;
   background-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
 }
@@ -1254,7 +1272,7 @@ input:focus-visible,
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 9px;
+  gap: 6px;
   color: var(--muted-foreground);
   font: 11px/1 var(--font-mono);
 }
@@ -1286,7 +1304,7 @@ input:focus-visible,
 
 .problem-file-group > header {
   display: grid;
-  height: 28px;
+  height: 26px;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px;

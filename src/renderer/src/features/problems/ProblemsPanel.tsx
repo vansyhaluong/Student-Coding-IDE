@@ -52,7 +52,7 @@ export function ProblemsPanel({
   )
 
   return (
-    <section ref={panelRef} className="terminal-panel problems-panel" aria-label="Problems panel" style={{ height }}>
+    <section ref={panelRef} className="terminal-panel terminal-panel-compact problems-panel" aria-label="Problems panel" style={{ height }}>
       <PanelResizer
         height={height}
         minimum={MINIMUM_PANEL_HEIGHT}

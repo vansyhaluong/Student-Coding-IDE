@@ -15,7 +15,7 @@ export function OutputPanel({ controller, height, onHeightChange, onSelectTermin
   useLayoutEffect(() => {
     if (following.current && log.current) log.current.scrollTop = log.current.scrollHeight
   }, [view])
-  return <section ref={panel} className="terminal-panel output-panel" aria-label="Output panel" style={{ height }}>
+  return <section ref={panel} className="terminal-panel terminal-panel-compact output-panel" aria-label="Output panel" style={{ height }}>
     <PanelResizer height={height} minimum={160}
       getMaximum={() => Math.max(160, (panel.current?.parentElement?.clientHeight ?? window.innerHeight) - 180)}
       onResize={onHeightChange} label="Resize Output panel" />
