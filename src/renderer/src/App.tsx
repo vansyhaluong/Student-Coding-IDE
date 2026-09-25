@@ -260,10 +260,7 @@ export default function App() {
             : <span className="chrome-context">Student Coding IDE</span>}
         </div>
         <div className="chrome-right">
-          <span className="chrome-tool-label" title="Project tools">
-            <Folder />
-            <span>{project?.name ?? 'Project tools'}</span>
-          </span>
+          
         </div>
       </header>
 

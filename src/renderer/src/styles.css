@@ -1190,6 +1190,17 @@ input:focus-visible,
   background: color-mix(in srgb, var(--foreground) 6%, var(--editor-surface));
 }
 
+/* Problems and Output follow the first (Terminal) tab in each panel. */
+.terminal-panel-compact .bottom-panel-tabs button:not(:first-child):hover {
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.terminal-panel-compact .bottom-panel-tabs button:not(:first-child)[aria-selected="true"]:hover {
+  background: color-mix(in srgb, var(--foreground) 4%, var(--editor-surface));
+  color: var(--foreground);
+}
+
 .terminal-panel-compact .bottom-panel-tabs button[aria-selected="true"]::after,
 .terminal-panel-compact .terminal-tab[data-active="true"]::after {
   content: none;
@@ -1425,3 +1436,40 @@ input:focus-visible,
 .recent-open { display: flex; flex-direction: column; min-width: 0; flex: 1; text-align: left; padding: 8px 6px; gap: 3px; border: 0; background: transparent; color: var(--foreground); }
 .recent-open span, .recent-open time { color: var(--muted-foreground); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
 .recent-projects [role="alert"] { color: var(--destructive); }
+.explorer-context-menu {
+  position: fixed;
+  z-index: 100;
+  width: 210px;
+  max-width: calc(100vw - 8px);
+  max-height: calc(100vh - 8px);
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--popover) 90%, transparent);
+  color: var(--popover-foreground);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 22%);
+  backdrop-filter: blur(12px);
+}
+
+.explorer-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 29px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+
+.explorer-context-menu-item svg { width: 14px; height: 14px; }
+.explorer-context-menu-item:enabled:hover,
+.explorer-context-menu-item:focus-visible { background: var(--accent); color: var(--accent-foreground); }
+.explorer-context-menu-item.destructive { color: var(--destructive); }
+.explorer-context-menu-item:disabled { opacity: 0.45; }
+.explorer-context-menu-separator { height: 1px; margin: 4px; background: var(--border); }

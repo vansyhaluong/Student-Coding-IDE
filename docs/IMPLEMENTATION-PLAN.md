@@ -31,6 +31,31 @@ reference evidence, not source or runtime dependencies.
 
 ## 3. Current baseline
 
+### Authorized Explorer context-menu follow-up — 2026-09-25
+
+Status: `COMPLETE`. The user explicitly authorized a renderer-only follow-up
+to the completed Explorer/editor foundations (FR-004–FR-009), on `develop`.
+Scope: file/folder/background context menus; move Rename/Delete out of the
+toolbar; preserve existing open, create, rename, refresh and guarded Recycle Bin
+flows; copy project-relative paths through the browser clipboard API.
+No new decision gate, dependency, filesystem/IPC authority, preview tabs, View
+File, Git actions or Phase 7 work is authorized by this follow-up.
+Acceptance: requested menu/selection/target/lifecycle/lock regression tests,
+existing dirty-editor protection tests, typecheck, lint, build and diff checks.
+Orca evidence is limited to visual grouping, translucency and right-button
+release handling in `file-explorer-row-context-menu.tsx` at the locked baseline;
+the implementation is independent.
+
+Verification: all 1039 tests in 78 files passed, including 69 Explorer/App
+integration tests and dirty-editor deletion regressions. Typecheck, lint,
+production/native Windows build and scoped `git diff --check` passed. The final
+repository-wide diff check reports trailing whitespace in an unrelated concurrent
+user edit at `src/renderer/src/App.tsx:263`; that edit was preserved. Live visual
+inspection in Electron was not performed; light/dark styling uses existing
+semantic tokens. No existing phase status or architecture decision was changed.
+
+### Previously completed baseline
+
 - Phase 0 and Phase 1 documentation are complete.
 - Phase 2A provides application/window lifecycle, shared contracts, validated
   IPC, persistence, internal cleanup, and automated-test foundations. Phase 2B
