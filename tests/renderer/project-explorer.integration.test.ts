@@ -139,6 +139,115 @@ afterEach(() => {
 })
 
 describe('ProjectExplorer integration', () => {
+  it('offers exactly the scoped menus, selects without opening/toggling, and closes safely', async () => {
+    const props = explorerProps()
+    installApi({ file: { listDirectory: async () => success([file('main.ts'), file('App.tsx'), directory('src')]) } })
+    const view = render(createElement(ProjectExplorer, props))
+    await screen.findByTitle('main.ts')
+    expect([...view.container.querySelectorAll('.explorer-actions button')].map(button => button.getAttribute('aria-label')))
+      .toEqual(['New file', 'New folder', 'Refresh Explorer'])
+    fireEvent.click(screen.getByTitle('main.ts'))
+    props.onOpenFile.mockClear()
+    fireEvent.contextMenu(screen.getByTitle('App.tsx'), { clientX: 100, clientY: 120 })
+    expect(screen.getByTitle('App.tsx').getAttribute('aria-current')).toBe('true')
+    expect(props.onOpenFile).not.toHaveBeenCalled()
+    expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Open', 'Rename', 'Delete', 'Copy Path'])
+    fireEvent.pointerUp(screen.getByRole('menuitem', { name: 'Open' }), { button: 2 })
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Open' }), { button: 2 })
+    expect(props.onOpenFile).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Open' }))
+    expect(props.onOpenFile).toHaveBeenCalledWith('App.tsx')
+    expect(screen.queryByRole('menu')).toBeNull()
+    fireEvent.contextMenu(screen.getByTitle('src'))
+    expect(screen.getByTitle('src').getAttribute('aria-expanded')).toBe('false')
+    expect(screen.getByTitle('src').getAttribute('aria-current')).toBe('true')
+    expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['New File', 'New Folder', 'Rename', 'Delete', 'Copy Path'])
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(document.activeElement).toBe(screen.getByTitle('src'))
+    fireEvent.contextMenu(view.container.querySelector('.tree-scroll')!)
+    expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['New File', 'New Folder', 'Refresh'])
+    fireEvent.mouseDown(document.body)
+    expect(screen.queryByRole('menu')).toBeNull()
+  })
+
+  it.each(['Rename', 'Delete'])('%s targets the right-clicked entry instead of the previous selection', async action => {
+    const rename = vi.fn(async () => success(file('renamed.ts')))
+    const deleteEntry = vi.fn(async () => success(null))
+    const props = explorerProps()
+    installApi({ file: { listDirectory: async () => success([file('main.ts'), file('App.tsx')]), rename, delete: deleteEntry } })
+    render(createElement(ProjectExplorer, props))
+    fireEvent.click(await screen.findByTitle('main.ts'))
+    fireEvent.contextMenu(screen.getByTitle('App.tsx'))
+    fireEvent.click(screen.getByRole('menuitem', { name: action }))
+    if (action === 'Rename') {
+      fireEvent.change(screen.getByRole('textbox', { name: 'New name' }), { target: { value: 'renamed.ts' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Rename' }))
+      await waitFor(() => expect(rename).toHaveBeenCalledWith(project.id, 'App.tsx', 'renamed.ts'))
+    } else {
+      fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
+      await waitFor(() => expect(deleteEntry).toHaveBeenCalledWith(project.id, 'App.tsx'))
+      expect(props.onRequestDelete).toHaveBeenCalledWith(file('App.tsx'))
+    }
+  })
+
+  it.each(['New File', 'New Folder'])('%s uses the context folder or root, independently of selection', async action => {
+    const createFile = vi.fn(async () => success(file('new')))
+    const createDirectory = vi.fn(async () => success(directory('new')))
+    installApi({ file: { listDirectory: async () => success([directory('src'), directory('other')]), createFile, createDirectory } })
+    const view = render(createElement(ProjectExplorer, explorerProps()))
+    await screen.findByTitle('other')
+    for (const target of ['src', '']) {
+      fireEvent.contextMenu(screen.getByTitle('other'))
+      fireEvent.contextMenu(target ? screen.getByTitle(target) : view.container.querySelector('.tree-scroll')!)
+      expect(screen.getAllByRole('menu')).toHaveLength(1)
+      fireEvent.click(screen.getByRole('menuitem', { name: action }))
+      fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'new' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+      await waitFor(() => expect(action === 'New File' ? createFile : createDirectory).toHaveBeenLastCalledWith(project.id, target, 'new'))
+    }
+  })
+
+  it('respects a changing interaction lock, copies only relative paths, and reports clipboard failure', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    installApi({ file: { listDirectory: async () => success([file('src/App.tsx'), directory('src')]) } })
+    const props = explorerProps()
+    const view = render(createElement(ProjectExplorer, props))
+    fireEvent.contextMenu(await screen.findByTitle('src/App.tsx'))
+    view.rerender(createElement(ProjectExplorer, { ...props, interactionLocked: true }))
+    for (const name of ['Open', 'Rename', 'Delete']) expect(screen.getByRole('menuitem', { name }).hasAttribute('disabled')).toBe(true)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Copy Path' }))
+    expect(writeText).toHaveBeenCalledWith('src/App.tsx')
+    writeText.mockRejectedValueOnce(new Error('Denied'))
+    fireEvent.contextMenu(screen.getByTitle('src'))
+    for (const name of ['New File', 'New Folder', 'Rename', 'Delete']) expect(screen.getByRole('menuitem', { name }).hasAttribute('disabled')).toBe(true)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Copy Path' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('Could not copy')
+    fireEvent.contextMenu(screen.getByTitle('src'))
+    view.rerender(createElement(ProjectExplorer, { ...props, project: { ...project, id: 'project_other' as ProjectIdentity['id'] } }))
+    expect(screen.queryByRole('menu')).toBeNull()
+    view.unmount()
+    expect(screen.queryByRole('menu')).toBeNull()
+    Reflect.deleteProperty(navigator, 'clipboard')
+  })
+
+  it('clamps the floating menu, supports arrow navigation, and refreshes from the background', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ width: 210, height: 180 } as DOMRect)
+    const listDirectory = vi.fn(async () => success([file('main.ts')]))
+    installApi({ file: { listDirectory } })
+    const view = render(createElement(ProjectExplorer, explorerProps()))
+    fireEvent.contextMenu(await screen.findByTitle('main.ts'), { clientX: window.innerWidth, clientY: window.innerHeight })
+    const menu = screen.getByRole('menu')
+    expect(menu.style.left).toBe(`${window.innerWidth - 214}px`)
+    expect(menu.style.top).toBe(`${window.innerHeight - 184}px`)
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Rename' }))
+    fireEvent.contextMenu(view.container.querySelector('.tree-scroll')!)
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Refresh' }))
+    await waitFor(() => expect(listDirectory).toHaveBeenCalledTimes(2))
+  })
+
   it('shares trusted Source Control decorations without another Git lifecycle and hides invalidated/project-old data', async () => {
     let changed!: (event: ProjectChangedEvent) => void
     const initial: GitStatus = { entries: [
@@ -309,7 +418,8 @@ describe('ProjectExplorer integration', () => {
     renderExplorer()
     fireEvent.click(await screen.findByTitle('main.ts'))
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rename selected item' }))
+    fireEvent.contextMenu(screen.getByTitle('main.ts'))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Rename' }))
     fireEvent.change(screen.getByRole('textbox', { name: 'New name' }), {
       target: { value: 'renamed.ts' },
     })
@@ -333,14 +443,10 @@ describe('ProjectExplorer integration', () => {
     })
     renderExplorer()
     fireEvent.click(await screen.findByTitle('main.ts'))
-    const deleteButton = screen.getByRole('button', {
-      name: 'Move selected item to Recycle Bin',
-    })
-
-    fireEvent.click(deleteButton)
+    requestContextDelete()
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(deleteEntry).not.toHaveBeenCalled()
-    fireEvent.click(deleteButton)
+    requestContextDelete()
     fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
 
     await waitFor(() => expect(deleteEntry).toHaveBeenCalledWith(project.id, 'main.ts'))
@@ -1881,7 +1987,7 @@ describe('App project integration', () => {
       monacoModels[1]!.setValue('dirty b')
     })
     fireEvent.click(screen.getAllByTitle('src')[0]!)
-    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    requestContextDelete('src')
     fireEvent.click(await screen.findByRole('button', { name: 'Move to Recycle Bin' }))
     expect(await screen.findByRole('button', { name: 'Save All' })).not.toBeNull()
 
@@ -1907,7 +2013,7 @@ describe('App project integration', () => {
     fireEvent.click(await screen.findByTitle('main.ts'))
     await screen.findByTestId('monaco-editor')
     act(() => monacoModels[0]!.setValue('discard after success'))
-    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    requestContextDelete()
     fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
     fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
 
@@ -1933,7 +2039,7 @@ describe('App project integration', () => {
     fireEvent.click(await screen.findByTitle('main.ts'))
     await screen.findByTestId('monaco-editor')
     act(() => monacoModels[0]!.setValue('must survive'))
-    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    requestContextDelete()
     fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
     fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
 
@@ -1944,7 +2050,7 @@ describe('App project integration', () => {
     expect(screen.getByRole('button', { name: 'Close main.ts' })).not.toBeNull()
     expect(deleteEntry).toHaveBeenCalledOnce()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    requestContextDelete()
     fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
     fireEvent.click(await screen.findByRole('button', { name: "Don't Save" }))
     await waitFor(() => expect(deleteEntry).toHaveBeenCalledTimes(2))
@@ -1963,7 +2069,7 @@ describe('App project integration', () => {
     render(createElement(App))
     fireEvent.click(await screen.findByTitle('main.ts'))
     await screen.findByTestId('monaco-editor')
-    fireEvent.click(screen.getByRole('button', { name: 'Move selected item to Recycle Bin' }))
+    requestContextDelete()
     fireEvent.click(screen.getByRole('button', { name: 'Move to Recycle Bin' }))
 
     expect(await screen.findByText('Recycle Bin unavailable')).not.toBeNull()
@@ -2051,6 +2157,11 @@ describe('Phase 6 Auto Save failure integration', () => {
 })
 function renderExplorer(): void {
   render(createElement(ProjectExplorer, explorerProps()))
+}
+
+function requestContextDelete(path = 'main.ts'): void {
+  fireEvent.contextMenu(screen.getAllByTitle(path).find(element => element.classList.contains('tree-row'))!)
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }))
 }
 
 function explorerProps() {

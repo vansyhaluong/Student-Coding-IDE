@@ -1569,3 +1569,27 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
 - No dependency, accepted architecture change, executable-path selection, source
   persistence authority or Phase 7 packaging work was introduced. Phase 7
   remains NOT_STARTED and ready for separate authorization.
+## Explorer context-menu follow-up (2026-09-25)
+
+- Replaced Explorer toolbar Rename/Delete buttons with file/folder context-menu
+  actions. New File, New Folder and Refresh remain in the toolbar.
+- Added independent compact floating menus with viewport clamping, separators,
+  lucide icons, destructive Delete color, light/dark semantic tokens, Escape,
+  outside dismissal, arrow navigation and right-button release protection.
+- Captured the clicked entry and creation directory explicitly; row right-click
+  selects without opening files or toggling folders. Background creation uses
+  the project root. Existing dialogs, Recycle Bin and dirty-editor guards remain.
+- Copy Path uses the browser clipboard for project-relative paths and reports
+  failures. No Main/Preload/contracts, dependencies or security settings changed.
+  No View File, preview tabs or other excluded actions were introduced.
+- Visual/interaction evidence: Orca locked commit
+  `4bb337741c335cfcc428d3b4271023566e2dadb8`,
+  `src/renderer/src/components/right-sidebar/file-explorer-row-context-menu.tsx`
+  (`FileExplorerRowContextMenu`, `stopRightButtonMenuSelection`); independently
+  adapted grouping/surface/release behavior without copying modules or stores.
+- Verified: 1039/1039 tests across 78 files (69 Explorer/App integration tests),
+  typecheck, lint, production/native Windows build and scoped diff whitespace
+  checks. Final repository-wide diff check reports trailing whitespace at
+  `src/renderer/src/App.tsx:263` in an unrelated concurrent edit, left untouched.
+  Live Electron visual QA was not performed. Preserved the pre-existing unrelated
+  Problems/Output hover CSS change; no commit or push was performed.

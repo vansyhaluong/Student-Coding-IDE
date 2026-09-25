@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type MouseEvent,
 } from 'react'
 import {
   ChevronRight,
@@ -15,9 +16,7 @@ import {
   FolderOpen,
   FolderPlus,
   Link2,
-  Pencil,
   RefreshCw,
-  Trash2,
 } from 'lucide-react'
 
 import type {
@@ -36,6 +35,7 @@ import {
 } from './explorer-model'
 import { Button } from '../../components/ui/Button'
 import { Dialog, PromptDialog } from '../../components/ui/Dialog'
+import { ExplorerContextMenu, type ExplorerContextMenuState } from './ExplorerContextMenu'
 
 interface ProjectExplorerProps {
   project: ProjectIdentity
@@ -53,7 +53,7 @@ interface ProjectExplorerProps {
 }
 
 type EntryDialogState =
-  | { mode: 'create'; kind: 'file' | 'directory' }
+  | { mode: 'create'; kind: 'file' | 'directory'; directory: string }
   | { mode: 'rename'; entry: FileEntry }
 
 export function ProjectExplorer({
@@ -70,6 +70,8 @@ export function ProjectExplorer({
   const [operationError, setOperationError] = useState<string | null>(null)
   const [entryDialog, setEntryDialog] = useState<EntryDialogState | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<FileEntry | null>(null)
+  const [contextMenu, setContextMenu] = useState<ExplorerContextMenuState | null>(null)
+  const closeContextMenu = useCallback(() => setContextMenu(null), [])
   const mounted = useRef(true)
   const directoryGenerations = useRef<Record<string, number>>({})
 
@@ -98,8 +100,15 @@ export function ProjectExplorer({
 
   useEffect(() => {
     dispatch({ type: 'reset' })
+    setContextMenu(null)
+    setEntryDialog(null)
+    setDeleteCandidate(null)
     void loadDirectory('')
   }, [loadDirectory])
+
+  useEffect(() => {
+    if (unavailable) setContextMenu(null)
+  }, [unavailable])
 
   useEffect(() => window.studentIde.file.onChanged((event) => {
     if (event.projectId !== project.id) return
@@ -132,6 +141,25 @@ export function ProjectExplorer({
     if (entry.kind === 'file' && !interactionLocked) onOpenFile?.(entry.relativePath)
   }
 
+  const openContextMenu = (event: MouseEvent<HTMLElement>, entry?: FileEntry): void => {
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget.focus()
+    if (entry) dispatch({ type: 'select', path: entry.relativePath })
+    setOperationError(null)
+    setContextMenu(entry
+      ? { kind: 'entry', entry, x: event.clientX, y: event.clientY }
+      : { kind: 'background', x: event.clientX, y: event.clientY })
+  }
+
+  const copyPath = async (entry: FileEntry): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(entry.relativePath)
+    } catch {
+      if (mounted.current) setOperationError('Could not copy the relative path to the clipboard.')
+    }
+  }
+
   const toggleDirectory = (entry: FileEntry): void => {
     dispatch({ type: 'select', path: entry.relativePath })
     dispatch({ type: 'toggle-directory', path: entry.relativePath })
@@ -147,10 +175,10 @@ export function ProjectExplorer({
     setEntryDialog(null)
     if (request.mode === 'create') {
       const result = request.kind === 'file'
-        ? await window.studentIde.file.createFile(project.id, selectedDirectory, name)
-        : await window.studentIde.file.createDirectory(project.id, selectedDirectory, name)
+        ? await window.studentIde.file.createFile(project.id, request.directory, name)
+        : await window.studentIde.file.createDirectory(project.id, request.directory, name)
       if (!mounted.current) return
-      await finishMutation(result, selectedDirectory)
+      await finishMutation(result, request.directory)
       return
     }
     if (name === request.entry.name) return
@@ -211,11 +239,9 @@ export function ProjectExplorer({
           <span>{project.name}</span>
         </div>
         <div className="explorer-actions" aria-label="File actions">
-          <Button variant="ghost" size="iconSmall" disabled={interactionLocked} onClick={() => setEntryDialog({ mode: 'create', kind: 'file' })} title="New file" aria-label="New file"><FilePlus2 /></Button>
-          <Button variant="ghost" size="iconSmall" disabled={interactionLocked} onClick={() => setEntryDialog({ mode: 'create', kind: 'directory' })} title="New folder" aria-label="New folder"><FolderPlus /></Button>
+          <Button variant="ghost" size="iconSmall" disabled={interactionLocked} onClick={() => setEntryDialog({ mode: 'create', kind: 'file', directory: selectedDirectory })} title="New file" aria-label="New file"><FilePlus2 /></Button>
+          <Button variant="ghost" size="iconSmall" disabled={interactionLocked} onClick={() => setEntryDialog({ mode: 'create', kind: 'directory', directory: selectedDirectory })} title="New folder" aria-label="New folder"><FolderPlus /></Button>
           <Button variant="ghost" size="iconSmall" disabled={interactionLocked} onClick={() => void refresh()} title="Refresh Explorer" aria-label="Refresh Explorer"><RefreshCw /></Button>
-          <Button variant="ghost" size="iconSmall" disabled={interactionLocked || !selectedEntry} onClick={() => selectedEntry && setEntryDialog({ mode: 'rename', entry: selectedEntry })} title="Rename selected item" aria-label="Rename selected item"><Pencil /></Button>
-          <Button variant="ghost" size="iconSmall" className="danger-action" disabled={interactionLocked || !selectedEntry} onClick={() => setDeleteCandidate(selectedEntry)} title="Move selected item to Recycle Bin" aria-label="Move selected item to Recycle Bin"><Trash2 /></Button>
         </div>
       </div>
 
@@ -226,7 +252,7 @@ export function ProjectExplorer({
         </div>
       )}
 
-      {(search ?? ((tree: ReactNode) => tree))(<div className="tree-scroll">
+      {(search ?? ((tree: ReactNode) => tree))(<div className="tree-scroll" tabIndex={-1} onContextMenu={(event) => openContextMenu(event)}>
         <DirectoryContents
           directoryPath=""
           depth={0}
@@ -237,15 +263,29 @@ export function ProjectExplorer({
           onLoad={loadDirectory}
           onSelect={selectEntry}
           onToggle={toggleDirectory}
+          onContextMenu={openContextMenu}
         />
       </div>)}
+      {contextMenu && (
+        <ExplorerContextMenu
+          state={contextMenu}
+          interactionLocked={interactionLocked}
+          onClose={closeContextMenu}
+          onOpen={(entry) => { if (!interactionLocked) onOpenFile?.(entry.relativePath) }}
+          onCreate={(kind, directory) => { if (!interactionLocked) setEntryDialog({ mode: 'create', kind, directory }) }}
+          onRename={(entry) => { if (!interactionLocked) setEntryDialog({ mode: 'rename', entry }) }}
+          onDelete={(entry) => { if (!interactionLocked) setDeleteCandidate(entry) }}
+          onCopyPath={(entry) => void copyPath(entry)}
+          onRefresh={() => { if (!interactionLocked) void refresh() }}
+        />
+      )}
       {entryDialog && (
         <PromptDialog
           title={entryDialog.mode === 'create'
             ? `New ${entryDialog.kind === 'file' ? 'file' : 'folder'}`
             : 'Rename item'}
           description={entryDialog.mode === 'create'
-            ? `Create it inside ${selectedDirectory || project.name}.`
+            ? `Create it inside ${entryDialog.directory || project.name}.`
             : `Rename “${entryDialog.entry.name}”.`}
           label={entryDialog.mode === 'create' ? 'Name' : 'New name'}
           initialValue={entryDialog.mode === 'rename' ? entryDialog.entry.name : ''}
@@ -284,6 +324,7 @@ interface DirectoryContentsProps {
   onLoad(path: string): Promise<void>
   onSelect(entry: FileEntry): void
   onToggle(entry: FileEntry): void
+  onContextMenu(event: MouseEvent<HTMLElement>, entry: FileEntry): void
 }
 
 function DirectoryContents({
@@ -296,6 +337,7 @@ function DirectoryContents({
   onLoad,
   onSelect,
   onToggle,
+  onContextMenu,
 }: DirectoryContentsProps) {
   const directory = directories[directoryPath]
   if (!directory || directory.status === 'idle' || directory.status === 'loading') {
@@ -326,6 +368,7 @@ function DirectoryContents({
               className={`tree-row${selectedPath === entry.relativePath ? ' selected' : ''}`}
               style={{ paddingLeft: 8 + depth * 16 }}
               onClick={() => isDirectory ? onToggle(entry) : void onSelect(entry)}
+              onContextMenu={(event) => onContextMenu(event, entry)}
               onKeyDown={(event) => {
                 if (!isDirectory) return
                 if (event.key === 'ArrowRight' && !isExpanded) {
@@ -362,6 +405,7 @@ function DirectoryContents({
                 onLoad={onLoad}
                 onSelect={onSelect}
                 onToggle={onToggle}
+                onContextMenu={onContextMenu}
               />
             )}
           </li>
