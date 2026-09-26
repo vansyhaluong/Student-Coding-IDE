@@ -85,6 +85,13 @@ export function EditorWorkbench({
 
   const onMount: OnMount = (editorInstance) => {
     editorRef.current = editorInstance
+    // The Monaco child can unmount while this workbench remains mounted.
+    editorInstance.onDidDispose(() => {
+      if (editorRef.current === editorInstance) {
+        editorRef.current = null
+        mountedKey.current = null
+      }
+    })
     editorInstance.addCommand(
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       () => {
@@ -101,6 +108,7 @@ export function EditorWorkbench({
       manager.setViewState(key, editorRef.current.saveViewState())
     }
     editorRef.current = null
+    mountedKey.current = null
   }, [manager])
 
   return (
