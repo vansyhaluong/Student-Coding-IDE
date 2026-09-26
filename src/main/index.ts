@@ -1,3 +1,6 @@
+import { OllamaService } from './services/ai/ollama-service'
+import { AI_CHANNELS } from '../shared/contracts/ai'
+import { AiIpcService } from './ipc/ai-ipc-service'
 import { CsharpSemanticService } from './services/language/csharp-semantic-service'
 import { LanguageIpcService } from './ipc/language-ipc-service'
 import { LANGUAGE_CHANNELS } from '../shared/contracts/language'
@@ -123,6 +126,12 @@ void app.whenReady().then(async () => {
   })
 
   const ipcRegistry = new IpcHandlerRegistry(ipcMain)
+  const aiService = new OllamaService()
+  const aiIpc = new AiIpcService(ipcRegistry, aiService, authorizePreferencesFrame,
+    (ownerId, event) => {
+      const owner = webContents.fromId(ownerId)
+      if (owner && !owner.isDestroyed()) owner.send(AI_CHANNELS.event, event)
+    })
   const nodeRuntime = new NodeRuntimeDetector()
   let runAdapter: WindowsPipedProcessAdapter | undefined
   const runService = new RunService({
@@ -179,6 +188,7 @@ void app.whenReady().then(async () => {
       const window = new BrowserWindow(options)
       gitDocuments.observe(window.webContents)
       csharpOwners.observe(window.webContents)
+      aiIpc.observe(window.webContents)
       return window
     },
     openExternal: (url) => shell.openExternal(url),
@@ -335,6 +345,8 @@ void app.whenReady().then(async () => {
     terminalService,
     foundationIpc,
     settingsIpc,
+    aiService,
+    aiIpc,
     unsavedTransitionService,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
     runLifecycle,

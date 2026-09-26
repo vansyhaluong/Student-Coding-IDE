@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+/* Utility expected by the unmodified beUI PromptInput source. */
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* Resolve stock beUI semantic utilities against the existing IDE theme. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+}
+
 .search-mode-tabs { display: flex; height: 28px; min-height: 28px; gap: 2px; padding: 2px; margin: 0 8px 6px; border-radius: 6px; background: color-mix(in srgb, var(--input) 40%, transparent); }
 .search-mode-tabs button { flex: 1; min-width: 0; border: 0; border-radius: var(--radius-sm); padding: 0 8px; color: var(--muted-foreground); background: transparent; font-size: 11px; font-weight: 400; }
 .search-mode-tabs button[aria-selected="true"] { color: var(--foreground); background: var(--background); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
@@ -1473,3 +1493,12 @@ input:focus-visible,
 .explorer-context-menu-item.destructive { color: var(--destructive); }
 .explorer-context-menu-item:disabled { opacity: 0.45; }
 .explorer-context-menu-separator { height: 1px; margin: 4px; background: var(--border); }
+.project-tools-content { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.local-ai-toggle { -webkit-app-region: no-drag; }
+.local-ai-toggle[aria-expanded="true"] { background: var(--accent); color: var(--foreground); }
+.ai-chat-panel { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; min-width: 0; overflow: hidden; background: var(--sidebar); color: var(--sidebar-foreground); }
+.ai-chat-header { display: flex; flex-shrink: 0; align-items: flex-start; justify-content: space-between; padding: 10px 8px 9px 12px; border-bottom: 1px solid var(--border); }
+.ai-chat-heading h2 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+.ai-chat-heading h2 svg { width: 14px; height: 14px; }
+.ai-chat-heading > span { display: block; margin: 4px 0 0 20px; color: var(--muted-foreground); font-size: 10px; font-family: var(--font-mono); }
+.ai-chat-composer { flex-shrink: 0; padding: 8px; border-top: 1px solid var(--border); }
