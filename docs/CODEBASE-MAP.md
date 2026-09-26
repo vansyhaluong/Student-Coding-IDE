@@ -17,6 +17,50 @@ semantic IPC/Preload boundary and C# Monaco providers.
 
 ## Current source tree through Phase 5.5F
 
+Local AI Chat through Phase 8C (`COMPLETE`):
+`src/renderer/src/features/ai/AiChatPanel.tsx` owns the ephemeral conversation;
+`src/renderer/src/components/ai/` contains the five stock beUI components and
+their required local support modules, with source attribution and MIT license.
+App owns only the toggle/overlay; Explorer/Git stay mounted and the right resizer
+stays above the panel. Typed AI contracts and Main-owned Ollama integration exist.
+
+Current Phase 8A Local AI UI structure (`COMPLETE`):
+
+```text
+Renderer (src/renderer/src/)
+└── features/ai/
+    └── AiChatPanel.tsx
+```
+
+UI integration flow: App chrome → Local AI toggle → AiChatPanel → beUI AI
+primitives. The selected primitives in `src/renderer/src/components/ai/` are:
+
+- Message (`message.tsx`).
+- MessageBubble (`message-bubble.tsx`).
+- MessageScroller (`message-scroller.tsx`).
+- PromptInput (`prompt-input.tsx`).
+- StreamingResponse (`streaming-response.tsx`).
+
+The top-right toggle opens/closes the right-sidebar overlay without blocking
+the editor. `qwen3:1.7b` is the fixed local model.
+
+Phase 8A, 8B and 8C Streaming & Reliability are COMPLETE.
+`src/shared/contracts/ai.ts` defines the typed AI API; `src/preload/bridge/ai.ts`
+and `src/main/ipc/ai-ipc-service.ts` validate the request/response boundary.
+`src/main/services/ai/ollama-service.ts` calls fixed `http://127.0.0.1:11434`
+with fixed `qwen3:1.7b`, conversation history, `stream:true` and `think:false`.
+The 8B complete-response API has been replaced by typed `startChat`, `stopChat`
+and `onChatEvent`. Main parses NDJSON incrementally and forwards request-identified
+chunk/complete/error/stopped events only to the owning renderer. `src/main/index.ts`
+wires the AI event callback and window observation. AI IPC owns active requests,
+sender authorization, overlap prevention and window/navigation/shutdown cleanup.
+AiChatPanel updates one response, guards stale/early events, cancels on unmount,
+and preserves partial content after Stop or error. Thinking... lasts until the
+first content chunk. The service uses AbortController, bounded records/output,
+timeouts, availability checks and malformed/interrupted-stream errors.
+AI tests live in `tests/main/ai-ollama.test.ts`, `tests/main/ai-ipc.test.ts` and
+`tests/renderer/ai-chat-panel.test.tsx`. No agent, tools, file context or persistence exists.
+
 | Current path | Role | Status |
 |---|---|---|
 | `src/main/index.ts` | Electron readiness, secure BrowserWindow, unsaved/terminal coordination, Main Run/Git/Search/C# language composition, owner routing/navigation cleanup and fail-closed quit wiring | Implemented through Phase 5.5F; privileged domains use owned lifecycle and cleanup |

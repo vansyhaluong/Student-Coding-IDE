@@ -1593,3 +1593,23 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   `src/renderer/src/App.tsx:263` in an unrelated concurrent edit, left untouched.
   Live Electron visual QA was not performed. Preserved the pre-existing unrelated
   Problems/Output hover CSS change; no commit or push was performed.
+## Local AI Chat UI V1 — 2026-09-25
+
+- Added a Sparkles toggle and a right-sidebar-only chat overlay, preserving
+  mounted Explorer/Git state and keeping the sidebar resizer interactive.
+- Added static C# example messages and ephemeral mock prompt/reply behavior;
+  closing the panel discards the conversation. qwen3:1.7b is display text only.
+  No Ollama, AI IPC/preload/backend, file context, tools or persistence.
+- Per user correction, retained stock beUI Message, MessageBubble,
+  MessageScroller, PromptInput and StreamingResponse source/UI with local import
+  rewiring and required upstream support modules. Removed bespoke component CSS;
+  only the surrounding chat background follows the project. Semantic Tailwind
+  tokens and scrollbar-hide support the upstream classes. Preserved MIT notice
+  and source URLs in components/ai. No full shadcn app or demo was imported.
+- Added clsx 2.1.1, motion 13.4.3 and tailwind-merge 3.7.0. npm audit reports
+  existing Monaco/DOMPurify low/moderate findings; no unrelated upgrades applied.
+- Renderer checks: 73/73 passed. Full suite: 1043/1043 across 79 files passed on
+  rerun; first concurrent build/test run timed out one real-Git first-commit test
+  at 5000ms. Typecheck/lint passed. Light/dark Electron harness renders inspected
+  with stock 14px text/16px bubble and prompt radii. Final production/native build
+  and diff checks passed. No commit/push/merge.

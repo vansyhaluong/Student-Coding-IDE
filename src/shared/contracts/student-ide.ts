@@ -1,3 +1,4 @@
+import type { AiApi } from './ai'
 import type { SettingsApi } from './settings'
 import type { LanguageApi } from './language'
 import type { FileApi } from './file'
@@ -9,6 +10,7 @@ import type { TerminalContractApi } from './terminal'
 import type { RunApi } from './run'
 
 export interface StudentIdeApi {
+  ai: AiApi
   settings: SettingsApi
   language: LanguageApi
   file: FileApi
