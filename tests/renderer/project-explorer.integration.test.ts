@@ -76,7 +76,12 @@ vi.mock('@monaco-editor/react', async () => {
     }) {
       editorReadOnlyStates.push(Boolean(options?.readOnly))
       React.useEffect(() => {
+        const disposeListeners = new Set<() => void>()
         onMount?.({
+          onDidDispose: (listener: () => void) => {
+            disposeListeners.add(listener)
+            return { dispose: () => disposeListeners.delete(listener) }
+          },
           addCommand: vi.fn((_binding: number, command: () => void) => {
             editorCommands.push(command)
           }),
@@ -87,6 +92,10 @@ vi.mock('@monaco-editor/react', async () => {
           revealRangeInCenter: vi.fn((range) => editorReveals.push(range)),
           setModel: vi.fn(),
         })
+        return () => {
+          for (const listener of disposeListeners) listener()
+          disposeListeners.clear()
+        }
       }, [onMount])
       return React.createElement('div', { 'data-testid': 'monaco-editor' })
     },
