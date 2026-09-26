@@ -1222,7 +1222,54 @@ Feature Orca có nhưng Student Coding IDE V1 không cần triển khai.
 
 ---
 
-## 20. AI Agent
+## 20. Local AI Chat và AI Agent
+
+### FR-038 — Local AI Chat
+
+#### Yêu cầu
+
+* Người dùng có thể mở và đóng Local AI Chat bằng toggle ở góc trên bên phải IDE.
+* Chat hiển thị trong vùng workspace bên phải, phủ sidebar hiện có và không chặn
+  editor; Explorer/Git vẫn mounted bên dưới.
+* Người dùng có thể nhập và gửi prompt; giao diện hiển thị message của user và
+  assistant bằng các primitive beUI Message, MessageBubble, MessageScroller,
+  PromptInput và StreamingResponse.
+* Runtime local AI dự kiến ban đầu là Ollama; model dự kiến là `qwen3:1.7b`.
+  AI inference được định hướng chạy cục bộ trên máy người dùng.
+
+#### Trạng thái và phạm vi Phase 8
+
+* **8A — Chat UI: COMPLETE.** Toggle, overlay, input/message UI và các component
+  beUI đã hoàn tất. Không có nhãn YOU/QWEN; Thinking... chỉ là trạng thái chờ.
+* **8B — Ollama Integration: COMPLETE.** AiChatPanel dùng Ollama thật tại URL cố định
+  `http://127.0.0.1:11434`, model cố định `qwen3:1.7b`. Luồng typed giữ ranh giới
+  Renderer → typed Preload API → Electron IPC → Main service → Ollama.
+  Tại mốc 8B, gửi lịch sử hội thoại trong bộ nhớ với `stream:false`, `think:false`,
+  nhận phản hồi hoàn chỉnh. Đã có loading/error, kiểm tra Ollama/model và chặn gửi
+  chồng lấn; 8C thay transport này bằng streaming.
+* **8C — Streaming & Reliability: COMPLETE.** Gửi `stream:true`, giữ `think:false`,
+  model và URL cố định. Main đọc NDJSON tăng dần; API typed startChat/stopChat/
+  onChatEvent chuyển chunk/complete/error/stopped kèm request ID đến đúng renderer
+  sở hữu request. UI cập nhật một phản hồi assistant, bỏ Thinking... khi nhận chunk
+  nội dung đầu tiên. Stop dùng AbortController, giữ nội dung đã nhận và cho gửi lại.
+  Có bảo vệ event cũ/trùng, event đến trước start acknowledgement, hủy khi đóng
+  panel/mất cửa sổ và cleanup lifecycle. Lỗi Ollama/model, HTTP, stream sai định
+  dạng/bị ngắt và timeout hiển thị gọn, không làm crash panel; không thêm agent,
+  tools, file context hoặc persistence.
+
+Phase 8 không bao gồm current-file context, selected-code context,
+multi-file/project context, sửa file, chạy terminal command, tool calling hoặc
+autonomous agent behavior. Đây là các khả năng AI Agent tương lai.
+
+### Local AI Chat UI V1 — historical UI-only exception (2026-09-25)
+
+Cho phép panel chat mock trong Renderer, phủ riêng sidebar phải và giữ Explorer/Git
+mounted. Toggle Local AI, transcript mẫu, input và phản hồi mock chỉ dùng React
+state trong phiên mở panel; đóng panel sẽ bỏ transcript. `qwen3:1.7b` chỉ là nhãn.
+Tham khảo năm primitive beUI: Message, MessageBubble, MessageScroller, PromptInput,
+StreamingResponse; dùng theme/scale hiện có. Không có Ollama, model call, streaming,
+IPC/preload/backend AI, tools, file context, history hay persistence.
+Ngoại lệ này không cho phép triển khai AI Agent hoặc các integration bên dưới.
 
 ### V1
 

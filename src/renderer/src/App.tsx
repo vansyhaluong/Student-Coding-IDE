@@ -5,7 +5,7 @@ import { shellShortcut } from './features/settings/shortcuts'
 import { AutoSave } from './features/editor/auto-save'
 import { registerCsharpNavigation } from './features/language/csharp/csharp-navigation'
 import { CsharpStatus } from './features/language/csharp/CsharpStatus'
-import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, Settings, SquareTerminal, X } from 'lucide-react'
+import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, Settings, Sparkles, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import type { AppResult, GitStatus, ProjectIdentity, ProjectId } from '../../shared/contracts'
@@ -21,6 +21,7 @@ import {
   type UnsavedChoice,
 } from './features/editor/use-editor-workspace'
 import { ProjectExplorer } from './features/explorer/ProjectExplorer'
+import { AiChatPanel } from './features/ai/AiChatPanel'
 import { useProjectLanguage } from './features/language/use-project-language'
 import { ProblemsPanel } from './features/problems/ProblemsPanel'
 import { problemsStore } from './features/problems/problems-session'
@@ -43,6 +44,7 @@ export default function App() {
   const preferences = useSettings()
   const dark = useTheme(preferences.settings.theme)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
   const closeSettings = useCallback(() => setSettingsOpen(false), [])
   const [project, setProject] = useState<ProjectIdentity | null>(null)
   const [gitDecorationSnapshot, setGitDecorationSnapshot] = useState<{ project: ProjectIdentity; status: GitStatus | null } | null>(null)
@@ -260,7 +262,11 @@ export default function App() {
             : <span className="chrome-context">Student Coding IDE</span>}
         </div>
         <div className="chrome-right">
-          
+          <Button className="local-ai-toggle" variant="ghost" size="iconSmall"
+            aria-label={aiOpen ? 'Close Local AI' : 'Open Local AI'}
+            title={aiOpen ? 'Close Local AI' : 'Open Local AI'}
+            aria-expanded={aiOpen} aria-controls="local-ai-panel"
+            onClick={() => setAiOpen(open => !open)}><Sparkles /></Button>
         </div>
       </header>
 
@@ -404,6 +410,7 @@ export default function App() {
 
         <aside className="explorer-sidebar" aria-label="Project tools">
           <SidebarResizer side="right" width={rightWidth} onResize={setRightWidth} getMaximum={rightMaximum} />
+          <div className="project-tools-content" inert={aiOpen} aria-hidden={aiOpen || undefined}>
           <div className="sidebar-tabs" role="tablist" aria-label="Project tools">
             <button
               type="button"
@@ -475,6 +482,8 @@ export default function App() {
             {project ? <SourceControl key={project.id} project={project} locked={editor.interactionLocked}
               unavailable={editor.fileSystemUnavailable} onSnapshot={publishGitSnapshot} /> : <p className="git-empty">Open a project to use Source Control.</p>}
           </div>
+          </div>
+          {aiOpen && <AiChatPanel onClose={() => setAiOpen(false)} />}
         </aside>
       </div>
 

@@ -139,6 +139,53 @@ afterEach(() => {
 })
 
 describe('ProjectExplorer integration', () => {
+  it('overlays only the right sidebar and restores mounted Git/Explorer state after closing Local AI', async () => {
+    installApi({ project: { getActive: async () => success(project) },
+      file: { listDirectory: async (_id, path) => success(path ? [file('src/main.ts')] : [directory('src')]) },
+      git: { getState: async () => success({ dependency: 'AVAILABLE', repository: 'REPOSITORY' }),
+        getStatus: async () => success({ entries: [], didHitLimit: false }),
+        getBranches: async () => success({ state: 'UNBORN', currentBranch: 'main', branches: [] }),
+        getHistory: async () => success([]) } })
+    const view = render(createElement(App))
+    fireEvent.click(await screen.findByTitle('src'))
+    await screen.findByTitle('src/main.ts')
+    fireEvent.click(screen.getByRole('tab', { name: 'Source Control' }))
+    const draft = await screen.findByLabelText('Commit message')
+    fireEvent.change(draft, { target: { value: 'Keep this draft' } })
+    const explorer = view.container.querySelector('#explorer-sidebar-panel')
+    const git = view.container.querySelector('#git-sidebar-panel')
+    expect(screen.queryByText('Project tools')).toBeNull()
+    const toggle = screen.getByRole('button', { name: 'Open Local AI' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    toggle.focus()
+    fireEvent.click(toggle)
+    expect(screen.getByRole('button', { name: 'Close Local AI' }).getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByRole('region', { name: 'Local AI chat' }).parentElement?.className).toBe('explorer-sidebar')
+    expect(view.container.querySelector('#explorer-sidebar-panel')).toBe(explorer)
+    expect(view.container.querySelector('#git-sidebar-panel')).toBe(git)
+    expect(draft.isConnected).toBe(true)
+    expect(view.container.querySelector('.project-tools-content')?.hasAttribute('inert')).toBe(true)
+    const resizer = screen.getByRole('separator', { name: 'Resize right sidebar' })
+    const width = Number(resizer.getAttribute('aria-valuenow'))
+    fireEvent.keyDown(resizer, { key: 'ArrowRight' })
+    expect(Number(resizer.getAttribute('aria-valuenow'))).toBe(width - 10)
+    fireEvent.click(screen.getByRole('button', { name: 'Close Local AI chat' }))
+    expect(document.activeElement).toBe(toggle)
+    expect(screen.getByRole('tab', { name: 'Source Control' }).getAttribute('aria-selected')).toBe('true')
+    expect((screen.getByLabelText('Commit message') as HTMLTextAreaElement).value).toBe('Keep this draft')
+    fireEvent.click(screen.getByRole('button', { name: 'Open Local AI' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Ask Qwen' }), { target: { value: 'Temporary prompt' } })
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Ask Qwen' }), { key: 'Enter' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close Local AI' }))
+    expect(screen.queryByRole('region', { name: 'Local AI chat' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Open Local AI' }))
+    expect(screen.queryByText('Temporary prompt')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Close Local AI' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Explorer' }))
+    expect(screen.getByTitle('src').getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByTitle('src/main.ts')).toBeTruthy()
+  })
+
   it('offers exactly the scoped menus, selects without opening/toggling, and closes safely', async () => {
     const props = explorerProps()
     installApi({ file: { listDirectory: async () => success([file('main.ts'), file('App.tsx'), directory('src')]) } })
@@ -2182,6 +2229,12 @@ function installApi(overrides: {
 } = {}): StudentIdeApi {
   window.matchMedia = vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
   const api: StudentIdeApi = {
+    ai: {
+      getStatus: async () => success('ready'),
+      startChat: async () => failure('Not configured'),
+      stopChat: async () => success(null),
+      onChatEvent: () => () => undefined,
+    },
     settings: {
       get: async () => success({ settings: { theme: 'dark', fontSize: 13, tabSize: 2, autoSave: false }, recovered: false }),
       update: async settings => success({ settings, recovered: false }),

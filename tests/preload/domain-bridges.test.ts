@@ -76,6 +76,7 @@ describe('Phase 2B preload bridges', () => {
     const api = createPreloadApi(ipcRenderer)
 
     expect(Object.keys(api).sort()).toEqual([
+      'ai',
       'file',
       'git',
       'language',
