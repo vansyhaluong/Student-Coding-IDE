@@ -31,6 +31,27 @@ reference evidence, not source or runtime dependencies.
 
 ## 3. Current baseline
 
+### Local AI Chat UI V1 — 2026-09-25
+
+Status: `COMPLETE`. Explicitly authorized renderer-only mock UI on `develop`,
+using completed shell/sidebar/theme foundations. Requirement Section 20 records
+the bounded scope exception. No unresolved decision gate. The user's correction
+requires stock beUI UI, with only the conversation background matching the IDE.
+Added its required clsx, motion and tailwind-merge dependencies after source review;
+no native/runtime service dependency or full shadcn initialization.
+App owns the toggle/overlay; stock beUI components and AiChatPanel own
+ephemeral presentation. Explorer/Git stay mounted, inaccessible under the overlay;
+the sidebar resizer remains available. Closing discards the mock conversation.
+No backend, IPC, model calls, streaming, file context, history or persistence.
+Acceptance: toggle/close, transcript, Enter/Shift+Enter, cleared input, preserved
+sidebar state, resize; renderer/full tests, typecheck, lint, build, diff checks.
+
+Verified: 73 renderer tests and 1043 total tests in 79 files passed; full suite
+rerun passed after one 5000ms real-Git timeout during concurrent build/test.
+Typecheck, lint, final production/native Windows build and diff checks passed.
+Light/dark Electron harness renders inspected; stock 14px component text and
+16px bubble/composer radii confirmed. No backend or accepted architecture change.
+
 ### Authorized Explorer context-menu follow-up — 2026-09-25
 
 Status: `COMPLETE`. The user explicitly authorized a renderer-only follow-up
@@ -3572,6 +3593,82 @@ dependency packaging, application packaging, installer, and documentation review
   security review, and final documentation review pass.
 - V1 milestone evidence is recorded before merge/tag/release actions are
   separately authorized.
+
+## 13.5 Phase 8 — Local AI Chat
+
+Traceability: FR-038 in Requirement Section 20. This roadmap records the completed
+renderer UI and local inference work. UI completion evidence is retained
+in Section 3. For this roadmap, `PLANNED` denotes future work that has not started
+and does not authorize implementation; the existing phase tracking rules remain
+unchanged.
+
+### 8A. Chat UI — COMPLETE
+
+#### Scope
+
+- Local AI toggle in the top-right application chrome.
+- AI Chat panel overlays the existing right sidebar; Explorer/Git remain mounted
+  underneath, and the editor remains accessible.
+- Chat panel uses the beUI primitives Message, MessageBubble, MessageScroller,
+  PromptInput, and StreamingResponse.
+- UI uses ephemeral conversation state; Phase 8B replaced mock replies with Ollama.
+- The displayed model label is `qwen3:1.7b`.
+- Compact messages have no YOU/QWEN labels; Thinking... indicates a pending response.
+
+Status: `COMPLETE`.
+
+### 8B. Ollama Integration — COMPLETE
+
+#### Scope
+
+- Connect Student Coding IDE to local Ollama.
+- Use `qwen3:1.7b` as the initial local model, with inference intended to run locally.
+- Detect whether Ollama is available.
+- Send chat messages to Ollama and receive AI responses.
+- Follow the existing architecture boundary:
+
+```text
+Renderer → typed Preload API → Electron IPC → Main service → Ollama
+```
+
+Status: `COMPLETE`. AiChatPanel uses real local Ollama at the fixed
+`http://127.0.0.1:11434` URL with fixed `qwen3:1.7b`. Conversation history is sent
+with `stream:false` and `think:false` at the 8B exit gate; the complete assistant
+response was returned. Phase 8C below supersedes that transport with streaming.
+Typed getStatus/chat APIs validated requests and responses. Loading/error states
+and overlapping-submission prevention are implemented. Typecheck, lint, 43 focused
+AI/preload tests and diff checks passed; the subsequent UI polish passed 9 renderer tests.
+
+### 8C. Streaming & Reliability — COMPLETE
+
+#### Scope
+
+- Stream assistant output incrementally.
+- Stop generation through the backend.
+- Handle Ollama unavailable and `qwen3:1.7b` missing/unavailable states.
+- Handle request/generation errors.
+- Prevent unstable behavior during overlapping requests.
+- Keep the UI responsive if generation fails or is interrupted.
+
+Status: `COMPLETE`. Typed `startChat`, `stopChat` and `onChatEvent` replace the
+complete-response chat API. Main incrementally parses Ollama NDJSON with
+`stream:true`, `think:false`, fixed `qwen3:1.7b` and the fixed localhost URL.
+Request-scoped chunk/complete/error/stopped events go only to the owning renderer.
+The panel grows one assistant response; Thinking... disappears on its first chunk.
+Stop aborts the request, preserves partial content and permits another submission.
+Request identity guards late/duplicate events, including events before the start
+acknowledgement. Panel unmount, window navigation/destruction, renderer loss and
+application shutdown cancel owned generation. Main blocks overlapping requests;
+the UI handles missing Ollama/model, HTTP failures, malformed records, premature
+EOF and timeouts without losing partial content. Stream record/output sizes are bounded.
+Verification: typecheck, lint, 51 AI/preload tests across 5 files and
+`git diff --check` passed. Tests mock HTTP/streams; no live Ollama test was required.
+
+### Non-goals
+
+Future AI Agent capabilities are outside Phase 8: current-file context,
+selected-code context, multi-file/project context, editing files, running terminal
+commands, tool calling, and autonomous agent behavior.
 
 ## 14. Decision Gate Register
 

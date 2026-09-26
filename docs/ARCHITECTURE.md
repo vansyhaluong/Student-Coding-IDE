@@ -852,7 +852,9 @@ The Phase 0 foundation already enables `contextIsolation`, disables `nodeIntegra
 
 ## 18. Future extension boundaries
 
-Formatter integrates through an editor command/provider boundary; debugger through a future DAP-oriented service; AI through an optional, separately permissioned feature boundary. None is implemented or required for V1. Cloud, collaboration, remote workspaces, mobile, extension host/marketplace, worktree orchestration, and AI agent process hooks are omitted.
+Local AI Chat is implemented through Renderer → typed Preload → IPC → Main → Ollama. Main owns local Ollama network access at fixed `http://127.0.0.1:11434`, the fixed `qwen3:1.7b` model, streaming and cancellation; Renderer owns the ephemeral chat UI. AI Agent behavior, tools and file context remain future work and are not implemented.
+
+Formatter integrates through an editor command/provider boundary; debugger through a future DAP-oriented service. Neither is implemented or required for V1. Cloud, collaboration, remote workspaces, mobile, extension host/marketplace, worktree orchestration, and AI agent process hooks are omitted.
 
 ## 19. Phase boundaries
 
