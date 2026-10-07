@@ -5,7 +5,9 @@
 This document converts the accepted Student Coding IDE requirements and
 architecture into an ordered execution plan. It defines ownership, dependencies,
 decision gates, tests, acceptance criteria, and phase exit conditions from Phase
-2 through Phase 7, including the newly authorized Phase 5.5 C# extension.
+2 through Phase 9, including Phase 5.5 C# intelligence, Phase 8 Local AI Chat,
+and the approved Phase 9 Learning roadmap. This documentation update does not
+authorize Phase 9 implementation.
 
 It is not a replacement for requirements or architecture, does not authorize
 implementation by itself, and does not resolve decisions that remain open. All
@@ -164,6 +166,9 @@ before affected work continues.
 | Phase 5.5 — C# Language Intelligence | `COMPLETE` | 5.5A–5.5H complete; automated verification and user-confirmed manual acceptance PASS |
 | Phase 6 — Settings & UX | `COMPLETE` | Settings, dependency guidance and Recent Projects; verified 2026-09-14 |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
+| Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
+| Phase 9 — Learning / Programming Techniques | `NOT_STARTED` | Planned 9A–9G; Section 13.6; explicit implementation authorization required |
+| C# Project Run extension — M1 + M2 | `NOT_STARTED` | Approved planning baseline; Section 13.7; both milestones required for completion |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
 `COMPLETE`. A status may become `COMPLETE` only after its exit gate passes.
@@ -234,6 +239,9 @@ Phase 5.5B PASS ---> Phase 5.5C–5.5H
 Phase 5.5 complete ---> Phase 6 Settings & UX
 Phases 2–6 including 5.5 complete ---> Phase 7 final V1 acceptance and packaging
 ```
+
+Phase 9 follows Phase 8 in the roadmap. Its internal dependencies and foundation
+gates are recorded in Section 13.6; this does not waive Phase 7 acceptance.
 
 Service work may be prepared only when its prerequisite contracts exist. The
 roadmap remains phase-sequenced even where later services are architecturally
@@ -3670,10 +3678,423 @@ Future AI Agent capabilities are outside Phase 8: current-file context,
 selected-code context, multi-file/project context, editing files, running terminal
 commands, tool calling, and autonomous agent behavior.
 
+## 13.6 PHASE 9 — LEARNING / PROGRAMMING TECHNIQUES
+
+Status: `NOT_STARTED`. Approved roadmap only; no implementation or completion
+is claimed. Traceability: Requirement Section 21, Phase 9; Architecture Section
+6, Learning direction. Existing Phase 1–8 decisions remain unchanged.
+
+### Goal, workspace layout and state
+
+Extend the IDE with Learning Mode for the initial course **Kỹ thuật lập trình**.
+Project Mode and Learning Mode are separate application workspace modes.
+Learning is not a project, modal, dialog, editor tab or replacement for Project
+Mode. Future courses must fit without redesigning Learning Mode.
+
+The current Project Mode layout in `App.tsx` remains authoritative:
+
+| Area | Project Mode | Learning Mode |
+|---|---|---|
+| Left `.project-sidebar` | Projects, Open/Switch Project, Create Project, Active Project, Recent Projects, Settings | Learning Roadmap: chapters and progress |
+| Center `.preview-surface` | EditorWorkbench and Terminal / Problems / Output; editor tabs and Run integrated in the workspace header | Learning Workspace, expanded into space freed on the right |
+| Right `.explorer-sidebar` | Project Tools: Explorer, Search, Source Control / Git | Hidden |
+
+Add the Learning application-header entry beside Local AI: `[Learning] [Local AI]`.
+Icon direction: `GraduationCap` from existing `lucide-react`. Learning toggles
+Project Mode ↔ Learning Mode. Reuse the left sidebar; do not add another sidebar.
+Hide Project bottom panels in Learning. Exercise Test Cases / Result must never
+be mixed with Project Output.
+
+Entering Learning changes presentation only: it must not close/switch the active
+project, close documents, discard unsaved code, restart terminals or reset Project
+Mode. Preserve and restore, where applicable:
+
+- active project, open documents and active document;
+- unsaved editor state and Monaco/editor models;
+- Projects sidebar state, selected Explorer/Git tab and presentation state;
+- terminal sessions and bottom panel state.
+
+Learning state is isolated. Learning → Project → Learning resumes the current
+chapter, lesson/exercise/quiz, selected exercise language, code draft, applicable
+Run/Submit result and learning position. Hiding a mode is not session disposal.
+
+### Content and exercise contract
+
+Local content is data-driven and separate from React components. The conceptual
+structure is Course → Chapter → Lesson → Exercise → Quiz; chapters need not
+require every item in that sequence. Never hard-code chapters into React.
+**Chương 1 — Giới thiệu môn học** is a special introduction chapter: course
+introduction, objectives, knowledge/skills, learning method and Learning Mode
+guidance. Coding exercises and quizzes are optional for Chapter 1. From Chapter
+2 onward, chapters may expose Tài liệu, Luyện tập, Trắc nghiệm and Tiến độ.
+Learning Roadmap answers “Student đang học ở đâu?”.
+
+Learning Workspace views/navigation:
+
+- Course Introduction for the introductory chapter.
+- Material → Lesson Workspace.
+- Practice → Exercise List → Exercise Workspace.
+- Quiz → Quiz Workspace.
+
+Exercise progression groups are **Cơ bản** (direct application), **Trung bình**
+(combining knowledge) and **Nâng cao** (problem analysis, edge cases and greater
+challenge). Learning statuses include chưa làm, đang làm and hoàn thành.
+
+An Exercise is language-neutral: id, title, learning difficulty, problem statement,
+input/output specifications, examples, constraints, test cases and allowed
+languages. Each language supplies language id, Monaco language id, filename,
+starter code and runtime adapter. Direction: C#, JavaScript, Python and Java;
+all adapters need not be implemented in one task or PR.
+
+Exercise Workspace has a breadcrumb/title, language selector, Run and Submit in
+its header. The Problem panel (Description, Input, Output, Examples, Constraints)
+sits beside the Monaco editor, with Test Cases / Run Result / Submission Result
+below. The split may resize where appropriate; no fixed pixel or percentage
+allocation is prescribed.
+
+Reuse the current Monaco/editor foundation; Project Document != Exercise Document.
+Exercise code is not automatically saved into the student project or shown in its
+file tree. Exercise Session owns exerciseId, selectedLanguage, solution drafts per
+language, current Run/Submit results, completion/progress and draft/dirty state
+where needed. C# → Python → C# retains the earlier C# draft. Shared Monaco
+configuration/wrapper extraction may occur in an authorized implementation
+package; duplicating the editor architecture is not the direction.
+
+Learning V1 uses **STDIN → Student Program → STDOUT**, allowing shared test cases
+across languages. Function-signature/harness exercises are outside V1. Run uses
+current session code, selected language and sample/custom input, returning
+stdout/stderr and a Run Result without requiring a saved project file.
+
+Submit prepares/compiles when needed, runs public then hidden tests, and judges
+results. Outcomes: Accepted, Wrong Answer, Compilation Error, Runtime Error and
+Time Limit Exceeded. Partial scores may show Passed 7 / 10 and Score 7 / 10.
+Full hidden input/output is not exposed to students.
+
+Execution follows Renderer → typed Preload API → IPC → Main → Exercise Service
+→ Judge Service → Language Runtime Adapter → OS/runtime. Main owns temporary
+exercise workspaces, prepare/compile/execute, stdin, stdout/stderr, timeout,
+normalization and cleanup. Project Run and Exercise Run may share narrow internal
+process primitives while retaining separate behavior and domain lifecycles.
+No generic renderer command execution API is allowed.
+
+### Dependencies and decision gates
+
+Use existing shell, retained project/editor state, Monaco, validated typed IPC,
+Main-owned process cleanup and local persistence foundations. Phase 9 follows
+Phase 8 in the roadmap; existing Phase 7 packaging/Windows acceptance obligations
+remain. Verify prerequisite exit gates and explicit package authorization before
+implementation. Learning itself has no AI dependency.
+
+Package sequence: 9A → 9B → 9C → 9D → 9E → 9F → 9G. Adapters can be delivered
+sequentially; completing one adapter does not complete all of 9D.
+ADR-011 remains unresolved for shared renderer state expansion: record the
+applicable decision before implementation without selecting a store here.
+Exact runtime versions/distribution, dependency detection, temporary-workspace
+policy, timeout limits, normalization/comparison rules, scoring rules and Learning
+persistence schema must be specified and verified in their authorized packages.
+This roadmap selects no new dependencies or language-service providers.
+
+### 9A — Learning Mode & Roadmap
+
+Status: `NOT_STARTED`.
+
+**Scope:** Learning icon/header entry; Project/Learning mode state; Projects sidebar
+→ Learning Roadmap; Project Workspace → Learning Workspace; hide right Project
+Tools and Project bottom panels; preserve/restore both modes; basic course/chapter
+navigation; Chapter 1 introduction shell; mode lifecycle/regression coverage.
+
+**Goal / exit gate:** Project ↔ Learning is safe. Verify all project and Learning
+state listed above, dirty buffers and retained models, live terminals, sidebar/
+panel restoration and inaccessible hidden controls. Local AI opens as a temporary
+overlay without revealing Project Tools; closing it returns to Learning Workspace.
+No project transition is triggered by entering Learning.
+
+### 9B — Course Content & Lessons
+
+Status: `NOT_STARTED`. Prerequisite: 9A exit gate.
+
+**Scope:** Course, Chapter and Lesson/material models; local data-driven content;
+Chapter 1 introduction content; Lesson Workspace; chapter/lesson navigation;
+content separated from React implementation.
+
+**Goal / exit gate:** Students follow the roadmap and read real course material.
+Verify data-driven navigation, the special introduction chapter without mandatory
+exercise/quiz, and content boundaries that permit additional courses.
+
+### 9C — Practice & Exercise Workspace
+
+Status: `NOT_STARTED`. Prerequisite: 9B exit gate.
+
+**Scope:** Exercise model; difficulty grouping; Exercise List and status;
+Exercise Session; Exercise Workspace and Problem panel; reused Monaco foundation;
+language selector; independent language drafts; Test/Result UI shell.
+A complete Judge is not required here.
+
+**Goal / exit gate:** Students open an exercise and write a solution. Verify
+problem content, independent document/model ownership, per-language draft
+retention, mode round trips and no automatic project file/tree mutations.
+Runtime/Judge actions must not present mock results as actual execution.
+
+### 9D — Exercise Runtime & Multi-language
+
+Status: `NOT_STARTED`. Prerequisite: 9C exit gate.
+
+**Scope:** Runtime abstraction; temporary workspace; STDIN/STDOUT; prepare/compile/
+run lifecycle; timeout; stdout/stderr capture; cleanup; language runtime adapters.
+
+| Adapter package | Status | Runtime direction |
+|---|---|---|
+| 9D.1 — C# | `NOT_STARTED` | dotnet |
+| 9D.2 — JavaScript | `NOT_STARTED` | node |
+| 9D.3 — Python | `NOT_STARTED` | python |
+| 9D.4 — Java | `NOT_STARTED` | Java compile/runtime adapter |
+
+Each adapter requires the common runtime contract and explicit task scope; all
+four need not ship in the same implementation task/PR.
+
+**Goal / exit gate:** Exercise code runs locally in the selected supported
+language without saving a project file. Verify stdin/stdout/stderr, preparation
+and compile failures, missing/invalid dependencies, bounded time/output, owned
+process/temporary-file cleanup and Windows behavior for each adapter. Validate
+IPC/session ownership and stale-result rejection. Runtime support does not imply
+new Project Run or language intelligence support.
+
+### 9E — Local Judge & Submission
+
+Status: `NOT_STARTED`. Prerequisite: 9D exit gate.
+
+**Scope:** Complete Run integration; Submit; public/hidden tests; output
+normalization/comparison; timeout result; Accepted / Wrong Answer / Compilation
+Error / Runtime Error / Time Limit Exceeded; partial scoring; submission result
+UI; Judge regression coverage.
+
+**Goal / exit gate:** Students submit and receive local judging results. Verify
+sample/custom Run input, shared test cases across supported languages, comparison/
+scoring, result classification, hidden input/output redaction, compile/runtime
+failures, timeout, stale-result rejection and cleanup.
+
+### 9F — Quiz & Learning Progress
+
+Status: `NOT_STARTED`. Prerequisite: 9E exit gate.
+
+**Scope:** Quiz model and Workspace; multiple-choice theory, code-reading,
+predict-output and identify-error questions; navigation and answers; scoring and
+results; chapter progress, lesson/exercise completion, submission score/progress;
+local persistence and Learning state resume.
+
+**Goal / exit gate:** Learning assesses knowledge and tracks progress. Verify quiz
+navigation/scoring/results and restoration of exercise drafts, submission results/
+scores, quiz completion/results and last learning position. Follow Main-owned
+versioned persistence, serialized atomic writes, migration and corrupt-state
+recovery. No account, cloud or backend is required.
+
+### 9G — Learning UX & Stabilization
+
+Status: `NOT_STARTED`. Prerequisite: 9A–9F exit gates.
+
+**Scope:** UI polish; resizing; accessibility; keyboard navigation; mode-switch
+regression; Learning state, Monaco and Exercise Session lifecycles; runtime cleanup
+and Judge regression tests; manual Electron smoke tests.
+
+**Goal / exit gate:** Stabilize the complete Learning flow. All package acceptance
+checks and new regressions must pass, including project data safety, isolated
+Learning state, retained drafts, runtime ownership/cleanup and Local AI overlay
+behavior. Verify both layouts and resizing in Electron on required Windows
+acceptance platforms before claiming Phase 9 completion.
+
+### Phase 9 quality gates and non-goals
+
+Implementation requires focused domain/security/lifecycle/renderer regressions,
+the documented automated suite, typecheck, lint, build and `git diff --check`,
+plus actual Windows/Electron evidence for runtime and final stabilization gates.
+This docs-only roadmap update requires diff review and `git diff --check` only.
+No Phase 9 package is complete until its exit gate has actually passed.
+
+Learning V1 is local and independent of AI. Keep Local AI on the header as a
+temporary overlay in Learning: opening it must not restore Project Tools and
+closing it returns to Learning. Preserve Phase 8's fixed local Ollama endpoint,
+`qwen3:1.7b`, text chat and configuration. No Agent, tools, project file access,
+automatic exercise/code context, AI Tutor or exercise-aware AI is added; these
+remain separate future extensions. Backend/cloud, accounts, project templates
+and function-signature exercise harnesses are outside this foundation.
+
+## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
+
+Status: `NOT_STARTED`. Milestone 1 and Milestone 2, including every task below,
+are `NOT_STARTED`. Authorized 2026-10-07 for survey, design and planning documents
+only. This package is a bounded Project Run extension, not Phase 5.5 reopening,
+Phase 9D implementation or authorization to begin production code.
+Traceability: FR-023 C# extension / FR-024, Architecture Section 10, ADR-024,
+Codebase Map planned C# Run modules, Language Support planned Project Run scope.
+
+### Task start checklist and baseline findings
+
+1. Authorized work: this documentation baseline only; subsequent task/package
+   authorization is required for either milestone implementation.
+2. Goal: saved Console `.csproj` Run plus Console.ReadLine in Output. M1 alone
+   is partial delivery. Exclude loose `.cs`, Web/API, debugger, launch profiles,
+   advanced multi-target selection, Exercise Runtime/Judge, auto-install SDK,
+   generic Renderer executor and PTY substitution.
+3. Foundations: completed Phase 2 project/filesystem/editor/IPC/process cleanup,
+   Phase 4 Run/Output and Phase 6 persistence/settings; Phase 5.5 native regression
+   coverage is mandatory because the binding is shared. At implementation start,
+   reconfirm applicable exit gates; Phase 7 packaged/Windows obligations remain.
+   This independently authorized extension requires no Phase 9 gate or new AI work.
+4. ADR-024 settles design scope. M1-04 is a hard native/SDK evidence gate; passing
+   planning checks does not pass it. No dependency or store-library gate resolved.
+5. Main owns disk/SDK/process/target store; Preload is semantic and typed; Renderer
+   owns documents/presentation. Preserve contextIsolation, sandbox, no Node access,
+   no raw IPC, relative-path authority, session ownership and retained cleanup.
+6. Required future verification: focused unit/integration tests, existing full
+   npm test, typecheck/lint/build, diff checks, native and manual Windows evidence
+   below. Docs-only review runs diff checks, not production acceptance.
+7. Survey branch: develop. Pre-existing edits in REQUIREMENT, ARCHITECTURE,
+   LANGUAGE-SUPPORT and IMPLEMENTATION-PLAN are retained (Phase 9 roadmap).
+   Planning adds bounded sections; no code/package/lockfile change or commit.
+
+| Current evidence | Consequence for planned work |
+|---|---|
+| run-service.ts has a fixed JS list and context-free resolveRuntime | Compose trusted strategies and resolve runtime by authorized kind/context |
+| prepare/start/launch use execution.args[0] for identity | Replace all sites with canonical target identity before multi-argument launches |
+| WindowsPipedProcessAdapter accepts one arg, rejects environment additions | Add bounded argv and explicit internal stdin/environment policy; preserve JS |
+| PipedRunProcess and RunService wrapper lack stdin capability | Extend both internal interfaces, not merely native exports |
+| Native binding supplies NUL stdin for Run, dedicated C# language pipes/writer | Reuse primitives with separate Run handles; never reuse LSP session ownership |
+| SDK detector rejects SDKs below 10 for csharp-ls | Run-specific policy; preserve existing language detector semantics |
+| CsharpWorkspace finds solutions/projects, not runnable Console entry targets | Separate Run resolver/store with evaluated Console eligibility |
+| RunController/EditorRunAction use active JS document; Output has streams only | Add project target and composer within existing header/Bottom Panel |
+| startRun awaits preparation; pending-start UI disables Stop | C# must reserve/return STARTING session promptly and expose cancellation during owned asynchronous preparation/build |
+| Root exit finalizes current one-process sessions | C# step exit must clean the step before advancing, not finalize the whole Run |
+
+### Final scope and implementation order
+
+M1: SDK-style single-framework .NET Console Exe under the active folder project;
+bounded nested discovery; one candidate auto-select/multiple explicit selection;
+separate remembered Run target; Main SDK/global.json/TFM checks; project-wide
+Save-first/conflict guard; SDK build/restore then dotnet run; Run/Stop/Re-run and
+separate stdout/stderr/exit. Preserve JS and all existing ownership transitions.
+M2: UTF-8 line-oriented stdin for exact owned C# execute session, repeated lines,
+multiline paste, typed validation/acks, bounded queue/backpressure/EOF, minimal
+Output composer, complete cross-domain regression and Windows acceptance.
+
+Execute M1-01 -> M1-02 -> M1-03 -> M1-04 before dependent C# production strategy.
+Then M1-05 -> M1-06 -> M1-07; M1-08 uses M1-02/M1-03 and may be validated with
+fake plans before real strategy composition; M1-09a supplies the source guard;
+M1-09 composes the completed seams;
+M1-10 -> M1-11 -> M1-12. Execute M2-01 -> M2-02 -> M2-03 -> M2-04 -> M2-05 ->
+M2-06 -> M2-07 after M1 exit. Independent module testing does not bypass listed
+production dependencies. A failed M1-04 blocks dependent work and reopens ADR-024
+only if evidence requires a design change.
+
+### Milestone 1 — C# Project Run Core
+
+| ID | Công việc | File/module dự kiến | Phụ thuộc | Kết quả đầu ra | Tiêu chí hoàn thành |
+|---|---|---|---|---|---|
+| M1-01 | Define target kind, resolution, phase/failure DTOs and exact validation | shared/contracts/run.ts; contract tests | Explicit implementation authorization; ADR-024 | Semantic file/project targets; STARTING/phase and selection states; no process authority | Reject unknown kind/extra fields/traversal; JS migration behavior covered; documented bounds |
+| M1-02 | Replace argv-derived identity; inject fixed strategies and contextual runtime resolution | run/run-service.ts, run-strategy.ts, javascript-run-strategy.ts; main/index.ts; run-foundation/lifecycle tests | M1-01 | Immutable authorized identity and fingerprint; JS-only composition still functional | All args[0] identity sites removed; canonical duplicate/re-run behavior, wrong owner and JS tests pass |
+| M1-03 | Generalize Windows argv with closed stdin mode | run/windows-piped-process-adapter.ts, piped-process-adapter.ts, native/run-process.cpp; smoke-run-native.mjs | M1-02 | Bounded argument-array launch, proper quoting/handles/environment | Spaces/#/Unicode/backslashes/quotes tested; command-line overflow/NUL fail; Job ownership and JS native smoke pass |
+| M1-04 | Isolated Windows/SDK compatibility evidence | planned spikes/csharp-project-run/REPORT.md and evidence harness; no app composition | M1-03; separately authorized spike | net8.0/net10.0 build/run evidence, future stdin/blocked-write prototype, flags and owned-tree report | Stop during restore/build; root/descendant cleanup; dotnet stdin inheritance; no shared build-worker escape; no JS/Git/LSP regression. HARD GATE PASS before dependent strategy composition |
+| M1-05 | Add Run SDK resolver and structured evaluation | planned dependencies/dotnet-run-runtime.ts; run/csharp-run-preflight.ts; tests/main/csharp-run-preflight.test.ts | M1-04 | PATH inventory, candidate-cwd CLI SDK selection and evaluated JSON; independent from LSP | Missing/invalid SDK, incompatible global.json, TFM and probe timeout/cancellation fixtures; language SDK >=10 unchanged |
+| M1-06 | Discover and classify runnable Console targets | planned run/csharp-run-target-resolver.ts; tests/main/csharp-run-targets.test.ts | M1-05 | Bounded nested candidates and recursive ProjectReference checks | One/multiple/none; exclusion/symlink/case duplicates; ambiguous framework/Web/GUI/test/library reject; broken candidate and bound overflow surfaced |
+| M1-07 | Persist independent per-project selection | planned run/csharp-run-target-store.ts; existing persistence internals; target-store tests | M1-06 | Versioned relative-path selection, revalidation/recovery | Restart persistence; rename/delete/stale choice; atomic write failure/corrupt recovery; LSP selection untouched |
+| M1-08 | Add cancellable execution-plan/session lifecycle | run/run-service.ts, run-strategy.ts, run-project-lifecycle.ts; run-lifecycle/project-lifecycle tests | M1-02/M1-03; M1-04 before real C# launch | JS one-step/C# two-step seam; early STARTING, preparation cancellation, step generations, retained cleanup | Stop during owned probes, build, step gap; old callback suppression; intermediate exit not final; cleanup failure blocks replacement/project switch/shutdown |
+| M1-09a | Define and implement bounded saved-source handshake | planned run/run-source-guard.ts; shared Run guard DTOs; IPC/Preload and output controller; focused tests | M1-01/M1-08 | Owner-scoped guard request/reply, aggregate dirty/conflict revision and preparation invalidation | Current lifecycle approval is not a snapshot API; 5s timeout/unknown/stale response fails closed; non-active dirty/reference conflict and edits during build prevent launch; no Monaco state in Main |
+| M1-09 | Implement CSharpRunStrategy and classify step failures | planned run/csharp-run-strategy.ts; run service and main/index.ts; focused strategy tests | M1-05–M1-08/M1-09a | Fixed SDK build then dotnet run plan, phase/error mapping and launch guard | No auto-save; guarded saved-source execution; build nonzero prevents execute; exact fixed args; JS plan unchanged |
+| M1-10 | Wire target resolution/selection and Run DTOs through IPC/Preload | main/ipc/run-ipc-service.ts, preload/bridge/run.ts, shared contract exports; IPC/Preload tests | M1-09 | Narrow resolve/select/start/stop/events; owner-scoped discovery cancellation | Exact validation at both boundaries; relative paths only; no runtime CLI options; stale selection/generation/owner denied; early session response supports Stop |
+| M1-11 | Minimal C# target/Run/Stop/Output presentation | output/run-controller.ts, EditorRunAction.tsx, OutputPanel.tsx, use-project-run.ts; App composition if needed | M1-10 | Compact target choice/label; project save guard; phase/failure output; JS current-file behavior | Single Run entry; Stop available while preparing/building; target != active .cs; stale events ignored; existing output/tab/theme behavior preserved |
+| M1-12 | Core acceptance and milestone review | tests/main/csharp-run*.test.ts; tests/renderer/run-output.integration.test.tsx; planned scripts/smoke-csharp-run.mjs; docs | M1-11 | M1 evidence report and status update only after exit passes | Core test matrix/native smoke, full suite/typecheck/lint/build/diff checks; Windows Core evidence; overall feature remains IN_PROGRESS pending M2 |
+
+M1 exit: every M1 task acceptance passes, actual Console project builds/runs/stops,
+invalid/dirty/conflict/dependency paths are truthful, original JS acceptance passes
+again, no owned descendant survives, and cleanup failure remains fail-closed.
+M1 does not claim Console.ReadLine support; only programs not requiring stdin are
+accepted until M2. Overall feature cannot be COMPLETE at the Core exit.
+
+### Milestone 2 — Console Input & Completion
+
+| ID | Công việc | File/module dự kiến | Phụ thuộc | Kết quả đầu ra | Tiêu chí hoàn thành |
+|---|---|---|---|---|---|
+| M2-01 | Define input/EOF/ack/capability contracts | shared/contracts/run.ts; contract tests | M1 exit; explicit M2 authorization | sendInput(projectId,sessionId,sequence,text), closeInput and typed responses/status | Exact fields; NUL/surrogates/size/sequence checks; no command/process fields; JS/build capability false |
+| M2-02 | Add Run-specific asynchronous native stdin | run/native/run-process.cpp, windows-piped-process-adapter.ts, piped-process-adapter.ts; native fixtures/smoke | M2-01; M1-04 stdin evidence | UTF-8 pipe writes, optional stdin capability, ordered EOF, cancellable writes | Repeated/partial writes and broken pipe; one in-flight writer; Stop unblocks full pipe; write callbacks/handles released; LSP/Git entry behavior unchanged |
+| M2-03 | Session-owned input queue and cancellation | run/run-service.ts; planned run/run-input-queue.ts; focused queue/lifecycle tests | M2-02 | Per-session order, 16 KiB request/64 KiB+32 queue/10s deadline, backpressure and input gate | Wrong owner/project/session/step denied; empty/multiline ordering; queue full rejects without byte loss; no replay; gate closes before Stop/exit/re-run/switch/shutdown |
+| M2-04 | Wire semantic input IPC and Preload | main/ipc/run-ipc-service.ts, preload/bridge/run.ts; IPC/Preload tests | M2-03 | Trusted-frame session-scoped input, safe acknowledgements/status | Validate at IPC and domain; JS input rejected; transport errors normalized; late replies never attach to replacement/other project |
+| M2-05 | Add Output line composer and controller behavior | output/OutputPanel.tsx, run-controller.ts; styles.css only as needed; renderer tests | M2-04 | Send/Enter, Shift+Enter/multiline, EOF, disabled/busy state; unsent-text preservation | One/multiple ReadLine; IME-safe Enter; no terminal redesign; no automatic resend/history/logging; queued input never transferred on re-run |
+| M2-06 | Full integration and Windows regression acceptance | main/IPC/preload/renderer tests; scripts/smoke-csharp-run.mjs; JS/Terminal/C# language smokes | M2-05 | Repeatable actual Electron end-to-end and manual Windows evidence | Complete test matrix below; root killed with surviving descendant; blocked write/ReadLine Stop; switch/close/re-run cycles; no orphan/handle leak |
+| M2-07 | Final review, documentation and status | relevant docs only after verified execution | M2-06 | Truthful capability/status updates and completion report | M1+M2 original gates, full automated/quality gates, Windows 10/11 manual evidence; remaining Phase 7 packaging obligations explicit |
+
+M2 exit / overall completion: all M1 and M2 gates pass together, Console.ReadLine
+works repeatedly with Unicode/empty/multiline input, ownership/backpressure/stale
+results are verified, original JS/Terminal/Language Service acceptance is preserved,
+and Stop/transition/shutdown leave no owned processes/resources. Only then set
+overall C# Run COMPLETE. Missing required Windows evidence prevents COMPLETE.
+
+### Test plan
+
+U = unit/fake-adapter tests; I = integration across services/contracts or real native
+Electron; W = manual Windows 10/11 x64 Electron smoke. W is recorded per OS, SDK,
+fixture and observed outcome; a mocked or single-OS test is not both-platform proof.
+
+| Scenario | Unit tests (U) | Integration tests (I) | Windows manual smoke (W) |
+|---|---|---|---|
+| JS Run regression | Node strategy/runtime selection, canonical target identity, dirty guard | Existing foundation/lifecycle/project/UI/IPC/Preload suites and native smoke | Saved .js output/Stop/re-run/switch unchanged; no stdin UI |
+| Valid Console project | Evaluated SDK Exe/single TFM classifier, fixed Debug args/cwd | Real net8.0 and net10.0 Console build/run; no-launch-profile policy | Run saved Console, observe project label and result |
+| One/multiple/nested projects | Auto-choice, saved choice, explicit choice, case dedup | Discovery + store + typed chooser; change/delete remembered target | Root/nested apps and libraries; selection retained after restart |
+| No suitable project / unsupported project | Library/Web/GUI/test/multi-TFM/malformed and limits | Resolution states; no child launch; unassessable candidate surfaced | Empty folder/only library/no SDK with candidates; actionable reason |
+| Missing/invalid SDK/global.json/TFM | PATH, inventory, effective selection JSON and invalid probe | Candidate-cwd CLI, missing required SDK, missing runtime/targeting pack fixtures | Installation/PATH/global.json guidance; never infer LSP health |
+| Build/restore failure | Build nonzero suppresses execute; cancellation != failure | Syntax error, unreachable/test NuGet feed, safe structured cause/streams | Separate Build/restore failed result; no runnable child afterward |
+| stdout/stderr/exit | UTF-8 split chunks, phase tagging, 0/nonzero/null, late step event | Prompt without newline, mixed streams, host failure, user nonzero exit | Unicode and both streams visible; actual exit code; no claimed total cross-stream ordering |
+| Unsaved/external conflict | Any active-folder retained buffer blocks; unknown revision blocks | Non-active file dirty, referenced file conflict, edits/external change during build | Save manually then run; no auto-save/discard; conflict retains editor text |
+| ReadLine once/repeated/multiline/empty | Newline normalization, FIFO, byte budget, EOF barrier | Actual dotnet run receives each line, Unicode, empty line and EOF/null | Type/send/paste multiple lines; Enter/Shift+Enter/IME and EOF |
+| Input after exit / wrong session/owner | Capability, sequence/duplicate, project generation guards | Direct IPC adversarial input; superseded session/reply rejection | Composer disables after exit/Stop; no text reaches new run |
+| Queue/backpressure / blocked stdin | 16 KiB/64 KiB/32/deadline boundaries; preserve bytes on busy | Child never reads, broken pipe, ack loss/late reply, bounded termination | Saturate input; busy/error feedback; Stop remains responsive |
+| Stop build/restore/preflight/step gap | Cancel token and step launch guard; retained cleanup failure | Actual long-running build/restore fixture and owned preparation process | Stop before and during build; no subsequent execute or build worker |
+| Stop execution/ReadLine/Re-run | Input gate closes first; serial cleanup/new session and fresh sequence | Waiting ReadLine, rapid repeated starts, cleanup failure/retry | Stop prompt; repeated runs have no overlap or carried input |
+| Project switch/unavailable root | Leases/generations cancel pending discovery/start/input | RunProjectLifecycle plus unsaved confirmation and stale results | Switch while building/reading; failed cleanup retains old project |
+| Owner loss/shutdown/no orphan | STOPPING retains failed resources and retries | Navigate/destroy renderer; natural/hard root exit with child holding pipe; repeated handle/write drain | Close app during build/input; inspect dotnet/app/MSBuild children and native handles after repeated cycles |
+| Terminal/Git/C# intelligence regression | Separate factories/registries/capabilities | Existing Git native, Terminal lifecycle and C# language native/workspace acceptance smokes | PTY input/resize and language completion/diagnostics remain functional while Run starts/stops |
+
+Implementation quality gates: focused tests as each independently testable task
+lands; at each milestone exit run `npm test`, `npm run typecheck`, `npm run lint`,
+`npm run build` and `git diff --check`, plus applicable real native/manual checks.
+Run builds and process tests sequentially where concurrent native file locks or
+resource contention would invalidate evidence. No automated, platform or packaged
+acceptance is claimed by this docs-only task.
+
+### Risks, evidence gates and first implementation task
+
+- Shared native changes can break Run/Git/LSP handle inheritance/finalization:
+  preserve entry points and run their regression smokes before composition.
+- Build/compiler servers may escape ownership: fixed no-server/no-reuse policy
+  requires actual SDK evidence; never terminate unrelated global servers.
+- SDK evaluation can execute trusted project logic and SDK restore can use network:
+  preserve existing trust policy, containment checks and cancellation budgets;
+  neither IPC validation nor Job objects sandbox student code/MSBuild.
+- CLI build versus restore is intentionally one combined failure category; exact
+  host versus student runtime cause needs structured evidence. Do not add parser
+  guesses to make statuses seem more precise.
+- Dirty state is Renderer-owned; current unsaved coordination exposes approval
+  only, so M1-09a adds a scoped Run guard handshake/revision. Build cannot provide
+  a fully atomic snapshot under
+  arbitrary external concurrent writes. Verify races and reject known changes.
+- Console line input is not terminal emulation; dotnet forwarding, UTF-8 and blocked
+  writes must be proven in M1-04 and M2 native acceptance. No automatic prompt/read
+  detection. Input acknowledgements report delivery, not consumption.
+- Initial stable SDK >=8, single-framework and input/discovery limits are bounded
+  design defaults; compatibility gate may require explicit ADR revision. No SDK
+  installation or new dependency is authorized. Phase 7 packaging is still required.
+- Evidence availability on both Windows versions is an acceptance dependency, not
+  a reason to mark completion early. No production blocker is claimed before work
+  begins; native compatibility remains unexecuted.
+
+Recommended first implementation task: explicitly authorize **M1-01** only,
+semantic target/phase/resolution contracts and validators with focused tests.
+Then complete identity/runtime and native foundations before implementing the C#
+strategy. This plan itself does not authorize M1-01 or a feature branch/commit.
+
 ## 14. Decision Gate Register
 
 | Decision | Related ADR | Required before | Current status | What must be verified |
 |---|---|---|---|---|
+| C# Project Run SDK/native compatibility | ADR-024 | Before M1-05 and real C# strategy composition | NOT_STARTED — design accepted, M1-04 evidence unexecuted | SDK flags, argument quoting, dotnet stdin inheritance, blocked writes, Stop during build, retained owned-tree cleanup and JS/Git/LSP regressions |
 | Renderer state management | ADR-011 | Shared Phase 2 shell/project/editor state expands | Proposed; unresolved | Actual cross-feature update needs, lifecycle ownership, complexity, bundle/dependency cost |
 | IPC runtime validation mechanism | ADR-016, ADR-003 | Production IPC handlers multiply in early Phase 2 | RESOLVED Phase 2A — explicit validators | Current contracts are small; validators provide normalized issues and audited narrowing without schema runtime cost |
 | React Monaco integration | ADR-006, ADR-019 | Phase 2C Editor implementation | RESOLVED Phase 2C — thin `@monaco-editor/react` mount over local `monaco-editor` | Model/view ownership remains with EditorModelManager; local workers, development/build behavior, and disposal must pass the Phase 2C gate |

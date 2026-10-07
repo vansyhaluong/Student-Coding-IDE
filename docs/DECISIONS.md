@@ -491,3 +491,57 @@ produce actionable errors and retain entries for explicit removal.
 Defaults: Dark, font 13 px, tab size 2, Auto Save OFF. Font integers 8–40; tabs
 2/4; theme Light/Dark/System. Dependencies are guidance only, with no custom
 executable paths. Existing runtime/Git/C# authority remains unchanged.
+
+## ADR-024 — C# Project Run and line-oriented Console input
+
+- **Status:** Accepted design baseline, 2026-10-07; production `NOT_STARTED`.
+  User explicitly authorized Console `.csproj` Run and Console.ReadLine design
+  in two milestones. This ADR records that scope change, not implementation
+  authorization or verified native compatibility.
+- **Evidence:** RunService hardcodes JavaScriptRunStrategy, uses context-free
+  resolveRuntime and derives identity from execution.args[0]. The Windows Run
+  adapter accepts one argument and no stdin; the process wrapper does not forward
+  stdin. Native C# language pipes demonstrate asynchronous writes, but their
+  sessions/lifecycle cannot be used for Run. Output/EditorRunAction currently
+  resolve a saved JS file and disable Stop while start IPC is pending.
+- **Options:** A single dotnet run with implicit build/restore is simplest but
+  supplies no reliable structured build-versus-runtime boundary; parsing localized
+  logs is insufficient. SDK build then dotnet run --no-build/--no-restore supplies
+  an explicit boundary and avoids duplicate build work, at the cost of two owned
+  steps and cancellation between them. Terminal/PTY offers terminal interaction
+  but is explicitly excluded. Standalone file-based apps are outside project scope.
+- **Selected option:** Run-domain fixed CSharpRunStrategy plus independent target
+  resolver/store; immutable canonical target identity separate from argv;
+  strategy-aware runtime resolution; SDK build then dotnet run --project with
+  fixed no-build/no-restore/no-launch-profile flags. SDK owns incremental output.
+  Preserve JavaScript strategy and one-active-session-per-target policy.
+- **Input:** Milestone 2 extends Run's pipes with typed session-owned line input,
+  bounded asynchronous writes, sequence validation, backpressure and EOF. Run is
+  still separate from interactive Terminal PTYs. ADR-008 ownership separation,
+  ADR-020 retained Job ownership and ADR-021 fail-closed cleanup remain Accepted.
+- **Scope clarification:** This supersedes general deferral of C# Project Run
+  only for the extension in FR-023; Phase 4 and 5.5 historical acceptance and
+  ADR-014 TypeScript deferral remain unchanged. It does not authorize Web projects,
+  launch profiles, multi-target selection, loose .cs, debugger or Phase 9 work.
+- **Policies:** SDK-style single-framework Console Exe only; candidate-cwd SDK
+  selection by CLI/global.json; Run-specific stable SDK >=8 policy, Windows
+  net8.0/net10.0 evidence required. Keep language SDK >=10 checks unchanged.
+  Project-wide dirty/conflict Save-first guard; no Run auto-save. Separate versioned
+  Run-target persistence. Initial discovery/input limits and exact semantic DTOs
+  are recorded in Architecture Section 10 and Plan Section 13.7.
+- **Consequences / gates:** Two steps require session-versus-step lifecycle and
+  Stop during preparation/build. Shared compiler-server ownership, inherited stdin,
+  blocked writes, Windows argument quoting and source-change races must pass the
+  specified evidence gate before dependent production work. Build/restore failure
+  is a combined category; execution failure includes host/launch/program failure
+  unless structured evidence supports a finer cause. No new dependency selected.
+- **Traceability:** FR-023 extension / FR-024 Output, Architecture Section 10,
+  Implementation Plan Section 13.7 (M1 Core, M2 Input & Completion). Overall C#
+  Run remains NOT_STARTED and cannot become COMPLETE after M1 alone.
+- **Sources:** Microsoft [dotnet run](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-run)
+  (implicit restore, multi-framework requirement, launch-profile suppression),
+  [dotnet msbuild](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-msbuild)
+  and [global.json](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json).
+  [evaluation-only JSON](https://learn.microsoft.com/en-us/visualstudio/msbuild/evaluate-items-and-properties)
+  is supported by MSBuild 17.8+ (SDK 8 baseline). SDK inventory/evaluation is
+  evidence, not proof of runtime readiness or sandboxing.

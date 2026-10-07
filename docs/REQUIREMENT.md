@@ -726,6 +726,42 @@ criteria của V1. Python Run được defer khỏi V1 hiện tại.
 
 ### FR-023 — Run Project
 
+#### Approved C# Project Run extension — planning baseline (2026-10-07)
+
+Status: `NOT_STARTED`. This task authorizes design/documentation only, not
+production implementation. The Phase 4 scope below remains historical acceptance;
+the C# exception is governed by ADR-024 and Implementation Plan Section 13.7.
+Phase 5.5 intelligence and Phase 9 Exercise Runtime do not implement this feature.
+
+- Milestone 1: SDK-style C# Console Application, single target framework, selected
+  `.csproj` under the active project root. Never execute the active `.cs` file as
+  an independent program. Automatically select exactly one eligible Console
+  project; otherwise require explicit choice. Remember the choice per project,
+  revalidate it on use, and keep it separate from IntelliSense workspace selection.
+- Main determines executable, arguments, cwd and SDK policy. Check PATH SDK
+  inventory, effective `global.json` selection and evaluated target framework.
+  Use SDK build/implicit restore followed by `dotnet run --project <csproj>` with
+  fixed no-build/no-restore and no-launch-profile options; no IDE build cache.
+- Run only saved sources. Block on dirty buffers or unresolved external conflicts
+  in the active folder project, including open referenced files; do not save,
+  discard or overwrite automatically. Recheck before starting execution.
+- Support Run, Stop, serialized Re-run, stdout, stderr and exit code. Preserve
+  project/owner validation, owned process-tree cleanup and fail-closed transitions.
+  Build/restore may write SDK `bin`/`obj` output and use configured NuGet feeds.
+  This is execution of a user-trusted project, not an OS sandbox.
+- Milestone 2: line-oriented Console input in the existing Output surface, sent
+  through validated typed IPC to stdin of the exact owned live Run session.
+  Support repeated and multiline input, bounded queues/backpressure, and reject
+  stale input after Stop, exit, Re-run or project/owner invalidation. Do not
+  substitute Terminal/PTY. `Console.ReadKey`, cursor control and full terminal
+  emulation are outside this line-input contract.
+- Preserve current JavaScript Run behavior. No standalone `.cs`, ASP.NET/Web API,
+  debugger, launch profiles, advanced multi-target selection, Exercise Runtime/
+  Judge, SDK installation or generic Renderer execute/shell API in this MVP.
+
+C# Run is `COMPLETE` only when both milestone exit gates, regression tests and
+Windows acceptance pass. A completed Core milestone alone is partial delivery.
+
 Built-in Run Project được defer, không phải acceptance requirement của Phase 4
 V1. V1 chỉ Run file `.js` hiện tại trong active project theo FR-022.
 
@@ -1540,6 +1576,39 @@ Không yêu cầu coverage percentage cao trong V1. Test phải ưu tiên:
 
 ---
 
+### Phase 9 — Learning / Programming Techniques
+
+Status: `NOT_STARTED`. Roadmap chính thức được phê duyệt; cập nhật docs không
+cấp phép implementation và không thay đổi các quyết định Phase 1–8.
+
+Learning là application workspace mode riêng bên cạnh Project Mode cho course
+ban đầu Kỹ thuật lập trình. Header có Learning cạnh Local AI. Trong Learning,
+left Projects sidebar trở thành Learning Roadmap; center trở thành Learning
+Workspace; right Explorer/Search/Git sidebar và Project bottom panels bị ẩn.
+Không tạo sidebar mới, close/switch project hay mất editor/terminal state. Hai
+mode có state riêng và tiếp tục được vị trí trước đó khi chuyển lại.
+
+Course/chapter/lesson/exercise/quiz dùng local data-driven content tách khỏi React.
+Chương 1 — Giới thiệu môn học không bắt buộc exercise/quiz. Exercise language-neutral,
+reuse Monaco foundation với document/session độc lập khỏi project và draft theo
+language. V1 dùng STDIN/STDOUT, local Run/Submit/Judge với public/hidden tests,
+partial score và local progress/persistence. Không tự ghi exercise code vào project.
+Runtime/compiler/judge thuộc Main qua typed Preload và validated IPC.
+
+Roadmap: 9A Learning Mode & Roadmap; 9B Course Content & Lessons; 9C Practice &
+Exercise Workspace; 9D Exercise Runtime & Multi-language (C#, JavaScript, Python,
+Java, triển khai tuần tự); 9E Local Judge & Submission; 9F Quiz & Learning Progress;
+9G Learning UX & Stabilization. Tất cả đều `NOT_STARTED`. Scope, dependencies và
+exit gates: Implementation Plan Section 13.6; ownership: Architecture Section 6.
+Roadmap này không mở rộng Project Run/language intelligence hiện tại.
+
+Không yêu cầu account/backend/cloud hoặc AI. Local AI giữ scope/configuration
+Phase 8, có thể mở overlay tạm trong Learning mà không hiện lại Project Tools;
+đóng AI quay về Learning Workspace. AI Tutor, exercise-aware AI, automatic code
+context, Agent/tools và function-signature exercise harness ngoài foundation.
+
+---
+
 ## 22. Các phase tương lai
 
 Các chức năng có thể xem xét sau khi core IDE hoàn thành:
@@ -1585,17 +1654,11 @@ Có thể tích hợp:
 * Grok.
 * OpenCode.
 
-### Phase Future — Learning Features
+### Learning đã được đưa vào roadmap Phase 9
 
-Có thể bổ sung:
-
-* Exercises.
-* Test cases.
-* Learning progress.
-* Project templates.
-* Course workspace.
-
-Các chức năng trên chưa phải requirement bắt buộc của phiên bản đầu.
+Learning Mode, exercises, test cases và learning progress thuộc roadmap chính
+thức Phase 9 tại Section 21; không còn là nhóm feature future chưa xác định.
+Project templates vẫn deferred, không thuộc Phase 9 foundation.
 
 ---
 
