@@ -201,6 +201,142 @@ Messages are safe for users; developer details and stack traces remain in logs. 
 
 React local state and focused feature stores are sufficient initially. Selection of a renderer store library is `TBD` until Phase 2 demonstrates cross-feature needs; Redux/Zustand is not selected solely because Orca uses Zustand.
 
+### Phase 9 direction — workspace modes and Learning ownership
+
+Status: planned (`NOT_STARTED`); this records approved architecture direction,
+not implemented behavior. The detailed 9A–9G roadmap is in Implementation Plan
+Section 13.6. Existing Phase 1–8 decisions remain unchanged.
+
+The current three-column Project Mode layout in `App.tsx` remains authoritative:
+
+| Surface | Project Mode | Learning Mode |
+|---|---|---|
+| Left `.project-sidebar` | Projects: Open/Switch, Create, Active Project, Recent Projects, Settings | Learning Roadmap: chapters and progress |
+| Center `.preview-surface` | EditorWorkbench plus Terminal / Problems / Output; tabs and Run integrated in the workspace header | Learning Workspace, using space released on the right |
+| Right `.explorer-sidebar` | Project Tools: Explorer, Search, Source Control / Git | Hidden |
+
+Learning extends the IDE as a separate application workspace mode; it is not a
+project, modal, dialog, editor tab or replacement for Project Mode. An application
+header Learning entry beside Local AI (`GraduationCap` from existing lucide-react
+as the icon direction) toggles Project ↔ Learning. No additional sidebar is
+created. Hide Project bottom panels in Learning; Exercise Test Cases / Result
+remain separate from Project Output. No fixed pixels or percentages are prescribed
+for Learning layout or its optional resizable problem/editor split.
+
+#### Mode state and lifecycle
+
+Entering Learning changes presentation, not the active project. It must not
+close/switch the project, close documents, discard unsaved code, restart terminals
+or reset project state. Preserve active project, open/active documents, unsaved
+buffers, Monaco models, Projects sidebar state, selected Explorer/Git tab and
+presentation state, terminal sessions and bottom panel state; restore them when
+returning where applicable. Hiding presentation must not invoke project/document/
+process teardown.
+
+Project and Learning state are isolated. Learning → Project → Learning resumes
+chapter, lesson/exercise/quiz, selected language, code draft, applicable Run/Submit
+results and learning position. Renderer owns interactive presentation/session
+state; Main retains privileged process and persistence ownership. Owner-loss and
+application-shutdown cleanup still apply. ADR-011's unresolved shared state choice
+is not resolved by this direction.
+
+#### Learning domain and content
+
+Use local data-driven Course, Chapter, Lesson/material, Exercise and Quiz content,
+separate from React logic. Never hard-code chapters in components. The initial
+course is Kỹ thuật lập trình; future courses must fit without a mode redesign.
+Chương 1 — Giới thiệu môn học covers introduction, objectives, skills, learning
+method and mode guidance without mandatory exercise/quiz. Later chapters may
+expose Tài liệu, Luyện tập, Trắc nghiệm and Tiến độ.
+
+Learning Workspace hosts Course Introduction, Lesson Workspace, Exercise List,
+Exercise Workspace and Quiz Workspace. Material opens lessons; Practice opens
+the exercise list then an exercise; Quiz opens the quiz workspace. Exercises group
+as Cơ bản, Trung bình and Nâng cao, with chưa làm / đang làm / hoàn thành status.
+Quizzes support theory multiple choice, code reading, predicted output and error
+identification, with navigation, answers, scoring and results.
+
+#### Exercise documents and shared Monaco foundation
+
+Project Document != Exercise Document. Reuse current Monaco/editor infrastructure
+and shared configuration/wrappers where appropriate; do not duplicate the editor
+architecture. Project EditorModelManager is not the source of truth for exercise
+code. Exercise documents have independent identities, sessions and model
+lifecycles; code is not automatically written to the student project or shown in
+its file tree. Shared foundation extraction belongs to an authorized future
+implementation package.
+
+Exercise Session owns exerciseId, selectedLanguage, solution drafts per language,
+current Run/Submit results, completion/progress and draft/dirty state where needed.
+C# → Python → C# preserves the earlier C# solution. Results remain associated
+with the appropriate session/language/code. The workspace header provides
+breadcrumb/title, language selector, Run and Submit; the Problem panel and Monaco
+editor sit above Test Cases / Run Result / Submission Result. Problem content
+includes Description, Input, Output, Examples and Constraints.
+
+The Exercise model is language-neutral: id, title, difficulty, statement, input/
+output specifications, examples, constraints, test cases and allowed languages.
+Language metadata supplies language id, Monaco language id, filename, starter
+code and runtime adapter. C#, JavaScript, Python and Java are the roadmap direction;
+adapters can be implemented sequentially. This does not expand current Project
+Run or language intelligence capabilities.
+
+#### Exercise, Judge and runtime boundary
+
+Learning V1 uses STDIN → Student Program → STDOUT. Test cases can be shared across
+languages; function-signature/harness execution is outside V1. Run uses current
+Exercise Session code and sample/custom input without a saved project file.
+Submit prepares/compiles when needed, runs public then hidden tests, compares
+output and returns a score/result.
+
+```text
+Renderer → typed Preload API → IPC → Main
+  → Exercise Service → Judge Service → Language Runtime Adapter → OS/runtime
+                                        |-- C#: dotnet
+                                        |-- JavaScript: node
+                                        |-- Python: python
+                                        `-- Java: later adapter
+```
+
+These are planned responsibilities, not implemented APIs/modules. Exercise
+Service coordinates owned exercise execution; Judge Service owns test
+orchestration, normalization/comparison and scoring; runtime adapters own
+language-specific prepare/compile/execute behavior in Main. The runtime foundation
+supports temporary exercise workspaces, stdin, stdout/stderr, timeout and cleanup.
+Project Run and Exercise Run may reuse narrow internal process primitives while
+retaining separate session lifecycles and behavior. No generic command executor
+is exposed to Renderer.
+
+Renderer remains unprivileged. Main runtime-validates typed requests, allowed
+languages/actions and exercise/session/operation ownership, controls temporary
+paths and compiler/runtime invocation, rejects stale results, bounds execution
+and output, and cleans up owned processes/resources. Preserve existing Windows
+ownership and shutdown rules. Concrete execution limits and runtime policies must
+be specified and verified in 9D/9E; temporary workspaces do not alone establish
+OS sandboxing.
+
+Judge outcomes are Accepted, Wrong Answer, Compilation Error, Runtime Error and
+Time Limit Exceeded. Partial scores may show Passed 7 / 10 and Score 7 / 10.
+Full hidden input/output must not be exposed through student-facing result
+payloads or UI. Project Output is not the Exercise Run/Judge result store.
+
+#### Learning persistence and Local AI
+
+V1 progress is local: chapter progress, lesson completion, exercise status and
+per-language drafts, submission results/scores, quiz completion/results and last
+Learning position. Keep Learning records logically separate from project state.
+Use Main-owned versioned persistence with serialized atomic writes, migrations,
+backup and corruption recovery; the exact Learning schema belongs to 9F. This
+does not place project source buffers in existing project convenience persistence.
+No account, backend or cloud is required.
+
+Learning V1 has no AI dependency. Phase 8 retains local Ollama at the fixed
+endpoint and `qwen3:1.7b`, text chat, no Agent/tools/project file access and no
+automatic exercise context. Local AI stays on the application header and can open
+as a temporary overlay in Learning. Opening it must not reveal hidden Project
+Tools; closing it returns to Learning Workspace. AI Tutor, exercise-aware AI and
+automatic code context remain separate future extensions.
+
 ## 7. Project and filesystem architecture
 
 V1 has one active local folder project. Opening a project canonicalizes and validates its root. Every file operation carries a project ID plus a project-relative path; main resolves the path and verifies the result remains under the authorized root. Absolute unrestricted paths are not accepted from renderer domain APIs.
@@ -304,6 +440,216 @@ contracts gain no PID, Job, executable, environment, signal, or kill authority.
 V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 ## 10. Run architecture
+
+The existing Phase 4 behavior described below is implemented JavaScript Run.
+ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
+the extension is `NOT_STARTED`. The non-interactive Run ownership row in Section
+4 describes the current baseline, not a prohibition on this approved extension.
+Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
+
+### Planned C# Project Run design — ADR-024
+
+#### Strategy, runtime and identity
+
+Main composes a fixed list of internal strategies: existing JavaScript and planned
+`CSharpRunStrategy`. No Renderer registration or plugin runner system. Add a
+semantic target kind (`javascript-file` / `csharp-project`) to Run contracts;
+exact validators reject unsupported kinds and extraneous process fields. Main
+authorizes active project, owner and canonical target before strategy dispatch.
+Runtime resolution takes the authorized strategy/target context: Node for JS;
+dotnet inventory plus effective project SDK for C#. Retain independent statuses;
+never use csharp-ls availability as Run readiness.
+
+Replace every `execution.args[0]` identity check in prepare, duplicate-preparation
+detection, start serialization and launch revalidation with a Main-only immutable
+authorized identity: project identity + target kind + normalized canonical target
+path. Return identity alongside preparation, not derived from executable or args.
+No canonical path crosses IPC. Revalidate target identity, project/owner generation,
+runtime and execution fingerprint immediately before native creation. Preserve
+one active session per canonical target and concurrency for different targets;
+another owner cannot replace an owned session.
+
+`PreparedRun` becomes a narrow execution plan: one JS step or two C# steps,
+explicit executable/argument array/cwd/environment policy, stdin mode, and trusted
+step purpose. This is Main-only data. A Run session owns every step, callback and
+cleanup under ProcessManager. Intermediate build exit/EOF is not the session's
+final exit; clean the step completely before the next one. Use a step generation
+to reject late build callbacks. Stop cancels the plan, including the gap between
+steps. Register ownership before each native creation and retain failed cleanup.
+
+For C#, reserve an owned STARTING session after cheap target/request authorization
+and return it before asynchronous probes/build. Publish bounded preparation,
+build-restore and execute phases separately from the existing RunState enum.
+Stop can cancel preparation and its owned finite probes without awaiting an
+unbounded start promise. Default probes: 20 seconds each, 1 MiB captured output;
+all probe handles join session/owner cleanup. JS's existing start semantics and
+event ordering remain compatible. Pending preparations must not outlive owner or
+project generations. User code/ReadLine has no exercise timeout; Stop remains
+available. Queue/write and cleanup deadlines are independently bounded.
+
+#### C# target discovery, selection and SDK
+
+`CSharpRunTargetResolver` lives in the Run domain. Bounded recursive discovery
+uses FileSystemService listing/authorization, excludes `.git`, `node_modules`,
+`bin`, `obj`, `dist`, `build`, `out`, and skips symlinks under the existing policy.
+Nested projects are independent candidates; `.sln` and IntelliSense selection do
+not determine the entry project. Deduplicate canonical Windows identities.
+Initial bounds: 100,000 directory entries and 64 evaluated projects/references;
+overflow produces an explicit discovery-limit result, never a partial auto-choice.
+
+Do not infer eligibility from raw XML, filename or the presence of Program.cs.
+From each candidate's directory, resolve effective SDK with `dotnet --version`
+and evaluate Debug properties with fixed evaluation-only MSBuild JSON requests.
+Query OutputType, TargetFramework(s), TargetFrameworkIdentifier/Version,
+UsingMicrosoftNETSdk, UsingMicrosoftNETSdkWeb, UseWPF, UseWindowsForms,
+IsTestProject and ProjectReference items. Accept SDK-style `Exe`, one modern
+`.NETCoreApp` framework, no Web/WPF/WinForms/test project. Reject `Library`,
+`WinExe`, .NET Framework, ambiguous/multiple frameworks and unsupported SDKs.
+Some computed properties can be empty during evaluation-only requests. Validate
+the single TFM and evaluated SDK flags, and treat unresolved metadata as a
+preflight failure rather than building a target just to discover eligibility.
+M1-04 must verify property availability against real supported SDK templates.
+Custom project logic still executes under the existing trusted-project policy;
+evaluation is not sandboxing or proof that arbitrary MSBuild targets are safe.
+
+PATH dotnet resolution and SDK inventory parsing may reuse dependency helpers;
+the current DotnetSdkDetector has a language-server-specific SDK >=10 restriction.
+Do not change that behavior globally or call it as Run's eligibility policy.
+Run gets its own SDK policy: accept a stable effective SDK >=8 only when it can
+evaluate/build the single framework; Windows acceptance covers net8.0 and net10.0
+with their compatible SDKs. Do not reimplement global.json rollForward rules:
+let CLI resolve from the same candidate cwd used for evaluation/build/run,
+including applicable ancestor global.json. Failed selection is invalid
+configuration; no SDK is missing dependency. Successful evaluation is preliminary;
+targeting packs, workload/restore failures and missing runtime can still fail later.
+
+Authorize evaluated ProjectReferences recursively inside the active root with
+cycle detection and canonical deduplication. Reject missing/out-of-root references.
+This confines IDE path authority, not the behavior of user code or all MSBuild
+imports/resources. Candidate result DTOs contain only relative path, display name,
+eligibility/reason and typed resolution state. No eligible project yields
+`NO_RUNNABLE_PROJECT`; all candidates blocked by SDK yield a dependency failure,
+not a misleading empty result. An unassessable candidate prevents claiming there
+is exactly one valid project. Present failures and allow explicit selection of a
+known eligible project; never silently ignore a broken candidate.
+
+`CSharpRunTargetStore` uses separate versioned Main JSON persistence keyed by
+canonical project identity, storing only relative selected `.csproj`. Revalidate
+saved paths and eligibility; removed/changed targets cause fresh selection rather
+than running a substitute silently. One valid candidate auto-selects, multiple
+require choice unless a still-valid saved choice exists. Persistence failure is
+reported; corrupt data safely falls back to selection. No LSP store mutation.
+
+#### Execution, errors and saved-source guard
+
+Fixed Main-created steps (same candidate cwd and Debug configuration):
+
+1. `dotnet build <csproj> --configuration Debug --disable-build-servers`, implicit
+   restore enabled, with verified no-node-reuse policy for owned MSBuild workers.
+2. `dotnet run --project <csproj> --configuration Debug --no-build --no-restore
+   --no-launch-profile --disable-build-servers`.
+
+This uses SDK incremental build output, never an IDE cache, and avoids guessing
+build/runtime boundaries from localized text. Shared build-server escape/ownership
+is a hard native acceptance gate; do not kill machine-wide compiler servers.
+The exact fixed flags/environment policy must pass the M1-04 compatibility gate
+on supported SDKs before production composition. No user-supplied CLI switches.
+
+Dependency/evaluation errors precede execution. Nonzero build step yields typed
+`BUILD_OR_RESTORE_FAILED` with exit code and distinct streams. Recognized structured
+NuGet/compiler diagnostics may annotate it, but build versus restore must not be
+guessed from prose. Run-step failure yields `EXECUTION_FAILED` with its exit code;
+it can represent dotnet launch/runtime-host failure or user-program failure.
+Do not claim exact user exception versus missing runtime without structured
+evidence. Spawn, observation, input and cleanup failures have separate safe domain
+reasons. Raw stacks/process metadata remain private; program stdout/stderr is
+intentional output, rendered as text and not forwarded into developer logs.
+
+Renderer computes dirty/external-conflict guards over all retained documents in
+the active folder project, not just the active C# file. Current unsaved-transition
+coordination exchanges approval only; it has no model snapshot/revision API.
+Plan a Run-owned bounded saved-source handshake in `RunSourceGuard`, patterned
+after its trusted-owner routing, without changing project-close approvals:
+Main emits a guard request with projectId/sessionId/opaque requestId; the owning
+Renderer responds with the same identities, monotonically increasing document
+revision and aggregate dirty/conflict flags. Exact validators reject unknown or
+stale replies; a 5-second timeout fails closed. Renderer invalidates the preparing
+session when model revision changes during build; it owns all Monaco data and
+sends no buffer contents. The Main record is only a launch guard, not editor state.
+Recheck revision/guard and disk authorization before each
+step; invalidate launch if edits happen while build runs. Block conservatively
+when dirty/conflict state is unknown. Already-running programs are not restarted
+or auto-saved by later edits. External changes during build require revalidation;
+SDK build is not an atomic source snapshot and cannot promise immunity to all
+concurrent external writes. Preserve editor contents and conflict semantics.
+
+#### Native pipes and session-scoped input
+
+Extend WindowsPipedProcessAdapter with bounded argument arrays and explicit
+Main-only stdin mode (`closed` for JS/build; `line-input` for C# execution).
+Implement correct per-argument Windows quoting, NUL checks, explicit executable,
+shell:false, controlled inherited environment and handles. Keep existing native
+JS/Git/LSP entry points compatible; a dedicated Run entry/writer may reuse the
+internal pipe/Job primitives but never LSP sessions or language-process factories.
+Argument limits must respect CreateProcess command-line limits and fail safely.
+
+Native writes run asynchronously off the JS thread, ordered with one write in
+flight per session. PipedRunProcess gains optional Main-only stdin writing/closure;
+RunService's wrapper must forward this capability (it currently forwards only
+close/ownership). Creation-time Windows Job assignment remains atomic. Pending
+writes and callback references participate in resource finalization; Stop must
+cancel/unblock a blocked pipe without waiting forever for a read.
+
+Proposed typed `sendInput` request: projectId, sessionId, monotonic sequence and
+text (line data). Main appends LF and writes UTF-8. Empty text is one empty line;
+CRLF/lone CR are normalized to LF, multiline paste retains order, final LF is
+added only if absent. Reject NUL/invalid surrogate data. `closeInput` sends EOF
+as an idempotent ordered barrier; later input is rejected. EOF is not Stop.
+
+Exact validation occurs in Main IPC, domain entry and Preload response/event
+boundaries. Main verifies trusted frame, owner, active project/generation, exact
+live session, C# execute step, input-open state and expected sequence. JS/build
+sessions never accept input. No PID, handle, path, executable, command or arbitrary
+channel in the input request. Completion means pipe delivery, not program read.
+Expose typed input capability/status and acknowledgements, not pipe handles.
+`RUNNING` means the owned Run command is alive; do not infer that the application
+is currently blocked in ReadLine from a prompt or output text.
+
+Initial Main bounds: 16 KiB UTF-8 per submission after newline normalization,
+64 KiB and 32 submissions queued per session including the in-flight write;
+10-second write deadline. Oversized submissions are rejected before enqueue;
+busy queue returns retryable INPUT_BUSY without dropping existing bytes. Invalid
+or duplicate sequences never replay data; ack loss never triggers automatic resend.
+UI permits one outstanding submission and retains unsent text on failure; async
+ack frees capacity only after delivered/failed. Write timeout closes further input
+and initiates bounded session Stop, retaining cleanup ownership on failure.
+Budgets are testable planning defaults; changes need documented evidence.
+
+Stop/exit/owner loss/project lease/shutdown synchronously close the input gate,
+reject queued writes and suppress stale acknowledgements before cleanup. Re-run
+creates a new session/sequence; old text and writes are never forwarded. Root exit,
+both output EOFs, empty Job, settled/cancelled writes and native handle release
+are all required for completion. Stop during build, execution, ReadLine or blocked
+stdin uses the same bounded tree termination. Cleanup failure blocks re-run,
+project switch and successful application shutdown under ADR-021.
+
+#### Minimal presentation changes
+
+Keep one EditorRunAction in the current header. JS remains current-file Run;
+C# context selects the remembered project target, with a compact chooser only
+when needed and an explicit target label. No duplicate Run button/new sidebar.
+RunController keys views by target kind/relative path plus project generation,
+tracks authoritative session/step/input state and stale replies, and derives
+project-wide save/conflict guards. Stop remains available during build/start
+after a session exists; do not keep the current pending-start UI disable rule.
+OutputPanel retains existing Bottom Panel hierarchy, tokens, stream display and
+resizing. Add line composer, Send and EOF controls for the selected live C# session;
+Enter sends, Shift+Enter inserts a line, and composition input is not sent mid-IME.
+Hide/disable input for JS/build/closed sessions, retain unsent text on busy/error,
+clear session input state on re-run/project invalidation, and avoid stdin history
+or developer logging. No PTY, ANSI terminal emulation or ReadKey promise.
+Use Orca baseline 4bb337741c335cfcc428d3b4271023566e2dadb8 for implementation UI
+review; no material visual redesign is authorized by this planning task.
 
 RunService is separate from TerminalService. A run session represents a command selected by a trusted language/project strategy, not arbitrary renderer text. It has `STARTING`, `RUNNING`, `STOPPING`, `EXITED`, `FAILED`, or `CANCELLED` state and emits separate stdout, stderr, and terminal exit metadata.
 
@@ -870,5 +1216,9 @@ Formatter integrates through an editor command/provider boundary; debugger throu
   hard compatibility gate before 5.5C–5.5H; packaged/installed acceptance stays
   in Phase 7.
 - Phase 6 completes settings, dependency configuration UX, and the user-facing Recent Projects UX and management experience.
+
+- Phase 9 adds the planned Learning workspace mode and 9A–9G content, exercise,
+  runtime/judge, quiz/progress and stabilization packages described in Section 6.
+  It does not change completed Project Mode or Phase 8 decisions.
 
 Any required deviation must be recorded in `DECISIONS.md` before implementation changes the architecture.

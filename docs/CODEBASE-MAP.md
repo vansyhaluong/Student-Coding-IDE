@@ -240,3 +240,28 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
   with a test-only model observation point. Isolated fixtures, JSON evidence and
   screenshots live under ignored `out/phase6-smoke/`. No observation capability
   is included in the production renderer build.
+
+## Planned C# Project Run modules — ADR-024 / Plan Section 13.7
+
+Status: `NOT_STARTED`; this table is a planning map, not an actual-source claim.
+Existing Run/Output files are extended only in explicitly authorized future tasks.
+No module below was created by the 2026-10-07 planning update.
+
+| Domain / responsibility | Proposed path | Ownership / status |
+|---|---|---|
+| C# fixed build/run strategy | `src/main/services/run/csharp-run-strategy.ts` | Main Run domain; planned |
+| Console target discovery/evaluation | `src/main/services/run/csharp-run-target-resolver.ts`, `csharp-run-preflight.ts` in that directory | Main; planned; not CsharpWorkspace or LSP session |
+| Remembered Run target | `src/main/services/run/csharp-run-target-store.ts` | Main versioned JSON store; planned; separate from IntelliSense store |
+| Run SDK eligibility | `src/main/services/dependencies/dotnet-run-runtime.ts` | Main; planned; shared inventory helpers, independent Run policy |
+| Saved-source preparation guard | `src/main/services/run/run-source-guard.ts` | Main Run-owned bounded Renderer handshake; planned; no Monaco ownership |
+| Bounded stdin queue | `src/main/services/run/run-input-queue.ts` | Main Run session; planned M2 |
+| Existing identity/plan/process seams | `src/main/services/run/run-service.ts`, `run-strategy.ts`, `piped-process-adapter.ts`, `windows-piped-process-adapter.ts`, `native/run-process.cpp` | Existing actual modules; planned extension with JS/Git/LSP regressions |
+| Semantic Run wire boundary | `src/shared/contracts/run.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Existing actual modules; planned target/phase/guard/input DTOs and validators |
+| Target selection and line composer | `src/renderer/src/features/output/run-controller.ts`, `EditorRunAction.tsx`, `OutputPanel.tsx`, `use-project-run.ts` | Existing actual Output feature; planned minimal extension |
+| Compatibility evidence | `spikes/csharp-project-run/REPORT.md` and isolated harness | Planned M1-04 evidence only; no new dependency without separate authorization |
+| C# Run acceptance | `tests/main/csharp-run-*.test.ts`, `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-csharp-run.mjs` | New focused tests/smoke planned; existing integration suite extended |
+
+TerminalService, LanguageServiceManager and Exercise Runtime retain independent
+semantics. No generic renderer process service, new panel system or public native
+handle is introduced by this map. Actual paths/statuses update only after verified
+implementation; packaged/installed acceptance remains Phase 7.

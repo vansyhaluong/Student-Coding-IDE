@@ -6,6 +6,38 @@ extension. Phase 5.5A established the design baseline; production capabilities
 are recorded only after their implementing work packages pass.
 `Runtime` and `Language Service` remain independent lifecycles.
 
+## Planned C# Project Run extension (2026-10-07)
+
+Status: `NOT_STARTED`; design accepted in ADR-024, implementation not authorized
+by the planning task. The implemented capability matrix below still reports
+current production behavior (C# Run deferred/unimplemented). The planned extension
+is separate from Phase 5.5 intelligence and Phase 9 Exercise Runtime.
+
+Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
+Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore
+and dotnet run, stdout/stderr/exit, Stop and Re-run. Milestone 2 adds Console.ReadLine
+through bounded session-owned UTF-8 stdin in Output, validated typed IPC, repeated/
+multiline input and complete lifecycle/Windows regression acceptance. Both gates
+must pass before overall C# Run can be COMPLETE. No terminal/PTY substitution.
+
+Run readiness never depends on csharp-ls. Existing intelligence's SDK >=10 policy
+remains; the planned Run policy accepts compatible stable effective SDK >=8 with
+net8.0/net10.0 Windows evidence required. No loose `.cs`, Web/API, debugger,
+launch profiles, advanced multi-target selection, SDK auto-install or Exercise
+Judge in this extension. See Architecture Section 10 and Plan Section 13.7.
+
+## Planned Phase 9 Exercise Runtime scope
+
+Phase 9D schedules independent Exercise Runtime adapters: 9D.1 C#, 9D.2
+JavaScript, 9D.3 Python and 9D.4 Java. All are `NOT_STARTED`; implementation
+requires explicit package authorization and runtime acceptance. Learning V1 uses
+language-neutral STDIN/STDOUT exercises and separate per-language session drafts.
+This is distinct from the Project Mode capability matrix below: C#/Python/Java
+Project Run and deferred language intelligence remain unchanged. An Exercise
+Runtime adapter does not grant language-service capabilities or modify Phase 3,
+Phase 4 or Phase 5.5 acceptance. See Implementation Plan Section 13.6 and
+Architecture Section 6 for the approved Learning boundaries.
+
 ## V1 capability matrix and implementation status
 
 | Language | Tier | Syntax | Completion | Hover | Signature Help | Definition | Diagnostics | Problems | Run | Runtime | Language Service | Decision status |
