@@ -168,7 +168,7 @@ before affected work continues.
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
 | Phase 9 — Learning / Programming Techniques | `NOT_STARTED` | Planned 9A–9G; Section 13.6; explicit implementation authorization required |
-| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01/M1-02/M1-03 COMPLETE; remaining tasks NOT_STARTED; Section 13.7; both milestones required for completion |
+| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01 through M1-04 COMPLETE; Windows 11 x64 scope; M1-05 READY but NOT_STARTED; remaining tasks NOT_STARTED; Section 13.7 |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
 `COMPLETE`. A status may become `COMPLETE` only after its exit gate passes.
@@ -3557,6 +3557,11 @@ and remains `NOT_STARTED`; Windows installer/packaged acceptance is not claimed.
 Complete final V1 integration, security, Windows 10/11 acceptance, native
 dependency packaging, application packaging, installer, and documentation review.
 
+C# Project Run is the scoped exception: its manual/native/e2e and packaged
+acceptance platform is Windows 11 x64 (ADR-024 amendment). Windows 10 is outside
+its verified baseline; compatibility is not claimed. Other IDE Windows 10/11
+packaging and installed-workflow obligations remain unchanged.
+
 ### Dependencies
 
 - All Phase 2–6 exit gates, including Phase 5.5, and recorded decisions.
@@ -3920,14 +3925,24 @@ and function-signature exercise harnesses are outside this foundation.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 
-Status: `IN_PROGRESS`. M1-01, M1-02 and M1-03 are explicitly authorized and `COMPLETE`;
-all other tasks and Milestone 2 remain `NOT_STARTED`. The 2026-10-07 planning
+Status: `IN_PROGRESS`. M1-01 through M1-04 are explicitly authorized and `COMPLETE`;
+M1-04's isolated spike passes 32/32 cases on Windows 11 x64 under the revised
+ADR-024 acceptance scope. M1-05 is READY from this gate but NOT_STARTED. All later tasks and
+Milestone 2 remain `NOT_STARTED`. The 2026-10-07 planning
 authorization was documentation-only; subsequent authorization is limited to
 M1-01 contracts/validation, M1-02 identity/runtime foundations and M1-03 native
-argument arrays with closed stdin. This package is a bounded Project Run extension,
+argument arrays with closed stdin, followed by M1-04 isolated native/SDK evidence.
+No later production implementation is authorized. This package is a bounded Project Run extension,
 not Phase 5.5 reopening, Phase 9D implementation or authorization for later tasks.
 Traceability: FR-023 C# extension / FR-024, Architecture Section 10, ADR-024,
 Codebase Map planned C# Run modules, Language Support planned Project Run scope.
+
+Acceptance platform for this extension: **Windows 11 x64**, including M1/M2
+manual/native/e2e evidence and its Phase 7 packaging checks. Windows 10 is outside
+the verified C# Project Run acceptance baseline. Compatibility is not claimed.
+The 2026-10-07 scope revision removes the previous Windows 10 evidence requirement;
+it does not waive a failed test or weaken cleanup, stdin or regression gates.
+Other IDE Windows 10/11 acceptance obligations remain unchanged.
 
 ### M1-01/M1-02 task start checklist and baseline findings
 
@@ -3992,15 +4007,16 @@ only if evidence requires a design change.
 
 ### Milestone 1 — C# Project Run Core
 
-Status: `IN_PROGRESS`. M1-01/M1-02/M1-03 COMPLETE; M1-04–M1-12 (including M1-09a)
-NOT_STARTED. No later implementation authorization is inferred.
+Status: `IN_PROGRESS`. M1-01 through M1-04 COMPLETE; M1-05–M1-12 (including M1-09a)
+NOT_STARTED. M1-05 prerequisites from M1-04 are satisfied (READY).
+No later implementation authorization is inferred.
 
 | ID | Công việc | File/module dự kiến | Phụ thuộc | Kết quả đầu ra | Tiêu chí hoàn thành |
 |---|---|---|---|---|---|
 | M1-01 | COMPLETE — Define target kind, resolution, phase/failure DTOs and exact validation | shared/contracts/run.ts; tests/contracts/run-validation.test.ts | Explicit implementation authorization; ADR-024 | Additive semantic file/project targets, execution phases and resolution/failure DTOs; live JS API unchanged | 74 contract tests and 178 focused/regression tests PASS; typecheck/lint/build/diff checks PASS; no process authority |
 | M1-02 | COMPLETE — Replace argv-derived identity; inject fixed strategies and contextual runtime resolution | run/run-service.ts, run-strategy.ts, javascript-run-strategy.ts; main/index.ts; run-identity/foundation/lifecycle tests | M1-01 | Immutable authorized identity and fingerprint; JS-only composition verified | All RunService args[0] identity sites removed; 202 focused tests, 1185 full-suite tests, quality gates and three native JS smokes PASS |
 | M1-03 | COMPLETE — Generalize Windows argv with closed stdin mode | run/windows-piped-process-adapter.ts, piped-process-adapter.ts, native/run-process.cpp; smoke-run-native.mjs | M1-02 | Bounded argument-array launch, proper quoting/handles/environment | Native round-trip/bounds/closed stdin and Job cleanup PASS; JS/Terminal/Git/LSP regression PASS; 1195 tests and quality gates PASS |
-| M1-04 | Isolated Windows/SDK compatibility evidence | planned spikes/csharp-project-run/REPORT.md and evidence harness; no app composition | M1-03; separately authorized spike | net8.0/net10.0 build/run evidence, future stdin/blocked-write prototype, flags and owned-tree report | Stop during restore/build; root/descendant cleanup; dotnet stdin inheritance; no shared build-worker escape; no JS/Git/LSP regression. HARD GATE PASS before dependent strategy composition |
+| M1-04 | COMPLETE — Windows 11 x64 compatibility gate PASS | spikes/csharp-project-run/REPORT.md and unchanged evidence/results.json, evidence/verification.json; no app composition | M1-03; explicitly authorized spike and scope revision | Real SDK 8.0.410/net8.0 and 10.0.112/net10.0; 32/32 PASS; stdin/EOF/blocked-write prototype | Flags/restore/build Stop, retained descendants, worker no-reuse, resource cleanup and regressions PASS; Windows 11 x64 evidence satisfies revised hard gate |
 | M1-05 | Add Run SDK resolver and structured evaluation | planned dependencies/dotnet-run-runtime.ts; run/csharp-run-preflight.ts; tests/main/csharp-run-preflight.test.ts | M1-04 | PATH inventory, candidate-cwd CLI SDK selection and evaluated JSON; independent from LSP | Missing/invalid SDK, incompatible global.json, TFM and probe timeout/cancellation fixtures; language SDK >=10 unchanged |
 | M1-06 | Discover and classify runnable Console targets | planned run/csharp-run-target-resolver.ts; tests/main/csharp-run-targets.test.ts | M1-05 | Bounded nested candidates and recursive ProjectReference checks | One/multiple/none; exclusion/symlink/case duplicates; ambiguous framework/Web/GUI/test/library reject; broken candidate and bound overflow surfaced |
 | M1-07 | Persist independent per-project selection | planned run/csharp-run-target-store.ts; existing persistence internals; target-store tests | M1-06 | Versioned relative-path selection, revalidation/recovery | Restart persistence; rename/delete/stale choice; atomic write failure/corrupt recovery; LSP selection untouched |
@@ -4121,6 +4137,43 @@ NOT_STARTED. No later implementation authorization is inferred.
   C# Run remain IN_PROGRESS, M1-04 remains NOT_STARTED and needs authorization.
   No dependency, ADR decision change, architecture deviation, commit/push/merge.
 
+#### M1-04 isolated compatibility evidence — 2026-10-07
+
+- Scope/checklist and full evidence: `spikes/csharp-project-run/REPORT.md`.
+  Started on `feature/csharp-project-run` with clean status/diff; preserved M1-03.
+  Added isolated harness, native probe, Console/build-hold fixtures and evidence;
+  no production source, SDK resolver, C# strategy, Run IPC/UI or dependency change.
+- Available host: Windows 11 x64, build 10.0.26200; PATH dotnet is
+  `C:\Program Files\dotnet\dotnet.exe`. Inventory includes 8.0.410, 9.0.314,
+  10.0.112. Local global.json pins prove 8.0.410/net8.0 and 10.0.112/net10.0;
+  no SDK installation. Raw inventory and source hashes are in evidence/results.json.
+- PASS on that host: 32/32 cases covering evaluation-only properties/references,
+  build/restore, fixed no-build/no-restore/no-launch-profile/no-server flags,
+  `-nodeReuse:false` worker policy, spaces/#/Unicode paths, stdout/stderr/nonzero,
+  real localhost NuGet request cancellation and held CoreCompile build cancellation.
+- CLI and direct-host root/child cases, owner cancellation and failed build/run
+  cleanup PASS. Prototype stdin receives Unicode/empty/multiple lines and EOF;
+  blocked 8 MiB write settles on Stop before release. This is isolated feasibility,
+  not production M2 input, queue, session capability or UI implementation.
+- Retained native ownership verified with Job/PID snapshots and actual no-reuse
+  MSBuild worker command lines. Final resources 0, new surviving .NET processes 0,
+  every released session has 0 open handles/pending writes. Eight repeated cycle
+  handle counts are flat: SDK 8 at 700, SDK 10 at 696. Unrelated control survives.
+  No global build-server shutdown or process-name termination.
+- Application checks/regression commands and their executed results are recorded
+  in `spikes/csharp-project-run/evidence/verification.json`. Initial harness setup
+  failures and corrected observation assumptions are disclosed in REPORT.md.
+- Gate disposition after authorized scope reconciliation: PASS / COMPLETE.
+  ADR-024's 2026-10-07 amendment makes Windows 11 x64 the acceptance platform;
+  existing 32/32 evidence satisfies all M1-04 hard gates. Windows 10 is out of
+  the verified baseline; compatibility is not claimed. No technical incompatibility
+  reopens ADR-024's architecture conclusions. Raw JSON remains unchanged, including
+  the historical BLOCKED disposition in verification.json under the previous
+  two-OS scope. This removes a scope requirement, not a failed-test waiver.
+  Manual production UI/packaged acceptance is not inferred and remains a later
+  obligation. M1-05 is READY from this gate but NOT_STARTED; explicit authorization
+  is still required. No repository commit/push/merge.
+
 M1 exit: every M1 task acceptance passes, actual Console project builds/runs/stops,
 invalid/dirty/conflict/dependency paths are truthful, original JS acceptance passes
 again, no owned descendant survives, and cleanup failure remains fail-closed.
@@ -4136,20 +4189,22 @@ accepted until M2. Overall feature cannot be COMPLETE at the Core exit.
 | M2-03 | Session-owned input queue and cancellation | run/run-service.ts; planned run/run-input-queue.ts; focused queue/lifecycle tests | M2-02 | Per-session order, 16 KiB request/64 KiB+32 queue/10s deadline, backpressure and input gate | Wrong owner/project/session/step denied; empty/multiline ordering; queue full rejects without byte loss; no replay; gate closes before Stop/exit/re-run/switch/shutdown |
 | M2-04 | Wire semantic input IPC and Preload | main/ipc/run-ipc-service.ts, preload/bridge/run.ts; IPC/Preload tests | M2-03 | Trusted-frame session-scoped input, safe acknowledgements/status | Validate at IPC and domain; JS input rejected; transport errors normalized; late replies never attach to replacement/other project |
 | M2-05 | Add Output line composer and controller behavior | output/OutputPanel.tsx, run-controller.ts; styles.css only as needed; renderer tests | M2-04 | Send/Enter, Shift+Enter/multiline, EOF, disabled/busy state; unsent-text preservation | One/multiple ReadLine; IME-safe Enter; no terminal redesign; no automatic resend/history/logging; queued input never transferred on re-run |
-| M2-06 | Full integration and Windows regression acceptance | main/IPC/preload/renderer tests; scripts/smoke-csharp-run.mjs; JS/Terminal/C# language smokes | M2-05 | Repeatable actual Electron end-to-end and manual Windows evidence | Complete test matrix below; root killed with surviving descendant; blocked write/ReadLine Stop; switch/close/re-run cycles; no orphan/handle leak |
-| M2-07 | Final review, documentation and status | relevant docs only after verified execution | M2-06 | Truthful capability/status updates and completion report | M1+M2 original gates, full automated/quality gates, Windows 10/11 manual evidence; remaining Phase 7 packaging obligations explicit |
+| M2-06 | Full integration and Windows 11 x64 regression acceptance | main/IPC/preload/renderer tests; scripts/smoke-csharp-run.mjs; JS/Terminal/C# language smokes | M2-05 | Repeatable actual Electron end-to-end and manual Windows 11 x64 evidence | Complete test matrix below; root killed with surviving descendant; blocked write/ReadLine Stop; switch/close/re-run cycles; no orphan/handle leak |
+| M2-07 | Final review, documentation and status | relevant docs only after verified execution | M2-06 | Truthful capability/status updates and completion report | M1+M2 gates under revised platform scope, full automated/quality gates, Windows 11 x64 manual evidence; remaining Phase 7 packaging obligations explicit |
 
 M2 exit / overall completion: all M1 and M2 gates pass together, Console.ReadLine
 works repeatedly with Unicode/empty/multiline input, ownership/backpressure/stale
 results are verified, original JS/Terminal/Language Service acceptance is preserved,
 and Stop/transition/shutdown leave no owned processes/resources. Only then set
-overall C# Run COMPLETE. Missing required Windows evidence prevents COMPLETE.
+overall C# Run COMPLETE. Missing required Windows 11 x64 evidence prevents COMPLETE.
 
 ### Test plan
 
 U = unit/fake-adapter tests; I = integration across services/contracts or real native
-Electron; W = manual Windows 10/11 x64 Electron smoke. W is recorded per OS, SDK,
-fixture and observed outcome; a mocked or single-OS test is not both-platform proof.
+Electron; W = manual Windows 11 x64 Electron smoke. W is recorded per SDK,
+fixture and observed outcome; mocked tests do not replace actual platform evidence.
+Windows 10 is outside this extension's verified acceptance baseline;
+compatibility is not claimed.
 
 | Scenario | Unit tests (U) | Integration tests (I) | Windows manual smoke (W) |
 |---|---|---|---|
@@ -4199,20 +4254,20 @@ acceptance is claimed by this docs-only task.
 - Initial stable SDK >=8, single-framework and input/discovery limits are bounded
   design defaults; compatibility gate may require explicit ADR revision. No SDK
   installation or new dependency is authorized. Phase 7 packaging is still required.
-- Evidence availability on both Windows versions is an acceptance dependency, not
-  a reason to mark completion early. No production blocker is claimed before work
-  begins; native compatibility remains unexecuted.
+- Actual Windows 11 x64 evidence is required for each applicable gate; missing
+  manual/native/e2e or packaging checks cannot be inferred from M1-04's spike.
+  M1-04 compatibility is verified; production acceptance remains future work.
 
-M1-01/M1-02/M1-03 are COMPLETE. Next eligible task is **M1-04**, the isolated
-Windows/SDK evidence gate, only after explicit authorization. It remains
-NOT_STARTED and must pass before dependent C# strategy composition. This
-completion does not authorize M1-04 or any commit.
+M1-01 through M1-04 are COMPLETE. Next eligible task is **M1-05**, READY because
+M1-04's Windows 11 x64 hard gate passed. M1-05 and dependent C# strategy composition
+remain NOT_STARTED and require explicit authorization. Neither milestone nor
+overall C# Run is COMPLETE.
 
 ## 14. Decision Gate Register
 
 | Decision | Related ADR | Required before | Current status | What must be verified |
 |---|---|---|---|---|
-| C# Project Run SDK/native compatibility | ADR-024 | Before M1-05 and real C# strategy composition | NOT_STARTED — design accepted, M1-04 evidence unexecuted | SDK flags, argument quoting, dotnet stdin inheritance, blocked writes, Stop during build, retained owned-tree cleanup and JS/Git/LSP regressions |
+| C# Project Run SDK/native compatibility | ADR-024 and platform amendment | Before M1-05 and real C# strategy composition | RESOLVED / PASS — M1-04 COMPLETE; Windows 11 x64/net8+net10 32/32 evidence | Verified no-server/no-reuse flags, stdin/blocked writes, restore/build Stop, owned-tree cleanup and JS/Terminal/Git/LSP regressions; preserve these gates during production implementation |
 | Renderer state management | ADR-011 | Shared Phase 2 shell/project/editor state expands | Proposed; unresolved | Actual cross-feature update needs, lifecycle ownership, complexity, bundle/dependency cost |
 | IPC runtime validation mechanism | ADR-016, ADR-003 | Production IPC handlers multiply in early Phase 2 | RESOLVED Phase 2A — explicit validators | Current contracts are small; validators provide normalized issues and audited narrowing without schema runtime cost |
 | React Monaco integration | ADR-006, ADR-019 | Phase 2C Editor implementation | RESOLVED Phase 2C — thin `@monaco-editor/react` mount over local `monaco-editor` | Model/view ownership remains with EditorModelManager; local workers, development/build behavior, and disposal must pass the Phase 2C gate |
@@ -4315,7 +4370,13 @@ An API equivalent to `window.api.execute(command)` is prohibited.
 
 ## 18. Windows Acceptance Strategy
 
-V1 acceptance targets Windows 10 and Windows 11. Relevant packages must test:
+V1 acceptance targets Windows 10 and Windows 11.
+
+C# Project Run is scoped to Windows 11 x64 by ADR-024's platform amendment.
+Windows 10 is outside its verified acceptance baseline; compatibility is not
+claimed. The other IDE domains retain the Windows 10/11 baseline below.
+
+Relevant packages must test:
 
 - drive letters and case-insensitive canonical comparisons;
 - Windows separators and supported UNC paths;
@@ -4414,6 +4475,8 @@ acceptance work is not a V1 exit requirement.
 - All V1 requirements and critical integration/security/data-safety tests pass.
 - Windows 10/11 acceptance, production build, packaged app, native dependencies,
   installer, and installer smoke pass.
+  C# Project Run's acceptance checks use Windows 11 x64 only; this exception does
+  not remove Windows 10 obligations for other installed IDE workflows.
 - Installed workflows for project, editor/save, terminal, Language Intelligence,
   Run, Git, settings, and cleanup pass.
 - No critical defect remains; final architecture, decisions, codebase map,

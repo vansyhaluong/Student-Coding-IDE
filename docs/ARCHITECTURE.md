@@ -450,6 +450,14 @@ Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
 
 ### Planned C# Project Run design — ADR-024
 
+C# Project Run acceptance baseline: **Windows 11 x64**. The recorded Windows 11
+SDK 8/net8.0 and SDK 10/net10.0 evidence passes 32/32 cases; M1-04 is COMPLETE
+under the 2026-10-07 ADR-024 platform amendment. Windows 10 is outside the verified
+C# Project Run acceptance baseline. Compatibility is not claimed. Other IDE
+Windows 10/11 and Phase 7 packaging obligations remain unchanged. Native process
+ownership, two-step execution, stdin feasibility and fail-closed cleanup retain
+their accepted design. Production C# Run and Console input remain unimplemented.
+
 M1-01 compatibility baseline: additive SemanticRunTarget/SemanticStartRunRequest,
 SemanticRunSession and resolution/failure DTOs are validated separately. The live
 RunApi/channels and legacy DTOs remain unchanged until authorized migration; new

@@ -1671,3 +1671,36 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
 - Manual UI, packaged Win10/Win11 and live UNC-share execution not performed.
   M1-03 COMPLETE; M1/overall C# Run IN_PROGRESS. M1-04 remains NOT_STARTED and
   requires separate authorization. No new dependency, ADR change or Git write.
+
+## C# Project Run M1-04 — Isolated Windows/.NET Evidence (2026-10-07)
+
+- Added `spikes/csharp-project-run/` with a separate native probe, SDK harness,
+  Console/build-hold fixtures, reproducible instructions and JSON evidence.
+  Production source, Run IPC/UI, SDK resolver, strategy and dependencies unchanged.
+- Real Windows 11 x64 build 10.0.26200, SDK 8.0.410/net8.0 and 10.0.112/net10.0:
+  32/32 compatibility cases PASS. Verified fixed build/execute flags, no-node-reuse
+  workers, evaluation JSON, Unicode paths, streams/exits, actual NuGet restore
+  cancellation, build Stop, root/descendant cleanup and isolated stdin/EOF/blocked
+  write feasibility. No SDK installed and no global server/process-name kill used.
+- Final resources/new surviving .NET processes: 0/0. Every native session released
+  all handles and settled writes. Eight measured cycles per SDK had flat handle
+  counts (700 for SDK 8, 696 for SDK 10); unrelated control owner survived.
+- Production build, typecheck, lint, diff checks, full suite 1195 tests/85 files,
+  and native JS Run/lifecycle/project, Git, C# LSP/provider and Terminal regression
+  smokes PASS. Harness setup/observation corrections are disclosed in REPORT.md.
+- At the time of this evidence run, M1-04 was BLOCKED: §13.7 required Windows 10/11 evidence,
+  but only Windows 11 was available. Manual UI/packaged acceptance not claimed.
+  No observed host incompatibility requires ADR-024 reopening. M1-05 and later
+  production work remain NOT_STARTED; overall C# Run remains IN_PROGRESS.
+  No repository commit, push or merge.
+
+## C# Project Run platform scope revision — 2026-10-07
+
+- Revised C# Project Run's verified acceptance platform to Windows 11 x64 through
+  an explicit ADR-024 amendment; removed Windows 10 evidence from M1-04's scope.
+  Windows 10 is outside the verified baseline; compatibility is not claimed.
+  This is a scope decision, not a compatibility failure; other IDE obligations remain.
+- Existing Windows 11 32/32 evidence now satisfies M1-04: COMPLETE. Raw evidence
+  and technical findings are unchanged; historical BLOCKED metadata is preserved.
+- No production code changed or spike rerun. Overall C# Run/M1 remain IN_PROGRESS;
+  M1-05 prerequisites are satisfied, but M1-05 remains NOT_STARTED.

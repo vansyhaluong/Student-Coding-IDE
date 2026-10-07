@@ -545,3 +545,25 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
   [evaluation-only JSON](https://learn.microsoft.com/en-us/visualstudio/msbuild/evaluate-items-and-properties)
   is supported by MSBuild 17.8+ (SDK 8 baseline). SDK inventory/evaluation is
   evidence, not proof of runtime readiness or sandboxing.
+
+### ADR-024 platform acceptance amendment — 2026-10-07
+
+- **Previous acceptance assumption:** Plan Section 13.7 required Windows 10 and
+  Windows 11 evidence for C# Project Run.
+- **Decision:** Windows 11 x64 only is the verified C# Project Run acceptance
+  platform. Windows 10 is outside the verified C# Project Run acceptance baseline.
+  Compatibility is not claimed; this is not a finding of technical incompatibility.
+- **Reason:** Explicitly authorized project scope reduction; no Windows 10
+  support claim is required for this extension. Other IDE Windows 10/11 requirements
+  and their Phase 7 packaging obligations remain unchanged.
+- **Consequence:** Existing Windows 11 evidence (32/32 cases, SDK 8.0.410/net8.0
+  and 10.0.112/net10.0) satisfies M1-04's hard gate. See
+  [REPORT](../spikes/csharp-project-run/REPORT.md) and its unchanged evidence JSON.
+  This removes a scope requirement, rather than waiving a failed compatibility test.
+- **Technical conclusions unchanged:** Project-based Run, two-step build/execute,
+  retained process ownership, isolated stdin feasibility and fail-closed cleanup.
+  No technical incompatibility requires reopening those conclusions.
+- **Current status:** M1-04 COMPLETE; overall C# Run IN_PROGRESS; M1-05 READY from
+  this gate but NOT_STARTED. Production strategy/input are not implemented and
+  later work still requires explicit authorization. Original baseline and raw
+  verification disposition are historical records, superseded only as to scope.

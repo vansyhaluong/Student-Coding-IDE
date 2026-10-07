@@ -8,7 +8,8 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `IN_PROGRESS`; M1-01 contracts and M1-02 Main foundations COMPLETE; no C# Run
+Status: `IN_PROGRESS`; M1-01 through M1-04 COMPLETE; M1-05 NOT_STARTED (READY);
+no CSharpRunStrategy or production Console input is implemented; no C# Run
 runtime capability is implemented. Design is accepted in ADR-024; the planning
 task did not authorize implementation. The implemented capability matrix below still reports
 current production behavior (C# Run deferred/unimplemented). The planned extension
@@ -23,7 +24,10 @@ must pass before overall C# Run can be COMPLETE. No terminal/PTY substitution.
 
 Run readiness never depends on csharp-ls. Existing intelligence's SDK >=10 policy
 remains; the planned Run policy accepts compatible stable effective SDK >=8 with
-net8.0/net10.0 Windows evidence required. No loose `.cs`, Web/API, debugger,
+net8.0/net10.0 Windows 11 x64 evidence required. M1-04's recorded 32/32 cases
+satisfy its compatibility gate under the ADR-024 scope amendment. Windows 10 is
+outside the verified C# Project Run acceptance baseline. Compatibility is not
+claimed. Other IDE platform obligations remain unchanged. No loose `.cs`, Web/API, debugger,
 launch profiles, advanced multi-target selection, SDK auto-install or Exercise
 Judge in this extension. See Architecture Section 10 and Plan Section 13.7.
 

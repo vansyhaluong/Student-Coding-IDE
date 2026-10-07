@@ -728,10 +728,17 @@ criteria của V1. Python Run được defer khỏi V1 hiện tại.
 
 #### Approved C# Project Run extension — planning baseline (2026-10-07)
 
-Status: `NOT_STARTED`. This task authorizes design/documentation only, not
-production implementation. The Phase 4 scope below remains historical acceptance;
+Current status: `IN_PROGRESS`; M1-01 through M1-04 COMPLETE, M1-05 NOT_STARTED.
+The original planning authorization was design/documentation only. Production
+C# Run and Console input remain unimplemented. The Phase 4 scope below remains historical acceptance;
 the C# exception is governed by ADR-024 and Implementation Plan Section 13.7.
 Phase 5.5 intelligence and Phase 9 Exercise Runtime do not implement this feature.
+
+C# Project Run's verified acceptance platform is **Windows 11 x64** (scope
+revision, 2026-10-07; ADR-024 amendment). Windows 10 is outside the verified
+C# Project Run acceptance baseline. Compatibility is not claimed. This exception
+does not change the Windows 10/11 requirements for other IDE capabilities,
+including the historical Phase 4 Run scope and Phase 7 packaging.
 
 - Milestone 1: SDK-style C# Console Application, single target framework, selected
   `.csproj` under the active project root. Never execute the active `.cs` file as

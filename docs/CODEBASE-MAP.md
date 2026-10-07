@@ -243,7 +243,8 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 
 ## Planned C# Project Run modules — ADR-024 / Plan Section 13.7
 
-Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations and M1-03 native argv COMPLETE; the module table below
+Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations, M1-03 native argv
+and M1-04 isolated compatibility evidence COMPLETE; M1-05 NOT_STARTED. The module table below
 remains a planning map for later Run composition, not an actual-source claim.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
 No module below was created by the 2026-10-07 planning update.
@@ -270,7 +271,16 @@ environment. `piped-process-adapter.ts` documents the internal policy;
 New `tests/main/windows-run-arguments.test.ts`, `tests/fixtures/run/argv.js` and
 `argv-tree.js`, and extended `scripts/smoke-run-native.mjs` cover round-trip,
 bounds, EOF/environment, repeated handle cleanup and multi-argument tree Stop.
-No C# production strategy, public Run API or Output change. M1-04 is NOT_STARTED.
+No C# production strategy, public Run API or Output change.
+
+M1-04 actual isolated evidence (2026-10-07): `spikes/csharp-project-run/` contains
+`harness.mjs`, `build-native.mjs`, `native-prototype.cpp`, Console/build-hold
+fixtures, README/REPORT and recorded JSON evidence. The probe compiles existing
+pipe/Job primitives separately; production native code and app composition are
+unchanged. Windows 11 x64/net8.0+net10.0 has 32/32 passing cases; M1-04 is COMPLETE
+under ADR-024's platform scope amendment. Windows 10 is outside the verified C#
+Project Run acceptance baseline; compatibility is not claimed. M1-05 is READY
+from this gate but NOT_STARTED. No production strategy or stdin is implemented.
 
 | Domain / responsibility | Proposed path | Ownership / status |
 |---|---|---|
@@ -283,7 +293,7 @@ No C# production strategy, public Run API or Output change. M1-04 is NOT_STARTED
 | Existing identity/plan/process seams | `src/main/services/run/run-service.ts`, `run-strategy.ts`, `piped-process-adapter.ts`, `windows-piped-process-adapter.ts`, `native/run-process.cpp` | Existing actual modules; planned extension with JS/Git/LSP regressions |
 | Semantic Run wire boundary | `src/shared/contracts/run.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Existing actual modules; planned target/phase/guard/input DTOs and validators |
 | Target selection and line composer | `src/renderer/src/features/output/run-controller.ts`, `EditorRunAction.tsx`, `OutputPanel.tsx`, `use-project-run.ts` | Existing actual Output feature; planned minimal extension |
-| Compatibility evidence | `spikes/csharp-project-run/REPORT.md` and isolated harness | Planned M1-04 evidence only; no new dependency without separate authorization |
+| Compatibility evidence | `spikes/csharp-project-run/REPORT.md`, `harness.mjs`, `native-prototype.cpp`, `build-native.mjs`, `fixtures/`, `evidence/` | M1-04 COMPLETE; Windows 11 x64 32/32 PASS under revised scope; no new dependency |
 | C# Run acceptance | `tests/main/csharp-run-*.test.ts`, `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-csharp-run.mjs` | New focused tests/smoke planned; existing integration suite extended |
 
 TerminalService, LanguageServiceManager and Exercise Runtime retain independent
