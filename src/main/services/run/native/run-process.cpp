@@ -119,8 +119,9 @@ static void teardown(napi_async_cleanup_hook_handle hook, void* data) {
     napi_release_threadsafe_function(s->events, napi_tsfn_abort);
   }
 }
-static std::wstring string(napi_env env, napi_value value) {
+static std::wstring string(napi_env env, napi_value value, size_t limit = SIZE_MAX) {
   size_t size = 0; napiCheck(napi_get_value_string_utf16(env, value, nullptr, 0, &size));
+  check(size <= limit, "Process string exceeds limit");
   std::u16string result(size + 1, 0);
   napiCheck(napi_get_value_string_utf16(env, value, result.data(), result.size(), &size));
   result.resize(size); check(result.find(u'\0') == std::u16string::npos, "NUL in process argument");
@@ -135,28 +136,60 @@ static std::wstring quote(const std::wstring& input) {
   }
   result.append(slashes * 2, L'\\'); return result + L"\"";
 }
+// Run-only defense in depth. Main resolves and authorizes these paths; never
+// search PATH/cwd or infer an executable from a command string in this binding.
+static void runPath(const std::wstring& path, bool directory) {
+  const bool drive = path.size() >= 3 && ((path[0] >= L'A' && path[0] <= L'Z')
+    || (path[0] >= L'a' && path[0] <= L'z')) && path[1] == L':'
+    && (path[2] == L'\\' || path[2] == L'/');
+  const auto share = path.find(L'\\', 2);
+  const bool unc = path.size() > 2 && path[0] == L'\\' && path[1] == L'\\'
+    && path[2] != L'?' && path[2] != L'.' && share != std::wstring::npos
+    && share > 2 && share + 1 < path.size() && path[share + 1] != L'\\';
+  check((drive || unc) && path.find_first_of(L"\"*?\r\n") == std::wstring::npos,
+    "Run requires fully qualified executable and cwd");
+  if (!directory) check(path.size() >= 4 && _wcsicmp(path.c_str() + path.size() - 4, L".exe") == 0,
+    "Run requires a native executable");
+  DWORD attributes = GetFileAttributesW(path.c_str());
+  check(attributes != INVALID_FILE_ATTRIBUTES && bool(attributes & FILE_ATTRIBUTE_DIRECTORY) == directory,
+    "Invalid Run executable or cwd");
+}
 static napi_value create(napi_env env, napi_callback_info info) {
   std::unique_ptr<Session> s = std::make_unique<Session>();
   try {
     size_t argc = 5; napi_value argv[5]; void* mode = nullptr;
     napiCheck(napi_get_cb_info(env, info, &argc, argv, nullptr, &mode));
-    check(argc == 5, "Expected executable, target, cwd, environment, observer");
+    check(argc == 5, "Expected executable, arguments, cwd, environment, observer");
+    const bool runArray = mode && *static_cast<int*>(mode) == 3;
     s->csharp = mode && *static_cast<int*>(mode) == 2;
-    auto executable = string(env, argv[0]), cwd = string(env, argv[2]);
+    const size_t limit = runArray ? 32766 : SIZE_MAX;
+    auto executable = string(env, argv[0], limit), cwd = string(env, argv[2], limit);
+    if (runArray) {
+      runPath(executable, false); runPath(cwd, true);
+      napi_valuetype type; napiCheck(napi_typeof(env, argv[4], &type));
+      check(type == napi_function, "Run observer must be a function");
+    }
     auto command = quote(executable);
     if (mode) {
-      // Private Git adapter only. Run retains its original single-target entry.
+      // Dedicated Run array entry; legacy Run/Git/LSP signatures remain compatible.
       uint32_t count; napiCheck(napi_get_array_length(env, argv[1], &count));
+      if (runArray) check(count <= 1024, "Too many Run arguments");
       for (uint32_t i = 0; i < count; ++i) {
         napi_value value; napiCheck(napi_get_element(env, argv[1], i, &value));
-        command += L" " + quote(string(env, value));
+        auto argument = quote(string(env, value, limit));
+        if (runArray) check(command.size() + 1 + argument.size() <= limit, "Run command line exceeds limit");
+        command += L" " + argument;
       }
     } else command += L" " + quote(string(env, argv[1]));
+    if (runArray) check(command.size() <= limit, "Run command line exceeds limit");
     uint32_t envCount; napiCheck(napi_get_array_length(env, argv[3], &envCount));
+    if (runArray) check(envCount <= 32767, "Run environment exceeds limit");
     std::wstring environment;
     for (uint32_t i = 0; i < envCount; ++i) {
       napi_value value; napiCheck(napi_get_element(env, argv[3], i, &value));
-      auto entry = string(env, value); check(entry.find(L'=') != std::wstring::npos, "Invalid environment entry");
+      auto entry = string(env, value, limit); check(entry.find(L'=') != std::wstring::npos, "Invalid environment entry");
+      if (runArray) check(entry.find(L'=') > 0 && environment.size() + entry.size() + 2 <= 32767,
+        "Invalid or oversized Run environment");
       environment += entry; environment += L'\0';
     }
     environment += L'\0'; if (!envCount) environment += L'\0';
@@ -311,15 +344,17 @@ static napi_value writeCsharp(napi_env env, napi_callback_info info) {
 static napi_value init(napi_env env, napi_value exports) {
   static int gitMode = 1;
   static int csharpMode = 2;
+  static int runMode = 3; // Closed stdin; never enables the C# language writer.
   napi_property_descriptor methods[] = {
     {"create", nullptr, create, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"createRun", nullptr, create, nullptr, nullptr, nullptr, napi_default, &runMode},
     {"control", nullptr, control, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"createGit", nullptr, create, nullptr, nullptr, nullptr, napi_default, &gitMode},
     {"createCsharp", nullptr, create, nullptr, nullptr, nullptr, napi_default, &csharpMode},
     {"createCsharpPreflight", nullptr, create, nullptr, nullptr, nullptr, napi_default, &gitMode},
     {"writeCsharp", nullptr, writeCsharp, nullptr, nullptr, nullptr, napi_default, nullptr},
   };
-  napi_define_properties(env, exports, 6, methods);
+  napi_define_properties(env, exports, 7, methods);
   napi_set_named_property(env, exports, "capability", text(env, "student-ide-piped-job-v1"));
   return exports;
 }

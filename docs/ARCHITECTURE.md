@@ -443,8 +443,8 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 contracts and M1-02 Main foundations
-COMPLETE; C# runtime composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
+the extension is `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations and
+M1-03 native argument arrays COMPLETE; C# runtime composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
 
@@ -608,8 +608,27 @@ concurrent external writes. Preserve editor contents and conflict semantics.
 
 #### Native pipes and session-scoped input
 
-Extend WindowsPipedProcessAdapter with bounded argument arrays and explicit
-Main-only stdin mode (`closed` for JS/build; `line-input` for C# execution).
+M1-03 implemented baseline: WindowsPipedProcessAdapter sends the immutable
+Main-prepared argv to dedicated native `createRun`; legacy `create`, `createGit`,
+`createCsharp` and `createCsharpPreflight` retain their entry contracts. Run's
+entry has a fixed closed-stdin policy (NUL/EOF), not a selectable writer mode.
+It accepts 0–1024 arguments, including empty strings, and uses the existing
+per-argument Windows quoting routine. The complete quoted command line must fit
+32766 UTF-16 code units plus its terminating NUL. Individual strings are bounded
+before allocation; non-string values and embedded NUL are rejected. Native
+validation requires an existing fully qualified drive/UNC executable `.exe`
+and directory cwd; Main still owns executable selection and project authorization.
+No PATH/cwd executable search or shell dispatch is added. Environment remains
+Main-inherited, sorted and filtered of NODE_OPTIONS/NODE_PATH/ELECTRON_RUN_AS_NODE;
+strategy environment additions remain rejected. Native Run environment blocks
+are bounded to 32767 UTF-16 units including terminators. Validation precedes pipe,
+Job and process creation; retained Job ownership/Stop/release are unchanged.
+This does not enable C# Run or the later input/SDK gate. Limits and quoting follow
+[CreateProcessW](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw)
+and [Microsoft argument parsing](https://learn.microsoft.com/en-us/cpp/c-language/parsing-c-command-line-arguments).
+
+Later input work adds selectable Main-only stdin mode
+(`closed` for JS/build; `line-input` for C# execution).
 Implement correct per-argument Windows quoting, NUL checks, explicit executable,
 shell:false, controlled inherited environment and handles. Keep existing native
 JS/Git/LSP entry points compatible; a dedicated Run entry/writer may reuse the
@@ -869,7 +888,7 @@ Windows Job using the existing private native pipe/ownership primitives. A Git
 root exit terminates surviving owned hook descendants; release requires root
 exit, both pipe EOFs, native settlement and an empty Job. Cleanup failure retains
 ownership and blocks new work, project release and application shutdown until a
-cleanup retry succeeds. Run retains its separate single-target native entry and
+cleanup retry succeeds. Run retains its separate closed-stdin native entry and
 semantic lifecycle. No generic process capability crosses Preload.
 
 ## 12. Language-service architecture

@@ -16,5 +16,8 @@ export interface PipedRunProcess {
   isReleased(): boolean
 }
 export interface PipedProcessAdapter {
+  /** Trusted Main preparation only. Windows policy: closed stdin, shell:false,
+   * filtered inherited environment with no additions, bounded argv (empty items allowed).
+   * Executable/cwd authorization remains Main's responsibility before creation. */
   create(run: PreparedRun, observe: (event: PipedProcessEvent) => void): PipedRunProcess
 }

@@ -13,7 +13,7 @@ type NativeEvent = { type: 'stdout' | 'stderr'; data: Buffer }
   | { type: 'exit'; exitCode: number }
 interface NativeModule {
   capability: string
-  create(executable: string, target: string, cwd: string, environment: string[],
+  createRun(executable: string, args: readonly string[], cwd: string, environment: string[],
     callback: (event: NativeEvent) => void): object
   control(handle: object, operation: 'pid' | 'count' | 'terminate' | 'release'): number | undefined
 }
@@ -26,12 +26,15 @@ export class WindowsPipedProcessAdapter implements PipedProcessAdapter {
     if (process.platform !== 'win32' || process.arch !== 'x64') throw new DomainError({
       code: 'UNSUPPORTED', retryable: false, operation: 'run:native', message: 'Run currently requires Windows x64.' })
     const binding: NativeModule = createRequire(__filename)(modulePath)
-    if (binding.capability !== 'student-ide-piped-job-v1') throw new Error('Run native capability mismatch.')
+    if (binding.capability !== 'student-ide-piped-job-v1' || typeof binding.createRun !== 'function') {
+      throw new Error('Run native capability mismatch.')
+    }
     this.native = binding
   }
 
   create(run: PreparedRun, observe: (event: PipedProcessEvent) => void): PipedRunProcess {
-    if (run.shell !== false || run.args.length !== 1 || Object.keys(run.environmentAdditions).length !== 0) {
+    if (run.shell !== false || !Array.isArray(run.args) || run.args.length > 1024
+      || !run.environmentAdditions || Object.keys(run.environmentAdditions).length !== 0) {
       throw new Error('Unsupported Run execution preparation.')
     }
     const environment = Object.entries(this.environment).filter(([key, value]) => value !== undefined
@@ -47,7 +50,9 @@ export class WindowsPipedProcessAdapter implements PipedProcessAdapter {
     const emit = (event: PipedProcessEvent): void => {
       try { observe(event) } catch { observationFailed = true }
     }
-    const handle = this.native.create(run.executable, run.args[0], run.cwd, environment, (event) => {
+    // createRun validates/quotes bounded argv before allocating OS resources.
+    // Stdin is always NUL (EOF); only Main's filtered inherited environment is used.
+    const handle = this.native.createRun(run.executable, run.args, run.cwd, environment, (event) => {
       if (released) return
       if (event.type === 'stdout' || event.type === 'stderr') {
         const data = (event.type === 'stdout' ? stdout : stderr).write(event.data)

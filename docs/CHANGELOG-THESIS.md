@@ -1648,3 +1648,26 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   lifecycle, project lifecycle) PASS, including released resources/descendants.
 - M1-02 COMPLETE; M1 and overall C# Run remain IN_PROGRESS. M1-03 and M1-04
   native/SDK work remain unimplemented. No ADR change, commit, push or merge.
+
+## C# Project Run M1-03 — Windows Native Argument Arrays (2026-10-07)
+
+- Added dedicated private native createRun argv entry while preserving legacy
+  Run/Git/LSP signatures. Main sends its immutable prepared array unchanged;
+  no public process authority, shell, Output UI or C# strategy is introduced.
+- Allows empty arguments and 0–1024 items. Validates fully qualified existing
+  executable/cwd, rejects NUL/invalid types, and bounds the quoted command line
+  to 32766 UTF-16 units plus NUL before allocating handles. Retains filtered
+  Main environment without additions, bounded native environment and NUL stdin.
+- Added focused adapter tests and native argv/tree fixtures. Windows smoke
+  verifies Unicode/spaces/#/quotes/backslashes, exact count/length boundaries,
+  30 invalid-input cases, EOF/environment, 23 round-trips and 15 JS cycles.
+  Repeated handle counts stayed 688→688; both multi-argument Stop and root-first
+  cleanup released the Job with root/descendant PIDs gone.
+- Typecheck/lint/build/diff checks PASS; focused suite 212/212 in eight files and
+  full suite 1195/1195 across 85 files PASS.
+  First full run timed out one real-Git test under concurrent smoke load; isolated
+  32/32 Git rerun and subsequent unchanged full suite passed. Native Run lifecycle,
+  project lifecycle, Terminal, Git and existing C# LSP/provider smokes all PASS.
+- Manual UI, packaged Win10/Win11 and live UNC-share execution not performed.
+  M1-03 COMPLETE; M1/overall C# Run IN_PROGRESS. M1-04 remains NOT_STARTED and
+  requires separate authorization. No new dependency, ADR change or Git write.

@@ -168,7 +168,7 @@ before affected work continues.
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
 | Phase 9 — Learning / Programming Techniques | `NOT_STARTED` | Planned 9A–9G; Section 13.6; explicit implementation authorization required |
-| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01/M1-02 COMPLETE; remaining tasks NOT_STARTED; Section 13.7; both milestones required for completion |
+| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01/M1-02/M1-03 COMPLETE; remaining tasks NOT_STARTED; Section 13.7; both milestones required for completion |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
 `COMPLETE`. A status may become `COMPLETE` only after its exit gate passes.
@@ -3920,15 +3920,16 @@ and function-signature exercise harnesses are outside this foundation.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 
-Status: `IN_PROGRESS`. M1-01 and M1-02 are explicitly authorized and `COMPLETE`;
+Status: `IN_PROGRESS`. M1-01, M1-02 and M1-03 are explicitly authorized and `COMPLETE`;
 all other tasks and Milestone 2 remain `NOT_STARTED`. The 2026-10-07 planning
 authorization was documentation-only; subsequent authorization is limited to
-M1-01 contracts/validation and M1-02 identity/runtime foundations. This package is a bounded Project Run extension,
+M1-01 contracts/validation, M1-02 identity/runtime foundations and M1-03 native
+argument arrays with closed stdin. This package is a bounded Project Run extension,
 not Phase 5.5 reopening, Phase 9D implementation or authorization for later tasks.
 Traceability: FR-023 C# extension / FR-024, Architecture Section 10, ADR-024,
 Codebase Map planned C# Run modules, Language Support planned Project Run scope.
 
-### Task start checklist and baseline findings
+### M1-01/M1-02 task start checklist and baseline findings
 
 1. Authorized work: M1-01 semantic contracts/validation, followed by M1-02 Main
    identity/runtime/strategy foundations. No native, IPC implementation, stdin or
@@ -3991,14 +3992,14 @@ only if evidence requires a design change.
 
 ### Milestone 1 — C# Project Run Core
 
-Status: `IN_PROGRESS`. M1-01/M1-02 COMPLETE; M1-03–M1-12 (including M1-09a)
+Status: `IN_PROGRESS`. M1-01/M1-02/M1-03 COMPLETE; M1-04–M1-12 (including M1-09a)
 NOT_STARTED. No later implementation authorization is inferred.
 
 | ID | Công việc | File/module dự kiến | Phụ thuộc | Kết quả đầu ra | Tiêu chí hoàn thành |
 |---|---|---|---|---|---|
 | M1-01 | COMPLETE — Define target kind, resolution, phase/failure DTOs and exact validation | shared/contracts/run.ts; tests/contracts/run-validation.test.ts | Explicit implementation authorization; ADR-024 | Additive semantic file/project targets, execution phases and resolution/failure DTOs; live JS API unchanged | 74 contract tests and 178 focused/regression tests PASS; typecheck/lint/build/diff checks PASS; no process authority |
 | M1-02 | COMPLETE — Replace argv-derived identity; inject fixed strategies and contextual runtime resolution | run/run-service.ts, run-strategy.ts, javascript-run-strategy.ts; main/index.ts; run-identity/foundation/lifecycle tests | M1-01 | Immutable authorized identity and fingerprint; JS-only composition verified | All RunService args[0] identity sites removed; 202 focused tests, 1185 full-suite tests, quality gates and three native JS smokes PASS |
-| M1-03 | Generalize Windows argv with closed stdin mode | run/windows-piped-process-adapter.ts, piped-process-adapter.ts, native/run-process.cpp; smoke-run-native.mjs | M1-02 | Bounded argument-array launch, proper quoting/handles/environment | Spaces/#/Unicode/backslashes/quotes tested; command-line overflow/NUL fail; Job ownership and JS native smoke pass |
+| M1-03 | COMPLETE — Generalize Windows argv with closed stdin mode | run/windows-piped-process-adapter.ts, piped-process-adapter.ts, native/run-process.cpp; smoke-run-native.mjs | M1-02 | Bounded argument-array launch, proper quoting/handles/environment | Native round-trip/bounds/closed stdin and Job cleanup PASS; JS/Terminal/Git/LSP regression PASS; 1195 tests and quality gates PASS |
 | M1-04 | Isolated Windows/SDK compatibility evidence | planned spikes/csharp-project-run/REPORT.md and evidence harness; no app composition | M1-03; separately authorized spike | net8.0/net10.0 build/run evidence, future stdin/blocked-write prototype, flags and owned-tree report | Stop during restore/build; root/descendant cleanup; dotnet stdin inheritance; no shared build-worker escape; no JS/Git/LSP regression. HARD GATE PASS before dependent strategy composition |
 | M1-05 | Add Run SDK resolver and structured evaluation | planned dependencies/dotnet-run-runtime.ts; run/csharp-run-preflight.ts; tests/main/csharp-run-preflight.test.ts | M1-04 | PATH inventory, candidate-cwd CLI SDK selection and evaluated JSON; independent from LSP | Missing/invalid SDK, incompatible global.json, TFM and probe timeout/cancellation fixtures; language SDK >=10 unchanged |
 | M1-06 | Discover and classify runnable Console targets | planned run/csharp-run-target-resolver.ts; tests/main/csharp-run-targets.test.ts | M1-05 | Bounded nested candidates and recursive ProjectReference checks | One/multiple/none; exclusion/symlink/case duplicates; ambiguous framework/Web/GUI/test/library reject; broken candidate and bound overflow surfaced |
@@ -4073,6 +4074,52 @@ NOT_STARTED. No later implementation authorization is inferred.
   single-argument create call is unchanged and belongs to M1-03.
 - No ADR change or architecture deviation. Prior M1-01 work is preserved;
   no commit/push/merge. M1-02 COMPLETE does not complete M1 or overall C# Run.
+
+#### M1-03 verification and compatibility — 2026-10-07
+
+- Start checklist: user authorized M1-03 only; M1-01/M1-02 are COMPLETE.
+  Branch `feature/csharp-project-run` started clean, with no unrelated edits.
+  Goal/scope is bounded Windows argv and closed stdin, preserving JS and native
+  ownership. Exclude M1-04, CSharpRunStrategy, SDK Run, input writing/queues,
+  public API/UI changes and dependencies. ADR-024 design and ADR-020/021 retained
+  Job/cleanup rules apply; M1-04 remains a separate unexecuted hard gate.
+  Required verification: focused/full automated tests, typecheck/lint/build,
+  Windows native bounds/quoting/ownership and cross-domain regression, diff check.
+- Dedicated private `createRun(executable, args, cwd, environment, observer)`
+  accepts 0–1024 arguments including empty strings. The adapter passes Main's
+  immutable PreparedRun array intact; existing fingerprint/authorization remains
+  unchanged. Legacy create, Git and C# language entry contracts remain available.
+- Windows quoting surrounds each argument, doubles backslashes before a quote
+  or closing delimiter and preserves spaces/#/Unicode/tabs/newlines/empty values.
+  Limit: 32766 UTF-16 code units after quoting, plus NUL. Reject non-string/sparse
+  arrays, count/string/quoted overflow and embedded NUL before creating handles.
+  Main retains project/executable authorization; native additionally checks fully
+  qualified drive/UNC paths, existing `.exe` and directory cwd. No shell/search
+  fallback or command-string execution interface. Environment is filtered Main
+  inheritance only, no additions, with native block limit 32767 including NULs.
+- Fixed stdin policy is closed via NUL/EOF. Run cannot use the language writer.
+  Job-at-creation, suspended launch, restricted inherited handles, Stop,
+  concurrent close, root/EOF settlement and empty-Job-before-release are retained.
+- PASS: focused suite 212/212 in eight files, typecheck, final lint,
+  production/native build, full suite 1195/1195 in
+  85 files and diff check. Initial new-test table/globals issues were corrected.
+  First full run had one 5s Git integration timeout under concurrent native smoke;
+  isolated Git rerun passed 32/32 and subsequent full suite passed unchanged.
+  Existing non-failing jsdom canvas diagnostic remains.
+- Automated Electron 44 / ABI 149 / Windows x64 native smoke PASS: 15 JS cycles,
+  23 argv round-trips, 30 invalid-input cases, exact command-line/count bounds,
+  copied executable/script paths containing spaces/#/Unicode, filtered environment,
+  closed stdin, failed creation and repeated cleanup. Handle count stayed 688→688.
+  Multi-argument live-root Stop and root-first cases verify root/descendant PIDs
+  gone, empty Job and released ownership. No native resource growth observed.
+- Run lifecycle and project lifecycle smokes PASS with zero remaining resources.
+  Terminal live-root/natural-root smokes PASS; Git native smoke PASS; existing
+  C# Language Service native/blocked-write/provider shutdown smoke PASS. This is
+  LSP regression evidence, not C# Run or M1-04 SDK compatibility evidence.
+- Manual UI smoke, packaged Windows 10/11 matrix and live UNC-share execution
+  were not performed; no such acceptance is claimed. M1-03 is COMPLETE, M1/overall
+  C# Run remain IN_PROGRESS, M1-04 remains NOT_STARTED and needs authorization.
+  No dependency, ADR decision change, architecture deviation, commit/push/merge.
 
 M1 exit: every M1 task acceptance passes, actual Console project builds/runs/stops,
 invalid/dirty/conflict/dependency paths are truthful, original JS acceptance passes
@@ -4156,10 +4203,10 @@ acceptance is claimed by this docs-only task.
   a reason to mark completion early. No production blocker is claimed before work
   begins; native compatibility remains unexecuted.
 
-M1-01/M1-02 are COMPLETE. Recommended next task: explicitly authorize **M1-03**,
-bounded Windows argument-array support with closed stdin and JS regression.
-Then pass M1-04 before the C# strategy. M1-03 remains NOT_STARTED;
-this completion does not authorize it or any commit.
+M1-01/M1-02/M1-03 are COMPLETE. Next eligible task is **M1-04**, the isolated
+Windows/SDK evidence gate, only after explicit authorization. It remains
+NOT_STARTED and must pass before dependent C# strategy composition. This
+completion does not authorize M1-04 or any commit.
 
 ## 14. Decision Gate Register
 

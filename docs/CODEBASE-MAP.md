@@ -243,7 +243,7 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 
 ## Planned C# Project Run modules — ADR-024 / Plan Section 13.7
 
-Status: `IN_PROGRESS` with M1-01 contracts and M1-02 Main foundations COMPLETE; the module table below
+Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations and M1-03 native argv COMPLETE; the module table below
 remains a planning map for later Run composition, not an actual-source claim.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
 No module below was created by the 2026-10-07 planning update.
@@ -252,7 +252,7 @@ M1-01 actual foundation (2026-10-07): `src/shared/contracts/run.ts` now includes
 additive semantic targets, phases, C# resolution/failure DTOs and exact validators;
 `tests/contracts/run-validation.test.ts` provides 74 focused contract tests.
 Existing JS API/channels and Main/Preload/Renderer implementations remain unchanged.
-No planned C# Main module is actual yet; M1-03 and later remain NOT_STARTED.
+No planned C# Main module is actual yet; later production composition remains deferred.
 
 M1-02 actual foundation (2026-10-07): existing `run-service.ts` and
 `run-strategy.ts` own canonical identity, execution fingerprint, immutable
@@ -262,6 +262,15 @@ still composes JS only. `run-runtime.ts` exports the JS strategy for existing
 native smoke harnesses. New `tests/main/run-identity.test.ts` and extended Run
 lifecycle tests cover the foundation; existing tests/smokes explicitly inject JS.
 No new production module, native adapter change or IPC/UI implementation.
+
+M1-03 actual extension (2026-10-07): `windows-piped-process-adapter.ts` uses
+dedicated closed-stdin native `createRun` with bounded argv and filtered inherited
+environment. `piped-process-adapter.ts` documents the internal policy;
+`native/run-process.cpp` validates paths/strings/bounds before OS resource creation.
+New `tests/main/windows-run-arguments.test.ts`, `tests/fixtures/run/argv.js` and
+`argv-tree.js`, and extended `scripts/smoke-run-native.mjs` cover round-trip,
+bounds, EOF/environment, repeated handle cleanup and multi-argument tree Stop.
+No C# production strategy, public Run API or Output change. M1-04 is NOT_STARTED.
 
 | Domain / responsibility | Proposed path | Ownership / status |
 |---|---|---|
