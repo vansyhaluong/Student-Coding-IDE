@@ -1,3 +1,4 @@
+import { JavaScriptRunStrategy } from '../../src/main/services/run/javascript-run-strategy'
 /** @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -56,7 +57,7 @@ function setup(path = 'main.js') {
       close: async () => { closing.resolve(); await gate.promise; native.finish(); native.released = true } }
   }) }
   const emit = (event: RunEvent) => { for (const listener of listeners) listener({}, event) }
-  const run = new RunService(authority, { adapter, manager, onEvent: (_owner, event) => { events.push(event); emit(event) } })
+  const run = new RunService(authority, [new JavaScriptRunStrategy()], { adapter, manager, onEvent: (_owner, event) => { events.push(event); emit(event) } })
   const owner = vi.fn()
   const ipc = new RunIpcService(registry, run, owner); ipc.start()
   const api = createPreloadApi(transport)

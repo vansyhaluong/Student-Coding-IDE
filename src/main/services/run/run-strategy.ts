@@ -1,4 +1,8 @@
-import type { RunTarget } from '../../../shared/contracts/run'
+import { createHash } from 'node:crypto'
+import { win32 } from 'node:path'
+import type { RunTarget, RunTargetKind } from '../../../shared/contracts/run'
+import { invalidInputError } from '../../errors/app-error'
+import { normalizePathIdentity } from '../project/project-identity'
 
 /** Main-only output from target authorization; never a renderer request DTO. */
 export interface AuthorizedRunTarget extends RunTarget {
@@ -6,7 +10,7 @@ export interface AuthorizedRunTarget extends RunTarget {
   readonly canonicalFile: string
 }
 
-/** Resolved by Main's later PATH detector, never supplied by Renderer. */
+/** Resolved by Main for the authorized target/strategy, never supplied by Renderer. */
 export interface RunRuntime { readonly executable: string }
 export interface PreparedRun {
   readonly executable: string
@@ -18,6 +22,42 @@ export interface PreparedRun {
 
 /** Internal strategy seam; no dynamic registration or user-defined runners. */
 export interface RunStrategy {
+  readonly kind: RunTargetKind
   supports(target: RunTarget): boolean
   prepare(target: AuthorizedRunTarget, runtime: RunRuntime): PreparedRun
+}
+
+/** Main-only context, supplied only after project/filesystem authorization. */
+export interface RunRuntimeContext {
+  readonly strategyKind: RunTargetKind
+  readonly target: AuthorizedRunTarget
+}
+
+export function runTargetIdentity(target: AuthorizedRunTarget, kind: RunTargetKind): string {
+  const absolute = (path: string) => typeof path === 'string' && !path.includes('\0')
+    && (/^[a-z]:[\\/]/i.test(path) || /^\\\\[^\\]+\\[^\\]+/.test(path)) && win32.isAbsolute(path)
+  if (!absolute(target.canonicalRoot) || !absolute(target.canonicalFile)) {
+    throw invalidInputError('run:prepare', ['target'])
+  }
+  const root = normalizePathIdentity(target.canonicalRoot, 'win32')
+  const file = normalizePathIdentity(target.canonicalFile, 'win32')
+  if (!file.startsWith(root.endsWith('\\') ? root : `${root}\\`)) {
+    throw invalidInputError('run:prepare', ['target'])
+  }
+  return JSON.stringify([target.projectId, kind, file])
+}
+
+/** Copy before retaining: strategy-owned arrays/maps cannot mutate a preparation. */
+export function snapshotExecution(execution: PreparedRun): PreparedRun {
+  return Object.freeze({ executable: execution.executable, args: Object.freeze([...execution.args]),
+    cwd: execution.cwd, shell: execution.shell,
+    environmentAdditions: Object.freeze({ ...execution.environmentAdditions }) })
+}
+
+export function runExecutionFingerprint(identity: string, target: AuthorizedRunTarget, execution: PreparedRun): string {
+  return createHash('sha256').update(JSON.stringify([identity,
+    normalizePathIdentity(target.canonicalRoot, 'win32'), execution.executable, execution.args,
+    execution.cwd, execution.shell,
+    Object.entries(execution.environmentAdditions).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0),
+  ])).digest('hex')
 }

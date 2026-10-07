@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
-const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, ProcessManager,
+const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, JavaScriptRunStrategy, ProcessManager,
   RunProjectLifecycle, ProjectService, FileSystemService, IpcHandlerRegistry, RunIpcService,
   FileIpcService, DesktopApplication } = require(resolve(root, 'out/main/run-runtime.js'))
 
@@ -24,7 +24,7 @@ async function smoke() {
   const detector = new NodeRuntimeDetector(), adapter = new WindowsPipedProcessAdapter()
   const natives = [], requests = []
   const run = new RunService({ authorize: async (target) => ({ ...target,
-    ...await files.authorizeRunFile(target.projectId, target.relativePath) }), resolveRuntime: () => detector.resolve() }, {
+    ...await files.authorizeRunFile(target.projectId, target.relativePath) }), resolveRuntime: () => detector.resolve() }, [new JavaScriptRunStrategy()], {
     manager, adapter: { create(execution, observe) { const native = adapter.create(execution, observe); natives.push(native); return native } },
     onEvent: (ownerId, event) => { assert.equal(ownerId, window.webContents.id); window.webContents.send('run:event', event) },
   })

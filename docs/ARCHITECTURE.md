@@ -443,13 +443,36 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `NOT_STARTED`. The non-interactive Run ownership row in Section
+the extension is `IN_PROGRESS` with M1-01 contracts and M1-02 Main foundations
+COMPLETE; C# runtime composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
 
 ### Planned C# Project Run design — ADR-024
 
+M1-01 compatibility baseline: additive SemanticRunTarget/SemanticStartRunRequest,
+SemanticRunSession and resolution/failure DTOs are validated separately. The live
+RunApi/channels and legacy DTOs remain unchanged until authorized migration; new
+semantic requests are not accepted by the legacy bridge/service validators.
+
 #### Strategy, runtime and identity
+
+M1-02 implemented baseline: RunService receives a constructor-only snapshot of
+trusted strategies, with unique kinds and no ambiguous target dispatch. The
+application registers JavaScriptRunStrategy only. Unsupported/dirty requests
+retain their early rejection; filesystem authorization precedes runtime resolution
+and strategy preparation. RunRuntimeContext contains the trusted strategy kind and
+an immutable authorized target. No new public request, channel or process authority.
+
+Main derives identity as a JSON tuple of project ID, strategy kind and normalized
+Windows canonical target path, with absolute-path and containment checks independent
+of argv. The SHA-256 execution fingerprint covers identity, normalized canonical
+root, executable, ordered argv, cwd, shell flag and sorted environment entries.
+Preparation copies/freezes execution data; start-to-preparation and
+preparation-to-launch comparisons reject identity or fingerprint drift before
+native creation. The fingerprint is an execution-spec check, not a source-content
+snapshot; the saved-source guard remains M1-09a. Existing owner/project generation
+checks and fail-closed cleanup are retained.
 
 Main composes a fixed list of internal strategies: existing JavaScript and planned
 `CSharpRunStrategy`. No Renderer registration or plugin runner system. Add a

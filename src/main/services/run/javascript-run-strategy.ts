@@ -5,6 +5,7 @@ import { normalizePathIdentity, resolveProjectRelativePath } from '../project/pr
 import type { AuthorizedRunTarget, PreparedRun, RunRuntime, RunStrategy } from './run-strategy'
 
 export class JavaScriptRunStrategy implements RunStrategy {
+  readonly kind = 'javascript-file' as const
   supports(target: RunTarget): boolean {
     return win32.extname(target.relativePath) === '.js'
   }

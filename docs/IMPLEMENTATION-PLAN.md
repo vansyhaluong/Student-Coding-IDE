@@ -168,7 +168,7 @@ before affected work continues.
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
 | Phase 9 — Learning / Programming Techniques | `NOT_STARTED` | Planned 9A–9G; Section 13.6; explicit implementation authorization required |
-| C# Project Run extension — M1 + M2 | `NOT_STARTED` | Approved planning baseline; Section 13.7; both milestones required for completion |
+| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01/M1-02 COMPLETE; remaining tasks NOT_STARTED; Section 13.7; both milestones required for completion |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
 `COMPLETE`. A status may become `COMPLETE` only after its exit gate passes.
@@ -3920,17 +3920,19 @@ and function-signature exercise harnesses are outside this foundation.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 
-Status: `NOT_STARTED`. Milestone 1 and Milestone 2, including every task below,
-are `NOT_STARTED`. Authorized 2026-10-07 for survey, design and planning documents
-only. This package is a bounded Project Run extension, not Phase 5.5 reopening,
-Phase 9D implementation or authorization to begin production code.
+Status: `IN_PROGRESS`. M1-01 and M1-02 are explicitly authorized and `COMPLETE`;
+all other tasks and Milestone 2 remain `NOT_STARTED`. The 2026-10-07 planning
+authorization was documentation-only; subsequent authorization is limited to
+M1-01 contracts/validation and M1-02 identity/runtime foundations. This package is a bounded Project Run extension,
+not Phase 5.5 reopening, Phase 9D implementation or authorization for later tasks.
 Traceability: FR-023 C# extension / FR-024, Architecture Section 10, ADR-024,
 Codebase Map planned C# Run modules, Language Support planned Project Run scope.
 
 ### Task start checklist and baseline findings
 
-1. Authorized work: this documentation baseline only; subsequent task/package
-   authorization is required for either milestone implementation.
+1. Authorized work: M1-01 semantic contracts/validation, followed by M1-02 Main
+   identity/runtime/strategy foundations. No native, IPC implementation, stdin or
+   UI changes; M1-03 and later tasks need separate authorization.
 2. Goal: saved Console `.csproj` Run plus Console.ReadLine in Output. M1 alone
    is partial delivery. Exclude loose `.cs`, Web/API, debugger, launch profiles,
    advanced multi-target selection, Exercise Runtime/Judge, auto-install SDK,
@@ -3948,9 +3950,11 @@ Codebase Map planned C# Run modules, Language Support planned Project Run scope.
 6. Required future verification: focused unit/integration tests, existing full
    npm test, typecheck/lint/build, diff checks, native and manual Windows evidence
    below. Docs-only review runs diff checks, not production acceptance.
-7. Survey branch: develop. Pre-existing edits in REQUIREMENT, ARCHITECTURE,
-   LANGUAGE-SUPPORT and IMPLEMENTATION-PLAN are retained (Phase 9 roadmap).
-   Planning adds bounded sections; no code/package/lockfile change or commit.
+7. Planning survey branch was develop; the M1-01 implementation starts on
+   feature/csharp-project-run with a clean working tree. Prior planning and Phase 9
+   changes are already present and retained. No dependency or commit is authorized.
+   M1-02 starts on the same feature branch with M1-01 changes in five docs,
+   shared/contracts/run.ts and its untracked contract test; all are preserved.
 
 | Current evidence | Consequence for planned work |
 |---|---|
@@ -3987,10 +3991,13 @@ only if evidence requires a design change.
 
 ### Milestone 1 — C# Project Run Core
 
+Status: `IN_PROGRESS`. M1-01/M1-02 COMPLETE; M1-03–M1-12 (including M1-09a)
+NOT_STARTED. No later implementation authorization is inferred.
+
 | ID | Công việc | File/module dự kiến | Phụ thuộc | Kết quả đầu ra | Tiêu chí hoàn thành |
 |---|---|---|---|---|---|
-| M1-01 | Define target kind, resolution, phase/failure DTOs and exact validation | shared/contracts/run.ts; contract tests | Explicit implementation authorization; ADR-024 | Semantic file/project targets; STARTING/phase and selection states; no process authority | Reject unknown kind/extra fields/traversal; JS migration behavior covered; documented bounds |
-| M1-02 | Replace argv-derived identity; inject fixed strategies and contextual runtime resolution | run/run-service.ts, run-strategy.ts, javascript-run-strategy.ts; main/index.ts; run-foundation/lifecycle tests | M1-01 | Immutable authorized identity and fingerprint; JS-only composition still functional | All args[0] identity sites removed; canonical duplicate/re-run behavior, wrong owner and JS tests pass |
+| M1-01 | COMPLETE — Define target kind, resolution, phase/failure DTOs and exact validation | shared/contracts/run.ts; tests/contracts/run-validation.test.ts | Explicit implementation authorization; ADR-024 | Additive semantic file/project targets, execution phases and resolution/failure DTOs; live JS API unchanged | 74 contract tests and 178 focused/regression tests PASS; typecheck/lint/build/diff checks PASS; no process authority |
+| M1-02 | COMPLETE — Replace argv-derived identity; inject fixed strategies and contextual runtime resolution | run/run-service.ts, run-strategy.ts, javascript-run-strategy.ts; main/index.ts; run-identity/foundation/lifecycle tests | M1-01 | Immutable authorized identity and fingerprint; JS-only composition verified | All RunService args[0] identity sites removed; 202 focused tests, 1185 full-suite tests, quality gates and three native JS smokes PASS |
 | M1-03 | Generalize Windows argv with closed stdin mode | run/windows-piped-process-adapter.ts, piped-process-adapter.ts, native/run-process.cpp; smoke-run-native.mjs | M1-02 | Bounded argument-array launch, proper quoting/handles/environment | Spaces/#/Unicode/backslashes/quotes tested; command-line overflow/NUL fail; Job ownership and JS native smoke pass |
 | M1-04 | Isolated Windows/SDK compatibility evidence | planned spikes/csharp-project-run/REPORT.md and evidence harness; no app composition | M1-03; separately authorized spike | net8.0/net10.0 build/run evidence, future stdin/blocked-write prototype, flags and owned-tree report | Stop during restore/build; root/descendant cleanup; dotnet stdin inheritance; no shared build-worker escape; no JS/Git/LSP regression. HARD GATE PASS before dependent strategy composition |
 | M1-05 | Add Run SDK resolver and structured evaluation | planned dependencies/dotnet-run-runtime.ts; run/csharp-run-preflight.ts; tests/main/csharp-run-preflight.test.ts | M1-04 | PATH inventory, candidate-cwd CLI SDK selection and evaluated JSON; independent from LSP | Missing/invalid SDK, incompatible global.json, TFM and probe timeout/cancellation fixtures; language SDK >=10 unchanged |
@@ -4002,6 +4009,70 @@ only if evidence requires a design change.
 | M1-10 | Wire target resolution/selection and Run DTOs through IPC/Preload | main/ipc/run-ipc-service.ts, preload/bridge/run.ts, shared contract exports; IPC/Preload tests | M1-09 | Narrow resolve/select/start/stop/events; owner-scoped discovery cancellation | Exact validation at both boundaries; relative paths only; no runtime CLI options; stale selection/generation/owner denied; early session response supports Stop |
 | M1-11 | Minimal C# target/Run/Stop/Output presentation | output/run-controller.ts, EditorRunAction.tsx, OutputPanel.tsx, use-project-run.ts; App composition if needed | M1-10 | Compact target choice/label; project save guard; phase/failure output; JS current-file behavior | Single Run entry; Stop available while preparing/building; target != active .cs; stale events ignored; existing output/tab/theme behavior preserved |
 | M1-12 | Core acceptance and milestone review | tests/main/csharp-run*.test.ts; tests/renderer/run-output.integration.test.tsx; planned scripts/smoke-csharp-run.mjs; docs | M1-11 | M1 evidence report and status update only after exit passes | Core test matrix/native smoke, full suite/typecheck/lint/build/diff checks; Windows Core evidence; overall feature remains IN_PROGRESS pending M2 |
+
+#### M1-01 verification and compatibility — 2026-10-07
+
+- Implemented additive `SemanticRunTarget`, `SemanticStartRunRequest`,
+  `SemanticRunSession`, `RunExecutionPhase`, CSharpRunCandidate/dependency/resolution
+  and RunFailure types plus exact validators in the existing side-effect-free
+  shared Run module; the existing wildcard export exposes these types/validators.
+- Target kinds: javascript-file (.js, preserving current case policy) and
+  csharp-project (.csproj, case-insensitive Windows suffix). New DTO bounds:
+  relative path 4096 UTF-16 code units, display name 256, candidate list 64.
+  Reuse the existing lexical path rules; no new bounds imposed on legacy requests.
+- Phases PREPARING / BUILD_RESTORE / EXECUTING remain separate from RunState.
+  JS has no BUILD_RESTORE phase. These validators do not authorize owners or
+  enforce lifecycle transitions; Main must still validate identity, generation,
+  SDK, disk containment and real Console eligibility when later tasks compose them.
+- Resolution: READY / SELECTION_REQUIRED / NO_RUNNABLE_PROJECT /
+  DEPENDENCY_FAILED / FAILED. Exact per-variant fields, candidate eligibility/reason,
+  dependency state/reason, target membership/project match, candidate bounds and
+  case-insensitive duplicate checks reject contradictory or unsafe payloads.
+  A limit failure cannot masquerade as a partial candidate list.
+- Runtime-owned executable/argv/cwd/environment/handles/canonical paths remain
+  Main-only in run-strategy.ts. Live RunApi, RUN_CHANNELS, legacy StartRunRequest,
+  RunSession/RunEvent validators and dispatch behavior remain unchanged. New typed
+  DTOs deliberately fail legacy validators: no C# execution is enabled in M1-01.
+  No semantic event/channel wiring, runtime resolver, selection store, source guard,
+  stdin, native or UI implementation in this task.
+- Verified: 178 tests across six focused files (new contract tests plus existing
+  Run foundation/lifecycle/project lifecycle, Preload domain bridges and Output
+  integration) PASS. Final contract-only rerun: 74/74 PASS after lint correction.
+  Typecheck, final lint, production build including existing Windows native binding,
+  and git diff --check PASS. No full-suite or live C#/Windows smoke claim; no native
+  behavior changed and M1-04 remains unexecuted.
+- Reviewed diff: no changes to Main, Preload, Renderer, package/lockfile or RunService;
+  clean starting tree on feature/csharp-project-run. No new dependency, ADR change,
+  commit/push/merge. M1-02 is eligible only after explicit user authorization.
+
+#### M1-02 verification and compatibility — 2026-10-07
+
+- Identity is a Main-only tuple of project ID, trusted strategy kind and normalized
+  canonical target path, validated for absolute path and root containment. No
+  argv position participates in duplicate detection, start serialization or re-run.
+- Immutable execution snapshots and SHA-256 fingerprints include identity, root,
+  executable, ordered argv, cwd, shell and deterministically ordered environment.
+  Initial resolution/preparation/launch must agree; mismatch prevents creation.
+  Main still reauthorizes disk/owner/project and checks lifecycle generations.
+- Constructor injection snapshots a fixed strategy list, rejects duplicate kinds
+  and ambiguous dispatch, and passes authorized target/kind to runtime resolution.
+  Main registers only JavaScript; no C# strategy, SDK resolver, dotnet invocation,
+  native argv support, stdin, dependency, generic executor or public API change.
+- Existing test and native smoke constructors now explicitly inject JavaScript;
+  Main-only run-runtime build entry exports that strategy for those harnesses.
+- PASS: typecheck, final lint (after removing an unused test parameter), build,
+  202 focused/regression tests in seven files, full npm test (1185 tests / 84 files),
+  git diff --check. Full suite printed a non-failing jsdom canvas diagnostic.
+- PASS on Electron 44 / ABI 149 / Windows x64: smoke-run-native (15 cycles,
+  root-first cleanup and failed spawn), smoke-run-lifecycle (Stop, duplicate Stop,
+  re-run, streams/exits/descendants), smoke-run-project-lifecycle (cancel, switch,
+  close, unavailable/reopen, shutdown). Lifecycle smokes report zero remaining
+  resources; project smoke reports all native resources released.
+- UI manual smoke, packaged Win10/Win11 matrix and C# native/SDK evidence were not
+  run; none is claimed here. M1-04 remains an unexecuted hard gate. The adapter's
+  single-argument create call is unchanged and belongs to M1-03.
+- No ADR change or architecture deviation. Prior M1-01 work is preserved;
+  no commit/push/merge. M1-02 COMPLETE does not complete M1 or overall C# Run.
 
 M1 exit: every M1 task acceptance passes, actual Console project builds/runs/stops,
 invalid/dirty/conflict/dependency paths are truthful, original JS acceptance passes
@@ -4085,10 +4156,10 @@ acceptance is claimed by this docs-only task.
   a reason to mark completion early. No production blocker is claimed before work
   begins; native compatibility remains unexecuted.
 
-Recommended first implementation task: explicitly authorize **M1-01** only,
-semantic target/phase/resolution contracts and validators with focused tests.
-Then complete identity/runtime and native foundations before implementing the C#
-strategy. This plan itself does not authorize M1-01 or a feature branch/commit.
+M1-01/M1-02 are COMPLETE. Recommended next task: explicitly authorize **M1-03**,
+bounded Windows argument-array support with closed stdin and JS regression.
+Then pass M1-04 before the C# strategy. M1-03 remains NOT_STARTED;
+this completion does not authorize it or any commit.
 
 ## 14. Decision Gate Register
 

@@ -8,8 +8,9 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `NOT_STARTED`; design accepted in ADR-024, implementation not authorized
-by the planning task. The implemented capability matrix below still reports
+Status: `IN_PROGRESS`; M1-01 contracts and M1-02 Main foundations COMPLETE; no C# Run
+runtime capability is implemented. Design is accepted in ADR-024; the planning
+task did not authorize implementation. The implemented capability matrix below still reports
 current production behavior (C# Run deferred/unimplemented). The planned extension
 is separate from Phase 5.5 intelligence and Phase 9 Exercise Runtime.
 

@@ -87,7 +87,7 @@ describe('JavaScriptRunStrategy', () => {
 describe('RunService preparation ownership (no execution)', () => {
   function setup() {
     const authority = { authorize: vi.fn(async () => target), resolveRuntime: vi.fn(async () => runtime) }
-    return { authority, service: new RunService(authority) }
+    return { authority, service: new RunService(authority, [new JavaScriptRunStrategy()]) }
   }
   it('generates opaque IDs in Main and does not expose executable data in session DTO', async () => {
     const { service, authority } = setup()

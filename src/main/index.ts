@@ -1,3 +1,4 @@
+import { JavaScriptRunStrategy } from './services/run/javascript-run-strategy'
 import { OllamaService } from './services/ai/ollama-service'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
@@ -146,8 +147,12 @@ void app.whenReady().then(async () => {
       assertOwner()
       return { projectId: target.projectId, relativePath: target.relativePath, ...file }
     },
-    resolveRuntime: () => nodeRuntime.resolve(),
-  }, {
+    resolveRuntime: ({ strategyKind }) => {
+      if (strategyKind !== 'javascript-file') throw new DomainError({ code: 'UNSUPPORTED',
+        message: 'Run runtime is not configured for this target.', operation: 'run:runtime', retryable: false })
+      return nodeRuntime.resolve()
+    },
+  }, [new JavaScriptRunStrategy()], {
     // Delay loading until an authorized Run; unsupported hosts retain normal IDE startup.
     adapter: { create: (execution, observe) => {
       runAdapter ??= new WindowsPipedProcessAdapter()

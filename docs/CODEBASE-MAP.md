@@ -243,9 +243,25 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 
 ## Planned C# Project Run modules — ADR-024 / Plan Section 13.7
 
-Status: `NOT_STARTED`; this table is a planning map, not an actual-source claim.
+Status: `IN_PROGRESS` with M1-01 contracts and M1-02 Main foundations COMPLETE; the module table below
+remains a planning map for later Run composition, not an actual-source claim.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
 No module below was created by the 2026-10-07 planning update.
+
+M1-01 actual foundation (2026-10-07): `src/shared/contracts/run.ts` now includes
+additive semantic targets, phases, C# resolution/failure DTOs and exact validators;
+`tests/contracts/run-validation.test.ts` provides 74 focused contract tests.
+Existing JS API/channels and Main/Preload/Renderer implementations remain unchanged.
+No planned C# Main module is actual yet; M1-03 and later remain NOT_STARTED.
+
+M1-02 actual foundation (2026-10-07): existing `run-service.ts` and
+`run-strategy.ts` own canonical identity, execution fingerprint, immutable
+preparation snapshots, constructor-only strategy registration and contextual
+runtime resolution. `javascript-run-strategy.ts` declares its kind; `main/index.ts`
+still composes JS only. `run-runtime.ts` exports the JS strategy for existing
+native smoke harnesses. New `tests/main/run-identity.test.ts` and extended Run
+lifecycle tests cover the foundation; existing tests/smokes explicitly inject JS.
+No new production module, native adapter change or IPC/UI implementation.
 
 | Domain / responsibility | Proposed path | Ownership / status |
 |---|---|---|

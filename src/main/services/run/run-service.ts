@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto'
 import { validateStartRunRequest, validateStopRunRequest, type RunEvent, type RunState,
   type RunSession, type RunSessionId, type StartRunRequest } from '../../../shared/contracts/run'
 import { DomainError, invalidInputError, serializeAppError } from '../../errors/app-error'
-import { normalizePathIdentity } from '../project/project-identity'
-import { JavaScriptRunStrategy } from './javascript-run-strategy'
-import type { AuthorizedRunTarget, PreparedRun, RunRuntime, RunStrategy } from './run-strategy'
+import { runTargetIdentity, runExecutionFingerprint, snapshotExecution,
+  type AuthorizedRunTarget, type PreparedRun, type RunRuntime, type RunStrategy,
+  type RunRuntimeContext } from './run-strategy'
 import type { PipedProcessAdapter, PipedProcessEvent, PipedRunProcess } from './piped-process-adapter'
 import type { ProcessManager } from '../process/process-manager'
 
@@ -12,11 +12,13 @@ import type { ProcessManager } from '../process/process-manager'
  * immediately before spawn. Renderer dirty/current-file state stays UI-owned. */
 export interface RunPreparationAuthority {
   authorize(target: StartRunRequest, ownerId: number): Promise<AuthorizedRunTarget>
-  resolveRuntime(): Promise<RunRuntime>
+  resolveRuntime(context: RunRuntimeContext): Promise<RunRuntime>
 }
 export interface RunPreparation {
   readonly session: RunSession
   readonly execution: PreparedRun
+  readonly identity: string
+  readonly fingerprint: string
 }
 interface OwnedPreparation extends RunPreparation { readonly ownerId: number }
 interface LifecycleSession {
@@ -50,7 +52,7 @@ interface LaunchLifecycle {
 export class RunService {
   private readonly preparations = new Map<RunSessionId, OwnedPreparation>()
   private readonly processes = new Map<RunSessionId, PipedRunProcess>()
-  private readonly strategies: readonly RunStrategy[] = [new JavaScriptRunStrategy()]
+  private readonly strategies: readonly RunStrategy[]
   private readonly sessions = new Map<RunSessionId, LifecycleSession>()
   private readonly targets = new Map<string, LifecycleSession>()
   private readonly starts = new Map<string, Promise<unknown>>()
@@ -65,45 +67,58 @@ export class RunService {
   // Small tombstones support late Stop without retaining processes/output indefinitely.
   private readonly completed = new Map<RunSessionId, { session: RunSession; ownerId: number }>()
   constructor(private readonly authority: RunPreparationAuthority,
-    private readonly execution?: RunExecutionOptions) {}
+    strategies: readonly RunStrategy[], private readonly execution?: RunExecutionOptions) {
+    const kinds = new Set<string>()
+    this.strategies = Object.freeze(strategies.map(strategy => {
+      if (!['javascript-file', 'csharp-project'].includes(strategy.kind) || kinds.has(strategy.kind)) {
+        throw invalidInputError('run:configure', ['strategy'])
+      }
+      kinds.add(strategy.kind)
+      return Object.freeze({ kind: strategy.kind, supports: strategy.supports.bind(strategy),
+        prepare: strategy.prepare.bind(strategy) })
+    }))
+  }
 
   private async resolve(request: StartRunRequest, ownerId: number): Promise<{
-    target: StartRunRequest; execution: PreparedRun
+    target: StartRunRequest; execution: PreparedRun; identity: string; fingerprint: string
   }> {
     const validation = validateStartRunRequest(request)
     if (!validation.ok) throw invalidInputError('run:prepare', validation.issues.map((issue) => issue.path))
     if (!Number.isSafeInteger(ownerId) || ownerId <= 0) throw invalidInputError('run:prepare', ['owner'])
     // Capture validated input before awaiting any Main authority operation.
-    const target = validation.value
+    const target = Object.freeze(validation.value)
     if (target.dirty) throw new DomainError({ code: 'INVALID_INPUT', retryable: false,
       operation: 'run:prepare', message: 'Save this file before running it.' })
-    const strategy = this.strategies.find((candidate) => candidate.supports(target))
+    const matches = this.strategies.filter((candidate) => candidate.supports(target))
+    if (matches.length > 1) throw invalidInputError('run:prepare', ['strategy'])
+    const strategy = matches[0]
     if (!strategy) throw new DomainError({ code: 'UNSUPPORTED', retryable: false,
       operation: 'run:prepare', message: target.relativePath.endsWith('.ts')
         ? 'TypeScript Run is not supported in current V1.'
         : 'Run supports JavaScript .js files only in current V1.' })
-    const authorized = await this.authority.authorize(target, ownerId)
+    const authorized = Object.freeze({ ...await this.authority.authorize(target, ownerId) })
     if (authorized.projectId !== target.projectId || authorized.relativePath !== target.relativePath) {
       throw invalidInputError('run:prepare', ['target'])
     }
-    const runtime = await this.authority.resolveRuntime()
-    const execution = strategy.prepare(authorized, runtime)
-    return { target, execution }
+    const identity = runTargetIdentity(authorized, strategy.kind)
+    const runtime = await this.authority.resolveRuntime(Object.freeze({ strategyKind: strategy.kind, target: authorized }))
+    const execution = snapshotExecution(strategy.prepare(authorized, runtime))
+    const fingerprint = runExecutionFingerprint(identity, authorized, execution)
+    return { target, execution, identity, fingerprint }
   }
 
   async prepare(request: StartRunRequest, ownerId: number): Promise<RunPreparation> {
-    const { target, execution } = await this.resolve(request, ownerId)
+    const { target, execution, identity, fingerprint } = await this.resolve(request, ownerId)
     // Preparations are serialized by target identity at the final synchronous insertion.
-    const identity = normalizePathIdentity(execution.args[0], 'win32')
     if ([...this.preparations.values()].some((entry) =>
-      normalizePathIdentity(entry.execution.args[0], 'win32') === identity)) {
+      entry.identity === identity)) {
       throw new DomainError({ code: 'PROCESS_FAILED', retryable: true,
         operation: 'run:prepare', message: 'The previous Run preparation must be released first.' })
     }
     const session: RunSession = Object.freeze({ projectId: target.projectId,
       relativePath: target.relativePath, sessionId: `run_${randomUUID()}` as RunSessionId,
       state: 'STARTING' })
-    const preparation = Object.freeze({ session, execution })
+    const preparation = Object.freeze({ session, execution, identity, fingerprint })
     this.preparations.set(session.sessionId, { ...preparation, ownerId })
     return preparation
   }
@@ -203,7 +218,7 @@ export class RunService {
     try { resolved = await this.resolve(request, ownerId) }
     catch (error) { throw safeStartError(error) }
     check()
-    const identity = normalizePathIdentity(resolved.execution.args[0], 'win32')
+    const identity = resolved.identity
     // Canonical target serialization preserves concurrency between different files.
     const previous = this.starts.get(identity) ?? Promise.resolve()
     const task = previous.catch(() => undefined).then(async () => {
@@ -217,7 +232,7 @@ export class RunService {
         this.releasePreparation(preparation.session.sessionId, ownerId)
         throw error
       }
-      if (normalizePathIdentity(preparation.execution.args[0], 'win32') !== identity) {
+      if (preparation.identity !== identity || preparation.fingerprint !== resolved.fingerprint) {
         this.releasePreparation(preparation.session.sessionId, ownerId)
         throw invalidInputError('run:start', ['target'])
       }
@@ -365,7 +380,8 @@ export class RunService {
     const owned = this.preparations.get(sessionId)
     if (!owned || owned.ownerId !== ownerId) throw new DomainError({ code: 'PERMISSION_DENIED',
       retryable: false, operation: 'run:session', message: 'Run session is not owned by this window.' })
-    return { session: owned.session, execution: owned.execution }
+    return Object.freeze({ session: owned.session, execution: owned.execution,
+      identity: owned.identity, fingerprint: owned.fingerprint })
   }
 
   /** Only unstarted preparations; never an execution/cleanup substitute. */
@@ -382,15 +398,12 @@ export class RunService {
     const preparation = this.getPreparation(sessionId, ownerId)
     if (this.processes.has(sessionId)) throw new Error('Preparation has already launched.')
     // Recheck project/disk/runtime authority after async preparation, before creation.
-    const current = await this.authority.authorize({ projectId: preparation.session.projectId,
+    const current = await this.resolve({ projectId: preparation.session.projectId,
       relativePath: preparation.session.relativePath, dirty: false }, ownerId)
-    const execution = this.strategies.find((strategy) => strategy.supports(current))!
-      .prepare(current, await this.authority.resolveRuntime())
+    const execution = current.execution
     this.getPreparation(sessionId, ownerId)
     if (this.processes.has(sessionId)) throw new Error('Preparation has already launched.')
-    if (current.projectId !== preparation.session.projectId
-      || current.relativePath !== preparation.session.relativePath
-      || normalizePathIdentity(execution.args[0], 'win32') !== normalizePathIdentity(preparation.execution.args[0], 'win32')) {
+    if (current.identity !== preparation.identity || current.fingerprint !== preparation.fingerprint) {
       throw invalidInputError('run:launch', ['target'])
     }
     let native: PipedRunProcess | undefined

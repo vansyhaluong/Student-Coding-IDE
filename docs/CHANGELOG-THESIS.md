@@ -1613,3 +1613,38 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   at 5000ms. Typecheck/lint passed. Light/dark Electron harness renders inspected
   with stock 14px text/16px bubble and prompt radii. Final production/native build
   and diff checks passed. No commit/push/merge.
+
+## C# Project Run M1-01 — Semantic Contracts & Validation (2026-10-07)
+
+- Added side-effect-free, discriminated JavaScript file/C# project target,
+  semantic start/session, execution phase, candidate/dependency/resolution and
+  safe failure DTOs with exact validators in shared/contracts/run.ts. Validation
+  covers lexical Windows paths, suffix/type, bounds, required/extra fields,
+  candidate membership/project match and inconsistent dependency/result variants.
+- Kept live JavaScript Run API/channels and legacy request/session/event behavior
+  intact. New DTOs are additive and intentionally rejected by legacy validators;
+  actual C# Run execution, Main authorization and IPC composition remain later work.
+  No RunService, native, UI, stdin, dependency or accepted ADR change.
+- Verified 178/178 focused/regression tests in six files; final new-contract rerun
+  74/74 PASS. Typecheck, final lint, production/native Windows build and diff checks
+  PASS. Full automated suite and live C# Windows acceptance were not run or claimed
+  for this contracts-only task. No commit/push/merge.
+- M1-01 COMPLETE; overall C# Run/M1 IN_PROGRESS. Every later task, including M1-02,
+  is NOT_STARTED and requires explicit authorization. M1-04 hard gate is unexecuted.
+
+## C# Project Run M1-02 — Identity & Runtime Foundations (2026-10-07)
+
+- Replaced RunService argv-derived identity with Main-authorized project/kind/
+  canonical-path identity. Immutable execution snapshots and SHA-256 fingerprints
+  reject target/runtime/execution drift between resolution, preparation and launch.
+- Injected fixed trusted strategies at construction; contextual runtime resolution
+  receives authorized target and kind. Main still composes JavaScript only.
+- Preserved public Run API, saved-file behavior, owner/session checks, re-run,
+  project transitions, shutdown and retained ownership on cleanup failure.
+- Added identity/runtime tests and re-run/fingerprint lifecycle regressions;
+  migrated existing test/smoke constructors. No native, IPC, UI or dependency change.
+- Verified: 202 focused tests, full suite 1185 tests / 84 files, typecheck, lint,
+  build and diff checks PASS. Three real Electron Windows JS smokes (native,
+  lifecycle, project lifecycle) PASS, including released resources/descendants.
+- M1-02 COMPLETE; M1 and overall C# Run remain IN_PROGRESS. M1-03 and M1-04
+  native/SDK work remain unimplemented. No ADR change, commit, push or merge.

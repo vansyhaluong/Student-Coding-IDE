@@ -1,3 +1,4 @@
+import { JavaScriptRunStrategy } from '../../src/main/services/run/javascript-run-strategy'
 import { describe, expect, it, vi } from 'vitest'
 import { ProjectService } from '../../src/main/services/project/project-service'
 import { FileSystemService, type FileSystemPort } from '../../src/main/services/filesystem/filesystem-service'
@@ -60,7 +61,7 @@ async function setup() {
   const authority = { authorize: vi.fn(async (target: { projectId: typeof project.id; relativePath: string }) => ({
     ...target, ...await files.authorizeRunFile(target.projectId, target.relativePath),
   })), resolveRuntime: vi.fn(async () => ({ executable: 'C:\\Node\\node.exe' })) }
-  const run = new RunService(authority, { adapter, manager, onEvent: (_owner, event) => events.push(event) })
+  const run = new RunService(authority, [new JavaScriptRunStrategy()], { adapter, manager, onEvent: (_owner, event) => events.push(event) })
   const failed = deferred<unknown>()
   const lifecycle = new RunProjectLifecycle(run, projects, files, (error) => failed.resolve(error))
   const window = { name: 'Window', stop: vi.fn() }

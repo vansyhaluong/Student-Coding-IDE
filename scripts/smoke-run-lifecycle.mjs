@@ -8,7 +8,7 @@ import { realpath, stat } from 'node:fs/promises'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
-const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, ProcessManager }
+const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, JavaScriptRunStrategy, ProcessManager }
   = require(resolve(root, 'out/main/run-runtime.js'))
 const projectId = 'project_1234567890abcdef12345678'
 const cwd = resolve(root, 'tests/fixtures/run')
@@ -28,7 +28,7 @@ const service = new RunService({
     return { projectId, relativePath: target.relativePath, canonicalRoot: cwd, canonicalFile }
   },
   resolveRuntime: () => detector.resolve(),
-}, { adapter: new WindowsPipedProcessAdapter(), manager,
+}, [new JavaScriptRunStrategy()], { adapter: new WindowsPipedProcessAdapter(), manager,
   onEvent: (owner, event) => {
     assert.equal(owner, 7)
     events.push(event)

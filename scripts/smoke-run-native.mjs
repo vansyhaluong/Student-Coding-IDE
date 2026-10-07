@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
-const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, ProcessManager }
+const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, JavaScriptRunStrategy, ProcessManager }
   = require(resolve(root, 'out/main/run-runtime.js'))
 const projectId = 'project_1234567890abcdef12345678'
 const cwd = resolve(root, 'tests/fixtures/run')
@@ -33,7 +33,7 @@ async function run() {
         canonicalFile: resolve(cwd, target.relativePath) }
     },
     resolveRuntime: async () => runtime,
-  })
+  }, [new JavaScriptRunStrategy()])
   for (let i = 0; i < 15; ++i) {
     const file = ['basic.js', 'nonzero.js', 'stream.js'][i % 3]
     const events = []
