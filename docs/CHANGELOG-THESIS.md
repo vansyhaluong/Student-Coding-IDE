@@ -1731,3 +1731,25 @@ M1-05 remains COMPLETE; M1-06 NOT_STARTED. No commit/push.
   are disclosed in `spikes/csharp-project-run/M1-05-REPORT.md`.
 - M1-05 COMPLETE; M1-06 READY but NOT_STARTED. M1 and overall C# Run IN_PROGRESS.
   No later task, commit, push or merge. Manual UI/packaged acceptance not claimed.
+
+## C# Project Run M1-06 — Discover and classify Console targets (2026-10-08)
+
+- Implemented Main-only `CsharpRunTargetResolver` with authorized bounded nested
+  discovery, stable canonical Windows deduplication, documented directory/link
+  exclusions, cancellation/project invalidation and final graph reauthorization.
+- Consumes unchanged production M1-05 evaluation; no XML classification. Console
+  eligibility excludes Library/Web/test/WPF/Forms/multi/unknown frameworks.
+  Recursive references are reauthorized, deduplicated and cycle/bound checked.
+- Preserved M1-01 DTOs. 0/1/multiple and partial assessment failures remain
+  distinct; no ambiguous target is auto-selected. No CsharpWorkspace selection
+  coupling, target persistence, IPC/UI, build/run/input or native changes.
+- Verification: 62 new tests; final full suite 1317/1317 in 87 files; typecheck,
+  lint, build and diff checks PASS. Real Windows 11 x64 SDK 8/10 smoke 14/14 PASS
+  with Web/test/WPF/Forms fixtures evaluated, no SKIP, and unchanged fixture trees.
+  116 native sessions released, 0 resources/new surviving .NET processes;
+  eight repeated handle counts all 687. No separate native regression rerun claim.
+- Evidence and reproduction: `spikes/csharp-project-run/M1-06-REPORT.md` and
+  `spikes/csharp-project-run/evidence/m1-06-targets.json`.
+- M1-06 COMPLETE; M1-07 READY but NOT_STARTED. M1 and overall C# Run IN_PROGRESS.
+  No new architecture decision/deviation, dependency, SDK/workload installation,
+  commit, push or merge. Full C# Run and packaged/manual UI acceptance remain later work.

@@ -443,8 +443,9 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 through M1-05 COMPLETE, including native
-argv, compatibility evidence and Run SDK/evaluation foundations. C# strategy
+the extension is `IN_PROGRESS` with M1-01 through M1-06 COMPLETE, including native
+argv, compatibility evidence, Run SDK/evaluation and target discovery/classification.
+M1-07 persistence is NOT_STARTED. C# strategy
 composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
@@ -593,6 +594,48 @@ eligibility/reason and typed resolution state. No eligible project yields
 not a misleading empty result. An unassessable candidate prevents claiming there
 is exactly one valid project. Present failures and allow explicit selection of a
 known eligible project; never silently ignore a broken candidate.
+
+M1-06 implementation: Main-only `CsharpRunTargetResolver.resolve(projectId, signal)`
+gets the active authority from ProjectService; it accepts no root/glob/options,
+LSP selection or editor state. It lists through FileSystemService, orders paths
+by normalized Windows identity with a code-unit tie-break, authorizes canonical
+files and deduplicates before invoking M1-05. The bounds above count all entries
+and unique discovered/referenced projects; relative paths use M1-01's 4096-character
+limit. Exclusions apply to discovery; an explicitly evaluated reference in an
+excluded directory must still be authorized and evaluated within the same limits.
+No solution parsing or solution membership filtering is used.
+
+Classification requires explicit SDK=true and OutputType=Exe; Web/test/WPF/Forms
+flags must be empty/false. Missing required facts or invalid boolean facts are
+UNASSESSABLE. Known modern TFMs net5.0 through net10.0 (plain or Windows-qualified)
+must not exceed the effective SDK major. Other platform/unknown/future TFMs are
+rejected, not guessed. A nonempty TargetFrameworks declaration, even a singleton,
+is rejected; no framework is selected from a list. Nonempty framework identifier
+and version must agree with .NETCoreApp and the single TFM; empty computed values
+are allowed only with the unambiguous known TFM and explicit evaluated SDK flag.
+This validates shape, not installed runtime/targeting packs or future build success.
+
+References are normalized relative to the canonical referring project, checked
+lexically for containment and reauthorized by FileSystemService. Absolute facts
+are accepted only inside that authority; drive-relative/device paths are rejected.
+Canonical graph nodes are evaluated once, with cycle detection and transitive
+failure propagation. A cycle, missing/external reference or failed reference
+evaluation makes the dependent candidate UNASSESSABLE/INVALID_PROJECT_REFERENCE.
+The 64-node bound also bounds graph depth; M1-05's 64-reference-per-node bound
+limits graph edges. No unbounded recursion or partial auto-choice occurs.
+
+Existing M1-01 resolution DTOs remain unchanged. Main-only assessments retain
+per-candidate classification detail/TFM/dependency reason, including when the
+wire FAILED result has no candidate list. Zero eligible with all candidates
+ineligible yields NO_RUNNABLE_PROJECT; one eligible and no unassessable yields
+READY with a semantic target only; multiple eligible or eligible plus unassessable
+yields SELECTION_REQUIRED without a target. With no eligible, SDK-only assessment
+failures yield DEPENDENCY_FAILED; other failures yield FAILED/PREFLIGHT_FAILED.
+Bounds, cancellation, project invalidation and retained-cleanup errors fail the
+whole operation. Project changes abort the supplied evaluator signal; listeners
+are removed in finally. The complete graph is reauthorized before cardinality.
+Results are not cached or launch authority. No app/IPC/UI composition, target
+store, CSharpRunStrategy, build/run or input is added by M1-06.
 
 `CSharpRunTargetStore` uses separate versioned Main JSON persistence keyed by
 canonical project identity, storing only relative selected `.csproj`. Revalidate

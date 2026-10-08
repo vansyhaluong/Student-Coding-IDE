@@ -8,7 +8,7 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `IN_PROGRESS`; M1-01 through M1-05 COMPLETE; M1-06 NOT_STARTED (READY);
+Status: `IN_PROGRESS`; M1-01 through M1-06 COMPLETE; M1-07 NOT_STARTED (READY);
 no CSharpRunStrategy or production Console input is implemented; no C# Run
 runtime capability is implemented. Design is accepted in ADR-024; the planning
 task did not authorize implementation. The implemented capability matrix below still reports
@@ -21,6 +21,14 @@ SDK 10/net10 on Windows 11 x64. CLI honors candidate/ancestor global.json; Run
 does not reuse the language detector's SDK >=10 eligibility rule. Evaluation
 returns facts, including Library and multi-target data; it does not expose a C#
 Run capability, select targets or certify runtime/targeting-pack availability.
+
+M1-06 adds Main-only bounded independent .csproj discovery, evaluated Console
+classification and recursive in-root reference validation. Existing semantic
+resolution distinguishes zero/one/multiple eligible targets and unassessable
+candidates; multiple or partially unassessable results never choose a target.
+Real SDK 8/net8 and SDK 10/net10 classification smoke is 14/14 PASS on Windows 11
+x64, including Web, test, WPF and WinForms rejection. No language workspace
+selection, persistence, build/run capability, picker or Console input is added.
 
 Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
 Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore
