@@ -2,6 +2,18 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## C# Run pre-UI R1 — IPC phase metadata retirement (2026-10-08)
+
+- Reproduced stale IPC phase metadata after unavailable project cleanup: terminal
+  session/resources retired, public events muted, one phase record still retained.
+- Added a Main-only RunService finalization callback to retire only the matching
+  owner/session metadata independently of public event delivery. Active/failed
+  cleanup records remain until terminal cleanup, including reload/IPC shutdown.
+- 6 new R1 cases and 153 focused Run IPC/lifecycle/Preload tests PASS; typecheck,
+  scoped ESLint and diff checks PASS. No native/command policy/public contract/UI
+  change; no full suite/build/native smoke, R2 implementation or commit/push/merge.
+- M1-11 remains NOT_STARTED; M1 and overall C# Run remain IN_PROGRESS.
+
 ## C# Project Run M1-10 — Typed IPC/Preload integration (2026-10-08)
 
 - Extended studentIde.run with semantic target resolve/select/clear/cancel,

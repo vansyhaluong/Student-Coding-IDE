@@ -191,6 +191,7 @@ void app.whenReady().then(async () => {
     onEvent: (ownerId, event) => /\.csproj$/i.test(event.session.relativePath)
       ? runIpcReference.current?.publish(ownerId, event) : publishToRenderer(ownerId, RUN_CHANNELS.event, event),
     onPhase: (ownerId, session, phase) => runIpcReference.current?.publishPhase(ownerId, session, phase),
+    onFinalized: (ownerId, session) => runIpcReference.current?.retireSession(ownerId, session),
     onEventSinkError: () => console.error('A Run event could not be delivered.'),
     sourceGuard: runSourceGuard,
   })

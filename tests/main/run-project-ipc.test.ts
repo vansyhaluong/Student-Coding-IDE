@@ -35,7 +35,9 @@ async function setup(paths = ['App.csproj']) {
   cleanups.push(() => rm(temp, { recursive: true, force: true }))
   await mkdir(root); for (const path of paths) await writeFile(join(root, path), '')
   const projects = new ProjectService(), project = await projects.openRoot(root)
-  const files = new FileSystemService(projects, { watchFactory: () => ({ close() {} }), trashItem: async () => {} })
+  let watchError!: (error: unknown) => void
+  const files = new FileSystemService(projects, { watchFactory: () => ({ close() {},
+    onError: callback => { watchError = callback } }), trashItem: async () => {} })
   files.start()
   cleanups.push(async () => { files.stop(); await projects.stop() })
   const execute = vi.fn<RunSdkProbe['execute']>(async (_exe, command) => ({ exitCode: 0, stderr: '',
@@ -81,22 +83,25 @@ async function setup(paths = ['App.csproj']) {
   type Listener = (event: { readonly sender?: unknown }, payload: unknown) => void
   const listeners = new Map<string, Set<Listener>>()
   const send = (channel: string, event: unknown) => { for (const listener of listeners.get(channel) ?? []) listener({}, event) }
-  const children: { emit(event: PipedProcessEvent): void; finish(code?: number): void }[] = []
+  const children: { emit(event: PipedProcessEvent): void; finish(code?: number): void; close: ReturnType<typeof vi.fn<() => Promise<void>>> }[] = []
   const adapter = { create: vi.fn((_spec: unknown, emit: (event: PipedProcessEvent) => void) => {
     let released = false, exited = false
     const finish = (exitCode = 0) => { if (!exited) { exited = true; emit({ type: 'exit', exitCode }) }
       emit({ type: 'stdout-eof' }); emit({ type: 'stderr-eof' }) }
-    children.push({ emit, finish })
+    const close = vi.fn(async () => { finish(); released = true })
+    children.push({ emit, finish, close })
     return { ownership: { mode: 'LEGACY_ROOT_OWNED' as const, rootPid: 12 }, settled: Promise.resolve(),
-      close: async () => { finish(); released = true }, isReleased: () => released }
+      close, isReleased: () => released }
   }) }
   const run = new RunService({ authorize: async target => ({ ...target, ...await files.authorizeRunFile(target.projectId, target.relativePath) }),
     resolveRuntime: context => context.strategyKind === 'javascript-file' ? Promise.resolve({ executable: 'C:\\node\\node.exe' }) : preparation.resolve(context),
   }, [new CSharpRunStrategy(), new JavaScriptRunStrategy()], { manager, adapter, sourceGuard: guard,
     onEvent: (owner, event) => /\.csproj$/i.test(event.session.relativePath) ? ipc.publish(owner, event) : send(RUN_CHANNELS.event, event),
     onPhase: (owner, session, phase) => ipc.publishPhase(owner, session, phase),
+    onFinalized: (owner, session) => ipc.retireSession(owner, session),
   })
-  const runLifecycle = new RunProjectLifecycle(run, projects, files, error => { throw error })
+  const cleanupErrors: unknown[] = []
+  const runLifecycle = new RunProjectLifecycle(run, projects, files, error => { cleanupErrors.push(error) })
   runLifecycle.start()
   const ipc = new RunIpcService(registry, run, () => {}, { targets, authorize,
     start: (request, owner) => run.startPlannedRun(request, owner), publish: (_owner, event) => send(RUN_PROJECT_CHANNELS.event, event) })
@@ -113,13 +118,106 @@ async function setup(paths = ['App.csproj']) {
   const wait = (count: number) => vi.waitFor(() => expect(children).toHaveLength(count))
   const terminal = () => vi.waitFor(() => expect(events.some(event => event.type === 'exit')).toBe(true))
   return { temp, root, project, projects, files, manager, targets, scopes, createScope, execute, handlers, api, transport,
-    ipc, run, events, legacy, children, adapter, target, start, wait, terminal, off, send, listeners,
+    ipc, run, events, legacy, children, adapter, target, start, wait, terminal, off, send, listeners, cleanupErrors,
+    unavailable: () => watchError(new Error('watch root unavailable')),
     dirty: () => { dirty = true }, noReply: () => { reply = false }, owner: (id: number) => { ownerId = id },
     reload: async () => { frameToken = 'reloaded'; await Promise.all([ipc.invalidateOwner(7), run.stopOwner(7)]) },
   }
 }
 
 describe('M1-10 production IPC/preload/store/strategy/guard integration', () => {
+  it('R1 retires unavailable session phase metadata without unmuting events across repeated reopen', async () => {
+    const h = await setup()
+    for (let cycle = 0; cycle < 3; ++cycle) {
+      const result = await h.start()
+      if (!result.ok) throw Error('missing session')
+      await h.wait(cycle + 1)
+      expect(h.ipc['phases'].size).toBe(1)
+      h.unavailable()
+      const count = h.events.length
+      await h.run.stopProject(h.project.id)
+      expect(h.run.getSession(result.value.sessionId, 7).state).toBe('CANCELLED')
+      expect(h.manager.size).toBe(0)
+      expect(h.events).toHaveLength(count)
+      expect(h.ipc['phases'].size).toBe(0)
+      h.children[cycle].emit({ type: 'stdout', data: 'stale unavailable output' })
+      expect(h.events).toHaveLength(count)
+      await h.projects.openRoot(h.root)
+    }
+  })
+  it('R1 retains unavailable failed-cleanup metadata until successful Stop retry', async () => {
+    const h = await setup(), result = await h.start()
+    if (!result.ok) throw Error('missing session')
+    await h.wait(1)
+    const close = h.children[0].close, original = close.getMockImplementation()!
+    close.mockRejectedValue(new Error('retained native cleanup'))
+    h.unavailable()
+    const count = h.events.length
+    await vi.waitFor(() => expect(h.cleanupErrors).toHaveLength(1))
+    expect(h.run.getSession(result.value.sessionId, 7).state).toBe('STOPPING')
+    expect(h.manager.size).toBeGreaterThan(0)
+    expect(h.ipc['phases'].has(result.value.sessionId)).toBe(true)
+    expect(h.events).toHaveLength(count)
+    close.mockImplementation(original)
+    expect((await h.api.stop(result.value.sessionId)).ok).toBe(true)
+    expect(h.ipc['phases'].size).toBe(0)
+    expect(h.manager.size).toBe(0)
+    expect(h.events).toHaveLength(count)
+  })
+  it('R1 retires only the finalized session and preserves another active target', async () => {
+    const h = await setup(['A.csproj', 'B.csproj'])
+    await h.api.selectTarget(h.target('A.csproj'))
+    const first = await h.start('A.csproj'); await h.wait(1)
+    await h.api.selectTarget(h.target('B.csproj'))
+    const next = await h.start('B.csproj'); await h.wait(2)
+    if (!first.ok || !next.ok) throw Error('missing sessions')
+    expect(h.ipc['phases'].size).toBe(2)
+    const active = h.run.getSession(next.value.sessionId, 7)
+    h.ipc.retireSession(7, active)
+    h.ipc.retireSession(8, { ...active, state: 'CANCELLED' })
+    expect(h.ipc['phases'].size).toBe(2)
+    await h.api.stop(first.value.sessionId)
+    h.ipc.retireSession(7, h.run.getSession(first.value.sessionId, 7))
+    expect(h.ipc['phases'].size).toBe(1)
+    expect(h.ipc['phases'].has(next.value.sessionId)).toBe(true)
+    const count = h.events.length
+    h.children[0].emit({ type: 'stdout', data: 'stale' })
+    expect(h.events).toHaveLength(count)
+    await h.api.stop(next.value.sessionId)
+    expect(h.ipc['phases'].size).toBe(0)
+  })
+  it.each(['reload', 'shutdown'] as const)('R1 %s preserves failed-cleanup metadata until terminal cleanup', async ending => {
+    const h = await setup(), result = await h.start()
+    if (!result.ok) throw Error('missing session')
+    await h.wait(1)
+    const close = h.children[0].close, original = close.getMockImplementation()!
+    close.mockRejectedValue(new Error('retained native cleanup'))
+    const count = h.events.length
+    if (ending === 'reload') await expect(h.reload()).rejects.toThrow()
+    else {
+      await h.ipc.stop()
+      await expect(h.run.stop()).rejects.toThrow()
+    }
+    expect(h.ipc['phases'].has(result.value.sessionId)).toBe(true)
+    expect(h.manager.size).toBeGreaterThan(0)
+    expect(h.events).toHaveLength(count)
+    close.mockImplementation(original)
+    await h.run.stopRun(result.value.sessionId, 7)
+    expect(h.ipc['phases'].size).toBe(0)
+    expect(h.manager.size).toBe(0)
+    expect(h.events).toHaveLength(count)
+  })
+  it('R1 retires phase metadata on project close before reopening', async () => {
+    const h = await setup(); await h.start(); await h.wait(1)
+    await h.projects.closeProject()
+    expect(h.ipc['phases'].size).toBe(0)
+    await h.projects.openRoot(h.root)
+    const result = await h.start(); await h.wait(2)
+    if (!result.ok) throw Error('missing session')
+    expect([...h.ipc['phases'].keys()]).toEqual([result.value.sessionId])
+    await h.api.stop(result.value.sessionId)
+    expect(h.ipc['phases'].size).toBe(0)
+  })
   it('resolves one target without persisting and returns only semantic candidates', async () => {
     const h = await setup(), result = await h.api.resolveTargets({ projectId: h.project.id })
     expect(result).toMatchObject({ ok: true, value: { state: 'READY', target: h.target() } })

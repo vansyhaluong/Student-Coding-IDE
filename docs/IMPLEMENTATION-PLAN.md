@@ -4476,6 +4476,21 @@ acceptance is claimed by this docs-only task.
 - No full suite, build or native smoke: execution policy and native adapters are
   unchanged. Commands/API examples: `spikes/csharp-project-run/M1-10-REPORT.md`.
 
+#### Pre-UI R1 corrective verification — 2026-10-08
+
+- Confirmed post-completion M1-10 phase metadata leak with a failing C# IPC
+  unavailable/reopen test: session CANCELLED and manager resources 0, phase records 1.
+  R1 corrective work is complete; M1-10 remains COMPLETE after focused revalidation.
+- Added Main-only terminal notification to existing RunService finalization,
+  composed with owner/session-scoped IPC metadata retirement. Muted events stay
+  muted; active/failed-cleanup records survive owner invalidation and IPC shutdown
+  until actual finalization. No execution policy, native, contracts or JS flow changes.
+- 6 new R1 cases PASS; 153 focused tests in 6 files PASS, plus typecheck/scoped
+  ESLint/diff checks. Unavailable/repeated reopen, session isolation, Stop/close,
+  reload/shutdown retained failure and retry verified with controlled process ports.
+- Evidence/commands: `spikes/csharp-project-run/M1-PRE-UI-REVIEW.md` R1 follow-up.
+  No full suite/build/native smoke; R2 and M1-11 are not implemented.
+
 M1-01 through M1-10 (including M1-09a) are COMPLETE. Next eligible task is **M1-11**,
 requiring explicit authorization. M1-11 target picker/Run/Output UI remains NOT_STARTED.
 Neither milestone nor

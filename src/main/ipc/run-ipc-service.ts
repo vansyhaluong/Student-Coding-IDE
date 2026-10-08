@@ -95,8 +95,14 @@ export class RunIpcService implements ManagedService {
   }
   async invalidateOwner(ownerId: number): Promise<void> {
     this.generations.set(ownerId, (this.generations.get(ownerId) ?? 0) + 1)
-    for (const [id, record] of this.phases) if (record.owner === ownerId) this.phases.delete(id)
     if (this.project?.targets.ownerId === ownerId) await this.project.targets.cancel(ownerId)
+  }
+  /** Main-only cleanup notification; never delivers a public event. Keep active
+   * and failed-cleanup records until RunService actually finalizes the session.
+   */
+  retireSession(ownerId: number, session: RunSession): void {
+    if (['EXITED', 'FAILED', 'CANCELLED'].includes(session.state)
+      && this.phases.get(session.sessionId)?.owner === ownerId) this.phases.delete(session.sessionId)
   }
   /** Main-only event adapter; Renderer never receives legacy execution internals. */
   publishPhase(owner: number, session: RunSession, phase: RunExecutionPhase): void {
@@ -127,6 +133,8 @@ export class RunIpcService implements ManagedService {
     this.stopped = true
     for (const remove of this.cleanup.splice(0).reverse()) remove()
     await this.project?.targets.stop()
-    this.phases.clear(); this.generations.clear()
+    // RunService may still own active/failed-cleanup sessions during IPC shutdown.
+    // Its terminal callback retires their metadata after mandatory cleanup.
+    this.generations.clear()
   }
 }

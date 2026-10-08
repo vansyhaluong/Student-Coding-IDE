@@ -55,6 +55,8 @@ export interface RunExecutionOptions {
   onEventSinkError?(error: unknown): void
   /** Main-only phase observation; no public IPC migration in M1-08. */
   onPhase?(ownerId: number, session: RunSession, phase: RunExecutionPhase): void
+  /** Main-only terminal bookkeeping, independent of muted public event delivery. */
+  onFinalized?(ownerId: number, session: RunSession): void
   sourceGuard?: RunSourceGuardPort
 }
 interface LaunchLifecycle {
@@ -614,6 +616,8 @@ export class RunService {
     if (this.completed.size > 128) this.completed.delete(this.completed.keys().next().value!)
     this.emit(entry, { type: 'state', session: entry.session })
     this.emit(entry, { type: 'exit', session: entry.session, exitCode: entry.exitCode })
+    try { this.execution?.onFinalized?.(entry.ownerId, entry.session) }
+    catch { this.execution?.onEventSinkError?.(runFailure('run:event', 'Run finalization notification failed.')) }
   }
 
   private emitError(entry: LifecycleSession, error: DomainError): void {

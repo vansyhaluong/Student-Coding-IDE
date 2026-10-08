@@ -819,8 +819,11 @@ Sending another candidate cannot replace the stored target or bypass the guard.
 
 RunService's Main-only event/phase callbacks feed `run:project-event`, with semantic
 C# session snapshots, phase, stdout/stderr, terminal exit and validated failure unions.
-Raw AppError/native details are reduced to allowlisted reasons. Phase records retire
-on exit/owner invalidation/shutdown. JS events remain on `run:event`, with no duplicate
+Raw AppError/native details are reduced to allowlisted reasons. A Main-only
+RunService `onFinalized` notification retires IPC phase records even when public
+events are muted. Owner invalidation/IPC shutdown do not discard active or retained
+failed-cleanup records; terminal cleanup retires them without public event delivery.
+Normal public exit also retires its record. JS events remain on `run:event`, with no duplicate
 delivery. RunService retains canonical session serialization, re-run ownership,
 generation checks and stale-process suppression. No new Run lifecycle or UI exists.
 
