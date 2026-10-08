@@ -8,12 +8,19 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `IN_PROGRESS`; M1-01 through M1-04 COMPLETE; M1-05 NOT_STARTED (READY);
+Status: `IN_PROGRESS`; M1-01 through M1-05 COMPLETE; M1-06 NOT_STARTED (READY);
 no CSharpRunStrategy or production Console input is implemented; no C# Run
 runtime capability is implemented. Design is accepted in ADR-024; the planning
 task did not authorize implementation. The implemented capability matrix below still reports
 current production behavior (C# Run deferred/unimplemented). The planned extension
 is separate from Phase 5.5 intelligence and Phase 9 Exercise Runtime.
+
+M1-05 provides Main-only contextual Run SDK resolution (stable SDK >=8) and
+structured single-project MSBuild evaluation, verified with real SDK 8/net8 and
+SDK 10/net10 on Windows 11 x64. CLI honors candidate/ancestor global.json; Run
+does not reuse the language detector's SDK >=10 eligibility rule. Evaluation
+returns facts, including Library and multi-target data; it does not expose a C#
+Run capability, select targets or certify runtime/targeting-pack availability.
 
 Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
 Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore

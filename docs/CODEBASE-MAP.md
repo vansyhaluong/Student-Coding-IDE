@@ -244,8 +244,8 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 ## Planned C# Project Run modules — ADR-024 / Plan Section 13.7
 
 Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations, M1-03 native argv
-and M1-04 isolated compatibility evidence COMPLETE; M1-05 NOT_STARTED. The module table below
-remains a planning map for later Run composition, not an actual-source claim.
+M1-04 isolated compatibility evidence and M1-05 resolver/evaluation COMPLETE;
+M1-06 NOT_STARTED. The module table distinguishes actual foundations from planned composition.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
 No module below was created by the 2026-10-07 planning update.
 
@@ -253,7 +253,7 @@ M1-01 actual foundation (2026-10-07): `src/shared/contracts/run.ts` now includes
 additive semantic targets, phases, C# resolution/failure DTOs and exact validators;
 `tests/contracts/run-validation.test.ts` provides 74 focused contract tests.
 Existing JS API/channels and Main/Preload/Renderer implementations remain unchanged.
-No planned C# Main module is actual yet; later production composition remains deferred.
+At M1-01 no planned C# Main module was actual; later production composition remains deferred.
 
 M1-02 actual foundation (2026-10-07): existing `run-service.ts` and
 `run-strategy.ts` own canonical identity, execution fingerprint, immutable
@@ -279,15 +279,25 @@ fixtures, README/REPORT and recorded JSON evidence. The probe compiles existing
 pipe/Job primitives separately; production native code and app composition are
 unchanged. Windows 11 x64/net8.0+net10.0 has 32/32 passing cases; M1-04 is COMPLETE
 under ADR-024's platform scope amendment. Windows 10 is outside the verified C#
-Project Run acceptance baseline; compatibility is not claimed. M1-05 is READY
-from this gate but NOT_STARTED. No production strategy or stdin is implemented.
+Project Run acceptance baseline; compatibility is not claimed. This gate enabled
+the subsequently completed M1-05 foundation. No production strategy or stdin is implemented.
+
+M1-05 actual foundation (2026-10-07): `dependencies/dotnet-run-runtime.ts` owns
+Run SDK policy/context; `run/csharp-run-preflight.ts` authorizes and evaluates one
+candidate; `run/csharp-run-probe.ts` bounds fixed native commands and retains
+ProcessManager ownership through cleanup. `run-runtime.ts` exports these Main-only
+modules for verification/later composition; `main/index.ts` still composes JS only.
+`tests/main/csharp-run-preflight.test.ts` has 60 focused tests; the real
+`scripts/smoke-csharp-run-preflight.mjs` and
+`spikes/csharp-project-run/evidence/m1-05-preflight.json` record 20 passing cases.
 
 | Domain / responsibility | Proposed path | Ownership / status |
 |---|---|---|
 | C# fixed build/run strategy | `src/main/services/run/csharp-run-strategy.ts` | Main Run domain; planned |
-| Console target discovery/evaluation | `src/main/services/run/csharp-run-target-resolver.ts`, `csharp-run-preflight.ts` in that directory | Main; planned; not CsharpWorkspace or LSP session |
+| Console target discovery | `src/main/services/run/csharp-run-target-resolver.ts` | Main; planned M1-06; no classification/selection implemented |
+| Single-project facts and bounded probes | `src/main/services/run/csharp-run-preflight.ts`, `csharp-run-probe.ts` | Actual M1-05; Main Run ownership, no CsharpWorkspace/LSP session reuse |
 | Remembered Run target | `src/main/services/run/csharp-run-target-store.ts` | Main versioned JSON store; planned; separate from IntelliSense store |
-| Run SDK eligibility | `src/main/services/dependencies/dotnet-run-runtime.ts` | Main; planned; shared inventory helpers, independent Run policy |
+| Run SDK eligibility | `src/main/services/dependencies/dotnet-run-runtime.ts` | Actual M1-05; shared executable validation, independent Run >=8 policy and CLI-selected SDK |
 | Saved-source preparation guard | `src/main/services/run/run-source-guard.ts` | Main Run-owned bounded Renderer handshake; planned; no Monaco ownership |
 | Bounded stdin queue | `src/main/services/run/run-input-queue.ts` | Main Run session; planned M2 |
 | Existing identity/plan/process seams | `src/main/services/run/run-service.ts`, `run-strategy.ts`, `piped-process-adapter.ts`, `windows-piped-process-adapter.ts`, `native/run-process.cpp` | Existing actual modules; planned extension with JS/Git/LSP regressions |

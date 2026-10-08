@@ -168,7 +168,7 @@ before affected work continues.
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
 | Phase 9 — Learning / Programming Techniques | `NOT_STARTED` | Planned 9A–9G; Section 13.6; explicit implementation authorization required |
-| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01 through M1-04 COMPLETE; Windows 11 x64 scope; M1-05 READY but NOT_STARTED; remaining tasks NOT_STARTED; Section 13.7 |
+| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01 through M1-05 COMPLETE; Windows 11 x64 scope; M1-06 READY but NOT_STARTED; remaining tasks NOT_STARTED; Section 13.7 |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
 `COMPLETE`. A status may become `COMPLETE` only after its exit gate passes.
@@ -3925,14 +3925,16 @@ and function-signature exercise harnesses are outside this foundation.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 
-Status: `IN_PROGRESS`. M1-01 through M1-04 are explicitly authorized and `COMPLETE`;
+Status: `IN_PROGRESS`. M1-01 through M1-05 are explicitly authorized and `COMPLETE`;
 M1-04's isolated spike passes 32/32 cases on Windows 11 x64 under the revised
-ADR-024 acceptance scope. M1-05 is READY from this gate but NOT_STARTED. All later tasks and
+ADR-024 acceptance scope. M1-05's production resolver/evaluation is verified;
+M1-06 is READY but NOT_STARTED. All later tasks and
 Milestone 2 remain `NOT_STARTED`. The 2026-10-07 planning
 authorization was documentation-only; subsequent authorization is limited to
 M1-01 contracts/validation, M1-02 identity/runtime foundations and M1-03 native
-argument arrays with closed stdin, followed by M1-04 isolated native/SDK evidence.
-No later production implementation is authorized. This package is a bounded Project Run extension,
+argument arrays with closed stdin, followed by M1-04 isolated native/SDK evidence
+and M1-05 Run-specific SDK resolution/structured evaluation. No M1-06 or later
+production implementation is authorized. This package is a bounded Project Run extension,
 not Phase 5.5 reopening, Phase 9D implementation or authorization for later tasks.
 Traceability: FR-023 C# extension / FR-024, Architecture Section 10, ADR-024,
 Codebase Map planned C# Run modules, Language Support planned Project Run scope.
@@ -4007,8 +4009,8 @@ only if evidence requires a design change.
 
 ### Milestone 1 — C# Project Run Core
 
-Status: `IN_PROGRESS`. M1-01 through M1-04 COMPLETE; M1-05–M1-12 (including M1-09a)
-NOT_STARTED. M1-05 prerequisites from M1-04 are satisfied (READY).
+Status: `IN_PROGRESS`. M1-01 through M1-05 COMPLETE; M1-06–M1-12 (including M1-09a)
+NOT_STARTED. M1-06 prerequisites from M1-05 are satisfied (READY).
 No later implementation authorization is inferred.
 
 | ID | Công việc | File/module dự kiến | Phụ thuộc | Kết quả đầu ra | Tiêu chí hoàn thành |
@@ -4017,7 +4019,7 @@ No later implementation authorization is inferred.
 | M1-02 | COMPLETE — Replace argv-derived identity; inject fixed strategies and contextual runtime resolution | run/run-service.ts, run-strategy.ts, javascript-run-strategy.ts; main/index.ts; run-identity/foundation/lifecycle tests | M1-01 | Immutable authorized identity and fingerprint; JS-only composition verified | All RunService args[0] identity sites removed; 202 focused tests, 1185 full-suite tests, quality gates and three native JS smokes PASS |
 | M1-03 | COMPLETE — Generalize Windows argv with closed stdin mode | run/windows-piped-process-adapter.ts, piped-process-adapter.ts, native/run-process.cpp; smoke-run-native.mjs | M1-02 | Bounded argument-array launch, proper quoting/handles/environment | Native round-trip/bounds/closed stdin and Job cleanup PASS; JS/Terminal/Git/LSP regression PASS; 1195 tests and quality gates PASS |
 | M1-04 | COMPLETE — Windows 11 x64 compatibility gate PASS | spikes/csharp-project-run/REPORT.md and unchanged evidence/results.json, evidence/verification.json; no app composition | M1-03; explicitly authorized spike and scope revision | Real SDK 8.0.410/net8.0 and 10.0.112/net10.0; 32/32 PASS; stdin/EOF/blocked-write prototype | Flags/restore/build Stop, retained descendants, worker no-reuse, resource cleanup and regressions PASS; Windows 11 x64 evidence satisfies revised hard gate |
-| M1-05 | Add Run SDK resolver and structured evaluation | planned dependencies/dotnet-run-runtime.ts; run/csharp-run-preflight.ts; tests/main/csharp-run-preflight.test.ts | M1-04 | PATH inventory, candidate-cwd CLI SDK selection and evaluated JSON; independent from LSP | Missing/invalid SDK, incompatible global.json, TFM and probe timeout/cancellation fixtures; language SDK >=10 unchanged |
+| M1-05 | COMPLETE — Run SDK resolver and structured evaluation | dependencies/dotnet-run-runtime.ts; run/csharp-run-preflight.ts; run/csharp-run-probe.ts; tests/main/csharp-run-preflight.test.ts; scripts/smoke-csharp-run-preflight.mjs | M1-04 COMPLETE; explicitly authorized | Main PATH inventory, CLI-selected candidate SDK >=8 and fixed Debug MSBuild facts; independent from LSP | 60 focused/214 focused+regression tests; real Windows 11 SDK 8/10 smoke 20/20; 1255 full-suite tests and quality/native regression gates PASS; no M1-06 classification |
 | M1-06 | Discover and classify runnable Console targets | planned run/csharp-run-target-resolver.ts; tests/main/csharp-run-targets.test.ts | M1-05 | Bounded nested candidates and recursive ProjectReference checks | One/multiple/none; exclusion/symlink/case duplicates; ambiguous framework/Web/GUI/test/library reject; broken candidate and bound overflow surfaced |
 | M1-07 | Persist independent per-project selection | planned run/csharp-run-target-store.ts; existing persistence internals; target-store tests | M1-06 | Versioned relative-path selection, revalidation/recovery | Restart persistence; rename/delete/stale choice; atomic write failure/corrupt recovery; LSP selection untouched |
 | M1-08 | Add cancellable execution-plan/session lifecycle | run/run-service.ts, run-strategy.ts, run-project-lifecycle.ts; run-lifecycle/project-lifecycle tests | M1-02/M1-03; M1-04 before real C# launch | JS one-step/C# two-step seam; early STARTING, preparation cancellation, step generations, retained cleanup | Stop during owned probes, build, step gap; old callback suppression; intermediate exit not final; cleanup failure blocks replacement/project switch/shutdown |
@@ -4174,6 +4176,57 @@ No later implementation authorization is inferred.
   obligation. M1-05 is READY from this gate but NOT_STARTED; explicit authorization
   is still required. No repository commit/push/merge.
 
+#### M1-05 resolver/evaluation verification — 2026-10-07
+
+Completion revalidation (2026-10-08): unchanged implementation; fresh full suite
+1255/1255 (86 files), typecheck/lint/build/diff checks and real production smoke
+20/20 PASS. All 77 native sessions released, resources/new surviving processes 0,
+eight handle measurements 677. Five source hashes match the original evidence.
+See `spikes/csharp-project-run/M1-05-REPORT.md` and
+`spikes/csharp-project-run/evidence/m1-05-revalidation-2026-10-08.json`.
+M1-05 remains COMPLETE; M1-06 remains NOT_STARTED. No new production scope.
+
+- Authorized M1-05 only after COMPLETE M1-01–M1-04. Started on
+  `feature/csharp-project-run` with clean status/diff; no unrelated changes to
+  preserve. No unresolved decision gate or new dependency; ADR-024 unchanged.
+- Main-only `DotnetRunRuntimeResolver` validates a PATH dotnet executable and
+  bounds inventory, then queries CLI `--version` in each canonical candidate cwd.
+  Stable SDK >=8 policy is independent of language SDK >=10. Nearest ancestor
+  global.json syntax/known-field diagnostics are bounded (64 levels/64 KiB);
+  CLI retains all SDK selection and roll-forward semantics.
+- `CsharpRunPreflight` authorizes/revalidates a single project via FileSystemService
+  and evaluates fixed Debug properties and ProjectReference items as MSBuild JSON.
+  Empty computed properties and multi-target facts remain distinct; references
+  are facts for later authorization. No raw XML interpretation, discovery,
+  runnable classification, selection, CSharpRunStrategy, app composition, IPC/UI,
+  build/run step or production stdin was implemented.
+- `CsharpRunProbe` scopes fixed commands to Run's existing native adapter and
+  ProcessManager owner. Closed stdin, shell:false, no environment additions,
+  20-second command deadline and 1 MiB combined output bound; root exit/cancel/
+  timeout/error waits for Job release. Failed cleanup retains ownership and
+  blocks new commands; explicit retry is tested. Shared wire contracts unchanged.
+- Unit/mocked evidence: 60 new focused tests; 214 focused/dependency/Run/language
+  regressions PASS. Typecheck/lint/build PASS. Full suite 1255/1255 in 86 files
+  PASS on the independent final run. An earlier run concurrent with build had
+  one 5-second Git integration timeout; no test/timeout was weakened.
+- Real evidence: `scripts/smoke-csharp-run-preflight.mjs`,
+  `spikes/csharp-project-run/M1-05-REPORT.md`, and unchanged captured
+  `spikes/csharp-project-run/evidence/m1-05-preflight.json`.
+  Windows 11 x64 SDK 8.0.410/net8.0 and 10.0.112/net10.0: 20/20 cases PASS,
+  including exact/ancestor/nearest pin, roll-forward, invalid/malformed global.json,
+  imports/Directory.Build.props/conditions, references, multi-target/future TFM facts,
+  no build/restore side effects, cancellation and repeated cleanup. 77 native
+  sessions released, final resources 0, new surviving .NET processes 0; all eight
+  measured handle counts 682. Earlier fixture/configuration findings are disclosed
+  in the report; M1-04 evidence was not changed.
+- Native regressions PASS: JS Run (15 cycles/23 argv round trips/30 rejects,
+  handles 692 -> 692), Run lifecycle/project cleanup, Git, C# provider/native/
+  preflight and Terminal live/natural-root. An initial JS smoke had transient EPERM
+  deleting a temp executable; unchanged smoke passed on retry.
+- M1-05 COMPLETE; overall C# Run/M1 IN_PROGRESS. M1-06 READY but NOT_STARTED and
+  requires separate authorization. Manual UI/packaged acceptance not performed.
+  No commit, push or merge.
+
 M1 exit: every M1 task acceptance passes, actual Console project builds/runs/stops,
 invalid/dirty/conflict/dependency paths are truthful, original JS acceptance passes
 again, no owned descendant survives, and cleanup failure remains fail-closed.
@@ -4258,8 +4311,8 @@ acceptance is claimed by this docs-only task.
   manual/native/e2e or packaging checks cannot be inferred from M1-04's spike.
   M1-04 compatibility is verified; production acceptance remains future work.
 
-M1-01 through M1-04 are COMPLETE. Next eligible task is **M1-05**, READY because
-M1-04's Windows 11 x64 hard gate passed. M1-05 and dependent C# strategy composition
+M1-01 through M1-05 are COMPLETE. Next eligible task is **M1-06**, READY because
+M1-05's resolver/evaluation acceptance passed. M1-06 and dependent C# strategy composition
 remain NOT_STARTED and require explicit authorization. Neither milestone nor
 overall C# Run is COMPLETE.
 

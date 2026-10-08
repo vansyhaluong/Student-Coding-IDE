@@ -728,7 +728,7 @@ criteria của V1. Python Run được defer khỏi V1 hiện tại.
 
 #### Approved C# Project Run extension — planning baseline (2026-10-07)
 
-Current status: `IN_PROGRESS`; M1-01 through M1-04 COMPLETE, M1-05 NOT_STARTED.
+Current status: `IN_PROGRESS`; M1-01 through M1-05 COMPLETE, M1-06 NOT_STARTED.
 The original planning authorization was design/documentation only. Production
 C# Run and Console input remain unimplemented. The Phase 4 scope below remains historical acceptance;
 the C# exception is governed by ADR-024 and Implementation Plan Section 13.7.

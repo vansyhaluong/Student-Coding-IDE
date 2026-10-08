@@ -443,8 +443,9 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations and
-M1-03 native argument arrays COMPLETE; C# runtime composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
+the extension is `IN_PROGRESS` with M1-01 through M1-05 COMPLETE, including native
+argv, compatibility evidence and Run SDK/evaluation foundations. C# strategy
+composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
 
@@ -553,6 +554,35 @@ let CLI resolve from the same candidate cwd used for evaluation/build/run,
 including applicable ancestor global.json. Failed selection is invalid
 configuration; no SDK is missing dependency. Successful evaluation is preliminary;
 targeting packs, workload/restore failures and missing runtime can still fail later.
+
+M1-05 implementation: `DotnetRunRuntimeResolver` uses Main PATH executable
+validation and bounded `--list-sdks` inventory, then lets `--version` select the
+effective stable SDK >=8 in the canonical candidate directory. Inventory never
+selects the newest SDK. `DotnetSdkDetector` and C# language-service policy remain
+independent and unchanged. Nearest-ancestor `global.json` inspection is limited to
+64 levels and 64 KiB: syntax/comments and known SDK field shapes are validated
+because the host may silently ignore invalid settings. No roll-forward selection
+algorithm is implemented in Main; CLI decides applicability and effective version.
+
+`CsharpRunPreflight` authorizes one semantic candidate through FileSystemService,
+revalidates canonical identity after SDK resolution, and returns Main-only facts.
+`CsharpRunProbe` permits only inventory, version and fixed Debug evaluation requests
+(`-getProperty`/`-getItem`, `-nodeReuse:false`, `-noAutoResponse`, no target/restore).
+It uses the existing Run adapter's closed stdin, filtered inherited environment,
+shell:false and retained Windows Job ownership. Each command has a 20-second
+deadline and combined stdout/stderr budget of 1 MiB. ProcessManager registers
+ownership before spawn; completion awaits cleanup. Failed cleanup retains the
+resource and blocks new probes until explicit retry succeeds.
+
+Evaluation returns the requested properties as bounded strings, preserving empty
+computed values and separate TargetFramework/TargetFrameworks; at most 64 reference
+identities are returned as untrusted facts for later authorization. There is no
+discovery, recursive reference walk, Console classification, target selection or
+CSharpRunStrategy composition in M1-05. Existing semantic dependency/candidate
+failure DTOs remain unchanged; bounded failure details stay inside Main. Raw
+stdout/stderr, executable paths and process authority are not exposed over IPC.
+Evaluation is preliminary and does not prove restore, targeting-pack availability,
+runtime readiness or stability against subsequent external project/config edits.
 
 Authorize evaluated ProjectReferences recursively inside the active root with
 cycle detection and canonical deduplication. Reject missing/out-of-root references.

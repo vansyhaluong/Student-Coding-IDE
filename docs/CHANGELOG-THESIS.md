@@ -1704,3 +1704,30 @@ Problems, formatter, debugger, AI, extension-host, or Phase 2E work was added.
   and technical findings are unchanged; historical BLOCKED metadata is preserved.
 - No production code changed or spike rerun. Overall C# Run/M1 remain IN_PROGRESS;
   M1-05 prerequisites are satisfied, but M1-05 remains NOT_STARTED.
+
+## C# Project Run M1-05 — Run SDK resolution and evaluation (2026-10-07)
+
+Completion revalidated on 2026-10-08 without source changes: full suite 1255/1255
+(86 files), typecheck/lint/build/diff checks and real Windows production smoke
+20/20 PASS. All 77 native sessions released; resources and new surviving .NET
+processes 0; eight handle counts 677. Source hashes match the original evidence.
+See `spikes/csharp-project-run/M1-05-REPORT.md` for the new captured evidence and
+the distinction between rerun checks and prior native regression evidence.
+M1-05 remains COMPLETE; M1-06 NOT_STARTED. No commit/push.
+
+- Added production Main-only Run SDK resolver, single-project structured MSBuild
+  evaluation and bounded Run-owned probe. Candidate cwd/global.json controls CLI
+  SDK selection; stable Run SDK >=8 remains independent of language SDK >=10.
+  Added bounded global.json syntax/field diagnostics for host fallback behavior.
+- Reused FileSystemService authorization and existing Run native Job/closed-pipe
+  cleanup; no new wire contract, native change, dependency, SDK installation,
+  target discovery/classification, CSharpRunStrategy or UI/input implementation.
+- 60 new focused tests, 214 focused/regression tests and final full suite
+  1255/1255 PASS; typecheck/lint/build/diff checks PASS. Windows 11 real SDK 8/10
+  smoke 20/20 PASS, 77 sessions released, 0 retained resources/new surviving
+  .NET processes, eight repeated handle counts all 682. Native Run/Git/C# language
+  and Terminal regressions PASS. Earlier smoke fixture/configuration findings,
+  one concurrent-build test timeout and one transient temp-file deletion error
+  are disclosed in `spikes/csharp-project-run/M1-05-REPORT.md`.
+- M1-05 COMPLETE; M1-06 READY but NOT_STARTED. M1 and overall C# Run IN_PROGRESS.
+  No later task, commit, push or merge. Manual UI/packaged acceptance not claimed.
