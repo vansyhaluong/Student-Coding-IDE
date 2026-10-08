@@ -2,6 +2,29 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## C# Project Run M1-08 — Cancellable execution-plan lifecycle (2026-10-08)
+
+- Extended RunService/RunStrategy with Main-only immutable JS one-step and C#
+  build-restore/execute plan infrastructure. No production CSharpRunStrategy,
+  dotnet build/run, public IPC/Preload/UI migration, source handshake or stdin.
+- Early STARTING reserves canonical identity before asynchronous preparation.
+  AbortSignal and registered session-owned preparation resources permit Stop
+  without waiting for preparation promises; late work cannot register or launch.
+- Reauthorize canonical target/runtime and whole-plan fingerprint before each
+  launch. Step generations suppress old callbacks; successful intermediate exit
+  waits for tree/root/EOF/native release and ProcessManager removal before advance.
+- Reused existing session/target maps, Stop/re-run/project/owner/shutdown ownership
+  and fail-closed cleanup. Failed cleanup retains resources, blocks replacement
+  and requires retry. Existing JS live start/prepare/launch/event behavior remains.
+- Verification: 31 new plan tests; 145 focused tests across 7 files PASS, including
+  JavaScript, project lifecycle, identity/runtime and ProcessManager regressions.
+  Typecheck, scoped ESLint and tracked/untracked whitespace checks PASS.
+- Native/process adapters unchanged; no full suite, build or native smoke run for
+  this TypeScript infrastructure package. Fake cleanup evidence shows successful
+  sessions release all owned resources; real production C# acceptance remains M1-12.
+- M1-08 COMPLETE. M1-09a/M1-09 NOT_STARTED; Milestone 1 and C# Run IN_PROGRESS.
+  No new ADR, dependency, commit, push or merge.
+
 ## Phase 1 — Orca Analysis & Architecture Design
 
 ### Analysis

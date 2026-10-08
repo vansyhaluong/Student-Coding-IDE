@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { win32 } from 'node:path'
-import type { RunTarget, RunTargetKind } from '../../../shared/contracts/run'
+import type { RunTarget, RunTargetKind, RunExecutionPhase } from '../../../shared/contracts/run'
 import { invalidInputError } from '../../errors/app-error'
 import { normalizePathIdentity } from '../project/project-identity'
 
@@ -25,12 +25,44 @@ export interface RunStrategy {
   readonly kind: RunTargetKind
   supports(target: RunTarget): boolean
   prepare(target: AuthorizedRunTarget, runtime: RunRuntime): PreparedRun
+  preparePlan?(target: AuthorizedRunTarget, runtime: RunRuntime,
+    context: RunPreparationContext): Promise<RunExecutionPlan> | RunExecutionPlan
 }
 
 /** Main-only context, supplied only after project/filesystem authorization. */
 export interface RunRuntimeContext {
   readonly strategyKind: RunTargetKind
   readonly target: AuthorizedRunTarget
+  readonly preparation?: RunPreparationContext
+}
+
+/** Main-only plans; the existing adapter still supplies closed stdin. */
+export interface RunExecutionStep {
+  readonly phase: Exclude<RunExecutionPhase, 'PREPARING'>
+  readonly execution: PreparedRun
+}
+export interface RunExecutionPlan { readonly steps: readonly RunExecutionStep[] }
+export interface RunPreparationContext {
+  readonly signal: AbortSignal
+  readonly resourceOwnerId: string
+  /** Register before creation; release only after safe cleanup. */
+  registerResource(close: () => Promise<void>): () => void
+}
+
+export function snapshotPlan(plan: RunExecutionPlan, kind: RunTargetKind): RunExecutionPlan {
+  const phases = plan.steps.map(step => step.phase)
+  if (JSON.stringify(phases) !== JSON.stringify(kind === 'javascript-file'
+    ? ['EXECUTING'] : ['BUILD_RESTORE', 'EXECUTING'])) {
+    throw invalidInputError('run:plan', ['steps'])
+  }
+  return Object.freeze({ steps: Object.freeze(plan.steps.map(step => Object.freeze({
+    phase: step.phase, execution: snapshotExecution(step.execution),
+  }))) })
+}
+
+export function runPlanFingerprint(identity: string, target: AuthorizedRunTarget, plan: RunExecutionPlan): string {
+  return createHash('sha256').update(JSON.stringify(plan.steps.map(step =>
+    [step.phase, runExecutionFingerprint(identity, target, step.execution)]))).digest('hex')
 }
 
 export function runTargetIdentity(target: AuthorizedRunTarget, kind: RunTargetKind): string {

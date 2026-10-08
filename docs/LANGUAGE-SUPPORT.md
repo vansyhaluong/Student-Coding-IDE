@@ -8,7 +8,7 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `IN_PROGRESS`; M1-01 through M1-07 COMPLETE; M1-08 NOT_STARTED (READY);
+Status: `IN_PROGRESS`; M1-01 through M1-08 COMPLETE; M1-09a/M1-09 NOT_STARTED;
 no CSharpRunStrategy or production Console input is implemented; no C# Run
 runtime capability is implemented. Design is accepted in ADR-024; the planning
 task did not authorize implementation. The implemented capability matrix below still reports
@@ -35,6 +35,14 @@ persistence using the existing persistence service. Every saved/explicit choice
 is checked against fresh M1-06 results and canonical authorization. Invalid or
 recovered choices require fresh selection; project changes invalidate async work.
 No public selection API, picker, execution lifecycle or C# Run runtime is added.
+
+M1-08 adds Main-only cancellable preparation and sequential execution plans to
+the existing RunService. One JS step or two trusted C# steps share one session;
+intermediate exit requires complete cleanup before advancement. Stop aborts
+preparation/build/execution/gaps; retained cleanup blocks replacement and project
+or shutdown completion. Fake plans verify the seam (31 new/145 focused tests).
+JavaScript's live API stays unchanged; no C# build/run strategy, source handshake,
+public phase API, picker or stdin is composed. M1-09a and M1-09 remain NOT_STARTED.
 
 Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
 Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore

@@ -443,9 +443,9 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 through M1-07 COMPLETE, including native
+the extension is `IN_PROGRESS` with M1-01 through M1-08 COMPLETE, including native
 argv, compatibility evidence, Run SDK/evaluation and target discovery/classification.
-M1-07 Main selection/persistence is implemented; M1-08 lifecycle is NOT_STARTED. C# strategy
+M1-07 Main selection/persistence and M1-08 plan lifecycle are implemented. C# strategy
 composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
@@ -502,13 +502,35 @@ runtime and execution fingerprint immediately before native creation. Preserve
 one active session per canonical target and concurrency for different targets;
 another owner cannot replace an owned session.
 
-`PreparedRun` becomes a narrow execution plan: one JS step or two C# steps,
+M1-08 adds Main-only `RunExecutionPlan`/`RunExecutionStep` around immutable
+`PreparedRun` process specifications: one JS step or two C# steps,
 explicit executable/argument array/cwd/environment policy, stdin mode, and trusted
 step purpose. This is Main-only data. A Run session owns every step, callback and
 cleanup under ProcessManager. Intermediate build exit/EOF is not the session's
 final exit; clean the step completely before the next one. Use a step generation
 to reject late build callbacks. Stop cancels the plan, including the gap between
 steps. Register ownership before each native creation and retain failed cleanup.
+
+Implemented seam: `RunService.startPlannedRun` validates a semantic Main request,
+performs cheap project/path authorization, reserves the canonical target under the
+existing start queue and returns STARTING before runtime/strategy preparation.
+The existing live JavaScript `startRun`/prepare/launch API and event order remain
+unchanged. No CSharpRunStrategy or public plan API is composed. Plans accept only
+EXECUTING for JS or BUILD_RESTORE then EXECUTING for C#; renderer process options
+remain forbidden. Main-only `onPhase` observes phases without changing wire DTOs.
+
+`RunPreparationContext` supplies AbortSignal, the session resource owner and a
+register-before-create cleanup seam for trusted finite probes. Abort races detach
+uncooperative preparation promises; late completion cannot register resources or
+launch. Owned resources must safely close before their registration is released.
+Stop cleans registered preparation resources without waiting for preparation to
+return. Each launch reauthorizes canonical identity and re-resolves the immutable
+whole-plan fingerprint. Successful intermediate steps require root/EOF/native
+release and ProcessManager cleanup before callback generation retirement and
+next-step preparation. Failure retains session/resource ownership for explicit
+cleanup retry and blocks replacements/project close/shutdown. Existing project
+leases and owner/shutdown generations govern both single-step and planned sessions.
+This checks execution specifications, not source content; M1-09a remains required.
 
 For C#, reserve an owned STARTING session after cheap target/request authorization
 and return it before asynchronous probes/build. Publish bounded preparation,
