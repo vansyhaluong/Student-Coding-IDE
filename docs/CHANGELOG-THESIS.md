@@ -2,6 +2,27 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## C# Project Run M1-09 — Build/execute strategy (2026-10-08)
+
+- Added Main-only CSharpRunStrategy and owned preparation composition using fresh
+  M1-06/07 selection and M1-05 evaluation. Immutable M1-04 Debug build/run commands
+  include build-server/node-reuse restrictions; effective SDK/TFM drift invalidates
+  the plan. The existing M1-08 session and M1-09a source guard own all lifecycle steps.
+- Build failure never executes; safe reasons classify SDK/preflight/build/runtime/
+  spawn/observation/cleanup failures. Cleanup failure retains resources and blocks
+  replacement. Main registers C# but the legacy public Run API still rejects it.
+- Verification: 30 new tests and 384 focused tests/13 files PASS; typecheck,
+  scoped ESLint and tracked/new-file whitespace PASS. JavaScript regressions PASS.
+  No full suite/application build or unrelated smoke; only a scoped Main bundle.
+- Real Windows 11 x64 SDK 8.0.410/net8.0 and 10.0.112/net10.0 smoke: 14/14 PASS,
+  plus 4/4 repeated resource cases. All 290 native process objects released,
+  zero owned resources/new process survivors, warmed handles 677/677/677/677.
+  An initial harness EPIPE was diagnosed and rerun with captured log files;
+  production native/process code was unchanged. Details and commands:
+  `spikes/csharp-project-run/M1-09-REPORT.md`.
+- M1-09 COMPLETE; M1-10 NOT_STARTED; Milestone 1/C# Run IN_PROGRESS. No ADR change,
+  public C# IPC/UI, stdin, auto-save, new dependency, commit, push or merge.
+
 ## C# Project Run M1-09a — Bounded saved-source handshake (2026-10-08)
 
 - Added RunSourceGuard with exact owner/frame/project/session/request validation,

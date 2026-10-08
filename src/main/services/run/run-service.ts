@@ -143,6 +143,9 @@ export class RunService {
     const validation = validateStartRunRequest(request)
     if (!validation.ok) return Promise.reject(invalidInputError('run:start', ['target']))
     const target = validation.value
+    // The legacy public bridge remains JavaScript-only until M1-10.
+    if (/\.csproj$/i.test(target.relativePath)) return Promise.reject(new DomainError({ code: 'UNSUPPORTED',
+      message: 'C# Run requires the Main-owned execution plan.', operation: 'run:start', retryable: false }))
     const generation = this.projectGenerations.get(target.projectId) ?? 0
     const ownerGeneration = this.ownerGenerations.get(ownerId) ?? 0
     const check = () => {
@@ -321,7 +324,13 @@ export class RunService {
           child = this.execution!.adapter.create(step.execution, event => {
             if (control.generation === generation) this.observe(entry, event)
           })
-        } catch (error) { unregister(); throw error }
+        } catch (error) {
+          unregister()
+          if (strategy.kind === 'csharp-project') throw new DomainError({ code: 'PROCESS_FAILED',
+            operation: 'run:spawn', message: 'The C# Run process could not be started.', retryable: false,
+            details: { reason: 'SPAWN_FAILED', phase: step.phase } })
+          throw error
+        }
         const created = child
         entry.process = {
           ownership: created.ownership, settled: created.settled, isReleased: () => created.isReleased(),
@@ -339,6 +348,12 @@ export class RunService {
         await this.requestCleanup(entry)
         check()
         if (entry.observationFailed || entry.exitCode !== 0) {
+          if (strategy.kind === 'csharp-project' && !entry.observationFailed) this.emitError(entry, new DomainError({
+            code: 'PROCESS_FAILED', operation: 'run:step', retryable: false,
+            message: step.phase === 'BUILD_RESTORE' ? 'C# build or restore failed.' : 'C# execution failed.',
+            details: { reason: step.phase === 'BUILD_RESTORE' ? 'BUILD_OR_RESTORE_FAILED' : 'EXECUTION_FAILED',
+              phase: step.phase, exitCode: entry.exitCode },
+          }))
           this.finalize(entry, 'FAILED'); return
         }
         ++control.generation // Retire callbacks before asynchronous step-gap preparation.
@@ -529,7 +544,8 @@ export class RunService {
       if (entry.plan && entry.cancelled) this.finalize(entry, 'CANCELLED')
     }
     catch {
-      const failure = runFailure('run:cleanup', 'Run cleanup failed. Retry Stop before running this file again.')
+      const failure = runFailure('run:cleanup', 'Run cleanup failed. Retry Stop before running this file again.',
+        entry.plan && /\.csproj$/i.test(entry.session.relativePath) ? 'CLEANUP_FAILED' : undefined)
       if (entry.plan) {
         entry.plan.cleanupFailed = true
         this.transition(entry, 'STOPPING')
@@ -574,7 +590,8 @@ export class RunService {
       void this.requestCleanup(entry).catch(() => undefined) // cleanup emits its safe failure
     } else if (!entry.observationFailed) {
       entry.observationFailed = true
-      this.emitError(entry, runFailure('run:output', 'Run output could not be fully observed.'))
+      this.emitError(entry, runFailure('run:output', 'Run output could not be fully observed.',
+        entry.plan && /\.csproj$/i.test(entry.session.relativePath) ? 'OBSERVATION_FAILED' : undefined))
       if (entry.plan) { entry.plan.finished?.(); return }
       void this.requestCleanup(entry).catch(() => undefined) // ownership retained on failure
     }
@@ -682,8 +699,9 @@ function abortable<T>(task: Promise<T>, signal: AbortSignal): Promise<T> {
     void task.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort))
   })
 }
-function runFailure(operation: string, message: string): DomainError {
-  return new DomainError({ code: 'PROCESS_FAILED', operation, message, retryable: true })
+function runFailure(operation: string, message: string, reason?: string): DomainError {
+  return new DomainError({ code: 'PROCESS_FAILED', operation, message, retryable: true,
+    ...(reason ? { details: { reason } } : {}) })
 }
 function safeStartError(error: unknown): DomainError {
   return error instanceof DomainError ? error : runFailure('run:start', 'The Run process could not be started.')

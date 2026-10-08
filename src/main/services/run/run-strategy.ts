@@ -41,7 +41,11 @@ export interface RunExecutionStep {
   readonly phase: Exclude<RunExecutionPhase, 'PREPARING'>
   readonly execution: PreparedRun
 }
-export interface RunExecutionPlan { readonly steps: readonly RunExecutionStep[] }
+export interface RunExecutionPlan {
+  readonly steps: readonly RunExecutionStep[]
+  /** Main-only evaluated configuration; SDK/TFM drift invalidates a prepared plan. */
+  readonly configurationIdentity?: string
+}
 export interface RunPreparationContext {
   readonly signal: AbortSignal
   readonly resourceOwnerId: string
@@ -55,14 +59,16 @@ export function snapshotPlan(plan: RunExecutionPlan, kind: RunTargetKind): RunEx
     ? ['EXECUTING'] : ['BUILD_RESTORE', 'EXECUTING'])) {
     throw invalidInputError('run:plan', ['steps'])
   }
-  return Object.freeze({ steps: Object.freeze(plan.steps.map(step => Object.freeze({
+  return Object.freeze({ configurationIdentity: plan.configurationIdentity,
+    steps: Object.freeze(plan.steps.map(step => Object.freeze({
     phase: step.phase, execution: snapshotExecution(step.execution),
   }))) })
 }
 
 export function runPlanFingerprint(identity: string, target: AuthorizedRunTarget, plan: RunExecutionPlan): string {
-  return createHash('sha256').update(JSON.stringify(plan.steps.map(step =>
-    [step.phase, runExecutionFingerprint(identity, target, step.execution)]))).digest('hex')
+  const steps = plan.steps.map(step => [step.phase, runExecutionFingerprint(identity, target, step.execution)])
+  return createHash('sha256').update(JSON.stringify(plan.configurationIdentity === undefined
+    ? steps : [plan.configurationIdentity, steps])).digest('hex')
 }
 
 export function runTargetIdentity(target: AuthorizedRunTarget, kind: RunTargetKind): string {

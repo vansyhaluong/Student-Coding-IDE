@@ -443,10 +443,11 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 through M1-08 and M1-09a COMPLETE, including native
+the extension is `IN_PROGRESS` with M1-01 through M1-09 (including M1-09a) COMPLETE, including native
 argv, compatibility evidence, Run SDK/evaluation and target discovery/classification.
-M1-07 selection/persistence, M1-08 lifecycle and M1-09a source guard are implemented. C# strategy
-composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
+M1-07 selection/persistence, M1-08 lifecycle, M1-09a source guard and M1-09 C# strategy
+composition are implemented in Main. M1-10 public C# Run IPC remains `NOT_STARTED`.
+The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
 
@@ -757,8 +758,29 @@ RunService's C# plan requires the guard before preparation, before each step and
 after async preparation immediately before spawn. Approved revision changes abort
 preparation/build and invoke existing owned cleanup; failed cleanup remains retained.
 Cancellation retires the guard and all timers. After execute creation, the guard
-retires and later edits do not cancel a running program. Production CSharpRunStrategy
-is still M1-09 NOT_STARTED; no native/process adapter, Run UI or stdin changes.
+retires and later edits do not cancel a running program.
+
+M1-09 composes `CSharpRunStrategy` with this existing lifecycle. `CsharpRunPreparation`
+reads Main's per-project target store through fresh M1-06 resolution, then evaluates
+the selected target with M1-05. It rejects ambiguity, stale selection, ownership
+mismatch and SDK failure; it never persists an automatic selection. Each preparation
+scope registers cleanup before probing, with a distinct child probe owner to avoid
+recursive session cleanup. Failed cleanup stays registered for retry.
+
+Only an internally evaluated runtime capability can produce the immutable two-step
+plan. Commands retain the M1-04 Debug/build-server/node-reuse policy. Effective SDK
+version and single TFM participate in the plan fingerprint, so drift between build
+and execute fails closed even when the dotnet host path is unchanged. Each step
+repeats selection, evaluation, identity and saved-source checks through M1-08/M1-09a.
+Build nonzero ends the session without execution; safe error details distinguish SDK,
+preflight, build/restore, execution, spawn, observation and cleanup failures.
+
+Main registers the C# strategy, while legacy `startRun` explicitly rejects `.csproj`;
+only the Main-only `startPlannedRun` seam can exercise it until M1-10. JavaScript
+commands and fingerprint semantics remain unchanged. No native/process adapter,
+public IPC/Preload, Run UI, LSP, Terminal or stdin changes. Windows 11 x64 evidence:
+14/14 real SDK 8/10 cases and 4/4 repeated resource cases PASS; see
+`spikes/csharp-project-run/M1-09-REPORT.md`. This guard still is not a disk snapshot.
 
 #### Native pipes and session-scoped input
 

@@ -8,11 +8,10 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `IN_PROGRESS`; M1-01 through M1-08 and M1-09a COMPLETE; M1-09 NOT_STARTED;
-no CSharpRunStrategy or production Console input is implemented; no C# Run
-runtime capability is implemented. Design is accepted in ADR-024; the planning
-task did not authorize implementation. The implemented capability matrix below still reports
-current production behavior (C# Run deferred/unimplemented). The planned extension
+Status: `IN_PROGRESS`; M1-01 through M1-09 (including M1-09a) COMPLETE; M1-10 NOT_STARTED.
+Main has a production CSharpRunStrategy; public C# Run IPC/UI and Console input
+remain unimplemented. Design is accepted in ADR-024. The implemented capability
+matrix below still reports user-accessible behavior (C# Run not exposed). The extension
 is separate from Phase 5.5 intelligence and Phase 9 Exercise Runtime.
 
 M1-05 provides Main-only contextual Run SDK resolution (stable SDK >=8) and
@@ -51,8 +50,19 @@ during preparation/build invalidate it even if saved immediately. Stop/project/
 renderer/shutdown invalidation fails closed. Execution retires the guard, so edits
 do not cancel running programs. No automatic Save, file content transfer, target
 UI, native launch strategy or stdin is added. Verification: 67 new/380 focused
-tests PASS, typecheck/scoped lint/diff PASS. M1-09 remains NOT_STARTED; actual
-C# Run and source/disk concurrency acceptance still require subsequent work.
+tests PASS, typecheck/scoped lint/diff PASS. Source/disk concurrency acceptance
+still requires the later Core Acceptance package.
+
+M1-09 adds Main-only CSharpRunStrategy and owned preparation composition. Fresh
+Run target selection/evaluation supplies the runtime; fixed Debug build/restore
+then `dotnet run --no-build --no-restore --no-launch-profile` share one session.
+Build servers are disabled and build node reuse is false. SDK/TFM fingerprint
+drift, dirty/stale source or invalid selection block launch. Build failure never
+executes; Stop and cleanup retain the existing fail-closed ownership rules.
+Verification: 30 new tests, 384 focused regression tests, typecheck/scoped lint
+and whitespace PASS. Real SDK 8.0.410/net8.0 and 10.0.112/net10.0 smoke: 14/14
+cases plus 4/4 repeated resource cases PASS. No public C# Run API/UI or stdin;
+JavaScript behavior is preserved. See `spikes/csharp-project-run/M1-09-REPORT.md`.
 
 Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
 Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore

@@ -1,4 +1,6 @@
 import { JavaScriptRunStrategy } from './services/run/javascript-run-strategy'
+import { CSharpRunStrategy } from './services/run/csharp-run-strategy'
+import { CsharpRunPreparation } from './services/run/csharp-run-preparation'
 import { OllamaService } from './services/ai/ollama-service'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
@@ -154,6 +156,8 @@ void app.whenReady().then(async () => {
       owner.send(channel, request)
     },
   })
+  const csharpRunPreparation = CsharpRunPreparation.production(app.getPath('userData'),
+    projectService, fileSystemService, processManager)
   const runService = new RunService({
     authorize: async (target, ownerId) => {
       const assertOwner = () => {
@@ -166,12 +170,10 @@ void app.whenReady().then(async () => {
       assertOwner()
       return { projectId: target.projectId, relativePath: target.relativePath, ...file }
     },
-    resolveRuntime: ({ strategyKind }) => {
-      if (strategyKind !== 'javascript-file') throw new DomainError({ code: 'UNSUPPORTED',
-        message: 'Run runtime is not configured for this target.', operation: 'run:runtime', retryable: false })
-      return nodeRuntime.resolve()
+    resolveRuntime: context => {
+      return context.strategyKind === 'javascript-file' ? nodeRuntime.resolve() : csharpRunPreparation.resolve(context)
     },
-  }, [new JavaScriptRunStrategy()], {
+  }, [new JavaScriptRunStrategy(), new CSharpRunStrategy()], {
     // Delay loading until an authorized Run; unsupported hosts retain normal IDE startup.
     adapter: { create: (execution, observe) => {
       runAdapter ??= new WindowsPipedProcessAdapter()

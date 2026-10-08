@@ -245,7 +245,8 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 
 Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations, M1-03 native argv
 M1-04 isolated compatibility evidence, M1-05 resolver/evaluation and M1-06
-discovery/classification, M1-07 selection/persistence, M1-08 lifecycle and M1-09a source guard COMPLETE.
+discovery/classification, M1-07 selection/persistence, M1-08 lifecycle, M1-09a source guard
+and M1-09 strategy composition COMPLETE. M1-10 public C# Run API remains NOT_STARTED.
 The module table distinguishes
 actual foundations from planned composition.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
@@ -309,7 +310,9 @@ no export/composition, settings schema, LSP store or wire contract changes.
 
 | Domain / responsibility | Proposed path | Ownership / status |
 |---|---|---|
-| C# fixed build/run strategy | `src/main/services/run/csharp-run-strategy.ts` | Main Run domain; planned |
+| C# fixed build/run strategy | `src/main/services/run/csharp-run-strategy.ts` | Actual M1-09; evaluated runtime capability, immutable M1-04 build/run commands and SDK/TFM fingerprint |
+| Owned C# preparation composition | `src/main/services/run/csharp-run-preparation.ts` | Actual M1-09; fresh Main target-store resolution and M1-05 evaluation per checkpoint, session-owned probe cleanup, no selection writes |
+| Strategy verification | `tests/main/csharp-run-strategy.test.ts`, `scripts/smoke-csharp-run-strategy.mjs`, `spikes/csharp-project-run/M1-09-REPORT.md` | Actual M1-09; 30 focused tests, real Windows SDK 8/10 execution/Stop and repeated resource evidence |
 | Console target discovery | `src/main/services/run/csharp-run-target-resolver.ts` | Actual M1-06; bounded canonical discovery, evaluated classification, reference graph and 0/1/multiple resolution; no persistence/execution |
 | Single-project facts and bounded probes | `src/main/services/run/csharp-run-preflight.ts`, `csharp-run-probe.ts` | Actual M1-05; Main Run ownership, no CsharpWorkspace/LSP session reuse |
 | Remembered Run target | `src/main/services/run/csharp-run-target-store.ts` | Actual M1-07; Main resolve/select/clear, isolated schema-1 JSON via PersistenceService, fresh resolver/canonical validation; no public API |
