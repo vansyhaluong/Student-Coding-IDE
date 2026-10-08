@@ -71,6 +71,8 @@ function setup() {
   const onPhase = vi.fn((_owner: number, _session: unknown, phase: RunExecutionPhase) => { phases.push(phase) })
   const service = new RunService(authority, [strategy, new JavaScriptRunStrategy()], {
     adapter, manager, onEvent: (_owner, event) => events.push(event), onPhase,
+    // M1-08 infrastructure fixture; real saved-source protocol has its own focused tests.
+    sourceGuard: { open: () => ({ check: async () => {}, assertValid: () => {}, release: () => {} }) },
   })
   const waitProcesses = (count: number) => vi.waitFor(() => expect(natives).toHaveLength(count))
   const terminal = () => vi.waitFor(() => expect(events.filter(event => event.type === 'exit')).toHaveLength(1))

@@ -443,9 +443,9 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 through M1-08 COMPLETE, including native
+the extension is `IN_PROGRESS` with M1-01 through M1-08 and M1-09a COMPLETE, including native
 argv, compatibility evidence, Run SDK/evaluation and target discovery/classification.
-M1-07 Main selection/persistence and M1-08 plan lifecycle are implemented. C# strategy
+M1-07 selection/persistence, M1-08 lifecycle and M1-09a source guard are implemented. C# strategy
 composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
@@ -481,7 +481,7 @@ root, executable, ordered argv, cwd, shell flag and sorted environment entries.
 Preparation copies/freezes execution data; start-to-preparation and
 preparation-to-launch comparisons reject identity or fingerprint drift before
 native creation. The fingerprint is an execution-spec check, not a source-content
-snapshot; the saved-source guard remains M1-09a. Existing owner/project generation
+snapshot; M1-09a now supplies the saved-source guard. Existing owner/project generation
 checks and fail-closed cleanup are retained.
 
 Main composes a fixed list of internal strategies: existing JavaScript and planned
@@ -530,7 +530,7 @@ release and ProcessManager cleanup before callback generation retirement and
 next-step preparation. Failure retains session/resource ownership for explicit
 cleanup retry and blocks replacements/project close/shutdown. Existing project
 leases and owner/shutdown generations govern both single-step and planned sessions.
-This checks execution specifications, not source content; M1-09a remains required.
+This checks execution specifications, not source content; M1-09a supplies a separate approval/revision guard.
 
 For C#, reserve an owned STARTING session after cheap target/request authorization
 and return it before asynchronous probes/build. Publish bounded preparation,
@@ -721,7 +721,7 @@ intentional output, rendered as text and not forwarded into developer logs.
 Renderer computes dirty/external-conflict guards over all retained documents in
 the active folder project, not just the active C# file. Current unsaved-transition
 coordination exchanges approval only; it has no model snapshot/revision API.
-Plan a Run-owned bounded saved-source handshake in `RunSourceGuard`, patterned
+M1-09a implements a Run-owned bounded saved-source handshake in `RunSourceGuard`, patterned
 after its trusted-owner routing, without changing project-close approvals:
 Main emits a guard request with projectId/sessionId/opaque requestId; the owning
 Renderer responds with the same identities, monotonically increasing document
@@ -735,6 +735,30 @@ when dirty/conflict state is unknown. Already-running programs are not restarted
 or auto-saved by later edits. External changes during build require revalidation;
 SDK build is not an atomic source snapshot and cannot promise immunity to all
 concurrent external writes. Preserve editor contents and conflict semantics.
+
+Actual wiring: shared `run-source-guard.ts` defines exact semantic DTOs and three
+Run-owned request/release/reply channels; `studentIde.runSourceGuard` exposes only
+subscriptions and validated replies. Live JavaScript `studentIde.run` stays
+unchanged. Main validates the actual main frame as well as owner/project/session;
+owner navigation, destruction or renderer-process loss invalidates approvals.
+The five-second timeout and shared 64-live-session bound limit pending timers and
+approval/watch records, never the number of source buffers being checked.
+
+EditorModelManager tracks per-project monotonic revisions from retained document
+identity, model version, dirty, external-conflict and missing-disk state. Active tab
+or other-project changes do not alter this project's approval. RunSourceGuardController
+responds and watches those aggregate revisions without Save calls or buffer contents.
+Main keeps one current request per session, rejects stale/mismatched/duplicate
+responses, and accepts rechecks only at the original clean revision. Null revision
+means unknown and fails closed. Semantic AppError details distinguish dirty,
+conflict, unknown, changed, timeout, cancelled, unavailable and capacity failures.
+
+RunService's C# plan requires the guard before preparation, before each step and
+after async preparation immediately before spawn. Approved revision changes abort
+preparation/build and invoke existing owned cleanup; failed cleanup remains retained.
+Cancellation retires the guard and all timers. After execute creation, the guard
+retires and later edits do not cancel a running program. Production CSharpRunStrategy
+is still M1-09 NOT_STARTED; no native/process adapter, Run UI or stdin changes.
 
 #### Native pipes and session-scoped input
 

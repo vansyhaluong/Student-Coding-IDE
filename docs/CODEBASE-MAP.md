@@ -245,7 +245,7 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 
 Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations, M1-03 native argv
 M1-04 isolated compatibility evidence, M1-05 resolver/evaluation and M1-06
-discovery/classification, M1-07 selection/persistence and M1-08 lifecycle COMPLETE.
+discovery/classification, M1-07 selection/persistence, M1-08 lifecycle and M1-09a source guard COMPLETE.
 The module table distinguishes
 actual foundations from planned composition.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
@@ -314,7 +314,10 @@ no export/composition, settings schema, LSP store or wire contract changes.
 | Single-project facts and bounded probes | `src/main/services/run/csharp-run-preflight.ts`, `csharp-run-probe.ts` | Actual M1-05; Main Run ownership, no CsharpWorkspace/LSP session reuse |
 | Remembered Run target | `src/main/services/run/csharp-run-target-store.ts` | Actual M1-07; Main resolve/select/clear, isolated schema-1 JSON via PersistenceService, fresh resolver/canonical validation; no public API |
 | Run SDK eligibility | `src/main/services/dependencies/dotnet-run-runtime.ts` | Actual M1-05; shared executable validation, independent Run >=8 policy and CLI-selected SDK |
-| Saved-source preparation guard | `src/main/services/run/run-source-guard.ts` | Main Run-owned bounded Renderer handshake; planned; no Monaco ownership |
+| Saved-source preparation guard | `src/main/services/run/run-source-guard.ts` | Actual M1-09a; Main approval/revision authority, trusted-frame reply handler, 5s/64-session bounds, abort/invalidations; no Monaco ownership |
+| Source guard contracts/bridge | `src/shared/contracts/run-source-guard.ts`, `src/preload/bridge/run-source-guard.ts` | Actual exact request/release/reply DTOs and narrow studentIde.runSourceGuard; existing JS Run API unchanged |
+| Retained source revision/response | `src/renderer/src/features/editor/models/editor-model-manager.ts`, `src/renderer/src/features/output/run-source-guard-controller.ts`, `use-project-run.ts` | Actual project-wide dirty/conflict/missing aggregation and revision observer; no Save calls or new UI |
+| Source guard verification | `tests/contracts/run-source-guard-validation.test.ts`, `tests/main/run-source-guard.test.ts`, `tests/main/run-source-guard-lifecycle.test.ts`, `tests/renderer/run-source-guard.test.ts`, `tests/preload/run-source-guard-bridge.test.ts` | Actual M1-09a focused contracts/ownership/editor/bridge/integration; fake process lifecycle, no production dotnet launch |
 | Bounded stdin queue | `src/main/services/run/run-input-queue.ts` | Main Run session; planned M2 |
 | Existing identity/plan/process seams | `src/main/services/run/run-service.ts`, `run-strategy.ts`, `piped-process-adapter.ts`, `windows-piped-process-adapter.ts`, `native/run-process.cpp` | Actual M1-08 Main plan lifecycle; early owned preparation, abort/resource context, sequential cleanup and fingerprint/generation checks; adapters/native unchanged |
 | Semantic Run wire boundary | `src/shared/contracts/run.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Existing actual modules; planned target/phase/guard/input DTOs and validators |

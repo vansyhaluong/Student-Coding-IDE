@@ -2,6 +2,30 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## C# Project Run M1-09a — Bounded saved-source handshake (2026-10-08)
+
+- Added RunSourceGuard with exact owner/frame/project/session/request validation,
+  a five-second timeout and 64 live approval records. Null revision or dirty/
+  conflict source refuses preparation; changed revision invalidates old approval.
+- Added a narrow studentIde.runSourceGuard Preload capability and minimal Renderer
+  request/release/revision handler. EditorModelManager aggregates all retained
+  project buffers, including non-active/reference/configuration files and external
+  conflict/missing state. No buffer contents, auto-save/discard or new Run UI.
+- Integrated initial/per-step/prelaunch checks into M1-08 C# plans. Stop, project
+  change, owner loss/crash and shutdown retire pending guards; build edits abort
+  and cleanup without bypassing retained cleanup failure. Already-executing
+  programs are unaffected by subsequent edits. JavaScript Run API stays unchanged.
+- Verification: 67 new tests in 5 files PASS; 380 focused tests in 16 files PASS
+  covering Editor Save/dirty, contracts/IPC/Preload, JS Run and lifecycle/identity.
+  Typecheck, scoped ESLint and tracked/new-file whitespace checks PASS. Existing
+  jsdom canvas notice is not a test failure. No flaky tests.
+- Production guard/bridge/editor/lifecycle integration uses controlled process
+  fixtures. Successful cleanup has zero owned resources/guard records; cleanup
+  failure retains resources for retry. No full suite, build or native smoke run;
+  native/process adapters remain unchanged. Approval is not a disk snapshot.
+- M1-09a COMPLETE; M1-09 NOT_STARTED; Milestone 1/C# Run IN_PROGRESS. No new ADR,
+  dependency, CSharpRunStrategy/dotnet build/run, stdin, commit, push or merge.
+
 ## C# Project Run M1-08 — Cancellable execution-plan lifecycle (2026-10-08)
 
 - Extended RunService/RunStrategy with Main-only immutable JS one-step and C#

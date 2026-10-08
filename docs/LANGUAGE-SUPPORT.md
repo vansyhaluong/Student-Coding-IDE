@@ -8,7 +8,7 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `IN_PROGRESS`; M1-01 through M1-08 COMPLETE; M1-09a/M1-09 NOT_STARTED;
+Status: `IN_PROGRESS`; M1-01 through M1-08 and M1-09a COMPLETE; M1-09 NOT_STARTED;
 no CSharpRunStrategy or production Console input is implemented; no C# Run
 runtime capability is implemented. Design is accepted in ADR-024; the planning
 task did not authorize implementation. The implemented capability matrix below still reports
@@ -42,7 +42,17 @@ intermediate exit requires complete cleanup before advancement. Stop aborts
 preparation/build/execution/gaps; retained cleanup blocks replacement and project
 or shutdown completion. Fake plans verify the seam (31 new/145 focused tests).
 JavaScript's live API stays unchanged; no C# build/run strategy, source handshake,
-public phase API, picker or stdin is composed. M1-09a and M1-09 remain NOT_STARTED.
+public phase API, picker or stdin was composed in that package.
+
+M1-09a adds a five-second owner/frame/session-scoped saved-source handshake with
+aggregate revision/dirty/conflict over all retained project documents. Main
+requires approval and rechecks before C# plan preparation and each launch; edits
+during preparation/build invalidate it even if saved immediately. Stop/project/
+renderer/shutdown invalidation fails closed. Execution retires the guard, so edits
+do not cancel running programs. No automatic Save, file content transfer, target
+UI, native launch strategy or stdin is added. Verification: 67 new/380 focused
+tests PASS, typecheck/scoped lint/diff PASS. M1-09 remains NOT_STARTED; actual
+C# Run and source/disk concurrency acceptance still require subsequent work.
 
 Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
 Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore

@@ -9,6 +9,7 @@ import { runTargetIdentity, runExecutionFingerprint, snapshotExecution, snapshot
   type RunRuntimeContext } from './run-strategy'
 import type { PipedProcessAdapter, PipedProcessEvent, PipedRunProcess } from './piped-process-adapter'
 import type { ProcessManager } from '../process/process-manager'
+import { sourceGuardError, type RunSourceGuardPort, type RunSourceLease } from './run-source-guard'
 
 /** Later execution composition must authorize disk/project state, then revalidate
  * immediately before spawn. Renderer dirty/current-file state stays UI-owned. */
@@ -43,6 +44,8 @@ interface LifecycleSession {
     generation: number
     finished?: () => void
     cleanupFailed: boolean
+    sourceLease?: RunSourceLease
+    sourceFailure?: DomainError
   }
 }
 export interface RunExecutionOptions {
@@ -52,6 +55,7 @@ export interface RunExecutionOptions {
   onEventSinkError?(error: unknown): void
   /** Main-only phase observation; no public IPC migration in M1-08. */
   onPhase?(ownerId: number, session: RunSession, phase: RunExecutionPhase): void
+  sourceGuard?: RunSourceGuardPort
 }
 interface LaunchLifecycle {
   cleanup(): Promise<void>
@@ -242,6 +246,7 @@ export class RunService {
     const control = entry.plan!
     const check = () => {
       lifecycleCheck()
+      if (control.sourceFailure) throw control.sourceFailure
       if (entry.finalized || entry.cancelled || control.controller.signal.aborted) {
         throw runFailure('run:prepare', 'Run preparation was cancelled.')
       }
@@ -267,10 +272,24 @@ export class RunService {
       return snapshotPlan(plan, strategy.kind)
     }
     try {
+      if (strategy.kind === 'csharp-project') {
+        if (!this.execution!.sourceGuard) throw sourceGuardError('SOURCE_STATE_UNKNOWN')
+        control.sourceLease = this.execution!.sourceGuard.open(entry.session, entry.ownerId,
+          control.controller.signal, error => {
+            if (entry.finalized || control.sourceFailure) return
+            control.sourceFailure = error
+            this.emitError(entry, error)
+            control.controller.abort()
+            void this.requestCleanup(entry).then(() => this.finalize(entry, 'FAILED')).catch(() => undefined)
+          })
+        await control.sourceLease.check()
+        check()
+      }
       const plan = await prepare(authorized)
       const fingerprint = runPlanFingerprint(entry.identity, authorized, plan)
       for (const [index, step] of plan.steps.entries()) {
         check()
+        if (control.sourceLease) { await control.sourceLease.check(); check() }
         const current = Object.freeze({ ...await abortable(this.authority.authorize({
           projectId: entry.session.projectId, relativePath: entry.session.relativePath, dirty: false,
         }, entry.ownerId, context), context.signal) })
@@ -286,6 +305,7 @@ export class RunService {
         // Preparation probes must release completely before native step creation.
         await this.requestCleanup(entry)
         check()
+        if (control.sourceLease) { await control.sourceLease.check(); check() }
         entry.process = undefined
         entry.exitCode = null; entry.stdoutEof = false; entry.stderrEof = false
         entry.observationFailed = false
@@ -293,6 +313,7 @@ export class RunService {
         const finished = new Promise<void>(resolve => { control.finished = resolve })
         this.publishPhase(entry, step.phase)
         check() // A synchronous phase observer may have requested Stop.
+        control.sourceLease?.assertValid()
         let child: PipedRunProcess | undefined
         const unregister = this.execution!.manager.register({ id: `run-step:${entry.session.sessionId}:${generation}`,
           ownerId: context.resourceOwnerId, close: () => this.cleanup(entry) })
@@ -311,6 +332,8 @@ export class RunService {
             }
           },
         }
+        // Subsequent edits never restart or cancel an already-executing program.
+        if (step.phase === 'EXECUTING') { control.sourceLease?.release(); control.sourceLease = undefined }
         if (entry.session.state === 'STARTING') this.transition(entry, 'RUNNING')
         await finished
         await this.requestCleanup(entry)
@@ -326,7 +349,7 @@ export class RunService {
     } catch (error) {
       if (entry.finalized) return
       if (control.cleanupFailed) return
-      if (!entry.cancelled) this.emitError(entry, safeStartError(error))
+      if (!entry.cancelled && !control.sourceFailure) this.emitError(entry, safeStartError(error))
       this.transition(entry, 'STOPPING')
       // Cleanup failure retains both session and resources; explicit Stop can retry.
       try {
@@ -565,6 +588,7 @@ export class RunService {
 
   private finalize(entry: LifecycleSession, state: 'EXITED' | 'FAILED' | 'CANCELLED'): void {
     if (entry.finalized) return
+    entry.plan?.sourceLease?.release()
     entry.session = Object.freeze({ ...entry.session, state })
     entry.finalized = true
     this.sessions.delete(entry.session.sessionId)

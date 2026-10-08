@@ -61,6 +61,7 @@ import { GitDocumentOwners } from './services/git/git-document-owners'
 import { GitService } from './services/git/git-service'
 import { DomainError } from './errors/app-error'
 import { RunIpcService } from './ipc/run-ipc-service'
+import { RunSourceGuard } from './services/run/run-source-guard'
 import { WindowManager } from './window/window-manager'
 import { createCsharpLanguageManager } from './services/language/language-service-manager'
 import { CsharpWorkspaceStore } from './services/language/csharp-workspace-store'
@@ -135,6 +136,24 @@ void app.whenReady().then(async () => {
     })
   const nodeRuntime = new NodeRuntimeDetector()
   let runAdapter: WindowsPipedProcessAdapter | undefined
+  const runSourceGuard = new RunSourceGuard(ipcRegistry, {
+    authorizeReply: authorizePreferencesFrame,
+    authorize: (session, ownerId) => {
+      const owner = webContents.fromId(ownerId)
+      if (!owner || owner.isDestroyed() || projectService.getActiveProject()?.id !== session.projectId
+        || fileSystemService.getStatus(session.projectId).state !== 'AVAILABLE'
+        || !['STARTING', 'RUNNING'].includes(runService.getSession(session.sessionId, ownerId).state)) {
+        throw new DomainError({ code: 'PERMISSION_DENIED', retryable: false,
+          message: 'The Run project or window is no longer available.' })
+      }
+      observeRunOwner(ownerId)
+    },
+    send: (ownerId, channel, request) => {
+      const owner = webContents.fromId(ownerId)
+      if (!owner || owner.isDestroyed()) throw new Error('Run owner unavailable')
+      owner.send(channel, request)
+    },
+  })
   const runService = new RunService({
     authorize: async (target, ownerId) => {
       const assertOwner = () => {
@@ -161,6 +180,7 @@ void app.whenReady().then(async () => {
     manager: processManager,
     onEvent: (ownerId, event) => publishToRenderer(ownerId, RUN_CHANNELS.event, event),
     onEventSinkError: () => console.error('A Run event could not be delivered.'),
+    sourceGuard: runSourceGuard,
   })
   const runLifecycle = new RunProjectLifecycle(runService, projectService, fileSystemService,
     () => console.error('Unavailable-project Run cleanup failed; cleanup remains retryable.'))
@@ -317,12 +337,13 @@ void app.whenReady().then(async () => {
   terminalIpcReference.current = terminalIpc
 
   const runOwners = new Map<number, () => void>()
-  const runIpc = new RunIpcService(ipcRegistry, runService, (ownerId) => {
+  const observeRunOwner = (ownerId: number) => {
     if (runOwners.has(ownerId)) return
     const owner = webContents.fromId(ownerId)
     if (!owner || owner.isDestroyed()) throw new DomainError({ code: 'PERMISSION_DENIED',
       message: 'The Run window is no longer available.', retryable: false })
     const cleanup = () => {
+      runSourceGuard.invalidateOwner(ownerId)
       void runService.stopOwner(ownerId).catch(() => {
         console.error('Run window cleanup failed; resources remain tracked for shutdown retry.')
       })
@@ -334,12 +355,15 @@ void app.whenReady().then(async () => {
     const remove = () => {
       owner.removeListener('did-start-navigation', navigation)
       owner.removeListener('destroyed', destroyed)
+      owner.removeListener('render-process-gone', cleanup)
       runOwners.delete(ownerId)
     }
     owner.on('did-start-navigation', navigation)
     owner.once('destroyed', destroyed)
+    owner.on('render-process-gone', cleanup)
     runOwners.set(ownerId, remove)
-  })
+  }
+  const runIpc = new RunIpcService(ipcRegistry, runService, observeRunOwner)
 
   desktopApplication = new DesktopApplication([
     persistenceService,
@@ -353,6 +377,7 @@ void app.whenReady().then(async () => {
     aiService,
     aiIpc,
     unsavedTransitionService,
+    runSourceGuard,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
     runLifecycle,
     { name: 'CsharpWorkspaceStore', stop: () => csharpStore.stop() },

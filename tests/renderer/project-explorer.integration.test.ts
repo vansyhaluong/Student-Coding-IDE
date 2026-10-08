@@ -2238,6 +2238,7 @@ function installApi(overrides: {
 } = {}): StudentIdeApi {
   window.matchMedia = vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
   const api: StudentIdeApi = {
+    runSourceGuard: { onRequested: () => () => {}, onReleased: () => () => {}, reply: async () => success(null) },
     ai: {
       getStatus: async () => success('ready'),
       startChat: async () => failure('Not configured'),
