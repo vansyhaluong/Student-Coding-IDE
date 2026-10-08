@@ -168,7 +168,7 @@ before affected work continues.
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
 | Phase 9 — Learning / Programming Techniques | `NOT_STARTED` | Planned 9A–9G; Section 13.6; explicit implementation authorization required |
-| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01 through M1-08 and M1-09a COMPLETE; Windows 11 x64 scope; M1-09 and remaining tasks NOT_STARTED; Section 13.7 |
+| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01 through M1-10 (including M1-09a) COMPLETE; Windows 11 x64 scope; M1-11 and remaining tasks NOT_STARTED; Section 13.7 |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
 `COMPLETE`. A status may become `COMPLETE` only after its exit gate passes.
@@ -3925,11 +3925,11 @@ and function-signature exercise harnesses are outside this foundation.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 
-Status: `IN_PROGRESS`. M1-01 through M1-08 and M1-09a are explicitly authorized and `COMPLETE`;
+Status: `IN_PROGRESS`. M1-01 through M1-10 (including M1-09a) are explicitly authorized and `COMPLETE`;
 M1-04's isolated spike passes 32/32 cases on Windows 11 x64 under the revised
 ADR-024 acceptance scope. M1-05's production resolver/evaluation is verified;
 M1-06 discovery/classification and M1-07 selection/persistence are verified
-(2026-10-08); M1-08 plan lifecycle and M1-09a saved-source handshake are verified.
+(2026-10-08); M1-08 lifecycle, M1-09a saved-source guard, M1-09 strategy and M1-10 IPC/Preload are verified.
 All later tasks and
 Milestone 2 remain `NOT_STARTED`. The 2026-10-07 planning
 authorization was documentation-only; subsequent authorization is limited to
@@ -3937,7 +3937,7 @@ M1-01 contracts/validation, M1-02 identity/runtime foundations and M1-03 native
 argument arrays with closed stdin, followed by M1-04 isolated native/SDK evidence
 and M1-05 Run-specific SDK resolution/structured evaluation, followed by M1-06
 discovery/classification, M1-07 Main-side selection/persistence and M1-08 lifecycle
-infrastructure and M1-09a bounded saved-source protocol. No M1-09 or later
+infrastructure, M1-09a saved-source protocol, M1-09 strategy and M1-10 IPC/Preload. No M1-11 or later
 implementation is authorized.
 This package is a bounded Project Run extension,
 not Phase 5.5 reopening, Phase 9D implementation or authorization for later tasks.
@@ -4014,7 +4014,7 @@ only if evidence requires a design change.
 
 ### Milestone 1 — C# Project Run Core
 
-Status: `IN_PROGRESS`. M1-01 through M1-09 (including M1-09a) COMPLETE; M1-10–M1-12
+Status: `IN_PROGRESS`. M1-01 through M1-10 (including M1-09a) COMPLETE; M1-11–M1-12
 NOT_STARTED. No later implementation authorization is inferred.
 
 | ID | Công việc | File/module dự kiến | Phụ thuộc | Kết quả đầu ra | Tiêu chí hoàn thành |
@@ -4029,7 +4029,7 @@ NOT_STARTED. No later implementation authorization is inferred.
 | M1-08 | COMPLETE — Add cancellable execution-plan/session lifecycle | run/run-service.ts, run-strategy.ts; tests/main/run-plan-lifecycle.test.ts; existing project lifecycle reused unchanged | M1-02/M1-03; M1-04 before real C# launch | Main-only JS one-step/C# two-step seam; early STARTING, abortable preparation/resources, step generations and full-plan launch fingerprint | 31 new/145 focused tests in 7 files PASS; preparation/build/execute/gap Stop, callback retirement, intermediate exit, retained cleanup and replacement/project/shutdown failure verified; typecheck/scoped lint/diff PASS; no production C# strategy |
 | M1-09a | COMPLETE — Bounded saved-source handshake | run/run-source-guard.ts; shared/contracts/run-source-guard.ts; preload/bridge/run-source-guard.ts; output/run-source-guard-controller.ts; EditorModelManager revision and Main composition | M1-01/M1-08 | Owner/frame/project/session/request validation, all-retained-buffer dirty/conflict revision, 5s timeout, cancellation and build invalidation | 67 new tests/5 files and 380 focused tests/16 files PASS; initial and per-step/prelaunch checks fail closed; edit+Save cannot reuse approval; cleanup failure retained; typecheck/scoped lint/diff PASS; no M1-09 strategy |
 | M1-09 | COMPLETE — CSharpRunStrategy and step failure classification | run/csharp-run-strategy.ts, csharp-run-preparation.ts; run service and main/index.ts; focused strategy tests | M1-05–M1-08/M1-09a | Fixed SDK build then dotnet run plan, phase/error mapping and launch guard | 30 new/384 focused tests PASS; Windows 8/10 smoke 14/14 plus repeated-resource 4/4 PASS; SDK/TFM revalidation, no auto-save, no execution after build failure; typecheck/scoped lint/diff PASS; JS unchanged |
-| M1-10 | Wire target resolution/selection and Run DTOs through IPC/Preload | main/ipc/run-ipc-service.ts, preload/bridge/run.ts, shared contract exports; IPC/Preload tests | M1-09 | Narrow resolve/select/start/stop/events; owner-scoped discovery cancellation | Exact validation at both boundaries; relative paths only; no runtime CLI options; stale selection/generation/owner denied; early session response supports Stop |
+| M1-10 | COMPLETE — C# Run IPC/Preload integration | main/ipc/run-ipc-service.ts, run/csharp-run-target-requests.ts, preload/bridge/run.ts, shared/contracts/run-project.ts; focused tests | M1-09 | Narrow resolve/select/clear/cancel/start/stop/events; owner-scoped discovery cancellation | 63 new tests/4 files and 443 focused tests/17 files PASS; exact DTO/frame/project/session validation, early session, phase/failure forwarding, cancellation and retained cleanup; typecheck/scoped lint/diff PASS; no UI/native changes |
 | M1-11 | Minimal C# target/Run/Stop/Output presentation | output/run-controller.ts, EditorRunAction.tsx, OutputPanel.tsx, use-project-run.ts; App composition if needed | M1-10 | Compact target choice/label; project save guard; phase/failure output; JS current-file behavior | Single Run entry; Stop available while preparing/building; target != active .cs; stale events ignored; existing output/tab/theme behavior preserved |
 | M1-12 | Core acceptance and milestone review | tests/main/csharp-run*.test.ts; tests/renderer/run-output.integration.test.tsx; planned scripts/smoke-csharp-run.mjs; docs | M1-11 | M1 evidence report and status update only after exit passes | Core test matrix/native smoke, full suite/typecheck/lint/build/diff checks; Windows Core evidence; overall feature remains IN_PROGRESS pending M2 |
 
@@ -4455,8 +4455,29 @@ acceptance is claimed by this docs-only task.
   No M1-10 IPC/Preload, M1-11 UI, stdin, auto-save or LSP/Terminal changes.
 - Full command list, limits and hashed evidence: `spikes/csharp-project-run/M1-09-REPORT.md`.
 
-M1-01 through M1-09 (including M1-09a) are COMPLETE. Next eligible task is **M1-10**,
-requiring explicit authorization. M1-10 public IPC/Preload remains NOT_STARTED.
+#### M1-10 IPC/Preload verification — 2026-10-08
+
+- Added typed project methods to `studentIde.run` and exact validators at Main and
+  Preload. Legacy JS start/stop/event DTOs remain compatible. C# events carry
+  semantic session/phase/output/exit and allowlisted failure reasons, not native errors.
+- Resolve/select/clear use M1-07's store with fresh resolver/evaluation. One finite
+  request scope at a time bounds discovery resources; explicit owner cancellation,
+  reload/project transition/shutdown invalidate it. Cleanup failure retains ownership
+  and blocks replacement. Cancellation during final cleanup cannot return stale success.
+- `startProject` accepts only the semantic C# target/dirty guard, returns STARTING
+  before probes and delegates to M1-09. Main selection, canonical authorization and
+  M1-09a source checks still decide whether any build/execute step may launch.
+- 63 new tests across 4 files and 443 focused regressions across 17 files PASS;
+  typecheck/scoped ESLint/tracked and new-file whitespace PASS. Production store,
+  persistence, resolver, strategy, source guard and lifecycle are used in IPC/Preload
+  integration with controlled SDK/process ports. No new native evidence is claimed.
+- Tests caught and fixed successful project-switch lock release and cancellation
+  during response cleanup. Old API-shape assertions were updated; no flaky test fixes.
+- No full suite, build or native smoke: execution policy and native adapters are
+  unchanged. Commands/API examples: `spikes/csharp-project-run/M1-10-REPORT.md`.
+
+M1-01 through M1-10 (including M1-09a) are COMPLETE. Next eligible task is **M1-11**,
+requiring explicit authorization. M1-11 target picker/Run/Output UI remains NOT_STARTED.
 Neither milestone nor
 overall C# Run is COMPLETE.
 

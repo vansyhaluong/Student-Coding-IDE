@@ -5,6 +5,29 @@ import type { AppResult } from '../../shared/contracts/app-error'
 import type { IpcRendererLike } from './lifecycle'
 import { invokeSafely } from './invoke'
 import { parseAppResult } from './result'
+import { RUN_PROJECT_CHANNELS, validateRunProjectRequest, validateCSharpRunTarget,
+  validateCSharpStartRunRequest, validateCSharpRunSession, validateCSharpRunTargetResolution,
+  validateProjectRunEvent, type CSharpRunSession } from '../../shared/contracts/run-project'
+import type { CSharpRunTargetResolution } from '../../shared/contracts/run'
+import { validateAppError } from '../../shared/contracts/app-error'
+import { validateExactObject } from '../../shared/contracts/validation'
+
+function parseProjectResult<T>(value: unknown, matches: (value: unknown) => value is T, operation: string): AppResult<T> {
+  const envelope = validateExactObject(value, ['ok', 'value', 'error'])
+  if (envelope.ok && envelope.value.ok === true && validateExactObject(value, ['ok', 'value']).ok) {
+    return parseAppResult(value, matches, operation)
+  }
+  if (envelope.ok && envelope.value.ok === false && validateExactObject(value, ['ok', 'error']).ok) {
+    const error = validateExactObject(envelope.value.error, ['code', 'message', 'operation', 'details', 'retryable'])
+    if (error.ok) {
+      // Existing Main serializer includes undefined optional fields.
+      const normalized = Object.fromEntries(Object.entries(error.value).filter(([, entry]) => entry !== undefined))
+      const valid = validateAppError(normalized)
+      if (valid.ok) return { ok: false, error: valid.value }
+    }
+  }
+  return parseAppResult(null, matches, operation)
+}
 
 function invalid<T>(): AppResult<T> {
   return { ok: false, error: { code: 'INVALID_INPUT', retryable: false,
@@ -14,6 +37,57 @@ function invalid<T>(): AppResult<T> {
 /** Narrow semantic Run capability; no executable or process options cross the bridge. */
 export function createRunBridge(ipc: IpcRendererLike): RunApi {
   return {
+    async resolveTargets(request) {
+      const valid = validateRunProjectRequest(request)
+      if (!valid.ok) return invalid()
+      return parseProjectResult(await invokeSafely(ipc, RUN_PROJECT_CHANNELS.resolve, valid.value),
+        (value): value is CSharpRunTargetResolution => {
+          const result = validateCSharpRunTargetResolution(value)
+          return result.ok && result.value.projectId === valid.value.projectId
+        }, RUN_PROJECT_CHANNELS.resolve)
+    },
+    async selectTarget(request) {
+      const valid = validateCSharpRunTarget(request)
+      if (!valid.ok) return invalid()
+      return parseProjectResult(await invokeSafely(ipc, RUN_PROJECT_CHANNELS.select, valid.value),
+        (value): value is CSharpRunTargetResolution => {
+          const result = validateCSharpRunTargetResolution(value)
+          return result.ok && result.value.projectId === valid.value.projectId
+        }, RUN_PROJECT_CHANNELS.select)
+    },
+    async clearTarget(request) {
+      const valid = validateRunProjectRequest(request)
+      if (!valid.ok) return invalid()
+      return parseProjectResult(await invokeSafely(ipc, RUN_PROJECT_CHANNELS.clear, valid.value),
+        (value): value is CSharpRunTargetResolution => {
+          const result = validateCSharpRunTargetResolution(value)
+          return result.ok && result.value.projectId === valid.value.projectId
+        }, RUN_PROJECT_CHANNELS.clear)
+    },
+    async cancelResolution(request) {
+      const valid = validateRunProjectRequest(request)
+      if (!valid.ok) return invalid()
+      return parseProjectResult(await invokeSafely(ipc, RUN_PROJECT_CHANNELS.cancel, valid.value),
+        (value): value is null => value === null, RUN_PROJECT_CHANNELS.cancel)
+    },
+    async startProject(request) {
+      const valid = validateCSharpStartRunRequest(request)
+      if (!valid.ok) return invalid()
+      return parseProjectResult(await invokeSafely(ipc, RUN_PROJECT_CHANNELS.start, valid.value),
+        (value): value is CSharpRunSession => {
+          const result = validateCSharpRunSession(value)
+          return result.ok && result.value.projectId === valid.value.projectId
+            && result.value.relativePath === valid.value.relativePath
+        }, RUN_PROJECT_CHANNELS.start)
+    },
+    onProjectEvent(listener) {
+      const wrapped = (_event: unknown, value: unknown) => {
+        const valid = validateProjectRunEvent(value)
+        if (valid.ok) listener(valid.value)
+      }
+      ipc.on(RUN_PROJECT_CHANNELS.event, wrapped)
+      return () => ipc.removeListener(RUN_PROJECT_CHANNELS.event, wrapped)
+    },
     async start(request) {
       const validated = validateStartRunRequest(request)
       if (!validated.ok) return invalid()

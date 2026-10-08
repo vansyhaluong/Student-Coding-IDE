@@ -2263,6 +2263,12 @@ function installApi(overrides: {
       ...overrides.git,
     },
     run: {
+      resolveTargets: async () => failure('Not configured'),
+      selectTarget: async () => failure('Not configured'),
+      clearTarget: async () => failure('Not configured'),
+      cancelResolution: async () => failure('Not configured'),
+      startProject: async () => failure('Not configured'),
+      onProjectEvent: () => () => undefined,
       start: async () => failure('Not configured'),
       stop: async () => failure('Not configured'),
       onEvent: () => () => undefined,

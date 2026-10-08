@@ -161,7 +161,8 @@ describe('Run IPC and preload foundation', () => {
     const transport: IpcRendererLike = { invoke: vi.fn(async () => ({ ok: true, value: snapshot })),
       on: vi.fn((_channel, callback) => { listener = callback }), removeListener: vi.fn() }
     const api = createRunBridge(transport)
-    expect(Object.keys(api).sort()).toEqual(['onEvent', 'start', 'stop'])
+    expect(Object.keys(api).sort()).toEqual(['cancelResolution', 'clearTarget', 'onEvent', 'onProjectEvent',
+      'resolveTargets', 'selectTarget', 'start', 'startProject', 'stop'])
     expect(await api.start(request)).toEqual({ ok: true, value: snapshot })
     expect(await api.start({ ...request, dirty: 'false' } as never)).toMatchObject({ ok: false })
     expect(transport.invoke).toHaveBeenCalledTimes(1)

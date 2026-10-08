@@ -8,10 +8,10 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `IN_PROGRESS`; M1-01 through M1-09 (including M1-09a) COMPLETE; M1-10 NOT_STARTED.
-Main has a production CSharpRunStrategy; public C# Run IPC/UI and Console input
-remain unimplemented. Design is accepted in ADR-024. The implemented capability
-matrix below still reports user-accessible behavior (C# Run not exposed). The extension
+Status: `IN_PROGRESS`; M1-01 through M1-10 (including M1-09a) COMPLETE; M1-11 NOT_STARTED.
+Main has a production CSharpRunStrategy and typed Run IPC/Preload; C# Run UI and
+Console input remain unimplemented. Design is accepted in ADR-024. The capability
+matrix below still reports end-user behavior (C# Run UI not exposed). The extension
 is separate from Phase 5.5 intelligence and Phase 9 Exercise Runtime.
 
 M1-05 provides Main-only contextual Run SDK resolution (stable SDK >=8) and
@@ -63,6 +63,15 @@ Verification: 30 new tests, 384 focused regression tests, typecheck/scoped lint
 and whitespace PASS. Real SDK 8.0.410/net8.0 and 10.0.112/net10.0 smoke: 14/14
 cases plus 4/4 repeated resource cases PASS. No public C# Run API/UI or stdin;
 JavaScript behavior is preserved. See `spikes/csharp-project-run/M1-09-REPORT.md`.
+
+M1-10 adds typed resolve/select/clear/cancel/startProject/onProjectEvent methods to
+the existing Run bridge. Main owns selection, sender/frame/project/session checks,
+probe cancellation and retained cleanup. Start returns an early session; actual
+execution still requires M1-09 revalidation and the M1-09a saved-source handshake.
+C# phase/output/exit/failure events are semantic and separate from unchanged JS
+events. Verification: 63 new tests and 443 focused regressions PASS, plus typecheck,
+scoped lint and whitespace. No native/execution policy or UI change; no new native
+smoke claim. M1-11 UI remains NOT_STARTED and overall C# Run remains IN_PROGRESS.
 
 Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
 Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore

@@ -246,7 +246,8 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations, M1-03 native argv
 M1-04 isolated compatibility evidence, M1-05 resolver/evaluation and M1-06
 discovery/classification, M1-07 selection/persistence, M1-08 lifecycle, M1-09a source guard
-and M1-09 strategy composition COMPLETE. M1-10 public C# Run API remains NOT_STARTED.
+and M1-09 strategy composition COMPLETE. M1-10 typed C# Run IPC/Preload is COMPLETE;
+M1-11 presentation remains NOT_STARTED.
 The module table distinguishes
 actual foundations from planned composition.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
@@ -323,7 +324,9 @@ no export/composition, settings schema, LSP store or wire contract changes.
 | Source guard verification | `tests/contracts/run-source-guard-validation.test.ts`, `tests/main/run-source-guard.test.ts`, `tests/main/run-source-guard-lifecycle.test.ts`, `tests/renderer/run-source-guard.test.ts`, `tests/preload/run-source-guard-bridge.test.ts` | Actual M1-09a focused contracts/ownership/editor/bridge/integration; fake process lifecycle, no production dotnet launch |
 | Bounded stdin queue | `src/main/services/run/run-input-queue.ts` | Main Run session; planned M2 |
 | Existing identity/plan/process seams | `src/main/services/run/run-service.ts`, `run-strategy.ts`, `piped-process-adapter.ts`, `windows-piped-process-adapter.ts`, `native/run-process.cpp` | Actual M1-08 Main plan lifecycle; early owned preparation, abort/resource context, sequential cleanup and fingerprint/generation checks; adapters/native unchanged |
-| Semantic Run wire boundary | `src/shared/contracts/run.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Existing actual modules; planned target/phase/guard/input DTOs and validators |
+| Semantic Run wire boundary | `src/shared/contracts/run.ts`, `run-project.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Actual M1-10; additive typed target operations/start/events, exact request/reply validation, trusted frame/project checks, JS compatibility; stdin remains planned M2 |
+| Finite target request ownership | `src/main/services/run/csharp-run-target-requests.ts` | Actual M1-10; one outstanding active-project operation, owner cancellation, project transition lease, registered scope cleanup and stale-response rejection |
+| C# Run IPC verification | `tests/contracts/run-project-validation.test.ts`, `tests/main/run-project-ipc.test.ts`, `tests/main/csharp-run-target-requests.test.ts`, `tests/preload/run-project-bridge.test.ts`, `spikes/csharp-project-run/M1-10-REPORT.md` | Actual M1-10; 63 new tests, production-domain IPC integration with controlled SDK/process ports; no new native smoke |
 | Target selection and line composer | `src/renderer/src/features/output/run-controller.ts`, `EditorRunAction.tsx`, `OutputPanel.tsx`, `use-project-run.ts` | Existing actual Output feature; planned minimal extension |
 | Compatibility evidence | `spikes/csharp-project-run/REPORT.md`, `harness.mjs`, `native-prototype.cpp`, `build-native.mjs`, `fixtures/`, `evidence/` | M1-04 COMPLETE; Windows 11 x64 32/32 PASS under revised scope; no new dependency |
 | C# Run acceptance | `tests/main/csharp-run-*.test.ts`, `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-csharp-run.mjs` | New focused tests/smoke planned; existing integration suite extended |

@@ -1,4 +1,5 @@
 import type { AppResult } from './app-error'
+import type { ProjectRunApi } from './run-project'
 import { validateAppError, type AppError } from './app-error'
 import type { ProjectId } from './project'
 import { validateExactObject, type ValidationResult } from './validation'
@@ -30,13 +31,13 @@ export type RunEvent =
   | { readonly type: 'error'; readonly session: RunSession; readonly error: AppError }
 
 /** Live Renderer capability exposes only these semantic operations, never process options. */
-export interface RunApi {
+export interface RunApi extends ProjectRunApi {
   start(request: StartRunRequest): Promise<AppResult<RunSession>>
   stop(sessionId: RunSessionId): Promise<AppResult<null>>
   onEvent(listener: (event: RunEvent) => void): () => void
 }
 
-/** M1-01 wire DTOs for later composition; RunApi and its legacy validators stay unchanged.
+/** M1-01 semantic DTOs; M1-10 adds project methods while legacy validators stay unchanged.
  * Validation is lexical only. Main must authorize owner, project, canonical paths,
  * Console eligibility and SDK before execution. Never add PreparedRun/process fields here.
  */

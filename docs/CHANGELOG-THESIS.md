@@ -2,6 +2,29 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## C# Project Run M1-10 — Typed IPC/Preload integration (2026-10-08)
+
+- Extended studentIde.run with semantic target resolve/select/clear/cancel,
+  startProject and project-event subscriptions. Legacy JS methods/events remain
+  compatible; Stop uses existing owned session identity for both kinds.
+- Added exact request/result/event validators and trusted frame/project checks.
+  Async replies recheck project identity and owner generation. Project events
+  expose phases, output, exit and allowlisted failures, never native error details.
+- Added finite target-request scope ownership using the existing resolver/store/
+  evaluator. One outstanding operation bounds probes; cancellation, project
+  transitions, filesystem unavailability, reload/crash/destroy and shutdown join
+  cleanup. Retained cleanup blocks replacement. Start keeps early session response
+  and existing selection/source revalidation; no Renderer path can bypass selection.
+- Verification: 63 new tests/4 files and 443 focused regressions/17 files PASS;
+  typecheck, scoped ESLint and tracked/new-file whitespace PASS. Tests cover real
+  persistence/domain integration through Preload/IPC with controlled SDK/process ports.
+  They caught successful-transition lease release and cancellation-during-cleanup
+  races; both fixed. Existing API-shape assertions updated; no flaky-test workaround.
+- No full suite, build or native smoke because native/execution implementation is
+  unchanged. No C# UI, stdin, new dependency, ADR change, commit, push or merge.
+  M1-10 COMPLETE; M1-11 NOT_STARTED; Milestone 1/C# Run IN_PROGRESS. Commands and
+  API usage: `spikes/csharp-project-run/M1-10-REPORT.md`.
+
 ## C# Project Run M1-09 — Build/execute strategy (2026-10-08)
 
 - Added Main-only CSharpRunStrategy and owned preparation composition using fresh

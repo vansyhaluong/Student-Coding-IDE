@@ -443,10 +443,11 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 through M1-09 (including M1-09a) COMPLETE, including native
+the extension is `IN_PROGRESS` with M1-01 through M1-10 (including M1-09a) COMPLETE, including native
 argv, compatibility evidence, Run SDK/evaluation and target discovery/classification.
 M1-07 selection/persistence, M1-08 lifecycle, M1-09a source guard and M1-09 C# strategy
-composition are implemented in Main. M1-10 public C# Run IPC remains `NOT_STARTED`.
+composition are implemented in Main. M1-10 typed IPC/Preload is implemented;
+M1-11 C# Run presentation remains `NOT_STARTED`.
 The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
@@ -776,11 +777,56 @@ Build nonzero ends the session without execution; safe error details distinguish
 preflight, build/restore, execution, spawn, observation and cleanup failures.
 
 Main registers the C# strategy, while legacy `startRun` explicitly rejects `.csproj`;
-only the Main-only `startPlannedRun` seam can exercise it until M1-10. JavaScript
+M1-10 calls the existing `startPlannedRun` seam through a separate semantic method. JavaScript
 commands and fingerprint semantics remain unchanged. No native/process adapter,
-public IPC/Preload, Run UI, LSP, Terminal or stdin changes. Windows 11 x64 evidence:
+Run UI, LSP, Terminal or stdin changes were made by M1-09. Windows 11 x64 evidence:
 14/14 real SDK 8/10 cases and 4/4 repeated resource cases PASS; see
 `spikes/csharp-project-run/M1-09-REPORT.md`. This guard still is not a disk snapshot.
+
+#### M1-10 typed Run IPC/Preload
+
+The existing `studentIde.run` capability now adds `resolveTargets({projectId})`,
+`selectTarget({kind:'csharp-project',projectId,relativePath})`, `clearTarget({projectId})`,
+`cancelResolution({projectId})`, `startProject({kind:'csharp-project',projectId,relativePath,dirty})`
+and `onProjectEvent(listener)`. Existing `start`, `stop(sessionId)` and `onEvent`
+keep JS wire compatibility; Stop serves both session kinds through Main ownership.
+No executable, argv, cwd, root, glob or traversal option can cross the request boundary.
+
+RunIpcService validates exact DTOs, authorizes the trusted live main frame and active
+project, and observes owner lifecycle. Async replies recheck the frame, owner
+generation and original authorized project object. Preload checks exact response
+envelopes/DTOs and project/path correspondence; listeners receive validated data
+only and have explicit disposers. Main projects results onto semantic resolution
+DTOs, excluding internal assessments, SDK commands and canonical paths.
+
+CsharpRunTargetRequests owns finite discovery/selection probes through ProcessManager.
+The single-active-project architecture allows one outstanding target operation;
+concurrent requests fail with REQUEST_IN_PROGRESS. Cancellation is scoped to the
+current owner/project operation; callers await it before retrying. Resource ownership
+is registered before scope creation. Failed cleanup is retained, reports CLEANUP_FAILED
+and blocks replacement until cancellation/transition/shutdown cleanup succeeds.
+Explicit cancellation is distinguished from normal scope disposal and checked after
+cleanup, preventing a late successful response. Project guards hold a transition
+lease until project-changed (success) or transition-settled (failure). Reload/crash/
+destroy and filesystem unavailability also abort target operations.
+
+Starting C# does not perform blocking discovery before returning its session.
+The semantic relative path is a request, not selection authority: M1-09 re-reads
+Main's store/resolver and M1-09a approval during owned preparation and before launch.
+Unselected multiple candidates produce SELECTION_REQUIRED from resolution and from
+the failed session's semantic error event if a caller attempts Start directly.
+Sending another candidate cannot replace the stored target or bypass the guard.
+
+RunService's Main-only event/phase callbacks feed `run:project-event`, with semantic
+C# session snapshots, phase, stdout/stderr, terminal exit and validated failure unions.
+Raw AppError/native details are reduced to allowlisted reasons. Phase records retire
+on exit/owner invalidation/shutdown. JS events remain on `run:event`, with no duplicate
+delivery. RunService retains canonical session serialization, re-run ownership,
+generation checks and stale-process suppression. No new Run lifecycle or UI exists.
+
+Verification: 63 new tests/4 files, 443 focused tests/17 files, typecheck/scoped lint/
+whitespace PASS. See `spikes/csharp-project-run/M1-10-REPORT.md`. Native execution
+implementation is unchanged; M1-10 does not claim a new native smoke or Core Acceptance.
 
 #### Native pipes and session-scoped input
 

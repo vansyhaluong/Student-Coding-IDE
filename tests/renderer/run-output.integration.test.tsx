@@ -100,7 +100,8 @@ describe('Phase 4E editor and narrow Run integration', () => {
     await start(h)
     expect(h.transport.invoke).toHaveBeenCalledWith(RUN_CHANNELS.start, { projectId, relativePath: 'main.js', dirty: false })
     expect(h.owner).toHaveBeenCalledWith(7)
-    expect(Object.keys(h.api.run).sort()).toEqual(['onEvent', 'start', 'stop'])
+    expect(Object.keys(h.api.run).sort()).toEqual(['cancelResolution', 'clearTarget', 'onEvent', 'onProjectEvent',
+      'resolveTargets', 'selectTarget', 'start', 'startProject', 'stop'])
   })
   it('blocks dirty JS without autosave or an invocation', () => {
     const h = setup(); render(<Harness h={h} />)
