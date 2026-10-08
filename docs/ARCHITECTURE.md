@@ -443,9 +443,9 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 through M1-06 COMPLETE, including native
+the extension is `IN_PROGRESS` with M1-01 through M1-07 COMPLETE, including native
 argv, compatibility evidence, Run SDK/evaluation and target discovery/classification.
-M1-07 persistence is NOT_STARTED. C# strategy
+M1-07 Main selection/persistence is implemented; M1-08 lifecycle is NOT_STARTED. C# strategy
 composition is `NOT_STARTED`. The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
@@ -643,6 +643,33 @@ saved paths and eligibility; removed/changed targets cause fresh selection rathe
 than running a substitute silently. One valid candidate auto-selects, multiple
 require choice unless a still-valid saved choice exists. Persistence failure is
 reported; corrupt data safely falls back to selection. No LSP store mutation.
+
+M1-07 implementation: Main-only `CsharpRunTargetStore` provides resolve/select/
+clear/stop over the existing resolver and PersistenceService. Dedicated schema-1
+files under `csharp-run-targets/<canonical-project-id>.json` store only relativePath
+or an empty selection; app settings and the C# workspace store are independent.
+Every use resolves afresh and reauthorizes the chosen path. Requested/saved
+canonical identity is captured before resolver and compared afterward. Only a
+currently eligible discovered candidate may become READY; global discovery
+failures/bounds cannot be bypassed. No implicit choice is persisted.
+
+A stale saved target forces fresh selection, including when one different
+Console remains. Corruption/backup recovery also forces fresh selection and
+reports PERSISTENCE_RECOVERED; a historical backup is not automatically used as
+the current choice. Read permission/IO failures are distinct from corruption and
+return PERSISTENCE_FAILED. Clear writes an empty primary through existing atomic
+persistence, retaining the standard backup as recovery evidence only.
+
+Selection operations serialize per project and newer requests supersede older
+ones. Each captures the authorized ActiveProject object and aborts on project
+change, cancellation or stop; same-root reopen cannot validate an older operation.
+The persistence adapter checks that operation immediately before atomic rename.
+Already-started filesystem rename cannot be canceled and may finish in its old
+project's file; the returned result is invalidated and never crosses roots.
+Listeners are removed in finally, and stop drains pending operations/writes.
+Main selection metadata reports AUTOMATIC/SAVED/EXPLICIT/CLEARED/STALE/RECOVERED
+and safe issues without changing M1-01 wire DTOs. Public IPC/UI and execution
+composition remain later tasks; results require launch-time revalidation.
 
 #### Execution, errors and saved-source guard
 

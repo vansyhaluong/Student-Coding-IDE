@@ -1753,3 +1753,20 @@ M1-05 remains COMPLETE; M1-06 NOT_STARTED. No commit/push.
 - M1-06 COMPLETE; M1-07 READY but NOT_STARTED. M1 and overall C# Run IN_PROGRESS.
   No new architecture decision/deviation, dependency, SDK/workload installation,
   commit, push or merge. Full C# Run and packaged/manual UI acceptance remain later work.
+
+## C# Project Run M1-07 — Main selection and persistence (2026-10-08)
+
+- Added independent `CsharpRunTargetStore.resolve/select/clear/stop`, using the
+  existing atomic PersistenceService in a dedicated per-project schema-1 namespace.
+  Persists relative paths only; app settings and C# language selection are untouched.
+- Fresh M1-06 eligibility and canonical authorization gate saved/explicit choices.
+  Stale choices and corrupt/backup recovery require fresh selection without
+  choosing another Console implicitly; unreadable/write-failed storage fails closed.
+- Per-project serialized operations, supersession/cancellation, project close/
+  switch/same-ID reopen invalidation, pre-commit checks and drained stop are tested.
+- Final focused suite: 143/143 tests, 5 files PASS, including M1-06/persistence/
+  project lifecycle regressions. Typecheck, scoped ESLint and diff checks PASS.
+  Real filesystem and production resolver/persistence integration use mocked SDK
+  process facts; no new real .NET/native smoke or full-suite/build claim.
+- M1-07 COMPLETE; M1-08 READY but NOT_STARTED. M1 and C# Run remain IN_PROGRESS.
+  No UI/IPC, execution, new dependency, architecture deviation/ADR, commit/push/merge.

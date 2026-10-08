@@ -245,7 +245,8 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 
 Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations, M1-03 native argv
 M1-04 isolated compatibility evidence, M1-05 resolver/evaluation and M1-06
-discovery/classification COMPLETE; M1-07 NOT_STARTED. The module table distinguishes
+discovery/classification and M1-07 selection/persistence COMPLETE; M1-08 NOT_STARTED.
+The module table distinguishes
 actual foundations from planned composition.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
 No module below was created by the 2026-10-07 planning update.
@@ -300,12 +301,18 @@ classification. `run-runtime.ts` exports it for verification/later composition;
 `spikes/csharp-project-run/M1-06-REPORT.md` / `evidence/m1-06-targets.json` record
 14 real SDK 8/10 cases. No store, picker, strategy or public capability is added.
 
+M1-07 actual foundation (2026-10-08): `run/csharp-run-target-store.ts` reuses
+PersistenceService under a separate `csharp-run-targets/<projectId>.json` namespace.
+`tests/main/csharp-run-target-store.test.ts` covers selection/reopen/isolation,
+stale/corrupt/IO/atomic failure and asynchronous lifecycle. Main-only helper;
+no export/composition, settings schema, LSP store or wire contract changes.
+
 | Domain / responsibility | Proposed path | Ownership / status |
 |---|---|---|
 | C# fixed build/run strategy | `src/main/services/run/csharp-run-strategy.ts` | Main Run domain; planned |
 | Console target discovery | `src/main/services/run/csharp-run-target-resolver.ts` | Actual M1-06; bounded canonical discovery, evaluated classification, reference graph and 0/1/multiple resolution; no persistence/execution |
 | Single-project facts and bounded probes | `src/main/services/run/csharp-run-preflight.ts`, `csharp-run-probe.ts` | Actual M1-05; Main Run ownership, no CsharpWorkspace/LSP session reuse |
-| Remembered Run target | `src/main/services/run/csharp-run-target-store.ts` | Main versioned JSON store; planned; separate from IntelliSense store |
+| Remembered Run target | `src/main/services/run/csharp-run-target-store.ts` | Actual M1-07; Main resolve/select/clear, isolated schema-1 JSON via PersistenceService, fresh resolver/canonical validation; no public API |
 | Run SDK eligibility | `src/main/services/dependencies/dotnet-run-runtime.ts` | Actual M1-05; shared executable validation, independent Run >=8 policy and CLI-selected SDK |
 | Saved-source preparation guard | `src/main/services/run/run-source-guard.ts` | Main Run-owned bounded Renderer handshake; planned; no Monaco ownership |
 | Bounded stdin queue | `src/main/services/run/run-input-queue.ts` | Main Run session; planned M2 |
