@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { mkdir, mkdtemp, rm, writeFile, readFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile, readFile, rename, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { IpcHandlerRegistry, type IpcMainLike, type IpcRequestContext } from '../../src/main/ipc/ipc-handler-registry'
@@ -126,6 +126,58 @@ async function setup(paths = ['App.csproj']) {
 }
 
 describe('M1-10 production IPC/preload/store/strategy/guard integration', () => {
+  it.each(['deleted', 'renamed', 'ineligible'] as const)('R2 forwards diagnostics for a %s saved target without choosing its replacement', async change => {
+    const h = await setup(['A.csproj', 'B.csproj'])
+    await h.api.selectTarget(h.target('A.csproj'))
+    if (change === 'deleted') await unlink(join(h.root, 'A.csproj'))
+    else if (change === 'renamed') await rename(join(h.root, 'A.csproj'), join(h.root, 'Renamed.csproj'))
+    else {
+      const original = h.execute.getMockImplementation()!
+      h.execute.mockImplementation(async (...args) => {
+        const result = await original(...args)
+        if (args[1].kind === 'evaluate' && args[1].project.endsWith('A.csproj')) {
+          const facts = JSON.parse(result.stdout); facts.Properties.OutputType = 'Library'
+          return { ...result, stdout: JSON.stringify(facts) }
+        }
+        return result
+      })
+    }
+    const result = await h.api.resolveTargets({ projectId: h.project.id })
+    expect(result).toMatchObject({ ok: true, value: { state: 'SELECTION_REQUIRED', selectionDiagnostic: 'STALE_TARGET' } })
+    if (!result.ok) throw Error('missing resolution')
+    expect(result.value).not.toHaveProperty('target')
+    expect(JSON.stringify(result)).not.toMatch(/assessments|canonicalRoot|executable|storageError/)
+    expect(JSON.stringify(result)).not.toContain(h.root)
+    if (change !== 'renamed' && 'candidates' in result.value) {
+      expect(result.value.candidates.filter(candidate => candidate.eligibility === 'ELIGIBLE')).toHaveLength(1)
+    }
+    await h.start('B.csproj'); await h.terminal()
+    expect(h.adapter.create).not.toHaveBeenCalled()
+    expect(h.events).toContainEqual(expect.objectContaining({ type: 'error', failure: { reason: 'STALE_TARGET' } }))
+    expect(await h.api.selectTarget(h.target('B.csproj'))).toMatchObject({ ok: true, value: { state: 'READY', target: h.target('B.csproj') } })
+    const confirmed = await h.api.resolveTargets({ projectId: h.project.id })
+    expect(confirmed.ok && confirmed.value).not.toHaveProperty('selectionDiagnostic')
+  })
+  it.each([false, true])('R2 forwards corrupt persistence recovery (backup=%s), requiring explicit confirmation even for one candidate', async backup => {
+    const h = await setup(['A.csproj', 'B.csproj'])
+    if (backup) await h.api.selectTarget(h.target('A.csproj'))
+    await h.api.selectTarget(h.target('B.csproj'))
+    await unlink(join(h.root, 'A.csproj'))
+    const file = join(h.temp, 'prefs/csharp-run-targets', `${h.project.id}.json`)
+    await writeFile(file, '{broken private storage')
+    const result = await h.api.resolveTargets({ projectId: h.project.id })
+    expect(result).toMatchObject({ ok: true, value: { state: 'SELECTION_REQUIRED', selectionDiagnostic: 'PERSISTENCE_RECOVERED',
+      candidates: [expect.objectContaining({ relativePath: 'B.csproj', eligibility: 'ELIGIBLE' })] } })
+    if (!result.ok) throw Error('missing resolution')
+    expect(Object.keys(result.value).sort()).toEqual(['candidates', 'projectId', 'selectionDiagnostic', 'state'])
+    expect(JSON.stringify(result)).not.toContain('private storage')
+    await h.start('B.csproj'); await h.terminal()
+    expect(h.adapter.create).not.toHaveBeenCalled()
+    expect(h.events).toContainEqual(expect.objectContaining({ type: 'error', failure: { reason: 'PERSISTENCE_RECOVERED' } }))
+    await h.api.selectTarget(h.target('B.csproj'))
+    expect(await h.api.resolveTargets({ projectId: h.project.id })).toMatchObject({ ok: true, value: { state: 'READY' } })
+    expect(await readFile(file + '.corrupt', 'utf8')).toBe('{broken private storage')
+  })
   it('R1 retires unavailable session phase metadata without unmuting events across repeated reopen', async () => {
     const h = await setup()
     for (let cycle = 0; cycle < 3; ++cycle) {
@@ -221,12 +273,15 @@ describe('M1-10 production IPC/preload/store/strategy/guard integration', () => 
   it('resolves one target without persisting and returns only semantic candidates', async () => {
     const h = await setup(), result = await h.api.resolveTargets({ projectId: h.project.id })
     expect(result).toMatchObject({ ok: true, value: { state: 'READY', target: h.target() } })
+    expect(result.ok && result.value).not.toHaveProperty('selectionDiagnostic')
     expect(JSON.stringify(result)).not.toContain(h.root); expect(JSON.stringify(result)).not.toContain('executable')
     await expect(readFile(join(h.temp, 'prefs/csharp-run-targets', `${h.project.id}.json`))).rejects.toMatchObject({ code: 'ENOENT' })
   })
   it('requires explicit selection, persists/restores across scopes, changes and clears it', async () => {
     const h = await setup(['A.csproj', 'B.csproj'])
     expect(await h.api.resolveTargets({ projectId: h.project.id })).toMatchObject({ ok: true, value: { state: 'SELECTION_REQUIRED' } })
+    const unselected = await h.api.resolveTargets({ projectId: h.project.id })
+    expect(unselected.ok && unselected.value).not.toHaveProperty('selectionDiagnostic')
     expect(await h.api.selectTarget(h.target('B.csproj'))).toMatchObject({ ok: true, value: { state: 'READY', target: h.target('B.csproj') } })
     expect(await h.api.resolveTargets({ projectId: h.project.id })).toMatchObject({ ok: true, value: { target: h.target('B.csproj') } })
     expect(await h.api.selectTarget(h.target('A.csproj'))).toMatchObject({ ok: true, value: { target: h.target('A.csproj') } })

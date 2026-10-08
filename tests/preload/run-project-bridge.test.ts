@@ -13,6 +13,20 @@ function setup() {
   return { ipc, api: createRunBridge(ipc) }
 }
 describe('M1-10 preload boundary', () => {
+  it.each(['resolveTargets', 'selectTarget', 'clearTarget'] as const)('R2 %s preserves validated diagnostics', async method => {
+    const h = setup()
+    for (const selectionDiagnostic of ['STALE_TARGET', 'PERSISTENCE_RECOVERED']) {
+      const value = { projectId, state: 'SELECTION_REQUIRED', candidates: response.candidates, selectionDiagnostic }
+      h.ipc.invoke.mockResolvedValue({ ok: true, value })
+      expect(await h.api[method](method === 'selectTarget' ? target : { projectId } as never)).toEqual({ ok: true, value })
+    }
+  })
+  it.each(['UNKNOWN', null, { reason: 'STALE_TARGET', storageError: 'private' }])('R2 rejects invalid diagnostic %#', async selectionDiagnostic => {
+    const h = setup()
+    h.ipc.invoke.mockResolvedValue({ ok: true, value: { projectId, state: 'SELECTION_REQUIRED',
+      candidates: response.candidates, selectionDiagnostic } })
+    expect(await h.api.resolveTargets({ projectId })).toMatchObject({ ok: false, error: { details: { boundaryFailure: 'response-validation' } } })
+  })
   it.each(['resolveTargets', 'selectTarget', 'clearTarget', 'cancelResolution', 'startProject'] as const)(
     '%s rejects privilege fields without invoking IPC', async method => {
       const h = setup()

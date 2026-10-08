@@ -83,8 +83,12 @@ export type CSharpRunDependencyFailure =
 export const CSHARP_RUN_RESOLUTION_STATES = [
   'READY', 'SELECTION_REQUIRED', 'NO_RUNNABLE_PROJECT', 'DEPENDENCY_FAILED', 'FAILED',
 ] as const
-export type CSharpRunTargetResolution = { readonly projectId: ProjectId } & (
-  | { readonly state: 'READY'; readonly target: CSharpProjectRunTarget; readonly candidates: readonly CSharpRunCandidate[] }
+export const CSHARP_RUN_SELECTION_DIAGNOSTICS = ['STALE_TARGET', 'PERSISTENCE_RECOVERED'] as const
+export type CSharpRunSelectionDiagnostic = typeof CSHARP_RUN_SELECTION_DIAGNOSTICS[number]
+/** Optional explanation only; resolution.state remains selection/launch authority. */
+export type CSharpRunTargetResolution = { readonly projectId: ProjectId;
+  readonly selectionDiagnostic?: CSharpRunSelectionDiagnostic } & (
+  | { readonly state: 'READY'; readonly selectionDiagnostic?: never; readonly target: CSharpProjectRunTarget; readonly candidates: readonly CSharpRunCandidate[] }
   | { readonly state: 'SELECTION_REQUIRED' | 'NO_RUNNABLE_PROJECT'; readonly candidates: readonly CSharpRunCandidate[] }
   | { readonly state: 'DEPENDENCY_FAILED'; readonly dependency: CSharpRunDependencyFailure; readonly candidates: readonly CSharpRunCandidate[] }
   | { readonly state: 'FAILED'; readonly reason: 'DISCOVERY_LIMIT_EXCEEDED' | 'PREFLIGHT_FAILED' | 'PERSISTENCE_FAILED' }
@@ -186,7 +190,7 @@ export function validateCSharpRunDependencyFailure(value: unknown): ValidationRe
 }
 
 export function validateCSharpRunTargetResolution(value: unknown): ValidationResult<CSharpRunTargetResolution> {
-  const object = validateExactObject(value, ['projectId', 'state', 'target', 'candidates', 'dependency', 'reason'])
+  const object = validateExactObject(value, ['projectId', 'state', 'target', 'candidates', 'dependency', 'reason', 'selectionDiagnostic'])
   if (!object.ok) return object
   const { projectId, state } = object.value
   if (typeof projectId !== 'string' || !/^project_[a-f0-9]{24}$/.test(projectId)) return invalid('$.projectId')
@@ -194,12 +198,17 @@ export function validateCSharpRunTargetResolution(value: unknown): ValidationRes
     : state === 'SELECTION_REQUIRED' || state === 'NO_RUNNABLE_PROJECT' ? ['projectId', 'state', 'candidates']
       : state === 'DEPENDENCY_FAILED' ? ['projectId', 'state', 'dependency', 'candidates']
         : ['projectId', 'state', 'reason']
-  const exact = validateExactObject(value, fields)
+  const diagnostic = object.value.selectionDiagnostic
+  const hasDiagnostic = Object.hasOwn(object.value, 'selectionDiagnostic')
+  if (hasDiagnostic && (state === 'READY' || typeof diagnostic !== 'string'
+    || !CSHARP_RUN_SELECTION_DIAGNOSTICS.includes(diagnostic as CSharpRunSelectionDiagnostic))) return invalid('$.selectionDiagnostic')
+  const metadata = hasDiagnostic ? { selectionDiagnostic: diagnostic as CSharpRunSelectionDiagnostic } : {}
+  const exact = validateExactObject(value, [...fields, ...(hasDiagnostic ? ['selectionDiagnostic'] : [])])
   if (!exact.ok) return exact
   if (state === 'FAILED') {
     const reason = object.value.reason
     if (reason === 'DISCOVERY_LIMIT_EXCEEDED' || reason === 'PREFLIGHT_FAILED' || reason === 'PERSISTENCE_FAILED') {
-      return { ok: true, value: { projectId: projectId as ProjectId, state, reason } }
+      return { ok: true, value: { projectId: projectId as ProjectId, state, reason, ...metadata } }
     }
     return invalid('$.reason')
   }
@@ -227,14 +236,14 @@ export function validateCSharpRunTargetResolution(value: unknown): ValidationRes
     return { ok: true, value: { ...context, state, target: selected.value } }
   }
   if (state === 'SELECTION_REQUIRED' && candidates.some(candidate => candidate.eligibility === 'ELIGIBLE')) {
-    return { ok: true, value: { ...context, state } }
+    return { ok: true, value: { ...context, state, ...metadata } }
   }
   if (state === 'NO_RUNNABLE_PROJECT' && candidates.every(candidate => candidate.eligibility === 'INELIGIBLE')) {
-    return { ok: true, value: { ...context, state } }
+    return { ok: true, value: { ...context, state, ...metadata } }
   }
   if (state === 'DEPENDENCY_FAILED' && !candidates.some(candidate => candidate.eligibility === 'ELIGIBLE')) {
     const dependency = validateCSharpRunDependencyFailure(object.value.dependency)
-    return dependency.ok ? { ok: true, value: { ...context, state, dependency: dependency.value } } : dependency
+    return dependency.ok ? { ok: true, value: { ...context, state, dependency: dependency.value, ...metadata } } : dependency
   }
   return invalid('$.state')
 }

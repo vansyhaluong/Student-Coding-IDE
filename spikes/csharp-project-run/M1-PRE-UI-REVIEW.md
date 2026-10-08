@@ -3,8 +3,8 @@
 Date: 2026-10-08. **Review Result: READY WITH NON-BLOCKING ISSUES.**
 
 Không phát hiện BLOCKER trong source đã review. Có hai SHOULD_FIX và một
-IMPROVEMENT/test gap tại thời điểm review. **R1 đã được sửa và verified trong
-follow-up bên dưới; R2 và R3 giữ nguyên.** M1-11 có thể bắt đầu khi được ủy quyền riêng; báo cáo này
+IMPROVEMENT/test gap tại thời điểm review. **R1 và R2 đã được sửa và verified trong
+follow-up bên dưới; R3 vẫn là non-blocking test gap.** M1-11 có thể bắt đầu khi được ủy quyền riêng; báo cáo này
 không xác nhận Core Acceptance M1-12 hoặc C# Run tổng thể COMPLETE.
 
 ## Scope và provenance
@@ -149,7 +149,56 @@ notification kể cả khi public event bị mute, hoặc project invalidation h
 ownership phù hợp. Giữ chính sách mute output. Thêm test C# + IPC: unavailable →
 cleanup → reopen nhiều lần, assert metadata và resources đều retire.
 
-### SHOULD_FIX — R2: Public resolution bỏ mất stale/recovered selection context
+### RESOLVED — R2 (original severity SHOULD_FIX): Public resolution bỏ mất stale/recovered selection context
+
+**R2 follow-up — 2026-10-08: TASK REVIEW PASS / COMPLETE.**
+
+- Authorized chỉ R2 sau COMPLETE M1-01–M1-10/R1. Branch
+  `feature/csharp-project-run`, status/diff ban đầu sạch; ADR-024 giữ nguyên,
+  không decision gate mới. Không triển khai M1-11, dependency hoặc UI.
+- Existing public `CSharpRunTargetResolution` thêm field optional scalar
+  `selectionDiagnostic: 'STALE_TARGET' | 'PERSISTENCE_RECOVERED'`. Absent field
+  giữ normal payload shape cũ; state phân biệt READY/chưa chọn/multiple/failure.
+  Diagnostic chỉ giải thích selection cũ mất hiệu lực hoặc cần xác nhận recovery.
+- Shared exact validator copy/allowlist field, reject unknown/null/object/undefined
+  và READY + diagnostic. Field có thể đi cùng SELECTION_REQUIRED, NO_RUNNABLE_PROJECT,
+  DEPENDENCY_FAILED hoặc FAILED; không làm thay đổi cardinality/failure policy.
+- TargetRequests map đúng hai issues từ TargetStore, validate trước khi trả qua
+  RunIpcService. Preload tái sử dụng validator shared nên không cần bridge/API mới.
+  Không expose selection object, assessments, remembered path, canonical root,
+  storage error hoặc executable/argv/cwd. TargetStore/persistence không sửa.
+- SELECTION_REQUIRED vẫn là authority ngay cả với một eligible candidate. Start
+  trước explicit confirmation vẫn bị Main chặn; selectTarget hợp lệ khôi phục
+  READY và bỏ diagnostic. JS start/stop/event và normal C# resolution tương thích.
+- **25 tests mới PASS / 4 files**:
+
+  ```text
+  npm test -- tests/contracts/run-project-validation.test.ts tests/main/csharp-run-target-requests.test.ts tests/main/run-project-ipc.test.ts tests/preload/run-project-bridge.test.ts -t R2
+  ```
+
+  Coverage: 10 contract cases, 4 request projection cases, 5 production-domain
+  IPC/Preload cases, 6 bridge cases. Deleted/renamed/ineligible selected target;
+  corrupt recovery với/không backup; one-candidate no auto-choice; explicit
+  confirmation; normal/multiple payload; invalid diagnostics và no-internal-leak.
+- **212 focused tests PASS / 7 files**, gồm 25 mới; typecheck/scoped ESLint PASS:
+
+  ```text
+  npm test -- tests/contracts/run-validation.test.ts tests/contracts/run-project-validation.test.ts tests/main/csharp-run-target-store.test.ts tests/main/csharp-run-target-requests.test.ts tests/main/run-project-ipc.test.ts tests/preload/run-project-bridge.test.ts tests/preload/domain-bridges.test.ts
+  npm run typecheck
+  npx --no-install eslint src/shared/contracts/run.ts src/main/services/run/csharp-run-target-requests.ts tests/contracts/run-project-validation.test.ts tests/main/csharp-run-target-requests.test.ts tests/main/run-project-ipc.test.ts tests/preload/run-project-bridge.test.ts
+  git diff --check
+  ```
+
+- Files changed: `src/shared/contracts/run.ts`,
+  `src/main/services/run/csharp-run-target-requests.ts`, 4 tests ở commands trên;
+  Architecture, Language Support, Implementation Plan, Changelog và report này.
+- Remaining R2 blockers: NONE. SDK/process ports controlled; không claim native
+  smoke mới. R3 vẫn chưa có public IPC→real native evidence; đưa vào M1-12.
+  Không full suite/build/native smoke hoặc commit/push/merge.
+- M1-11 readiness: YES khi được ủy quyền riêng; dùng diagnostic để giải thích,
+  không auto-pick theo candidate count. M1-11 NOT_STARTED, M1/overall C# IN_PROGRESS.
+
+Original review evidence dưới đây được giữ như lịch sử trước fix:
 
 **Loại:** confirmed diagnostic limitation; không phải selection bypass. Projection
 hiện tại tuân thủ DTO resolution tối giản M1-01, nhưng làm giảm thông tin cho UI.
@@ -221,8 +270,8 @@ Không claim hai findings đã được test end-to-end trực tiếp hoặc đ�
 ## M1-11 readiness và lưu ý cho consumer
 
 API đủ cho minimal target picker, Run/Stop và Output phases/failures. Chưa có
-blocker bắt buộc sửa trước UI. R1 đã verified; R2 là task nhỏ độc lập nên được lên lịch;
-R2 có thể dùng generic selection message trong khi contract vẫn giữ nguyên.
+blocker bắt buộc sửa trước UI. R1/R2 đã verified; R3 vẫn là non-blocking test gap
+cho M1-12. UI có thể dùng selectionDiagnostic để giải thích stale/recovered state.
 
 - Subscribe project events trước start; correlate project/session và UI generation.
   STARTING/phase/error có thể đến trước invoke reply; Start success không đồng
@@ -246,6 +295,6 @@ R2 có thể dùng generic selection message trong khi contract vẫn giữ nguy
 **Status giữ nguyên:** M1-01 → M1-10 (gồm M1-09a) COMPLETE;
 M1-11 NOT_STARTED; Milestone 1 và overall C# Run IN_PROGRESS.
 
-**Recommended next actions:** có thể ủy quyền M1-11; R1 bookkeeping cleanup đã
-hoàn thành, thống nhất R2 messaging/semantic context khi cần, và đưa R3 vào M1-12.
+**Recommended next actions:** có thể ủy quyền M1-11; R1/R2 đã hoàn thành;
+đưa R3 public IPC→real .NET/native evidence vào M1-12.
 Không có task sửa BLOCKER hoặc quyết định ADR mới được yêu cầu bởi review này.

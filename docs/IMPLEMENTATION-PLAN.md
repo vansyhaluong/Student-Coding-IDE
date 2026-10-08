@@ -4491,6 +4491,20 @@ acceptance is claimed by this docs-only task.
 - Evidence/commands: `spikes/csharp-project-run/M1-PRE-UI-REVIEW.md` R1 follow-up.
   No full suite/build/native smoke; R2 and M1-11 are not implemented.
 
+#### Pre-UI R2 corrective verification — 2026-10-08
+
+- Resolved M1-10's loss of Main selection diagnostics at the public projection.
+  Existing resolution contract adds optional selectionDiagnostic with only
+  STALE_TARGET/PERSISTENCE_RECOVERED; normal payloads remain unchanged. Shared
+  exact validation is reused by Main and Preload, rejects invalid values/READY
+  contradictions, and projects no internal assessment/storage/launch information.
+- Persistence/recovery/ownership policy is unchanged. SELECTION_REQUIRED remains
+  authority with one or multiple candidates; explicit selection clears diagnostics.
+- 25 new tests PASS; 212 focused contract/store/request/IPC/Preload tests in 7 files
+  PASS; typecheck/scoped ESLint/diff checks PASS. No full suite/build/native smoke.
+- Evidence/commands: `spikes/csharp-project-run/M1-PRE-UI-REVIEW.md` R2 follow-up.
+  R2 COMPLETE; M1-10 remains COMPLETE, M1-11 NOT_STARTED, overall M1/C# IN_PROGRESS.
+
 M1-01 through M1-10 (including M1-09a) are COMPLETE. Next eligible task is **M1-11**,
 requiring explicit authorization. M1-11 target picker/Run/Output UI remains NOT_STARTED.
 Neither milestone nor

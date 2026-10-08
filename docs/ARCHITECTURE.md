@@ -799,6 +799,15 @@ envelopes/DTOs and project/path correspondence; listeners receive validated data
 only and have explicit disposers. Main projects results onto semantic resolution
 DTOs, excluding internal assessments, SDK commands and canonical paths.
 
+Pre-UI R2 adds optional `selectionDiagnostic` to the existing C# resolution DTO:
+only `STALE_TARGET` or `PERSISTENCE_RECOVERED`. Main projects those two TargetStore
+issues through the shared exact validator used by Preload. Normal resolutions
+omit the field and retain their prior shape. A diagnostic is forbidden on READY;
+it can accompany selection-required, no-runnable, dependency or failed results
+without overriding their state. Stale/recovered selection requires explicit
+confirmation even when only one eligible candidate remains. No remembered path,
+storage error or internal selection/assessment object crosses the bridge.
+
 CsharpRunTargetRequests owns finite discovery/selection probes through ProcessManager.
 The single-active-project architecture allows one outstanding target operation;
 concurrent requests fail with REQUEST_IN_PROGRESS. Cancellation is scoped to the

@@ -2,6 +2,20 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## C# Run pre-UI R2 — Public selection diagnostics (2026-10-08)
+
+- Extended existing C# resolution DTO with optional selectionDiagnostic containing
+  only STALE_TARGET/PERSISTENCE_RECOVERED. Main projects safe TargetStore issues;
+  shared validation also protects Preload responses and rejects READY contradictions.
+- Ordinary/legacy payloads and JS Run API remain compatible. One remaining eligible
+  candidate does not override stale/recovered SELECTION_REQUIRED; no storage policy,
+  ownership, execution, native or UI changes and no additional API/dependency.
+- 25 new tests and 212 focused tests in 7 files PASS; typecheck/scoped ESLint/diff
+  PASS. Deleted/renamed/ineligible target, corrupt recovery with/without backup,
+  explicit confirmation, invalid diagnostics and leak prevention verified.
+- Review R2 resolved; R3 real IPC/native evidence gap remains for Core Acceptance.
+  M1-11 NOT_STARTED, M1/overall C# IN_PROGRESS; no full suite/build/native smoke.
+
 ## C# Run pre-UI R1 — IPC phase metadata retirement (2026-10-08)
 
 - Reproduced stale IPC phase metadata after unavailable project cleanup: terminal

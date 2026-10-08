@@ -13,6 +13,25 @@ function setup() {
   return { manager, close, store, create, requests }
 }
 describe('M1-10 finite discovery request ownership', () => {
+  it.each(['STALE_TARGET', 'PERSISTENCE_RECOVERED'] as const)('R2 projects only allowlisted %s selection context', async issue => {
+    const h = setup()
+    h.store.resolve.mockResolvedValue({ ...result, issue, selection: issue === 'STALE_TARGET' ? 'STALE' : 'RECOVERED' })
+    expect(await h.requests.perform(7, projectId, { kind: 'resolve' }, () => {})).toEqual({ ...result.resolution, selectionDiagnostic: issue })
+    expect(h.manager.size).toBe(0)
+  })
+  it('R2 does not expose unrelated internal selection issues or assessments', async () => {
+    const h = setup()
+    h.store.resolve.mockResolvedValue({ ...result, issue: 'INVALID_SELECTION' })
+    expect(await h.requests.perform(7, projectId, { kind: 'resolve' }, () => {})).toEqual(result.resolution)
+  })
+  it('R2 rejects diagnostics that contradict a READY result', async () => {
+    const h = setup()
+    h.store.resolve.mockResolvedValue({ ...result, issue: 'STALE_TARGET', resolution: { projectId, state: 'READY',
+      target: { kind: 'csharp-project', projectId, relativePath: 'App.csproj' },
+      candidates: [{ relativePath: 'App.csproj', displayName: 'App', eligibility: 'ELIGIBLE', reason: null }] } })
+    await expect(h.requests.perform(7, projectId, { kind: 'resolve' }, () => {})).rejects.toMatchObject({ details: { reason: 'INVALID_RESPONSE' } })
+    expect(h.manager.size).toBe(0)
+  })
   it('registers before scope construction and releases before returning semantic results', async () => {
     const h = setup(); h.create.mockImplementation(() => { expect(h.manager.size).toBe(1); return { store: h.store, close: h.close } })
     expect(await h.requests.perform(7, projectId, { kind: 'resolve' }, () => {})).toEqual(result.resolution)

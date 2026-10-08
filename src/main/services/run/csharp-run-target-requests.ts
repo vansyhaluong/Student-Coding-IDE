@@ -87,7 +87,12 @@ export class CsharpRunTargetRequests {
         const result = action.kind === 'select' ? await scope.store.select(action.target, controller.signal)
           : await scope.store[action.kind](project, controller.signal)
         valid()
-        const validated = validateCSharpRunTargetResolution(result.resolution)
+        // Only the two public semantic issues cross the boundary, never storage
+        // recovery details, internal assessments or the remembered path.
+        const selectionDiagnostic = result.issue === 'STALE_TARGET' || result.issue === 'PERSISTENCE_RECOVERED'
+          ? result.issue : undefined
+        const validated = validateCSharpRunTargetResolution({ ...result.resolution,
+          ...(selectionDiagnostic ? { selectionDiagnostic } : {}) })
         if (!validated.ok || validated.value.projectId !== project) throw denied('INVALID_RESPONSE')
         response = validated.value
       } finally {

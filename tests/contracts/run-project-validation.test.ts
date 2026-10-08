@@ -1,11 +1,33 @@
 import { describe, expect, it } from 'vitest'
 import { validateRunProjectRequest, validateCSharpStartRunRequest, validateCSharpRunTarget,
-  validateProjectRunEvent, validateProjectRunFailure } from '../../src/shared/contracts/run-project'
+  validateProjectRunEvent, validateProjectRunFailure, validateCSharpRunTargetResolution } from '../../src/shared/contracts/run-project'
 
 const projectId = 'project_1234567890abcdef12345678'
 const target = { kind: 'csharp-project', projectId, relativePath: 'src/Việt 😀/App.csproj' }
 const session = { ...target, sessionId: 'run_12345678-1234-1234-1234-123456789abc', state: 'STARTING', phase: 'PREPARING' }
 describe('M1-10 exact semantic wire contracts', () => {
+  const candidates = [{ relativePath: target.relativePath, displayName: 'App', eligibility: 'ELIGIBLE', reason: null }]
+  it.each(['STALE_TARGET', 'PERSISTENCE_RECOVERED'])('R2 validates optional %s while retaining selection authority', selectionDiagnostic => {
+    const resolution = { projectId, state: 'SELECTION_REQUIRED', candidates, selectionDiagnostic }
+    expect(validateCSharpRunTargetResolution(resolution)).toEqual({ ok: true, value: resolution })
+    expect(validateCSharpRunTargetResolution({ projectId, state: 'SELECTION_REQUIRED', candidates }).ok).toBe(true)
+    expect(validateCSharpRunTargetResolution({ projectId, state: 'READY', target, candidates, selectionDiagnostic }).ok).toBe(false)
+    for (const value of [
+      { projectId, state: 'NO_RUNNABLE_PROJECT', candidates: [] },
+      { projectId, state: 'FAILED', reason: 'PREFLIGHT_FAILED' },
+      { projectId, state: 'DEPENDENCY_FAILED', candidates: [], dependency: { state: 'MISSING', reason: 'DOTNET_HOST_MISSING' } },
+    ]) expect(validateCSharpRunTargetResolution({ ...value, selectionDiagnostic }).ok).toBe(true)
+  })
+  it.each(['UNKNOWN', '', null, undefined, 1, { reason: 'STALE_TARGET' }, ['STALE_TARGET']])(
+    'R2 rejects malformed diagnostic %#', selectionDiagnostic => {
+      expect(validateCSharpRunTargetResolution({ projectId, state: 'SELECTION_REQUIRED', candidates, selectionDiagnostic }).ok).toBe(false)
+    })
+  it('R2 rejects internal fields alongside a valid diagnostic', () => {
+    const resolution = { projectId, state: 'SELECTION_REQUIRED', candidates, selectionDiagnostic: 'STALE_TARGET' }
+    for (const field of ['assessments', 'canonicalRoot', 'storageError', 'selectedPath', 'executable']) {
+      expect(validateCSharpRunTargetResolution({ ...resolution, [field]: 'private' }).ok).toBe(false)
+    }
+  })
   it('accepts project-only resolution/clear/cancel and C# target/start requests', () => {
     expect(validateRunProjectRequest({ projectId }).ok).toBe(true)
     expect(validateCSharpRunTarget(target).ok).toBe(true)

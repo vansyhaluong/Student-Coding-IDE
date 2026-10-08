@@ -73,6 +73,12 @@ events. Verification: 63 new tests and 443 focused regressions PASS, plus typech
 scoped lint and whitespace. No native/execution policy or UI change; no new native
 smoke claim. M1-11 UI remains NOT_STARTED and overall C# Run remains IN_PROGRESS.
 
+Pre-UI R2 adds optional allowlisted `selectionDiagnostic` (`STALE_TARGET` or
+`PERSISTENCE_RECOVERED`) to public C# resolutions. Normal/unselected results keep
+their existing shape; resolution state remains authority. Stale/recovered choices
+never auto-select a replacement even with one candidate. Shared/Main/Preload
+validation and controlled IPC integration are verified; no picker/UI is added.
+
 Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
 Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore
 and dotnet run, stdout/stderr/exit, Stop and Re-run. Milestone 2 adds Console.ReadLine
