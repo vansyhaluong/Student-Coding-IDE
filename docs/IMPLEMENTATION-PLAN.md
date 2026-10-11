@@ -4279,6 +4279,20 @@ accepted until M2. Overall feature cannot be COMPLETE at the Core exit.
   No CSharpRunStrategy, build/run, selection persistence, IPC/picker/Output/stdin,
   commit, push or merge. No manual UI/packaged/Windows 10 acceptance claimed.
 
+#### M1-06 CI platform correction — 2026-10-11
+
+- GitHub's Ubuntu job exposed that the M1-06 integration fixture uses the real
+  host filesystem while production Run authorization intentionally requires
+  Windows canonical paths. This was a test-platform mismatch, not a production
+  behavior change.
+- The real-filesystem M1-06 suites now skip on non-Windows hosts. A dedicated
+  `windows-latest` Actions job runs the complete `csharp-run-targets.test.ts`
+  file with Node 22 and one Vitest worker; it uses `npm ci --ignore-scripts`
+  because this test file does not load Electron or native `node-pty` code.
+- Local Windows verification: all 62/62 tests passed. The hosted Windows job
+  provides platform-specific integration coverage only; it is not Windows 11
+  client, native, packaged, or product acceptance evidence.
+
 #### M1-07 selection/persistence verification — 2026-10-08
 
 - Authorized M1-07 only after M1-01–M1-06 COMPLETE. Started on
