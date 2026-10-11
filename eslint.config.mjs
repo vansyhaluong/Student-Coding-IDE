@@ -57,4 +57,19 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  // Electron mockup renderer: sử dụng CommonJS.
+{
+files: [
+'spikes/csharp-project-run/mockups/render.cjs',
+],
+
+languageOptions: {
+  globals: globals.node,
+},
+
+rules: {
+  '@typescript-eslint/no-require-imports': 'off',
+},
+
+},
 )
