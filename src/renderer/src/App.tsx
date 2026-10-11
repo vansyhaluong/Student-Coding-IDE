@@ -257,7 +257,7 @@ export default function App() {
         <div className="chrome-center">
           {project
             ? <><EditorTabs manager={editor.manager} onClose={editor.closeDocument} />
-              <EditorRunAction manager={editor.manager} controller={run} locked={editor.interactionLocked}
+              <EditorRunAction key={project.id} manager={editor.manager} controller={run} locked={editor.interactionLocked}
                 onShowOutput={() => setBottomPanel('output')} /></>
             : <span className="chrome-context">Student Coding IDE</span>}
         </div>

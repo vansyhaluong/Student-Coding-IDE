@@ -168,7 +168,7 @@ before affected work continues.
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
 | Phase 9 — Learning / Programming Techniques | `NOT_STARTED` | Planned 9A–9G; Section 13.6; explicit implementation authorization required |
-| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01 through M1-10 (including M1-09a) COMPLETE; Windows 11 x64 scope; M1-11 and remaining tasks NOT_STARTED; Section 13.7 |
+| C# Project Run extension — M1 + M2 | `IN_PROGRESS` | M1-01 through M1-11 (including M1-09a) COMPLETE; Windows 11 x64 scope; M1-12 BLOCKED and later tasks NOT_STARTED; Section 13.7 |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
 `COMPLETE`. A status may become `COMPLETE` only after its exit gate passes.
@@ -4014,8 +4014,9 @@ only if evidence requires a design change.
 
 ### Milestone 1 — C# Project Run Core
 
-Status: `IN_PROGRESS`. M1-01 through M1-10 (including M1-09a) COMPLETE; M1-11–M1-12
-NOT_STARTED. No later implementation authorization is inferred.
+Status: `IN_PROGRESS`. M1-01 through M1-11 (including M1-09a) COMPLETE; M1-12
+BLOCKED pending a public-Preload-to-real-C#-native/UI acceptance run and the
+remaining multi-project and visual checks. See `spikes/csharp-project-run/M1-12-REPORT.md`.
 
 | ID | Công việc | File/module dự kiến | Phụ thuộc | Kết quả đầu ra | Tiêu chí hoàn thành |
 |---|---|---|---|---|---|
@@ -4030,8 +4031,8 @@ NOT_STARTED. No later implementation authorization is inferred.
 | M1-09a | COMPLETE — Bounded saved-source handshake | run/run-source-guard.ts; shared/contracts/run-source-guard.ts; preload/bridge/run-source-guard.ts; output/run-source-guard-controller.ts; EditorModelManager revision and Main composition | M1-01/M1-08 | Owner/frame/project/session/request validation, all-retained-buffer dirty/conflict revision, 5s timeout, cancellation and build invalidation | 67 new tests/5 files and 380 focused tests/16 files PASS; initial and per-step/prelaunch checks fail closed; edit+Save cannot reuse approval; cleanup failure retained; typecheck/scoped lint/diff PASS; no M1-09 strategy |
 | M1-09 | COMPLETE — CSharpRunStrategy and step failure classification | run/csharp-run-strategy.ts, csharp-run-preparation.ts; run service and main/index.ts; focused strategy tests | M1-05–M1-08/M1-09a | Fixed SDK build then dotnet run plan, phase/error mapping and launch guard | 30 new/384 focused tests PASS; Windows 8/10 smoke 14/14 plus repeated-resource 4/4 PASS; SDK/TFM revalidation, no auto-save, no execution after build failure; typecheck/scoped lint/diff PASS; JS unchanged |
 | M1-10 | COMPLETE — C# Run IPC/Preload integration | main/ipc/run-ipc-service.ts, run/csharp-run-target-requests.ts, preload/bridge/run.ts, shared/contracts/run-project.ts; focused tests | M1-09 | Narrow resolve/select/clear/cancel/start/stop/events; owner-scoped discovery cancellation | 63 new tests/4 files and 443 focused tests/17 files PASS; exact DTO/frame/project/session validation, early session, phase/failure forwarding, cancellation and retained cleanup; typecheck/scoped lint/diff PASS; no UI/native changes |
-| M1-11 | Minimal C# target/Run/Stop/Output presentation | output/run-controller.ts, EditorRunAction.tsx, OutputPanel.tsx, use-project-run.ts; App composition if needed | M1-10 | Compact target choice/label; project save guard; phase/failure output; JS current-file behavior | Single Run entry; Stop available while preparing/building; target != active .cs; stale events ignored; existing output/tab/theme behavior preserved |
-| M1-12 | Core acceptance and milestone review | tests/main/csharp-run*.test.ts; tests/renderer/run-output.integration.test.tsx; planned scripts/smoke-csharp-run.mjs; docs | M1-11 | M1 evidence report and status update only after exit passes | Core test matrix/native smoke, full suite/typecheck/lint/build/diff checks; Windows Core evidence; overall feature remains IN_PROGRESS pending M2 |
+| M1-11 | COMPLETE — Minimal C# target/Run/Stop/Output presentation | output/run-controller.ts, EditorRunAction.tsx, RunTargetDialog.tsx, OutputPanel.tsx, use-project-run.ts; App composition; renderer tests | M1-10 | Compact target choice/label; project save guard; phase/failure output; JS current-file behavior | Single Run entry; Stop available while preparing/building; target != active .cs; stale events ignored; existing output/tab/theme behavior preserved. Focused renderer tests 32/32 PASS; typecheck/build/changed-file lint/diff PASS. Whole-repo lint retains 12 errors in the pre-existing mockup renderer. Native visual inspection unavailable in this session; see M1-11 report. M1-12 not performed |
+| M1-12 | BLOCKED — Core acceptance and milestone review | tests/main/csharp-run*.test.ts; tests/renderer/run-output.integration.test.tsx; planned scripts/smoke-csharp-run.mjs; docs | M1-11 | M1 evidence report and status update only after exit passes | Focused tests 170/170 PASS; existing Electron-hosted native Main smoke 14/14 PASS; JS production-UI smoke PASS. Still missing one C# UI→public Preload→Main→real-native acceptance run, multi-project UI verification, and visual QA. See `spikes/csharp-project-run/M1-12-REPORT.md`; do not mark M1 complete. |
 
 #### M1-01 verification and compatibility — 2026-10-07
 
@@ -4505,10 +4506,9 @@ acceptance is claimed by this docs-only task.
 - Evidence/commands: `spikes/csharp-project-run/M1-PRE-UI-REVIEW.md` R2 follow-up.
   R2 COMPLETE; M1-10 remains COMPLETE, M1-11 NOT_STARTED, overall M1/C# IN_PROGRESS.
 
-M1-01 through M1-10 (including M1-09a) are COMPLETE. Next eligible task is **M1-11**,
-requiring explicit authorization. M1-11 target picker/Run/Output UI remains NOT_STARTED.
-Neither milestone nor
-overall C# Run is COMPLETE.
+M1-01 through M1-11 (including M1-09a) are COMPLETE. M1-12 core acceptance and
+milestone review is **BLOCKED**; see `spikes/csharp-project-run/M1-12-REPORT.md`.
+Neither Milestone 1 nor overall C# Run is COMPLETE.
 
 ## 14. Decision Gate Register
 
