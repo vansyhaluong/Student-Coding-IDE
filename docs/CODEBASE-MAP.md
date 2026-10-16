@@ -265,3 +265,38 @@ TerminalService, LanguageServiceManager and Exercise Runtime retain independent
 semantics. No generic renderer process service, new panel system or public native
 handle is introduced by this map. Actual paths/statuses update only after verified
 implementation; packaged/installed acceptance remains Phase 7.
+
+## Planned Phase 9 Learning modules — ADR-025 / Plan Section 13.6
+
+Status: `NOT_STARTED`. These are proposed paths/responsibilities, not existing
+modules or implementation claims. One subject and exactly the eight chapters in
+Requirement Section 21; no course selector/management. Content is local data,
+separate from React, with source/license records. No content import in this task.
+
+| Responsibility | Proposed path / existing reuse | Ownership / package |
+|---|---|---|
+| Mode and eight-chapter Roadmap | `src/renderer/src/features/learning/`, integration with existing `App.tsx` | Renderer, 9A; retain project/editor/terminal state |
+| Local content and provenance | `src/main/services/learning/content/` | Main content boundary, 9B; schema and packaged lookup pending P9-CONTENT |
+| Lessons and quiz presentation | `src/renderer/src/features/learning/` | Renderer, 9B/9F; chapter Theory/Practice/Quiz navigation |
+| Exercise session and workspace | `src/renderer/src/features/learning/practice/` | Renderer, 9C; chapter list, Easy/Medium/Hard, function starters, Description, reused Monaco, Test Cases/Run Result/Submission Result and My Solutions |
+| Semantic Learning contracts | `src/shared/contracts/learning.ts` | Side-effect-free DTOs/validation phased 9A–9F; no raw process/path authority |
+| Narrow Learning bridge | `src/preload/bridge/learning.ts`, `src/main/ipc/learning-ipc-service.ts` | Preload and Main validation of sender/session/operation ownership |
+| Exercise coordination | `src/main/services/learning/exercise-service.ts` | Main, 9D; independent from Project Run |
+| C#/JavaScript harness adapters | `src/main/services/learning/runtime/` | Main, 9D; generated driver, controlled compiler/Node processes, limits/Stop/cleanup |
+| Local Judge | `src/main/services/learning/judge-service.ts` | Main, 9E; public/hidden tests, 100% Accepted, distinct internal error |
+| Learning records | `src/main/services/learning/learning-store.ts`; reuse existing `src/main/services/persistence/persistence-service.ts` where suitable | Main, 9E Accepted commit/recovery; 9F durable auto-saved drafts/quiz/progress |
+| Runtime distribution | Exact asset paths pending P9-RUNTIME/P9-PACKAGE | 9D feasibility; 9G packaged offline clean-Windows verification |
+
+No Python/Java adapters or new language providers. Primary runtime distribution
+bundles C# SDK/equivalent compiler and Node.js; versions/size/fallback remain gates.
+Only narrow internal ownership/cleanup primitives may be reused; Project Run,
+Terminal and language-service sessions/lifecycles remain independent.
+
+Learning data resides in a separate directory under Electron userData, never
+installation folders or Project Explorer. Per-exercise/language Code Drafts are
+separate from immutable Accepted snapshots (code-at-Submit, exercise, language,
+timestamp, result, test-set metadata). Retain multiple Accepted versions. My
+Solutions lists saved Accepted records only; failed submissions remain transient.
+Saved/new completion follows successful commit, while later failures preserve
+earlier completion. 9E must establish storage consistency before 9F extends
+progress. Exact schema, filenames and recovery are P9-STORAGE/P9-PROGRESS gates.

@@ -243,16 +243,22 @@ is not resolved by this direction.
 #### Learning domain and content
 
 Use local data-driven Course, Chapter, Lesson/material, Exercise and Quiz content,
-separate from React logic. Never hard-code chapters in components. The initial
-course is Kỹ thuật lập trình; future courses must fit without a mode redesign.
-Chương 1 — Giới thiệu môn học covers introduction, objectives, skills, learning
+separate from React logic. Never hard-code chapters in components. The only
+subject is Kỹ thuật lập trình, with exactly the eight chapter names/order in
+Requirement Section 21, Phase 9; no course selector/management or chapter 9/10.
+Chương 1 — Giới thiệu môn Kỹ thuật lập trình covers introduction, objectives, skills, learning
 method and mode guidance without mandatory exercise/quiz. Later chapters may
-expose Tài liệu, Luyện tập, Trắc nghiệm and Tiến độ.
+expose Lý thuyết, Luyện tập, Trắc nghiệm and Tiến độ. Theory/quizzes are selected
+and authored from Internet references, stored locally for offline use, with
+provenance and license/copyright compliance. No automated scraping or bulk copying
+of copyrighted material; no CMS or actual content import in this design task.
 
 Learning Workspace hosts Course Introduction, Lesson Workspace, Exercise List,
 Exercise Workspace and Quiz Workspace. Material opens lessons; Practice opens
 the exercise list then an exercise; Quiz opens the quiz workspace. Exercises group
-as Cơ bản, Trung bình and Nâng cao, with chưa làm / đang làm / hoàn thành status.
+by chapter, not topic/tag, with Easy/Medium/Hard difficulty and Chưa làm / Đang làm /
+Hoàn thành status. LeetCode-inspired problems require suitable rights or lawful
+reauthoring with source attribution.
 Quizzes support theory multiple choice, code reading, predicted output and error
 identification, with navigation, answers, scoring and results.
 
@@ -268,41 +274,45 @@ implementation package.
 
 Exercise Session owns exerciseId, selectedLanguage, solution drafts per language,
 current Run/Submit results, completion/progress and draft/dirty state where needed.
-C# → Python → C# preserves the earlier C# solution. Results remain associated
+C# → JavaScript → C# preserves the earlier C# Code Draft. Results remain associated
 with the appropriate session/language/code. The workspace header provides
 breadcrumb/title, language selector, Run and Submit; the Problem panel and Monaco
-editor sit above Test Cases / Run Result / Submission Result. Problem content
+editor sit above Test Cases / Run Result / Submission Result, with My Solutions
+showing only successfully saved Accepted Solutions. Problem content
 includes Description, Input, Output, Examples and Constraints.
 
 The Exercise model is language-neutral: id, title, difficulty, statement, input/
 output specifications, examples, constraints, test cases and allowed languages.
-Language metadata supplies language id, Monaco language id, filename, starter
-code and runtime adapter. C#, JavaScript, Python and Java are the roadmap direction;
-adapters can be implemented sequentially. This does not expand current Project
+Language metadata defines the function, parameters/types, return type, starter
+code, compatible test cases, Monaco language id and runtime adapter. Only C# and
+JavaScript are in Phase 9 V1; Python/Java are excluded. This does not expand current Project
 Run or language intelligence capabilities.
 
 #### Exercise, Judge and runtime boundary
 
-Learning V1 uses STDIN → Student Program → STDOUT. Test cases can be shared across
-languages; function-signature/harness execution is outside V1. Run uses current
-Exercise Session code and sample/custom input without a saved project file.
-Submit prepares/compiles when needed, runs public then hidden tests, compares
-output and returns a score/result.
+Learning V1 uses function-signature test harnesses. Students implement the supplied
+function, not Main() or a complete Console program. Exercise Runtime generates
+the driver, compiles if necessary and calls the function in a controlled child
+process. Students need no project, Terminal or compiler command. Internal pipes
+and output capture are transport details, not a STDIN/STDOUT problem contract.
+Run uses current code with sample/custom tests; show Input, Expected Output,
+Actual Output, Passed/Failed and errors. Run never saves an Accepted Solution or
+marks completion. Submit judges official public/hidden cases against the code
+snapshot taken at Submit; only 100% pass earns Accepted.
 
 ```text
 Renderer → typed Preload API → IPC → Main
-  → Exercise Service → Judge Service → Language Runtime Adapter → OS/runtime
-                                        |-- C#: dotnet
-                                        |-- JavaScript: node
-                                        |-- Python: python
-                                        `-- Java: later adapter
+  → Exercise Service → Run sample/custom tests OR Judge official Submit tests
+    → Exercise Runtime adapter → C# compiler/SDK + driver OR Node.js + driver
+    → Judge result → Learning persistence for Accepted → saved/completion acknowledgement
 ```
 
 These are planned responsibilities, not implemented APIs/modules. Exercise
 Service coordinates owned exercise execution; Judge Service owns test
-orchestration, normalization/comparison and scoring; runtime adapters own
-language-specific prepare/compile/execute behavior in Main. The runtime foundation
-supports temporary exercise workspaces, stdin, stdout/stderr, timeout and cleanup.
+orchestration and comparison; runtime adapters own language-specific harness,
+prepare/compile/execute coordination in Main. Student code never executes directly
+in Electron Main or Renderer. The runtime foundation supports temporary exercise
+workspaces, bounded process I/O, time/resource limits, Stop and cleanup.
 Project Run and Exercise Run may reuse narrow internal process primitives while
 retaining separate session lifecycles and behavior. No generic command executor
 is exposed to Renderer.
@@ -316,19 +326,41 @@ be specified and verified in 9D/9E; temporary workspaces do not alone establish
 OS sandboxing.
 
 Judge outcomes are Accepted, Wrong Answer, Compilation Error, Runtime Error and
-Time Limit Exceeded. Partial scores may show Passed 7 / 10 and Score 7 / 10.
+Time Limit Exceeded; internal Judge errors are a separate category. Partial test
+success never grants Accepted/completion. Re-submit is allowed. Failed submissions
+are current results only, not persisted submission/solution history; a later
+failure cannot revoke earlier saved completion.
 Full hidden input/output must not be exposed through student-facing result
-payloads or UI. Project Output is not the Exercise Run/Judge result store.
+payloads or UI. Offline hidden tests are not absolutely secret or tamper-proof.
+Project Output is not the Exercise Run/Judge result store.
+
+Primary distribution bundles a C# SDK/equivalent compiler toolchain (not merely
+.NET Runtime) and suitable Node.js for offline use without student installation.
+If size/technical barriers justify it, fallback may use an additional runtime pack
+or detected installed runtime with clear guidance. Exact versions, redistribution,
+package size, fallback threshold, harness/type/comparison policy and execution
+limits remain Open Decision / Pending Verification in ADR-025. 9D verifies
+feasibility; 9G verifies packaged offline Run/Submit on another Windows machine
+without development tools. Project Run PATH policy and csharp-ls remain unchanged.
 
 #### Learning persistence and Local AI
 
-V1 progress is local: chapter progress, lesson completion, exercise status and
-per-language drafts, submission results/scores, quiz completion/results and last
-Learning position. Keep Learning records logically separate from project state.
-Use Main-owned versioned persistence with serialized atomic writes, migrations,
-backup and corruption recovery; the exact Learning schema belongs to 9F. This
-does not place project source buffers in existing project convenience persistence.
-No account, backend or cloud is required.
+Learning records live in a dedicated directory under Electron userData, never
+the install directory or Project Explorer. Reuse PersistenceService where suitable:
+Main-owned versioned JSON, serialized safe writes, migrations, backup and recovery.
+Auto-saved per-exercise/per-language Code Drafts are distinct from Accepted records.
+Each Accepted Solution keeps immutable code-at-Submit, exercise id, language,
+timestamp, result and necessary test-set identity/version. Retain multiple versions
+without overwriting. My Solutions lists only successfully committed Accepted records.
+Only successful persistence permits saved/new completion acknowledgement. If the
+write fails, report it separately from the Accepted verdict; retain earlier saved
+completion. Run and failed submissions never create Accepted records.
+
+9E must establish Accepted-record/completion consistency and crash recovery before
+9F adds durable Code Draft auto-save, chapter progress, quiz results and last
+learning position. Exercise states are Chưa làm / Đang làm / Hoàn thành. Exact
+schema, commit protocol, auto-save scheduling and aggregate progress rules remain
+open in ADR-025. No account, backend or cloud is required.
 
 Learning V1 has no AI dependency. Phase 8 retains local Ollama at the fixed
 endpoint and `qwen3:1.7b`, text chat, no Agent/tools/project file access and no

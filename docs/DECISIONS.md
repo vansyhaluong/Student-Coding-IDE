@@ -545,3 +545,66 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
   [evaluation-only JSON](https://learn.microsoft.com/en-us/visualstudio/msbuild/evaluate-items-and-properties)
   is supported by MSBuild 17.8+ (SDK 8 baseline). SDK inventory/evaluation is
   evidence, not proof of runtime readiness or sandboxing.
+
+## ADR-025 — Phase 9 Learning and function-based exercises
+
+- **Status:** Accepted design direction per explicit user scope revision,
+  2026-10-16; all Phase 9 packages remain `NOT_STARTED`. Open details below are
+  neither selected implementations nor passed verification gates.
+- **Context/evidence:** Previous Phase 9 planning described future courses, four
+  adapters, STDIN/STDOUT problems, partial scoring and function harnesses outside
+  V1. The user's revised scope replaces those planned directions. No Phase 2–8,
+  Phase 5.5 or C# Project Run decision/acceptance is reopened.
+- **Selected scope:** One subject, Kỹ thuật lập trình, exactly the eight chapters
+  in Requirement Section 21. No course selector/management or chapters 9/10;
+  Chapter 1 needs no mandatory exercises/quizzes. Local-first theory/quizzes are
+  selected and authored with source/license records; no automated scraping or
+  bulk copyrighted copying. Apply rights checks to LeetCode-inspired problems.
+- **Exercise choice:** Chapter-based Easy/Medium/Hard exercises, only C# and
+  JavaScript. Per-language function signatures, parameters, return types, starter
+  code and compatible tests; generated harnesses replace standalone STDIN/STDOUT
+  problems. No student-written Main()/Console program. Separate exercise models
+  reuse Monaco foundation; per-exercise/language Code Drafts auto-save.
+- **Run/Submit:** Run is sample/custom testing only and never grants completion.
+  Submit uses official public/hidden tests; only 100% pass is Accepted. Distinguish
+  student verdicts from internal Judge errors. Failed submissions have no saved
+  solution history. Re-submission is allowed; later failure cannot revoke saved
+  completion. Hidden offline tests are not absolutely secret.
+- **Persistence:** Main-owned versioned JSON in a separate Learning directory
+  under userData, safe writes/recovery, reuse PersistenceService where suitable.
+  Accepted snapshots retain code-at-Submit, exercise/language/time/result/test-set
+  metadata; multiple versions, no overwriting. My Solutions shows saved Accepted
+  records only. Successful persistence is required before reporting saved/newly
+  completed progress; write failure remains visible separately from Judge Accepted.
+- **Distribution choice:** Primary: bundle C# SDK/equivalent compilation tooling
+  and suitable Node.js. .NET Runtime alone cannot provide compilation. Fallback:
+  additional runtime pack or detected installed runtime with clear guidance if
+  size/technical evidence requires it. Bundling supports offline, setup-free use
+  but adds package size/maintenance; fallback reduces base size but adds setup.
+  Exact versions, size and fallback trigger are not decided here.
+- **Boundaries:** Main coordinates controlled child processes; never execute
+  student code in Main/Renderer. Exercise Runtime has its own lifecycle, separate
+  from Project Run/Terminal/language services; reuse narrow internal helpers only.
+  ADR-002/003/008/010 and existing owned Windows cleanup remain constraints.
+- **Traceability:** Requirement Section 21; Architecture Section 6; Codebase Map
+  planned Learning modules; Language Support planned Exercise scope; Plan 13.6.
+
+### Phase 9 Open Decisions / Pending Verification
+
+Resolve and record these in authorized work before dependent implementation.
+This documentation task installs nothing and selects no runtime versions.
+
+| Gate | Open detail / required evidence | Before dependent work |
+|---|---|---|
+| P9-STATE | Applicable shared-state choice under ADR-011; retain both modes without teardown | 9A shared state expansion |
+| P9-CONTENT | Local schema/versioning, source/license metadata and approved content sources | 9B content, then 9C exercises/9F quizzes |
+| P9-HARNESS | Function signatures, supported types, argument/result serialization, starter validation, custom expected-output handling and comparison semantics including numbers/arrays/strings | 9C contracts; verify in 9D/9E |
+| P9-RUNTIME | Exact compiler/SDK/Node versions, offline dependency closure, redistribution rights, Windows compatibility, packaging/update strategy, measured size and fallback threshold/selection | 9D runtime integration; packaged recheck in 9G |
+| P9-EXECUTION | Temporary workspace policy, time/resource/output limits, Stop during compile/run, compiler/descendant ownership, containment limits and error mapping | 9D execution; 9E Judge verification |
+| P9-STORAGE | Versioned schema, immutable snapshot identity, consistent Accepted-record/completion commit, concurrent submissions, crash recovery, migrations/backups | 9E Accepted storage; extend in 9F |
+| P9-PROGRESS | Draft auto-save scheduling/failure/conflict handling, Chưa làm → Đang làm trigger, chapter aggregation, quiz scoring and last-position schema | 9F; preserve 9C drafts and 9E completion invariant |
+| P9-PACKAGE | Installer/portable delivery form, optional runtime-pack setup, supported Windows 10/11 clean-machine offline evidence without developer tools | 9G; does not replace Phase 7 acceptance |
+
+Failed gates do not authorize silent fallback, weaker completion rules, extra
+languages or Project Mode changes. Stop affected work and seek a decision if
+evidence requires changing accepted scope/architecture.

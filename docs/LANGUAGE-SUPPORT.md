@@ -28,15 +28,35 @@ Judge in this extension. See Architecture Section 10 and Plan Section 13.7.
 
 ## Planned Phase 9 Exercise Runtime scope
 
-Phase 9D schedules independent Exercise Runtime adapters: 9D.1 C#, 9D.2
-JavaScript, 9D.3 Python and 9D.4 Java. All are `NOT_STARTED`; implementation
-requires explicit package authorization and runtime acceptance. Learning V1 uses
-language-neutral STDIN/STDOUT exercises and separate per-language session drafts.
+Phase 9D schedules only independent Exercise Runtime adapters 9D.1 C# and 9D.2
+JavaScript. Both are `NOT_STARTED`; Python/Java are outside Phase 9 V1.
+Implementation requires explicit package authorization and runtime acceptance.
+Learning V1 uses supplied functions with per-language parameters/types, return
+type, starter code and compatible tests, executed by generated harnesses/drivers.
+Students do not write Main()/Console programs or create projects/open Terminal.
+Code Drafts auto-save per exercise/language and survive language switches.
 This is distinct from the Project Mode capability matrix below: C#/Python/Java
 Project Run and deferred language intelligence remain unchanged. An Exercise
 Runtime adapter does not grant language-service capabilities or modify Phase 3,
 Phase 4 or Phase 5.5 acceptance. See Implementation Plan Section 13.6 and
 Architecture Section 6 for the approved Learning boundaries.
+
+Primary distribution bundles suitable C# SDK/equivalent compilation tooling (not
+only .NET Runtime) and Node.js. Main coordinates controlled child processes with
+time/resource limits, Stop and cleanup; student code never executes directly in
+Main/Renderer. Run tests sample/custom cases without completing exercises;
+Submit requires 100% official public/hidden tests, then successful Accepted-record
+persistence before newly completed progress. Only saved Accepted records appear
+in My Solutions; no failed-submission history. Offline hidden tests are not
+absolutely secret. Exercise sessions remain independent from Project Run.
+
+ADR-025 keeps exact versions, offline compiler dependencies, harness serialization/
+comparison, resource limits, package size and fallback thresholds open. Additional
+runtime packs or detected installed runtimes with guidance are fallback options
+for size/technical barriers. 9D proves feasibility; 9G requires packaged offline
+C#/JavaScript Run/Submit on another Windows machine without development tooling.
+This bundled-runtime policy does not alter existing Project Run PATH discovery,
+C# Project Run ADR-024, or Phase 5.5 language-service requirements.
 
 ## V1 capability matrix and implementation status
 
