@@ -3686,10 +3686,10 @@ is claimed. Traceability: Requirement Section 21, Phase 9; Architecture Section
 
 ### Goal, workspace layout and state
 
-Extend the IDE with Learning Mode for the initial course **Kỹ thuật lập trình**.
+Extend the IDE with Learning Mode only for **Kỹ thuật lập trình**.
 Project Mode and Learning Mode are separate application workspace modes.
 Learning is not a project, modal, dialog, editor tab or replacement for Project
-Mode. Future courses must fit without redesigning Learning Mode.
+Mode. No course selector, multi-course management or future-course expansion.
 
 The current Project Mode layout in `App.tsx` remains authoritative:
 
@@ -3721,12 +3721,23 @@ Run/Submit result and learning position. Hiding a mode is not session disposal.
 ### Content and exercise contract
 
 Local content is data-driven and separate from React components. The conceptual
-structure is Course → Chapter → Lesson → Exercise → Quiz; chapters need not
-require every item in that sequence. Never hard-code chapters into React.
-**Chương 1 — Giới thiệu môn học** is a special introduction chapter: course
+structure is the single subject → chapters with Theory, Practice and Quiz;
+chapters need not require every content type. Never hard-code chapters into React.
+The fixed chapter names/order are:
+
+1. Giới thiệu môn Kỹ thuật lập trình
+2. Kiến thức lập trình cơ bản
+3. Cấu trúc rẽ nhánh
+4. Cấu trúc lặp
+5. Kỹ thuật xử lý chuỗi
+6. Hàm
+7. Kỹ thuật xử lý mảng một chiều
+8. Kỹ thuật xử lý mảng hai chiều
+
+No chapter 9/10. **Chương 1 — Giới thiệu môn Kỹ thuật lập trình** covers course
 introduction, objectives, knowledge/skills, learning method and Learning Mode
 guidance. Coding exercises and quizzes are optional for Chapter 1. From Chapter
-2 onward, chapters may expose Tài liệu, Luyện tập, Trắc nghiệm and Tiến độ.
+2 onward, chapters may expose Lý thuyết, Luyện tập, Trắc nghiệm and Tiến độ.
 Learning Roadmap answers “Student đang học ở đâu?”.
 
 Learning Workspace views/navigation:
@@ -3736,46 +3747,74 @@ Learning Workspace views/navigation:
 - Practice → Exercise List → Exercise Workspace.
 - Quiz → Quiz Workspace.
 
-Exercise progression groups are **Cơ bản** (direct application), **Trung bình**
-(combining knowledge) and **Nâng cao** (problem analysis, edge cases and greater
-challenge). Learning statuses include chưa làm, đang làm and hoàn thành.
+Exercises are organized by chapter, not LeetCode-style topics/tags, with
+**Easy, Medium, Hard** difficulty. Progress states: Chưa làm, Đang làm, Hoàn thành.
+Theory/quizzes are selected and authored from Internet references and stored
+locally for offline use. Record sources and licensing/copyright compliance;
+no automatic scraping or bulk copyrighted copying. LeetCode-inspired problems
+require suitable usage rights or lawful reauthoring. This design task creates
+neither a CMS nor actual imported course content.
 
 An Exercise is language-neutral: id, title, learning difficulty, problem statement,
 input/output specifications, examples, constraints, test cases and allowed
-languages. Each language supplies language id, Monaco language id, filename,
-starter code and runtime adapter. Direction: C#, JavaScript, Python and Java;
-all adapters need not be implemented in one task or PR.
+languages. Each language defines its function, parameters/types, return type,
+starter code and compatible tests, plus language/Monaco id and runtime adapter.
+Only C# and JavaScript are in Phase 9 V1; Python/Java are outside scope.
 
 Exercise Workspace has a breadcrumb/title, language selector, Run and Submit in
 its header. The Problem panel (Description, Input, Output, Examples, Constraints)
 sits beside the Monaco editor, with Test Cases / Run Result / Submission Result
-below. The split may resize where appropriate; no fixed pixel or percentage
+below, plus My Solutions showing only saved Accepted Solutions. The split may
+resize where appropriate; no fixed pixel or percentage
 allocation is prescribed.
 
 Reuse the current Monaco/editor foundation; Project Document != Exercise Document.
 Exercise code is not automatically saved into the student project or shown in its
 file tree. Exercise Session owns exerciseId, selectedLanguage, solution drafts per
 language, current Run/Submit results, completion/progress and draft/dirty state
-where needed. C# → Python → C# retains the earlier C# draft. Shared Monaco
+where needed. C# → JavaScript → C# retains the earlier C# Code Draft. Shared Monaco
 configuration/wrapper extraction may occur in an authorized implementation
 package; duplicating the editor architecture is not the direction.
 
-Learning V1 uses **STDIN → Student Program → STDOUT**, allowing shared test cases
-across languages. Function-signature/harness exercises are outside V1. Run uses
-current session code, selected language and sample/custom input, returning
-stdout/stderr and a Run Result without requiring a saved project file.
+Learning V1 uses a **function-signature test harness/driver**. Students fill the
+supplied function, not Main() or a Console program. Runtime prepares the harness,
+compiles if needed and invokes the function without requiring student project
+creation, Terminal or compiler commands. Run uses current code and sample/custom
+tests, showing Input, Expected Output, Actual Output, Passed/Failed and errors.
+Run never creates an Accepted Solution or marks completion.
 
 Submit prepares/compiles when needed, runs public then hidden tests, and judges
 results. Outcomes: Accepted, Wrong Answer, Compilation Error, Runtime Error and
-Time Limit Exceeded. Partial scores may show Passed 7 / 10 and Score 7 / 10.
-Full hidden input/output is not exposed to students.
+Time Limit Exceeded; internal Judge errors are separate. Only **100% of official
+tests passed** is Accepted. Failed submissions show results without saving
+submission/solution history. Re-submit is allowed; later failure preserves earlier
+saved completion. Full hidden input/output is not exposed through UI/DTOs, but
+offline hidden tests cannot be described as absolutely secret.
 
 Execution follows Renderer → typed Preload API → IPC → Main → Exercise Service
-→ Judge Service → Language Runtime Adapter → OS/runtime. Main owns temporary
-exercise workspaces, prepare/compile/execute, stdin, stdout/stderr, timeout,
-normalization and cleanup. Project Run and Exercise Run may share narrow internal
+→ Run tests or Judge Service → Exercise Runtime Adapter → controlled child process.
+Main owns temporary workspaces, harness preparation/compile/execute, bounded I/O,
+time/resource limits, Stop and cleanup. Student code never executes directly in
+Main/Renderer. Internal pipes are not the exercise problem contract. Project Run
+and Exercise Run may share narrow internal
 process primitives while retaining separate behavior and domain lifecycles.
 No generic renderer command execution API is allowed.
+
+Primary distribution bundles C# SDK/equivalent compiler tooling (not only .NET
+Runtime) and suitable Node.js. Fallback for size/technical barriers may use an
+additional runtime pack or detected installed runtime with guidance; exact versions,
+size and fallback threshold remain open. Execution must work offline.
+
+Learning records live in a dedicated Electron userData directory, never install
+folders or Project Explorer. Main-owned versioned JSON uses safe writes, migration,
+backup/recovery and PersistenceService where suitable. Auto-saved Code Drafts are
+per exercise/language. Immutable Accepted records include code-at-Submit, exercise
+id, language, time, result and test-set metadata; multiple versions, no overwrite.
+My Solutions lists only saved Accepted records. Judge Accepted alone is not a
+successful save/new completion: persistence must succeed first. Report write
+failure separately and preserve previous saved completion. Failed submissions
+are not persisted as history. 9E establishes this invariant; 9F extends drafts,
+last position, chapter progress and quiz results.
 
 ### Dependencies and decision gates
 
@@ -3789,9 +3828,16 @@ Package sequence: 9A → 9B → 9C → 9D → 9E → 9F → 9G. Adapters can be 
 sequentially; completing one adapter does not complete all of 9D.
 ADR-011 remains unresolved for shared renderer state expansion: record the
 applicable decision before implementation without selecting a store here.
-Exact runtime versions/distribution, dependency detection, temporary-workspace
-policy, timeout limits, normalization/comparison rules, scoring rules and Learning
-persistence schema must be specified and verified in their authorized packages.
+ADR-025 records the approved revision and gates P9-STATE, P9-CONTENT,
+P9-HARNESS, P9-RUNTIME, P9-EXECUTION, P9-STORAGE, P9-PROGRESS and P9-PACKAGE.
+Resolve content/schema before 9B; function types/serialization before dependent
+9C contracts; runtime versions/distribution/offline dependencies, limits and
+cleanup before 9D integration; comparison and Accepted storage/commit recovery
+before 9E; auto-save/progress/quiz policies before 9F. Record package-size evidence,
+fallback threshold/selection and final delivery form before 9G acceptance.
+Accepted-at-100% and saved-before-completed are already decided, not open scoring
+options. Resolve the minimal Accepted storage contract in 9E rather than making
+9E depend on later 9F. Exact details remain Open Decision / Pending Verification.
 This roadmap selects no new dependencies or language-service providers.
 
 ### 9A — Learning Mode & Roadmap
@@ -3800,78 +3846,94 @@ Status: `NOT_STARTED`.
 
 **Scope:** Learning icon/header entry; Project/Learning mode state; Projects sidebar
 → Learning Roadmap; Project Workspace → Learning Workspace; hide right Project
-Tools and Project bottom panels; preserve/restore both modes; basic course/chapter
+Tools and Project bottom panels; preserve/restore both modes; exactly eight-chapter
 navigation; Chapter 1 introduction shell; mode lifecycle/regression coverage.
 
 **Goal / exit gate:** Project ↔ Learning is safe. Verify all project and Learning
 state listed above, dirty buffers and retained models, live terminals, sidebar/
 panel restoration and inaccessible hidden controls. Local AI opens as a temporary
 overlay without revealing Project Tools; closing it returns to Learning Workspace.
-No project transition is triggered by entering Learning.
+No project transition is triggered by entering Learning. Verify all eight names/
+order, no chapter 9/10 or course selector, and Chapter 1 without mandatory practice/quiz.
 
 ### 9B — Course Content & Lessons
 
 Status: `NOT_STARTED`. Prerequisite: 9A exit gate.
 
-**Scope:** Course, Chapter and Lesson/material models; local data-driven content;
+**Scope:** Single-subject Chapter and Lesson/material models; local data-driven content;
 Chapter 1 introduction content; Lesson Workspace; chapter/lesson navigation;
-content separated from React implementation.
+content separated from React implementation; selected/authored Internet-reference
+material with source/license metadata and offline availability.
 
 **Goal / exit gate:** Students follow the roadmap and read real course material.
 Verify data-driven navigation, the special introduction chapter without mandatory
-exercise/quiz, and content boundaries that permit additional courses.
+exercise/quiz, all eight chapter boundaries, offline reading and source/usage-right
+records. No scraping, bulk copying or multi-course/CMS functionality.
 
 ### 9C — Practice & Exercise Workspace
 
 Status: `NOT_STARTED`. Prerequisite: 9B exit gate.
 
-**Scope:** Exercise model; difficulty grouping; Exercise List and status;
+**Scope:** Chapter-based Exercise model; Easy/Medium/Hard; Exercise List and status;
 Exercise Session; Exercise Workspace and Problem panel; reused Monaco foundation;
-language selector; independent language drafts; Test/Result UI shell.
+only C#/JavaScript selector; function/parameters/return/starter/test metadata;
+independent language drafts; Test/Result and My Solutions UI shells.
 A complete Judge is not required here.
 
 **Goal / exit gate:** Students open an exercise and write a solution. Verify
 problem content, independent document/model ownership, per-language draft
 retention, mode round trips and no automatic project file/tree mutations.
-Runtime/Judge actions must not present mock results as actual execution.
+Verify supplied functions do not require student Main()/Console code; source/rights
+metadata accompanies exercises. Runtime/Judge/My Solutions must not present mock
+execution or unsaved solutions as real. Durable draft auto-save is completed in 9F;
+9C must already retain drafts across language/mode switches.
 
-### 9D — Exercise Runtime & Multi-language
+### 9D — Exercise Runtime
 
 Status: `NOT_STARTED`. Prerequisite: 9C exit gate.
 
-**Scope:** Runtime abstraction; temporary workspace; STDIN/STDOUT; prepare/compile/
-run lifecycle; timeout; stdout/stderr capture; cleanup; language runtime adapters.
+**Scope:** Function-signature harness/driver abstraction; temporary workspace;
+prepare/compile/call-function lifecycle; time/resource/output limits; Stop;
+error capture and cleanup; only C#/JavaScript adapters; bundled-runtime feasibility.
 
 | Adapter package | Status | Runtime direction |
 |---|---|---|
-| 9D.1 — C# | `NOT_STARTED` | dotnet |
-| 9D.2 — JavaScript | `NOT_STARTED` | node |
-| 9D.3 — Python | `NOT_STARTED` | python |
-| 9D.4 — Java | `NOT_STARTED` | Java compile/runtime adapter |
+| 9D.1 — C# | `NOT_STARTED` | Bundled SDK/equivalent compiler + generated harness; version pending |
+| 9D.2 — JavaScript | `NOT_STARTED` | Suitable bundled Node.js + generated driver; version pending |
 
-Each adapter requires the common runtime contract and explicit task scope; all
-four need not ship in the same implementation task/PR.
+Each adapter requires the common runtime contract and explicit task scope. The
+two adapters may ship sequentially, but both must pass to complete 9D.
 
 **Goal / exit gate:** Exercise code runs locally in the selected supported
-language without saving a project file. Verify stdin/stdout/stderr, preparation
-and compile failures, missing/invalid dependencies, bounded time/output, owned
-process/temporary-file cleanup and Windows behavior for each adapter. Validate
+language without student project/Terminal/compiler setup. Verify function inputs/
+returns, harness serialization, preparation/compile/runtime failures, missing/
+invalid runtime, offline dependency closure, bounded time/resources/output,
+Stop during preparation/compile/run, descendant and temporary-file cleanup,
+owner-loss/shutdown and Windows behavior for both adapters. Validate
 IPC/session ownership and stale-result rejection. Runtime support does not imply
-new Project Run or language intelligence support.
+new Project Run or language intelligence support. Record compiler/Node versions,
+redistribution and size evidence, fallback trigger/selection if needed. No claim
+that a temporary directory is an OS sandbox. Full packaged acceptance is 9G.
 
-### 9E — Local Judge & Submission
+### 9E — Local Judge & Submit
 
 Status: `NOT_STARTED`. Prerequisite: 9D exit gate.
 
 **Scope:** Complete Run integration; Submit; public/hidden tests; output
 normalization/comparison; timeout result; Accepted / Wrong Answer / Compilation
-Error / Runtime Error / Time Limit Exceeded; partial scoring; submission result
-UI; Judge regression coverage.
+Error / Runtime Error / Time Limit Exceeded, plus distinct internal Judge errors;
+100% Accepted rule; submission result UI; Accepted-only versioned persistence and
+My Solutions integration; Judge/storage regression coverage.
 
 **Goal / exit gate:** Students submit and receive local judging results. Verify
-sample/custom Run input, shared test cases across supported languages, comparison/
-scoring, result classification, hidden input/output redaction, compile/runtime
-failures, timeout, stale-result rejection and cleanup.
+sample/custom Run Input/Expected/Actual/Passed/Failed, official tests for both
+languages, comparison, all verdicts/internal errors, hidden-data redaction,
+compile/runtime failures, timeout, stale-result rejection and cleanup. Verify
+Run cannot complete/save a solution; partial success cannot be Accepted; failed
+Submit has no saved history; re-submit works; later failure preserves completion.
+Verify immutable code-at-Submit/test-set metadata, multiple Accepted versions,
+My Solutions shows only committed records, write failure cannot claim saved/new
+completion, and crash recovery preserves record/progress consistency.
 
 ### 9F — Quiz & Learning Progress
 
@@ -3879,14 +3941,20 @@ Status: `NOT_STARTED`. Prerequisite: 9E exit gate.
 
 **Scope:** Quiz model and Workspace; multiple-choice theory, code-reading,
 predict-output and identify-error questions; navigation and answers; scoring and
-results; chapter progress, lesson/exercise completion, submission score/progress;
-local persistence and Learning state resume.
+results; Code Draft auto-save per exercise/language; chapter progress,
+lesson/exercise status, quiz results and last learning position; local persistence
+and resume extending 9E's Accepted storage without failed-submission history.
 
 **Goal / exit gate:** Learning assesses knowledge and tracks progress. Verify quiz
-navigation/scoring/results and restoration of exercise drafts, submission results/
-scores, quiz completion/results and last learning position. Follow Main-owned
+navigation/scoring/results, content source/rights, and restoration of auto-saved
+drafts across language/mode switches and restart, saved Accepted versions,
+quiz results and last position. Verify Chưa làm/Đang làm/Hoàn thành and chapter
+aggregation, draft write failure/recovery, and the 9E saved-completion invariant.
+Follow Main-owned
 versioned persistence, serialized atomic writes, migration and corrupt-state
-recovery. No account, cloud or backend is required.
+recovery in a dedicated userData Learning directory; no writes to install folders
+or Project Explorer. Chapter 1 must not require nonexistent practice/quiz results
+to progress; exact aggregation is P9-PROGRESS. No account/cloud/backend required.
 
 ### 9G — Learning UX & Stabilization
 
@@ -3894,13 +3962,22 @@ Status: `NOT_STARTED`. Prerequisite: 9A–9F exit gates.
 
 **Scope:** UI polish; resizing; accessibility; keyboard navigation; mode-switch
 regression; Learning state, Monaco and Exercise Session lifecycles; runtime cleanup
-and Judge regression tests; manual Electron smoke tests.
+and Judge regression tests; manual Electron smoke; offline packaged distribution
+on another Windows machine without development tooling.
 
 **Goal / exit gate:** Stabilize the complete Learning flow. All package acceptance
 checks and new regressions must pass, including project data safety, isolated
 Learning state, retained drafts, runtime ownership/cleanup and Local AI overlay
 behavior. Verify both layouts and resizing in Electron on required Windows
-acceptance platforms before claiming Phase 9 completion.
+acceptance platforms before claiming Phase 9 completion. Verify packaged offline
+lessons/quizzes, C#/JavaScript Run and Submit on Windows 10/11 using another clean
+machine/environment with no preinstalled compiler/SDK/Node. Verify Stop, timeout,
+errors/cleanup, userData writes, restart/drafts and Accepted versions. Record
+actual package/runtime versions, size, distribution form and offline test evidence.
+If approved fallback packs are needed, verify delivery/setup guidance without
+developer tools and offline Run/Submit after local provisioning; installed-runtime
+fallback alone does not prove the no-development-tools criterion. Existing Phase 7
+and Project Mode acceptance/status remain unchanged.
 
 ### Phase 9 quality gates and non-goals
 
@@ -3916,7 +3993,9 @@ closing it returns to Learning. Preserve Phase 8's fixed local Ollama endpoint,
 `qwen3:1.7b`, text chat and configuration. No Agent, tools, project file access,
 automatic exercise/code context, AI Tutor or exercise-aware AI is added; these
 remain separate future extensions. Backend/cloud, accounts, project templates
-and function-signature exercise harnesses are outside this foundation.
+are outside this foundation. No course management, chapter 9/10, Python/Java
+Exercise adapters or CMS. All 9A–9G and 9D.1–9D.2 remain `NOT_STARTED` until
+explicit implementation authorization; this update implements no functionality.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 

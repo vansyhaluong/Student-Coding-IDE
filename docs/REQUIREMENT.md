@@ -1581,31 +1581,95 @@ Không yêu cầu coverage percentage cao trong V1. Test phải ưu tiên:
 Status: `NOT_STARTED`. Roadmap chính thức được phê duyệt; cập nhật docs không
 cấp phép implementation và không thay đổi các quyết định Phase 1–8.
 
-Learning là application workspace mode riêng bên cạnh Project Mode cho course
-ban đầu Kỹ thuật lập trình. Header có Learning cạnh Local AI. Trong Learning,
+Learning là application workspace mode riêng bên cạnh Project Mode, chỉ cho môn
+Kỹ thuật lập trình; không có chọn/quản lý nhiều môn. Header có Learning cạnh Local AI. Trong Learning,
 left Projects sidebar trở thành Learning Roadmap; center trở thành Learning
 Workspace; right Explorer/Search/Git sidebar và Project bottom panels bị ẩn.
-Không tạo sidebar mới, close/switch project hay mất editor/terminal state. Hai
-mode có state riêng và tiếp tục được vị trí trước đó khi chuyển lại.
+Không tạo sidebar mới, close/switch project, mất editor buffer/tab/Monaco model
+hoặc restart terminal. Hai mode có state riêng và tiếp tục được vị trí/trạng thái
+đang làm việc trước đó khi chuyển lại.
 
-Course/chapter/lesson/exercise/quiz dùng local data-driven content tách khỏi React.
-Chương 1 — Giới thiệu môn học không bắt buộc exercise/quiz. Exercise language-neutral,
-reuse Monaco foundation với document/session độc lập khỏi project và draft theo
-language. V1 dùng STDIN/STDOUT, local Run/Submit/Judge với public/hidden tests,
-partial score và local progress/persistence. Không tự ghi exercise code vào project.
-Runtime/compiler/judge thuộc Main qua typed Preload và validated IPC.
+Nội dung local data-driven tách khỏi React, theo đúng 8 chương cố định:
+
+1. Giới thiệu môn Kỹ thuật lập trình
+2. Kiến thức lập trình cơ bản
+3. Cấu trúc rẽ nhánh
+4. Cấu trúc lặp
+5. Kỹ thuật xử lý chuỗi
+6. Hàm
+7. Kỹ thuật xử lý mảng một chiều
+8. Kỹ thuật xử lý mảng hai chiều
+
+Không thêm chương 9/10. Mỗi chương có Lý thuyết, Luyện tập và Trắc nghiệm theo
+nội dung phù hợp; Chương 1 chủ yếu giới thiệu, không bắt buộc bài tập/trắc nghiệm.
+Lý thuyết/trắc nghiệm tham khảo Internet có chọn lọc và biên soạn, lưu cục bộ để
+học offline; ghi nguồn, tuân thủ giấy phép/bản quyền. Không tự động scraping hoặc
+sao chép hàng loạt nội dung có bản quyền. Nhiệm vụ thiết kế này không xây CMS hay
+nhập nội dung thực tế.
+
+Bài tập tổ chức theo chương, không theo topic/tag như LeetCode; độ khó **Easy,
+Medium, Hard**. Bài toán tham khảo LeetCode phải có quyền sử dụng phù hợp hoặc
+được biên soạn lại hợp lệ, có ghi nguồn. V1 chỉ có **C# và JavaScript**.
+Exercise Workspace gồm Description, Code Editor, Test Cases, Run Result,
+Submission Result và My Solutions (Lời giải của tôi). Sinh viên viết trong hàm
+mẫu, không tự viết Main() hoặc chương trình Console hoàn chỉnh. Mỗi bài định nghĩa
+hàm, tham số, kiểu trả về, starter code và test case phù hợp từng ngôn ngữ.
+Reuse Monaco foundation, nhưng Exercise Document/session độc lập Project Document;
+không tự ghi code vào project/Explorer. Code Draft tự lưu riêng theo bài/ngôn ngữ;
+C# → JavaScript → C# không mất bản nháp trước đó.
+
+Run chỉ thử sample/custom test bằng code hiện tại. Exercise Runtime tự chuẩn bị
+function-signature test harness/driver, gọi hàm, biên dịch nếu cần và chạy ngầm;
+sinh viên không tạo project, mở Terminal hay chạy lệnh compiler. Hiển thị Input,
+Expected Output, Actual Output, Passed/Failed và lỗi phù hợp. Run không tạo
+Accepted Solution và không đánh dấu hoàn thành bài tập.
+
+Submit chấm bộ test chính thức gồm công khai và ẩn. Kết quả: Accepted, Wrong
+Answer, Compilation Error, Runtime Error, Time Limit Exceeded; phân biệt riêng
+lỗi nội bộ Judge. Chỉ vượt **100% test case** mới Accepted. Submission không đạt
+chỉ hiển thị kết quả, không lưu lịch sử lời giải đã nộp. Được Submit lại; lần thất
+bại sau không xóa trạng thái hoàn thành đã có. Không đưa toàn bộ hidden input/output
+vào UI/DTO, nhưng test ẩn offline không có bảo mật tuyệt đối.
+
+Dữ liệu Learning ở thư mục riêng dưới Electron userData, không ở thư mục cài đặt
+hoặc Project Explorer. Định hướng JSON có phiên bản, Main-owned, ghi an toàn,
+migration/backup/recovery; tận dụng PersistenceService nếu phù hợp. Code Draft
+tự lưu để tiếp tục làm bài. Accepted Solution chỉ lưu khi Submit Accepted và ghi
+thành công: giữ bản sao code tại thời điểm Submit, mã bài, ngôn ngữ, thời gian,
+kết quả và thông tin bộ test cần thiết. Giữ nhiều phiên bản, không ghi đè bản cũ.
+My Solutions chỉ hiển thị Accepted Solution đã lưu. Chỉ xác nhận đã lưu/mới hoàn
+thành sau khi ghi thành công; lỗi ghi phải báo riêng với kết quả Judge Accepted,
+không báo thành công giả. Hoàn thành từ bản đã lưu trước đó vẫn giữ nguyên.
+Tiến độ bài tập: Chưa làm, Đang làm, Hoàn thành; dự kiến lưu vị trí học gần nhất,
+tiến độ chương và kết quả trắc nghiệm. Schema/lịch tự lưu/quy tắc tổng hợp còn mở.
+
+Phương án chính là tích hợp C# SDK hoặc công cụ biên dịch tương đương (không chỉ
+.NET Runtime) và Node.js phù hợp vào bản phân phối để không cần sinh viên tự cài.
+Exercise Runtime độc lập Project Run, chỉ reuse internal primitives phù hợp,
+không trộn session/vòng đời. Main điều phối qua typed Preload/validated IPC và
+child processes được kiểm soát; không chạy code sinh viên trực tiếp trong Main
+hoặc Renderer. Phải chạy offline, giới hạn thời gian/tài nguyên, có Stop, xử lý
+lỗi và dọn file tạm/process tree. Thư mục tạm không đồng nghĩa OS sandbox.
+
+Dự phòng khi quá lớn hoặc có trở ngại kỹ thuật: gói runtime bổ sung hoặc runtime
+có sẵn trên máy, kèm phát hiện/hướng dẫn rõ ràng. Phiên bản, kích thước bộ cài,
+ngưỡng fallback, chính sách giới hạn và chi tiết harness còn Open Decision /
+Pending Verification trong ADR-025. Nghiệm thu bản đóng gói trên máy Windows khác
+không cài môi trường lập trình, gồm Run/Submit C# và JavaScript offline; không lấy
+môi trường dev của máy build thay cho bằng chứng này.
 
 Roadmap: 9A Learning Mode & Roadmap; 9B Course Content & Lessons; 9C Practice &
-Exercise Workspace; 9D Exercise Runtime & Multi-language (C#, JavaScript, Python,
-Java, triển khai tuần tự); 9E Local Judge & Submission; 9F Quiz & Learning Progress;
+Exercise Workspace; 9D Exercise Runtime (C#, JavaScript, function-signature harness);
+9E Local Judge & Submit; 9F Quiz & Learning Progress;
 9G Learning UX & Stabilization. Tất cả đều `NOT_STARTED`. Scope, dependencies và
 exit gates: Implementation Plan Section 13.6; ownership: Architecture Section 6.
-Roadmap này không mở rộng Project Run/language intelligence hiện tại.
+Roadmap này không mở rộng Project Run/language intelligence hiện tại; Python và
+Java ngoài Phase 9 V1. Giữ nguyên quyết định/nghiệm thu Phase 2–8, 5.5 và C# Project Run.
 
 Không yêu cầu account/backend/cloud hoặc AI. Local AI giữ scope/configuration
 Phase 8, có thể mở overlay tạm trong Learning mà không hiện lại Project Tools;
 đóng AI quay về Learning Workspace. AI Tutor, exercise-aware AI, automatic code
-context, Agent/tools và function-signature exercise harness ngoài foundation.
+context và Agent/tools ngoài foundation. Tất cả Phase 9 giữ `NOT_STARTED`.
 
 ---
 
