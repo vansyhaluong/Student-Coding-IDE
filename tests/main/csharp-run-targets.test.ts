@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import process from 'node:process'
 import { mkdtemp, mkdir, writeFile, rm, symlink, unlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, dirname, win32 } from 'node:path'
@@ -13,9 +12,6 @@ import { RUN_EVALUATION_PROPERTIES, RunProbeError, type RunSdkProbe } from '../.
 import { CsharpRunTargetResolver, CSHARP_RUN_DISCOVERY_LIMITS } from '../../src/main/services/run/csharp-run-target-resolver'
 
 const cleanups: Array<() => Promise<unknown> | void> = []
-// These production integration tests require Windows canonical paths and a real
-// Windows filesystem. CI runs them in the dedicated Windows job.
-const describeWindows = describe.skipIf(process.platform !== 'win32')
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
 const properties = (overrides: Partial<EvaluatedRunProperties> = {}): EvaluatedRunProperties => ({
   ...Object.fromEntries(RUN_EVALUATION_PROPERTIES.map(p => [p, ''])), OutputType: 'Exe', TargetFramework: 'net8.0',
@@ -48,7 +44,7 @@ async function fixture(paths: string[], facts: Record<string, Partial<EvaluatedR
   return { root, projects, project, files, execute, preflight, resolver, resolve }
 }
 
-describeWindows('bounded Main C# Run discovery (real filesystem, production M1-05 evaluator, mocked process)', () => {
+describe('bounded Main C# Run discovery (real filesystem, production M1-05 evaluator, mocked process)', () => {
   it.each(['App.csproj', 'src/App/App.csproj', 'src/Ứng dụng # 😀/Console App.csproj'])('resolves one Console: %s', async path => {
     const f = await fixture([path])
     expect((await f.resolve()).resolution).toMatchObject({ state: 'READY', target: { kind: 'csharp-project', relativePath: path } })
@@ -197,7 +193,7 @@ describeWindows('bounded Main C# Run discovery (real filesystem, production M1-0
   })
 })
 
-describeWindows('evaluated Console classification and resolution cardinality', () => {
+describe('evaluated Console classification and resolution cardinality', () => {
   it.each<[Partial<EvaluatedRunProperties>, string, string]>([
     [{ OutputType: 'Library' }, 'LIBRARY', 'INELIGIBLE'], [{ OutputType: 'WinExe' }, 'NOT_EXE', 'INELIGIBLE'],
     [{ UsingMicrosoftNETSdkWeb: 'true' }, 'WEB', 'INELIGIBLE'], [{ IsTestProject: 'true' }, 'TEST', 'INELIGIBLE'],
@@ -260,7 +256,7 @@ describeWindows('evaluated Console classification and resolution cardinality', (
   })
 })
 
-describeWindows('untrusted recursive ProjectReference graph', () => {
+describe('untrusted recursive ProjectReference graph', () => {
   it('authorizes nested relative/absolute/duplicate references, evaluates each node once and accepts libraries', async () => {
     const refs = { 'src/App.csproj': ['../lib/Library.csproj', '../lib/Library.csproj'] }
     const f = await fixture(['src/App.csproj', 'lib/Library.csproj'], { 'lib/Library.csproj': { OutputType: 'Library' } }, refs)

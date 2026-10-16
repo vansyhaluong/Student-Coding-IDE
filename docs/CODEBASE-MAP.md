@@ -97,7 +97,7 @@ AI tests live in `tests/main/ai-ollama.test.ts`, `tests/main/ai-ipc.test.ts` and
 | `tests/main/git-foundation.test.ts`, `tests/main/git-foundation.integration.test.ts` | Strict top-level path and IPC authority regressions; real Git process cleanup and temporary repository exact-root/non-repository/nested-root integration | 5A remediation verification; real integration requires Windows PATH Git and explicitly reports unavailable environments |
 | `scripts/build-run-native.mjs`, `scripts/smoke-run-native.mjs`, `tests/fixtures/run/`, `tests/main/run-runtime.test.ts` | Electron native artifact compilation, real process smoke fixtures, runtime/launch boundary regression | 4B verification |
 | `src/shared/contracts/run.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Exact Run validation and live narrow start/stop/event capability; no Renderer process options | 4A foundation, 4E composition |
-| `src/renderer/src/features/output/` | EditorRunAction, RunTargetDialog, OutputPanel, useProjectRun subscription ownership and RunController JS/C# target/session/output projection | Implemented 4E, M1-11 |
+| `src/renderer/src/features/output/` | EditorRunAction, OutputPanel, useProjectRun subscription ownership and RunController per-target session/output projection | Implemented 4E |
 | `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-run-ui.mjs` | Deterministic UI/Preload/RunService integration and production Electron/native Run UI verification | 4E verification |
 | `tests/main/run-foundation.test.ts` | 4A contracts, path/authority rejection, strategy preparation, session ownership, IPC/preload validation and cleanup | 37 focused tests |
 | `src/main/services/terminal/` | Main-owned TerminalService registry/ownership/lifecycle/batching, project-transition leases, Windows shell resolution, environment policy, native-independent PTY port, sole production patched-node-pty adapter, retained natural-root ownership, and unified Job finalization | Implemented through Phase 2E-J corrective Step 2 |
@@ -246,9 +246,8 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations, M1-03 native argv
 M1-04 isolated compatibility evidence, M1-05 resolver/evaluation and M1-06
 discovery/classification, M1-07 selection/persistence, M1-08 lifecycle, M1-09a source guard
-and M1-09 strategy composition COMPLETE. M1-10 typed C# Run IPC/Preload and M1-11
-presentation are COMPLETE; M1-12 Core Acceptance remains NOT_STARTED. M1-11 did not
-claim native or end-to-end acceptance.
+and M1-09 strategy composition COMPLETE. M1-10 typed C# Run IPC/Preload is COMPLETE;
+M1-11 presentation remains NOT_STARTED.
 The module table distinguishes
 actual foundations from planned composition.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
@@ -328,9 +327,9 @@ no export/composition, settings schema, LSP store or wire contract changes.
 | Semantic Run wire boundary | `src/shared/contracts/run.ts`, `run-project.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Actual M1-10; additive typed target operations/start/events, exact request/reply validation, trusted frame/project checks, JS compatibility; stdin remains planned M2 |
 | Finite target request ownership | `src/main/services/run/csharp-run-target-requests.ts` | Actual M1-10; one outstanding active-project operation, owner cancellation, project transition lease, registered scope cleanup and stale-response rejection |
 | C# Run IPC verification | `tests/contracts/run-project-validation.test.ts`, `tests/main/run-project-ipc.test.ts`, `tests/main/csharp-run-target-requests.test.ts`, `tests/preload/run-project-bridge.test.ts`, `spikes/csharp-project-run/M1-10-REPORT.md` | Actual M1-10; 63 new tests, production-domain IPC integration with controlled SDK/process ports; no new native smoke |
-| Target selection and line composer | `src/renderer/src/features/output/run-controller.ts`, `EditorRunAction.tsx`, `RunTargetDialog.tsx`, `OutputPanel.tsx`, `use-project-run.ts` | M1-11 actual target resolution/selection, explicit JS/C# mode, pinned C# session, phase/output/failure projection; line composer remains planned for M2 |
+| Target selection and line composer | `src/renderer/src/features/output/run-controller.ts`, `EditorRunAction.tsx`, `OutputPanel.tsx`, `use-project-run.ts` | Existing actual Output feature; planned minimal extension |
 | Compatibility evidence | `spikes/csharp-project-run/REPORT.md`, `harness.mjs`, `native-prototype.cpp`, `build-native.mjs`, `fixtures/`, `evidence/` | M1-04 COMPLETE; Windows 11 x64 32/32 PASS under revised scope; no new dependency |
-| C# Run acceptance | `tests/main/csharp-run-*.test.ts`, `tests/renderer/csharp-run-ui.test.tsx`, `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-csharp-run.mjs` | M1-11 renderer UI tests actual; M1-12 public bridge/native acceptance and smoke remain planned |
+| C# Run acceptance | `tests/main/csharp-run-*.test.ts`, `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-csharp-run.mjs` | New focused tests/smoke planned; existing integration suite extended |
 
 TerminalService, LanguageServiceManager and Exercise Runtime retain independent
 semantics. No generic renderer process service, new panel system or public native

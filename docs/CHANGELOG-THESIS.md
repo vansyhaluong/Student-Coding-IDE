@@ -2,27 +2,6 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
-## C# Project Run M1-11 — Target, Run and Output UI (2026-10-11)
-
-- Added the Option A editor-titlebar selector and shared Dialog target chooser,
-  including explicit JavaScript/C# mode selection, refresh, clear, safe empty/error
-  states, candidate eligibility reasons, and stale/recovered selection diagnostics.
-  `SELECTION_REQUIRED` remains unselected until a person chooses a candidate.
-- Extended the existing RunController/Output panel for C# project identity, early
-  project events, pinned Stop, phase markers, stdout/stderr, safe failures and exit
-  status. Project/session generations reject stale events. C# target stays independent
-  of the active editor file; dirty retained source blocks Run without auto-save.
-- Preserved the current-file JavaScript Run/re-run/Stop path and reused existing
-  `studentIde.run`, Dialog/Button/theme, Output panel, source-guard controller and
-  listener ownership. No backend/contract/IPC/dependency or process changes.
-- Verification: 32/32 focused C# UI plus JavaScript compatibility tests in 2 files;
-  typecheck, build, changed-file ESLint and `git diff --check` PASS. Repository-wide
-  lint reports 12 existing errors in the mockup-only `render.cjs`. Native visual
-  inspection could not be performed: Electron dev was started, but Computer Use
-  exposed no native app window. No visual verification is claimed.
-- M1-11 COMPLETE; M1-12 Core Acceptance NOT_STARTED. No public-bridge-to-real-.NET
-  smoke, full suite acceptance, commit, push or merge.
-
 ## C# Run pre-UI R2 — Public selection diagnostics (2026-10-08)
 
 - Extended existing C# resolution DTO with optional selectionDiagnostic containing
