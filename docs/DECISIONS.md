@@ -596,7 +596,7 @@ This documentation task installs nothing and selects no runtime versions.
 
 | Gate | Open detail / required evidence | Before dependent work |
 |---|---|---|
-| P9-STATE | Applicable shared-state choice under ADR-011; retain both modes without teardown | 9A shared state expansion |
+| P9-STATE | Resolved for 9A by explicit user instruction: React state in App.tsx for workspaceMode, selectedChapterId and Learning sidebar collapse; retain Project UI mounted and hidden/inert. No new store or dependency. ADR-011 remains open for broader shared-state expansion. | Recorded before 9A implementation, 2026-10-17 |
 | P9-CONTENT | Local schema/versioning, source/license metadata and approved content sources | 9B content, then 9C exercises/9F quizzes |
 | P9-HARNESS | Function signatures, supported types, argument/result serialization, starter validation, custom expected-output handling and comparison semantics including numbers/arrays/strings | 9C contracts; verify in 9D/9E |
 | P9-RUNTIME | Exact compiler/SDK/Node versions, offline dependency closure, redistribution rights, Windows compatibility, packaging/update strategy, measured size and fallback threshold/selection | 9D runtime integration; packaged recheck in 9G |

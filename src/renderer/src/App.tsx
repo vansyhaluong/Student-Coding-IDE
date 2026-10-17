@@ -5,7 +5,7 @@ import { shellShortcut } from './features/settings/shortcuts'
 import { AutoSave } from './features/editor/auto-save'
 import { registerCsharpNavigation } from './features/language/csharp/csharp-navigation'
 import { CsharpStatus } from './features/language/csharp/CsharpStatus'
-import { Files, Folder, FolderOpen, FolderPlus, GitBranch, ListChecks, Settings, Sparkles, SquareTerminal, X } from 'lucide-react'
+import { Files, Folder, FolderOpen, FolderPlus, GitBranch, GraduationCap, ListChecks, Settings, Sparkles, SquareTerminal, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import type { AppResult, GitStatus, ProjectIdentity, ProjectId } from '../../shared/contracts'
@@ -33,6 +33,8 @@ import { terminalController } from './features/terminal/terminal-session'
 import { EditorRunAction } from './features/output/EditorRunAction'
 import { OutputPanel } from './features/output/OutputPanel'
 import { useProjectRun } from './features/output/use-project-run'
+import { LearningWorkspace } from './features/learning/LearningWorkspace'
+import type { ChapterId } from './features/learning/chapters'
 
 const DEFAULT_SIDEBAR_WIDTH = 280
 const MIN_SIDEBAR_WIDTH = 220
@@ -45,6 +47,12 @@ export default function App() {
   const dark = useTheme(preferences.settings.theme)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
+  const [workspaceMode, setWorkspaceMode] = useState<'project' | 'learning'>('project')
+  const [selectedChapterId, setSelectedChapterId] = useState<ChapterId>(1)
+  const [learningSidebarCollapsed, setLearningSidebarCollapsed] = useState(false)
+  const learning = workspaceMode === 'learning'
+  const workspaceModeRef = useRef(workspaceMode)
+  workspaceModeRef.current = workspaceMode
   const closeSettings = useCallback(() => setSettingsOpen(false), [])
   const [project, setProject] = useState<ProjectIdentity | null>(null)
   const [gitDecorationSnapshot, setGitDecorationSnapshot] = useState<{ project: ProjectIdentity; status: GitStatus | null } | null>(null)
@@ -226,6 +234,13 @@ export default function App() {
 
   useEffect(() => {
     const receive = (event: KeyboardEvent) => {
+      if (workspaceModeRef.current === 'learning') {
+        if (shellShortcut(event, false)) {
+          event.preventDefault()
+          event.stopImmediatePropagation()
+        }
+        return
+      }
       const action = shellShortcut(event, !!document.querySelector('[role="dialog"][aria-modal="true"]'))
       if (!action || loading || editor.interactionLocked) return
       if (action === 'terminal') { event.preventDefault(); event.stopPropagation(); toggleTerminal(); return }
@@ -234,6 +249,7 @@ export default function App() {
       event.preventDefault()
       setSidebarTab('explorer')
       requestAnimationFrame(() => {
+        if (workspaceModeRef.current !== 'project') return
         if (action === 'new') document.querySelector<HTMLButtonElement>('[aria-label="New file"]')?.click()
         else {
           document.getElementById('search-mode-contents')?.click()
@@ -246,7 +262,7 @@ export default function App() {
   })
 
   return (
-    <main className="ide-shell" style={shellStyle}>
+    <main className="ide-shell" data-workspace-mode={workspaceMode} style={shellStyle}>
       <header className="app-chrome">
         <div className="chrome-left">
           <div className="app-identity">
@@ -254,14 +270,24 @@ export default function App() {
             <span>Student Coding IDE</span>
           </div>
         </div>
-        <div className="chrome-center">
+        <div className="chrome-center" hidden={learning} inert={learning} aria-hidden={learning || undefined}>
           {project
             ? <><EditorTabs manager={editor.manager} onClose={editor.closeDocument} />
               <EditorRunAction manager={editor.manager} controller={run} locked={editor.interactionLocked}
                 onShowOutput={() => setBottomPanel('output')} /></>
             : <span className="chrome-context">Student Coding IDE</span>}
         </div>
+        {learning && <div className="chrome-center learning-chrome-context">Kỹ thuật lập trình</div>}
         <div className="chrome-right">
+          <Button className="learning-toggle" variant="ghost" size="iconSmall"
+            aria-label={learning ? 'Back to Project' : 'Open Learning'} title={learning ? 'Back to Project' : 'Learning'}
+            aria-pressed={learning} aria-controls="learning-workspace"
+            disabled={loading || editor.interactionLocked || settingsOpen || createDialogOpen}
+            onClick={event => {
+              event.currentTarget.focus()
+              setAiOpen(false)
+              setWorkspaceMode(mode => mode === 'project' ? 'learning' : 'project')
+            }}><GraduationCap /></Button>
           <Button className="local-ai-toggle" variant="ghost" size="iconSmall"
             aria-label={aiOpen ? 'Close Local AI' : 'Open Local AI'}
             title={aiOpen ? 'Close Local AI' : 'Open Local AI'}
@@ -270,7 +296,7 @@ export default function App() {
         </div>
       </header>
 
-      <div className="workbench">
+      <div className="workbench" hidden={learning} inert={learning} aria-hidden={learning || undefined}>
         <aside className="project-sidebar" aria-label="Project">
           <header className="panel-header">
             <h1>Projects</h1>
@@ -483,11 +509,19 @@ export default function App() {
               unavailable={editor.fileSystemUnavailable} onSnapshot={publishGitSnapshot} /> : <p className="git-empty">Open a project to use Source Control.</p>}
           </div>
           </div>
-          {aiOpen && <AiChatPanel onClose={() => setAiOpen(false)} />}
+          {aiOpen && !learning && <AiChatPanel onClose={() => setAiOpen(false)} />}
         </aside>
       </div>
 
-      <footer className="status-bar">
+      <div id="learning-workspace" className="learning-workspace" hidden={!learning} inert={!learning}>
+        <div className="learning-workspace-content" inert={aiOpen} aria-hidden={aiOpen || undefined}>
+          <LearningWorkspace selectedChapterId={selectedChapterId} sidebarCollapsed={learningSidebarCollapsed}
+            onSelectChapter={setSelectedChapterId} onToggleSidebar={() => setLearningSidebarCollapsed(value => !value)} />
+        </div>
+        {learning && aiOpen && <div className="learning-ai-overlay"><AiChatPanel onClose={() => setAiOpen(false)} /></div>}
+      </div>
+
+      <footer className="status-bar" hidden={learning} inert={learning} aria-hidden={learning || undefined}>
         <span className="status-primary">
           <span className={`status-dot${project ? ' active' : ''}`} aria-hidden="true" />
           {editor.applicationState === 'STOPPING'

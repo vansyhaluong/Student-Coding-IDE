@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./features/learning/learning.css";
 
 /* Utility expected by the unmodified beUI PromptInput source. */
 @utility scrollbar-hide {
