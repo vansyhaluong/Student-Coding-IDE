@@ -3842,7 +3842,21 @@ This roadmap selects no new dependencies or language-service providers.
 
 ### 9A — Learning Mode & Roadmap
 
-Status: `NOT_STARTED`.
+Status: `IN_PROGRESS`. Explicitly authorized 2026-10-17; user acceptance pending.
+P9-STATE is resolved for this package with App-local React state. The user selects
+`docs/learning/system-design.md` (Cursor) for Learning only; Project styling stays
+unchanged. The introduction and Chapter 1 share a scrollable page; chapters 2–8
+are shells. No 9B–9G content/runtime/progress implementation is authorized.
+Do not mark COMPLETE before user acceptance.
+
+Acceptance evidence (2026-10-17): user-confirmed **Manual PASS** for Editor,
+working code and Terminal retention across Project ↔ Learning. Full automated
+Electron smoke remains **FAIL/incomplete due to its test script**, not Automated
+PASS; further terminal smoke-script repair is deferred by the user. Typecheck,
+build, scoped lint and 25 related component tests passed. Remaining checks and
+evidence limits are recorded in [PHASE-9A-ACCEPTANCE.md](PHASE-9A-ACCEPTANCE.md).
+Keep this package `IN_PROGRESS` pending user acceptance; no production changes
+are authorized merely to accommodate the test harness.
 
 **Scope:** Learning icon/header entry; Project/Learning mode state; Projects sidebar
 → Learning Roadmap; Project Workspace → Learning Workspace; hide right Project
