@@ -1,4 +1,6 @@
 import { OllamaService } from './services/ai/ollama-service'
+import { getBundledCourse } from './services/learning/content/course'
+import { LearningIpcService } from './ipc/learning-ipc-service'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
 import { CsharpSemanticService } from './services/language/csharp-semantic-service'
@@ -347,6 +349,7 @@ void app.whenReady().then(async () => {
     settingsIpc,
     aiService,
     aiIpc,
+    new LearningIpcService(ipcRegistry, getBundledCourse, authorizePreferencesFrame),
     unsavedTransitionService,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
     runLifecycle,

@@ -1,6 +1,8 @@
 import { ArrowDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useRef } from 'react'
 import { learningChapters, type ChapterId } from './chapters'
+import { ChapterMaterial } from './ChapterMaterial'
+import { useLearningCourse } from './use-learning-course'
 
 interface Props {
   selectedChapterId: ChapterId
@@ -11,6 +13,8 @@ interface Props {
 
 export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelectChapter, onToggleSidebar }: Props) {
   const introduction = useRef<HTMLElement>(null)
+  const { course, error, retry } = useLearningCourse()
+  const chapters = course ? course.manifest.chapters.map(chapter => ({ id: chapter.order, title: chapter.title })) : learningChapters
   return (
     <div className="learning-layout" data-collapsed={sidebarCollapsed}>
       <aside className="learning-sidebar" aria-label="Learning Roadmap">
@@ -24,7 +28,7 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
           </button>
         </div>
         <nav id="learning-chapters" aria-label="8 chương Kỹ thuật lập trình">
-          {learningChapters.map(chapter => (
+          {chapters.map(chapter => (
             <button type="button" key={chapter.id} aria-current={selectedChapterId === chapter.id ? 'page' : undefined}
               aria-label={`Chương ${chapter.id}: ${chapter.title}`} title={chapter.title}
               onClick={() => onSelectChapter(chapter.id)}>
@@ -36,7 +40,7 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
         {!sidebarCollapsed && <p className="learning-sidebar-note">Kỹ thuật lập trình<br /><span>8 chương · Một hành trình</span></p>}
       </aside>
       <div className="learning-pages">
-        {learningChapters.map(chapter => (
+        {chapters.map(chapter => (
           <section key={chapter.id} className="learning-page" hidden={selectedChapterId !== chapter.id}
             aria-label={`Nội dung chương ${chapter.id}`} tabIndex={0}>
             {chapter.id === 1 ? <>
@@ -50,25 +54,13 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
                 </button>
                 <div className="learning-intro-caption"><span>Nền tảng vững vàng.</span><span>Tư duy có cấu trúc.</span></div>
               </div>
-              <section ref={introduction} className="learning-chapter-intro" aria-labelledby="learning-chapter-one">
-                <p className="learning-eyebrow">Chương 01 / Giới thiệu</p>
-                <h2 id="learning-chapter-one">Bắt đầu từ cách tư duy.</h2>
-                <p>Môn Kỹ thuật lập trình tập trung vào cách phân tích yêu cầu, tổ chức lời giải và diễn đạt lời giải bằng code dễ hiểu.</p>
-                <dl className="learning-intro-details">
-                  <div><dt>Mục tiêu</dt><dd>Nhận diện dữ liệu đầu vào, kết quả cần đạt và các bước xử lý của một bài toán.</dd></div>
-                  <div><dt>Kiến thức & kỹ năng</dt><dd>Làm quen với cấu trúc điều khiển, cách tách hàm và kỹ thuật xử lý chuỗi, mảng.</dd></div>
-                  <div><dt>Cách học</dt><dd>Đọc kỹ yêu cầu, tự diễn đạt hướng giải quyết và đối chiếu kết quả với điều bạn mong đợi.</dd></div>
-                  <div><dt>Không gian học tập</dt><dd>Chọn chương trong lộ trình bên trái. Dùng nút Learning trên Header để trở lại project; khi quay lại, chương đang chọn vẫn được giữ.</dd></div>
-                </dl>
-                <p className="learning-content-note">Nội dung bài học đang được chuẩn bị. Chương giới thiệu không yêu cầu bài tập hoặc trắc nghiệm.</p>
+              <section ref={introduction} id="learning-chapter-one" className="learning-chapter-intro" aria-label="Lý thuyết chương 1">
+                {course && <ChapterMaterial chapter={course.manifest.chapters[0]} markdown={course.materials[0].markdown} policy={course.manifest.sourceUsePolicy} />}
+                {!course && (error ? <p role="alert">{error} <button type="button" onClick={retry}>Thử lại</button></p> : <p role="status">Đang tải nội dung…</p>)}
               </section>
             </> : <div className="learning-chapter-shell">
-              <p className="learning-eyebrow">Kỹ thuật lập trình / Chương {String(chapter.id).padStart(2, '0')}</p>
-              <h1>{chapter.title}</h1>
-              <p className="learning-lead">{chapter.summary}</p>
-              <div className="learning-content-placeholder"><h2>Nội dung đang được chuẩn bị</h2>
-                <p>Bài học, luyện tập và trắc nghiệm của chương sẽ xuất hiện tại đây khi được bổ sung.</p>
-              </div>
+              {course && <ChapterMaterial chapter={course.manifest.chapters[chapter.id - 1]} markdown={course.materials[chapter.id - 1].markdown} policy={course.manifest.sourceUsePolicy} />}
+              {!course && (error ? <p role="alert">{error} <button type="button" onClick={retry}>Thử lại</button></p> : <p role="status">Đang tải nội dung…</p>)}
             </div>}
           </section>
         ))}

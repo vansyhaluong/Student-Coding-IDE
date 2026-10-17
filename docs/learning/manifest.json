@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "courseId": "ky-thuat-lap-trinh",
+  "courseTitle": "Kỹ thuật lập trình",
+  "language": "vi",
+  "exampleLanguage": "csharp",
+  "readingMode": "single-scroll-page-per-chapter",
+  "offline": true,
+  "chapterCount": 8,
+  "chapters": [
+    {
+      "id": "chapter-01",
+      "order": 1,
+      "title": "Giới thiệu môn Kỹ thuật lập trình",
+      "contentPath": "chapters/chapter-01.md",
+      "sections": [
+        "1. Kỹ thuật lập trình là gì?",
+        "2. Quy trình giải một bài toán lập trình",
+        "3. Ví dụ C# đầu tiên",
+        "4. Những khái niệm sẽ gặp trong môn học",
+        "5. Học bằng Student Coding IDE",
+        "6. Kết quả mong đợi sau Chương 1"
+      ],
+      "references": [
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/overview",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/tutorials/hello-world",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        }
+      ],
+      "specialIntroductionChapter": true,
+      "requiresPractice": false,
+      "requiresQuiz": false
+    },
+    {
+      "id": "chapter-02",
+      "order": 2,
+      "title": "Kiến thức lập trình cơ bản",
+      "contentPath": "chapters/chapter-02.md",
+      "sections": [
+        "1. Biến, hằng và cách đặt tên",
+        "2. Các kiểu dữ liệu thường gặp",
+        "3. Toán tử và biểu thức",
+        "4. Ép kiểu và sai sót thường gặp",
+        "5. Ví dụ tổng hợp — tính diện tích hình tròn"
+      ],
+      "references": [
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/built-in-types",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/arithmetic-operators",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        }
+      ],
+      "specialIntroductionChapter": false,
+      "requiresPractice": null,
+      "requiresQuiz": null
+    },
+    {
+      "id": "chapter-03",
+      "order": 3,
+      "title": "Cấu trúc rẽ nhánh",
+      "contentPath": "chapters/chapter-03.md",
+      "sections": [
+        "1. Điều kiện và kiểu `bool`",
+        "2. `if`, `else if` và `else`",
+        "3. Kết hợp điều kiện",
+        "4. `switch` cho các lựa chọn rời rạc",
+        "5. Ví dụ tổng hợp — kiểm tra năm nhuận",
+        "6. Lỗi thường gặp"
+      ],
+      "references": [
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/selection-statements",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        }
+      ],
+      "specialIntroductionChapter": false,
+      "requiresPractice": null,
+      "requiresQuiz": null
+    },
+    {
+      "id": "chapter-04",
+      "order": 4,
+      "title": "Cấu trúc lặp",
+      "contentPath": "chapters/chapter-04.md",
+      "sections": [
+        "1. Khi nào cần vòng lặp?",
+        "2. Vòng lặp `for`",
+        "3. `while` và `do-while`",
+        "4. `break`, `continue` và `foreach`",
+        "5. Vòng lặp lồng nhau",
+        "6. Ví dụ tổng hợp — tìm ước của một số"
+      ],
+      "references": [
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/iteration-statements",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        }
+      ],
+      "specialIntroductionChapter": false,
+      "requiresPractice": null,
+      "requiresQuiz": null
+    },
+    {
+      "id": "chapter-05",
+      "order": 5,
+      "title": "Kỹ thuật xử lý chuỗi",
+      "contentPath": "chapters/chapter-05.md",
+      "sections": [
+        "1. Chuỗi và ký tự trong C#",
+        "2. Duyệt và đếm ký tự",
+        "3. Các phương thức xử lý chuỗi thường dùng",
+        "4. So sánh chuỗi",
+        "5. Ví dụ — đảo ngược chuỗi ký tự ASCII",
+        "6. Ví dụ — kiểm tra chuỗi đối xứng đơn giản"
+      ],
+      "references": [
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/strings",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/tutorials/hello-world",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        }
+      ],
+      "specialIntroductionChapter": false,
+      "requiresPractice": null,
+      "requiresQuiz": null
+    },
+    {
+      "id": "chapter-06",
+      "order": 6,
+      "title": "Hàm",
+      "contentPath": "chapters/chapter-06.md",
+      "sections": [
+        "1. Vì sao dùng hàm?",
+        "2. Tham số và giá trị trả về",
+        "3. Phạm vi biến và tính dễ kiểm thử",
+        "4. Chia bài toán thành nhiều hàm nhỏ",
+        "5. Tham trị và lưu ý với kiểu tham chiếu",
+        "6. Lỗi cần tránh"
+      ],
+      "references": [
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/methods",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        }
+      ],
+      "specialIntroductionChapter": false,
+      "requiresPractice": null,
+      "requiresQuiz": null
+    },
+    {
+      "id": "chapter-07",
+      "order": 7,
+      "title": "Kỹ thuật xử lý mảng một chiều",
+      "contentPath": "chapters/chapter-07.md",
+      "sections": [
+        "1. Mảng một chiều là gì?",
+        "2. Duyệt mảng và tính tổng",
+        "3. Tìm giá trị lớn nhất / nhỏ nhất",
+        "4. Đếm và lọc theo điều kiện",
+        "5. Tìm kiếm tuyến tính",
+        "6. Ví dụ — đảo vị trí các phần tử"
+      ],
+      "references": [
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/arrays",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        }
+      ],
+      "specialIntroductionChapter": false,
+      "requiresPractice": null,
+      "requiresQuiz": null
+    },
+    {
+      "id": "chapter-08",
+      "order": 8,
+      "title": "Kỹ thuật xử lý mảng hai chiều",
+      "contentPath": "chapters/chapter-08.md",
+      "sections": [
+        "1. Mảng hai chiều trong C#",
+        "2. Duyệt mảng theo hàng và cột",
+        "3. Tính tổng theo hàng và theo cột",
+        "4. Đường chéo của ma trận vuông",
+        "5. Tìm phần tử lớn nhất trong bảng",
+        "6. Mảng chữ nhật và mảng răng cưa"
+      ],
+      "references": [
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/arrays",
+          "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        }
+      ],
+      "specialIntroductionChapter": false,
+      "requiresPractice": null,
+      "requiresQuiz": null
+    }
+  ],
+  "sourceUsePolicy": {
+    "authoredContent": "Original Vietnamese lessons and independently authored C# examples; referenced technical concepts only",
+    "externalSourceMaterial": "Reference URLs only; do not copy source articles, images, sample code or other third-party assets unless rights are verified",
+    "licenseMetadataMeaning": "sourceLicenseStatus is a review flag, not a grant of redistribution rights"
+  }
+}

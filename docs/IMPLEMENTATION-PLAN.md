@@ -167,7 +167,7 @@ before affected work continues.
 | Phase 6 — Settings & UX | `COMPLETE` | Settings, dependency guidance and Recent Projects; verified 2026-09-14 |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
-| Phase 9 — Learning / Programming Techniques | `NOT_STARTED` | Planned 9A–9G; Section 13.6; explicit implementation authorization required |
+| Phase 9 — Learning / Programming Techniques | `IN_PROGRESS` | 9A and 9B COMPLETE by user acceptance; 9C–9G NOT_STARTED; Section 13.6 |
 | C# Project Run extension — M1 + M2 | `NOT_STARTED` | Approved planning baseline; Section 13.7; both milestones required for completion |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
@@ -3680,9 +3680,10 @@ commands, tool calling, and autonomous agent behavior.
 
 ## 13.6 PHASE 9 — LEARNING / PROGRAMMING TECHNIQUES
 
-Status: `NOT_STARTED`. Approved roadmap only; no implementation or completion
-is claimed. Traceability: Requirement Section 21, Phase 9; Architecture Section
-6, Learning direction. Existing Phase 1–8 decisions remain unchanged.
+Status: `IN_PROGRESS`. 9A and 9B are COMPLETE by user acceptance; 9C–9G remain
+NOT_STARTED. Package evidence and accepted limitations are recorded below.
+Traceability: Requirement Section 21, Phase 9; Architecture Section 6, Learning
+direction. Existing Phase 1–8 decisions remain unchanged.
 
 ### Goal, workspace layout and state
 
@@ -3838,16 +3839,21 @@ fallback threshold/selection and final delivery form before 9G acceptance.
 Accepted-at-100% and saved-before-completed are already decided, not open scoring
 options. Resolve the minimal Accepted storage contract in 9E rather than making
 9E depend on later 9F. Exact details remain Open Decision / Pending Verification.
-This roadmap selects no new dependencies or language-service providers.
+The roadmap itself selects no dependencies or language-service providers.
+The later authorized 9B implementation adds only the user-approved Markdown/GFM
+dependencies recorded under P9-CONTENT; no language-service provider is added.
 
 ### 9A — Learning Mode & Roadmap
 
-Status: `IN_PROGRESS`. Explicitly authorized 2026-10-17; user acceptance pending.
+Status: `COMPLETE`. Explicit user acceptance on 2026-10-17 authorizes closure
+of 9A with the documented automated Terminal smoke-script limitation retained.
 P9-STATE is resolved for this package with App-local React state. The user selects
 `docs/learning/system-design.md` (Cursor) for Learning only; Project styling stays
 unchanged. The introduction and Chapter 1 share a scrollable page; chapters 2–8
-are shells. No 9B–9G content/runtime/progress implementation is authorized.
-Do not mark COMPLETE before user acceptance.
+were shells at 9A acceptance. The 9A scope excluded 9B–9G content/runtime/progress;
+the subsequent 9B authorization and acceptance are recorded in the next package.
+User acceptance closes the 9A prerequisite for 9B; it does not turn the incomplete
+automated smoke into an Automated PASS.
 
 Acceptance evidence (2026-10-17): user-confirmed **Manual PASS** for Editor,
 working code and Terminal retention across Project ↔ Learning. Full automated
@@ -3855,7 +3861,7 @@ Electron smoke remains **FAIL/incomplete due to its test script**, not Automated
 PASS; further terminal smoke-script repair is deferred by the user. Typecheck,
 build, scoped lint and 25 related component tests passed. Remaining checks and
 evidence limits are recorded in [PHASE-9A-ACCEPTANCE.md](PHASE-9A-ACCEPTANCE.md).
-Keep this package `IN_PROGRESS` pending user acceptance; no production changes
+User acceptance now permits `COMPLETE`; no production changes
 are authorized merely to accommodate the test harness.
 
 **Scope:** Learning icon/header entry; Project/Learning mode state; Projects sidebar
@@ -3872,7 +3878,27 @@ order, no chapter 9/10 or course selector, and Chapter 1 without mandatory pract
 
 ### 9B — Course Content & Lessons
 
-Status: `NOT_STARTED`. Prerequisite: 9A exit gate.
+Status: `COMPLETE` — final user-authorized acceptance, 2026-10-17.
+Tracking reconciled at final review: the stale NOT_STARTED entry was moved to
+IN_PROGRESS to reflect authorized implementation, then COMPLETE after acceptance.
+Prerequisite: 9A COMPLETE with its original recorded limitations retained.
+
+Delivered: supplied eight-chapter manifest and Markdown, 47 content sections,
+42 C# examples; one continuous page per chapter; Chapter 1 below the retained
+general introduction; safe Markdown/tables/code display, real Monaco syntax
+tokenization and inspectable source/license-review metadata. Main embeds fixed
+inputs at build time behind a validated read-only Learning bridge. No 9C–9G work.
+
+Acceptance evidence: 32/32 related tests, typecheck, scoped lint, build and
+42/42 C# expected UTF-8 outputs PASS. Focused built Electron rendering PASS for
+all eight pages and real code highlighting; this is not an offline test.
+User-confirmed **Manual Offline PASS** is accepted only for the actual inspected
+material/environment; no all-eight-chapter manual offline coverage is claimed.
+Automated offline smoke remains **FAIL/incomplete (navigator.onLine harness
+assertion)** and deferred by explicit user decision. Development-server and
+clean packaged Windows acceptance remain NOT VERIFIED for later verification.
+Full evidence, limits and 9C prerequisites:
+[PHASE-9B-ACCEPTANCE.md](PHASE-9B-ACCEPTANCE.md).
 
 **Scope:** Single-subject Chapter and Lesson/material models; local data-driven content;
 Chapter 1 introduction content; Lesson Workspace; chapter/lesson navigation;
@@ -4008,8 +4034,9 @@ closing it returns to Learning. Preserve Phase 8's fixed local Ollama endpoint,
 automatic exercise/code context, AI Tutor or exercise-aware AI is added; these
 remain separate future extensions. Backend/cloud, accounts, project templates
 are outside this foundation. No course management, chapter 9/10, Python/Java
-Exercise adapters or CMS. All 9A–9G and 9D.1–9D.2 remain `NOT_STARTED` until
-explicit implementation authorization; this update implements no functionality.
+Exercise adapters or CMS. 9A and 9B are COMPLETE with the recorded evidence and
+accepted limitations. 9C–9G and 9D.1–9D.2 remain `NOT_STARTED` and require explicit
+implementation authorization. Closing 9B does not authorize the next package.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 

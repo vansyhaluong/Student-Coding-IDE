@@ -62,6 +62,39 @@
 .learning-ai-overlay { position: absolute; inset: 0 0 0 auto; width: min(440px, 100%); border-left: 1px solid var(--learning-line); }
 .learning-ai-overlay .ai-chat-panel { --sidebar: var(--learning-canvas); --sidebar-foreground: var(--learning-ink); --background: var(--learning-canvas); --foreground: var(--learning-ink); --muted-foreground: var(--learning-body); --border: var(--learning-line); color-scheme: light; }
 .learning-workspace :is(button, .learning-page):focus-visible { outline: 2px solid var(--learning-ink); outline-offset: -2px; }
+.learning-material { max-width: 760px; margin-inline: auto; line-height: 1.75; overflow-wrap: anywhere; }
+.learning-page .learning-material > h1, .learning-page .learning-material-title { font-size: clamp(28px, 3vw, 36px); line-height: 1.25; margin-bottom: 32px; }
+.learning-page .learning-material > h2:not(.learning-material-title) { margin: 56px 0 20px; font-size: 26px; line-height: 1.3; }
+.learning-material h3 { margin: 32px 0 16px; font-size: 18px; font-weight: 500; }
+.learning-page .learning-material p { max-width: none; margin-block: 16px; line-height: 1.75; }
+.learning-material :is(ul, ol) { margin-block: 20px; padding-left: 24px; list-style-position: outside; }
+.learning-material ul { list-style-type: disc; }
+.learning-material ol { list-style-type: decimal; }
+.learning-material li { padding-left: 4px; margin-block: 8px; color: var(--learning-body); }
+.learning-material strong { color: var(--learning-ink); font-weight: 600; }
+.learning-material blockquote { border-left: 2px solid var(--learning-line); padding-left: 20px; margin-block: 24px; }
+.learning-material code { font-family: "JetBrains Mono", Consolas, monospace; font-size: 13px; }
+.learning-material :not(pre) > code { padding: 2px 5px; background: var(--learning-selected); border-radius: 4px; }
+.learning-code-block { margin-block: 24px; border: 1px solid var(--learning-line); border-radius: 8px; background: var(--learning-surface); overflow: hidden; }
+.learning-code-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 16px; border-bottom: 1px solid var(--learning-line); color: var(--learning-body); font-size: 11px; }
+.learning-code-toolbar button { border: 0; background: transparent; color: var(--learning-ink); padding: 4px 8px; cursor: pointer; }
+.learning-code-block pre { margin: 0; padding: 20px; overflow-x: auto; white-space: pre; line-height: 1.65; color: var(--learning-ink); }
+.learning-code-block pre > code { display: block; padding: 0; background: transparent; }
+.learning-code-block .learning-syntax-keyword { color: #7848a5; }
+.learning-code-block .learning-syntax-string { color: #256a45; }
+.learning-code-block .learning-syntax-number { color: #975011; }
+.learning-code-block .learning-syntax-comment { color: #72776c; }
+.learning-table-scroll { overflow-x: auto; margin-block: 24px; }
+.learning-material table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.learning-material :is(th, td) { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--learning-line); vertical-align: top; }
+.learning-material th { font-weight: 500; color: var(--learning-ink); background: var(--learning-surface); }
+.learning-material td { color: var(--learning-body); }
+.learning-external-reference { overflow-wrap: anywhere; }
+.learning-external-reference small { color: var(--learning-muted); font-size: 11px; }
+.learning-source-metadata { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--learning-line); font-size: 13px; }
+.learning-source-metadata summary { cursor: pointer; font-weight: 500; }
+.learning-source-metadata dl > div { margin-block: 16px; }
+.learning-source-metadata dd { margin: 4px 0 0; color: var(--learning-body); }
 @media (max-width: 1000px) {
   .ide-shell[data-workspace-mode="learning"] { --learning-sidebar-width: 220px; }
   .learning-intro-details > div { grid-template-columns: 1fr; gap: 8px; }
