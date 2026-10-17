@@ -2238,6 +2238,9 @@ function installApi(overrides: {
 } = {}): StudentIdeApi {
   window.matchMedia = vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
   const api: StudentIdeApi = {
+    learning: {
+      getCourse: async () => failure('Learning content is not configured in this Project Explorer fixture'),
+    },
     ai: {
       getStatus: async () => success('ready'),
       startChat: async () => failure('Not configured'),

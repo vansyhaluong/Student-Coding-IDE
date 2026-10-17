@@ -1,4 +1,5 @@
 import { createAiBridge } from './ai'
+import { createLearningBridge } from './learning'
 import { createSettingsBridge } from './settings'
 import { createLanguageBridge } from './language'
 import type { StudentIdeApi } from '../../shared/contracts'
@@ -17,6 +18,7 @@ export function createPreloadApi(
   ipcRenderer: IpcRendererLike,
 ): StudentIdeApi {
   return {
+    learning: createLearningBridge(ipcRenderer),
     ai: createAiBridge(ipcRenderer),
     settings: createSettingsBridge(ipcRenderer),
     language: createLanguageBridge(ipcRenderer),

@@ -80,6 +80,7 @@ describe('Phase 2B preload bridges', () => {
       'file',
       'git',
       'language',
+      'learning',
       'lifecycle',
       'project',
       'run',
@@ -90,6 +91,7 @@ describe('Phase 2B preload bridges', () => {
     expect(api).not.toHaveProperty('ipcRenderer')
     expect(api).not.toHaveProperty('execute')
     expect(api).not.toHaveProperty('fs')
+    expect(Object.keys(api.learning)).toEqual(['getCourse'])
     await expect(api.project.getActive()).resolves.toMatchObject({ ok: true })
     await expect(api.file.listDirectory(
       'project_1234567890abcdef12345678' as never,

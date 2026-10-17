@@ -2,6 +2,28 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## Phase 9B — Course Content & Lessons (2026-10-17)
+
+- User-authorized final acceptance closes 9B as COMPLETE, with 9A COMPLETE and
+  9C NOT_STARTED. No 9C production work or Git publication was performed.
+- Integrated supplied Vietnamese manifest and eight Markdown chapters as fixed
+  Main-bundled content: 47 content sections and 42 independently authored C#
+  examples. Preserved Markdown and source/license-review metadata. Reference
+  URLs grant no third-party redistribution rights.
+- Added a validated read-only Learning capability, safe Markdown/GFM rendering,
+  model-free Monaco C# tokenization, scoped reading styles and source inspection.
+  Chapters are continuous pages; Chapter 1 follows the retained introduction.
+- Verified 32/32 scoped tests, typecheck, scoped lint, production/native build and
+  42/42 C# expected UTF-8 outputs under net10.0. Focused built Electron rendering
+  verified all eight pages, real highlighting, tables, unchanged code text,
+  metadata and chapter/scroll retention; Chapter 2 screenshot inspected.
+- User confirmed Manual Offline PASS in their actual reading environment, with
+  inspected chapters/environment unspecified. Accepted limitation: automated
+  offline smoke is FAIL/incomplete due to its navigator.onLine assertion; it is
+  deferred, not reported PASS. Full manual offline coverage, development-server
+  and clean packaged Windows acceptance remain NOT VERIFIED. Preserve 9A limits.
+- Evidence and next-package decisions: `docs/PHASE-9B-ACCEPTANCE.md`.
+
 ## Phase 1 — Orca Analysis & Architecture Design
 
 ### Analysis

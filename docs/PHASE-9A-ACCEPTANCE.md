@@ -1,7 +1,9 @@
 # Phase 9A — Acceptance checklist
 
-Recorded: 2026-10-17. Phase status: `IN_PROGRESS`; user acceptance pending.
-This report does not mark Phase 9A COMPLETE or authorize 9B–9G.
+Recorded: 2026-10-17. Phase status: `COMPLETE` by explicit user acceptance.
+The user authorized 9B after accepting 9A with the recorded smoke limitation.
+Earlier NOT VERIFIED entries remain historical evidence limits; acceptance does
+not convert them into executed tests or Automated PASS.
 
 ## Evidence and result definitions
 
@@ -111,6 +113,7 @@ restrained typography and hairline separators; Project styling is intended to
 remain unchanged. No dependency, global TypeScript configuration, Main/Preload
 authority, C# Project Run or 9B–9G functionality was added for this package.
 
-Overall review: **NOT PASS / pending acceptance**. Manual retention evidence is
-accepted; remaining checks and the incomplete automated smoke are not concealed.
-No commit, push, merge or COMPLETE transition is authorized.
+Overall acceptance: **PASS by user acceptance**, with the evidence limits above.
+The full automated smoke remains **FAIL/incomplete (test harness)** and deferred.
+The user explicitly authorized the 9A COMPLETE transition and 9B implementation.
+No commit, push or merge is authorized.

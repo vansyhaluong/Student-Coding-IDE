@@ -266,21 +266,22 @@ semantics. No generic renderer process service, new panel system or public nativ
 handle is introduced by this map. Actual paths/statuses update only after verified
 implementation; packaged/installed acceptance remains Phase 7.
 
-## Planned Phase 9 Learning modules — ADR-025 / Plan Section 13.6
+## Phase 9 Learning modules — ADR-025 / Plan Section 13.6
 
-Status: `NOT_STARTED`. These are proposed paths/responsibilities, not existing
-modules or implementation claims. One subject and exactly the eight chapters in
-Requirement Section 21; no course selector/management. Content is local data,
-separate from React, with source/license records. No content import in this task.
+Status: `IN_PROGRESS` overall. 9A and 9B are COMPLETE by user acceptance;
+9C–9G remain NOT_STARTED. Actual 9A/9B paths below are implemented; later paths
+remain proposed. One subject and exactly eight chapters, without a course
+selector. Supplied lesson data is separate from React with source/license-review
+metadata; 9B acceptance limits are in `PHASE-9B-ACCEPTANCE.md`.
 
 | Responsibility | Proposed path / existing reuse | Ownership / package |
 |---|---|---|
 | Mode and eight-chapter Roadmap | `src/renderer/src/features/learning/`, integration with existing `App.tsx` | Renderer, 9A; retain project/editor/terminal state |
-| Local content and provenance | `src/main/services/learning/content/` | Main content boundary, 9B; schema and packaged lookup pending P9-CONTENT |
-| Lessons and quiz presentation | `src/renderer/src/features/learning/` | Renderer, 9B/9F; chapter Theory/Practice/Quiz navigation |
+| Local content and provenance (actual 9B) | `docs/learning/manifest.json`, `docs/learning/chapters/chapter-01.md`–`chapter-08.md`; `src/main/services/learning/content/course.ts`, `raw-content.d.ts` | Main embeds fixed inputs at build time; no repository paths read at runtime; P9-CONTENT resolved for lessons only |
+| Theory presentation (actual 9B); quiz deferred | `src/renderer/src/features/learning/LearningWorkspace.tsx`, `ChapterMaterial.tsx`, `highlight-csharp.ts`, `use-learning-course.ts`, `learning.css` | Renderer; eight continuous theory pages, safe Markdown/GFM, model-free C# tokenization, source metadata; quizzes remain 9F |
 | Exercise session and workspace | `src/renderer/src/features/learning/practice/` | Renderer, 9C; chapter list, Easy/Medium/Hard, function starters, Description, reused Monaco, Test Cases/Run Result/Submission Result and My Solutions |
-| Semantic Learning contracts | `src/shared/contracts/learning.ts` | Side-effect-free DTOs/validation phased 9A–9F; no raw process/path authority |
-| Narrow Learning bridge | `src/preload/bridge/learning.ts`, `src/main/ipc/learning-ipc-service.ts` | Preload and Main validation of sender/session/operation ownership |
+| Semantic Learning contracts (actual 9B) | `src/shared/contracts/learning.ts` | Side-effect-free course/material DTOs and response validation; future exercise/quiz contracts deferred |
+| Narrow Learning bridge (actual 9B) | `src/preload/bridge/learning.ts`, `src/main/ipc/learning-ipc-service.ts` | Read-only getCourse; exact empty request validation and Main frame authorization; no path/command input |
 | Exercise coordination | `src/main/services/learning/exercise-service.ts` | Main, 9D; independent from Project Run |
 | C#/JavaScript harness adapters | `src/main/services/learning/runtime/` | Main, 9D; generated driver, controlled compiler/Node processes, limits/Stop/cleanup |
 | Local Judge | `src/main/services/learning/judge-service.ts` | Main, 9E; public/hidden tests, 100% Accepted, distinct internal error |
@@ -292,7 +293,7 @@ bundles C# SDK/equivalent compiler and Node.js; versions/size/fallback remain ga
 Only narrow internal ownership/cleanup primitives may be reused; Project Run,
 Terminal and language-service sessions/lifecycles remain independent.
 
-Learning data resides in a separate directory under Electron userData, never
+Future mutable Learning records reside in a separate directory under Electron userData, never
 installation folders or Project Explorer. Per-exercise/language Code Drafts are
 separate from immutable Accepted snapshots (code-at-Submit, exercise, language,
 timestamp, result, test-set metadata). Retain multiple Accepted versions. My
