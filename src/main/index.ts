@@ -1,6 +1,8 @@
 import { OllamaService } from './services/ai/ollama-service'
 import { getBundledCourse } from './services/learning/content/course'
 import { LearningIpcService } from './ipc/learning-ipc-service'
+import { PracticeIpcService } from './ipc/practice-ipc-service'
+import { createPracticeStore } from './services/learning/practice-store'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
 import { CsharpSemanticService } from './services/language/csharp-semantic-service'
@@ -128,6 +130,12 @@ void app.whenReady().then(async () => {
   })
 
   const ipcRegistry = new IpcHandlerRegistry(ipcMain)
+  const practiceStore = createPracticeStore(join(app.getPath('userData'), 'learning', 'drafts.json'))
+  const practiceIpc = new PracticeIpcService(ipcRegistry, practiceStore, authorizePreferencesFrame,
+    (owner, channel, payload) => {
+      const target = webContents.fromId(owner)
+      if (target && !target.isDestroyed()) target.send(channel, payload)
+    })
   const aiService = new OllamaService()
   const aiIpc = new AiIpcService(ipcRegistry, aiService, authorizePreferencesFrame,
     (ownerId, event) => {
@@ -340,6 +348,7 @@ void app.whenReady().then(async () => {
 
   desktopApplication = new DesktopApplication([
     persistenceService,
+    practiceStore,
     processManager,
     projectService,
     fileSystemService,
@@ -350,6 +359,7 @@ void app.whenReady().then(async () => {
     aiService,
     aiIpc,
     new LearningIpcService(ipcRegistry, getBundledCourse, authorizePreferencesFrame),
+    practiceIpc,
     unsavedTransitionService,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
     runLifecycle,
@@ -391,11 +401,18 @@ void app.whenReady().then(async () => {
 
   quitCoordinator = new ApplicationQuitCoordinator({
     getApplication: () => desktopApplication,
-    requestApproval: () => (
-      BrowserWindow.getAllWindows().some((window) => !window.isDestroyed())
-        ? unsavedTransitionService?.requestApplicationClose() ?? Promise.resolve(false)
-        : Promise.resolve(false)
-    ),
+    requestApproval: async () => {
+      const owner = BrowserWindow.getAllWindows().find(window => !window.isDestroyed())?.webContents.id
+      if (owner === undefined) return false
+      if (!await practiceIpc.prepareClose(owner)) {
+        await dialog.showMessageBox({ type: 'error', title: 'Code Draft chưa được lưu',
+          message: 'Chưa thể lưu hoặc xác nhận Code Draft. Ứng dụng vẫn mở để bạn kiểm tra và thử lại.', buttons: ['Tiếp tục chỉnh sửa'] })
+        return false
+      }
+      const approved = await (unsavedTransitionService?.requestApplicationClose() ?? Promise.resolve(false))
+      if (!approved) practiceIpc.resume(owner)
+      return approved
+    },
     quit: () => app.quit(),
     onCleanupError: () => {
       console.error('Student Coding IDE cleanup did not finish cleanly.')

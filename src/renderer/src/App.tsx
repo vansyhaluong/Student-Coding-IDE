@@ -34,6 +34,7 @@ import { EditorRunAction } from './features/output/EditorRunAction'
 import { OutputPanel } from './features/output/OutputPanel'
 import { useProjectRun } from './features/output/use-project-run'
 import { LearningWorkspace } from './features/learning/LearningWorkspace'
+import { LearningSidebarHeader } from './features/learning/LearningSidebarHeader'
 import type { ChapterId } from './features/learning/chapters'
 
 const DEFAULT_SIDEBAR_WIDTH = 280
@@ -41,6 +42,8 @@ const MIN_SIDEBAR_WIDTH = 220
 const MAX_LEFT_SIDEBAR_WIDTH = 500
 const MIN_EDITOR_WIDTH = 360
 const DEFAULT_TERMINAL_HEIGHT = 260
+const PROJECT_LOGO = new URL('../images/logo2-transparent.png', import.meta.url).href
+const LEARNING_LOGO = new URL('../images/logo2-ice-blue.png', import.meta.url).href
 
 export default function App() {
   const preferences = useSettings()
@@ -48,6 +51,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [workspaceMode, setWorkspaceMode] = useState<'project' | 'learning'>('project')
+  const practiceExitGuard = useRef<() => Promise<boolean>>(async () => true)
   const [selectedChapterId, setSelectedChapterId] = useState<ChapterId>(1)
   const [learningSidebarCollapsed, setLearningSidebarCollapsed] = useState(false)
   const learning = workspaceMode === 'learning'
@@ -266,16 +270,16 @@ export default function App() {
       <header className="app-chrome">
         <div className="chrome-left">
           <div className="app-identity">
-            <span className="app-mark" aria-hidden="true">S</span>
-            <span>Student Coding IDE</span>
+            <img className="app-logo" src={learning ? LEARNING_LOGO : PROJECT_LOGO} alt="Student Coding IDE" />
           </div>
+          {learning && <LearningSidebarHeader collapsed={learningSidebarCollapsed} disabled={aiOpen}
+            onToggle={() => setLearningSidebarCollapsed(value => !value)} />}
         </div>
         <div className="chrome-center" hidden={learning} inert={learning} aria-hidden={learning || undefined}>
-          {project
-            ? <><EditorTabs manager={editor.manager} onClose={editor.closeDocument} />
+          {project &&
+            <><EditorTabs manager={editor.manager} onClose={editor.closeDocument} />
               <EditorRunAction manager={editor.manager} controller={run} locked={editor.interactionLocked}
-                onShowOutput={() => setBottomPanel('output')} /></>
-            : <span className="chrome-context">Student Coding IDE</span>}
+                onShowOutput={() => setBottomPanel('output')} /></>}
         </div>
         {learning && <div className="chrome-center learning-chrome-context">Kỹ thuật lập trình</div>}
         <div className="chrome-right">
@@ -283,8 +287,9 @@ export default function App() {
             aria-label={learning ? 'Back to Project' : 'Open Learning'} title={learning ? 'Back to Project' : 'Learning'}
             aria-pressed={learning} aria-controls="learning-workspace"
             disabled={loading || editor.interactionLocked || settingsOpen || createDialogOpen}
-            onClick={event => {
+            onClick={async event => {
               event.currentTarget.focus()
+              if (learning && !await practiceExitGuard.current()) return
               setAiOpen(false)
               setWorkspaceMode(mode => mode === 'project' ? 'learning' : 'project')
             }}><GraduationCap /></Button>
@@ -515,8 +520,8 @@ export default function App() {
 
       <div id="learning-workspace" className="learning-workspace" hidden={!learning} inert={!learning}>
         <div className="learning-workspace-content" inert={aiOpen} aria-hidden={aiOpen || undefined}>
-          <LearningWorkspace selectedChapterId={selectedChapterId} sidebarCollapsed={learningSidebarCollapsed}
-            onSelectChapter={setSelectedChapterId} onToggleSidebar={() => setLearningSidebarCollapsed(value => !value)} />
+          <LearningWorkspace active={learning} exitGuard={practiceExitGuard} selectedChapterId={selectedChapterId} sidebarCollapsed={learningSidebarCollapsed}
+            onSelectChapter={setSelectedChapterId} />
         </div>
         {learning && aiOpen && <div className="learning-ai-overlay"><AiChatPanel onClose={() => setAiOpen(false)} /></div>}
       </div>

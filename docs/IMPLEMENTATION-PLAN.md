@@ -33,6 +33,105 @@ reference evidence, not source or runtime dependencies.
 
 ## 3. Current baseline
 
+### Chapter 1 academic introduction follow-up — 2026-10-19
+
+Status: `COMPLETE` for the user-authorized academic presentation of the course
+introduction. This explicit direction supersedes the marketing-style hero for
+Chapter 1 only. Added a compact book-style serif heading using installed
+Georgia/Times fallbacks, a concise course description, three chapter objectives,
+course-information definition list and reading guidance. Summaries derive from
+the existing authored Chapter 1; no new credit, duration, prerequisite or
+assessment claims. Replaced slogans and the overview card with restrained
+dividers; retained the existing Learning palette, left gutter and shared scroll
+region. The read action still scrolls to the retained Chapter 1 material.
+Authored Markdown, code examples, sources and Practice were not edited.
+
+Verified: typecheck, lint, production/native Windows build and diff check PASS;
+six focused Renderer tests PASS (16 unselected tests skipped), including three
+objectives, heading/read action, reading retention and guarded tab navigation.
+Built Electron layout checks PASS at 900/1000/1440px with both sidebar states;
+Chapter 1 screenshots inspected at desktop and narrow widths. All eight theory
+pages still share their left gutter without page horizontal overflow. No new
+dependency, IPC, ADR or later-phase scope; full-suite/original phase gates not
+rerun or reclassified.
+
+### Learning header and compact tabs follow-up — 2026-10-19
+
+Status: `COMPLETE` for the explicitly authorized Renderer-only UI adjustment.
+Moved the Roadmap title/collapse control into the existing App chrome beside
+the logo, via LearningSidebarHeader. App retains its existing collapse state.
+The 64px collapsed header retains both a smaller logo and the expand button;
+the title hides. The button uses no-drag styling and is disabled during the
+Learning AI overlay, preserving the previous inaccessible-sidebar behavior.
+Removed the duplicate row from the Roadmap. No Main/IPC/dependency/ADR change.
+
+Tabs retain the accepted Cursor pricing pill styling at a compact 13px scale,
+with smaller padding and content width. Removed the full-width divider/row;
+the native measurement is approximately 153 × 31px, plus 6px vertical margins.
+The control remains aligned with the document gutter in either sidebar state.
+
+Verified: typecheck, lint, production/native Windows build and diff check PASS.
+Six focused Renderer tests PASS (16 unselected tests skipped), covering header
+placement/control association, collapse/selection/reading retention, safe
+material display and guarded tab navigation. Built Electron checks/screenshots
+PASS in both sidebar states: logo/title/button share the header, collapsed
+controls fit, no-drag is applied, compact Tabs retain linked panels/keyboard
+behavior and Practice fills its width. Full-suite/original phase gates were
+not rerun or reclassified; no later package is authorized by this follow-up.
+
+### Learning beUI Tabs follow-up — 2026-10-19
+
+Status: `COMPLETE` for the explicitly authorized Tài liệu/Luyện tập control
+replacement. Imported stock MIT Tabs and its two support files from the official
+beUI registry, with import paths rewired locally. Composed `variant="pill"`;
+the user's final reference is the Individuel / Teams control at
+`https://cursor.com/fr/pricing`, observed directly in Chrome on 2026-10-19.
+Consumer CSS matches its 5% ink track, 2px inset, #f2f1ed sliding selected pill,
+subtle shadow and 16px regular labels. Selected text uses full ink; inactive
+text uses 60% ink. No icons; the duplicate overlay label is hidden.
+No new dependencies, ADR or IPC change. Kept per-chapter selection,
+theory scroll state, existing Practice state and guarded draft saving. Linked
+tab/panel accessibility and keyboard navigation are preserved. Chapter 1 still
+has no Practice tab; no runtime, Judge or later phase is authorized here.
+
+Verified: typecheck, lint, production/native Windows build and diff check PASS.
+The three related Renderer files ran with a 15s per-test limit: 15 PASS, seven
+FAIL on pre-existing stale section counts (expected 6/7; current authored
+chapters contain 14–16). They were preserved; the broader group is NOT PASS.
+Passing coverage includes draft failure blocking tab changes, retry, retained
+drafts/reading position, panel IDs and Home/End keyboard navigation. Built
+Electron checks and screenshot review PASS in both sidebar states: only the
+selected icon has width/opacity, panels match selection, and Practice fills its
+panel width. Stock upstream emitted ResizeObserver notification-loop console
+warnings during animated measurements; the checks passed, and vendor source
+remains unchanged apart from imports. The final Cursor pricing styling passed
+the targeted tab/save test, typecheck, lint, build, built Electron computed-style
+checks and screenshot review in both sidebar states. The final no-icon run
+emitted no ResizeObserver notification warning. Full-suite/original phase gates
+not rerun.
+
+### Learning document layout corrective follow-up — 2026-10-19
+
+Status: `COMPLETE` for this explicitly authorized Renderer-only correction to
+9A/9B. Fix: nested auto margins centered the theory material and shifted its
+left edge relative to the introduction when the Roadmap sidebar collapsed.
+All eight theory pages now share a left-aligned gutter. Chapter 1 follows
+`docs/learning/system-design.md`: responsive introduction/overview grid, 1200px
+outer container, 760px reading measure, cream canvas, white hairline surfaces,
+regular display headings and 80px section rhythm. Existing authored Markdown,
+source metadata, chapter navigation, scroll retention and Practice work remain.
+No dependency, ADR, IPC or lifecycle change; no later package is authorized.
+
+Verified: typecheck, lint and production/native Windows build PASS; five focused
+Renderer tests PASS (seven unselected tests skipped), including reading-position
+retention through sidebar collapse/expand and safe Markdown/code rendering.
+The first concurrent run exceeded the default 5s test timeout; the isolated run
+passed with `--testTimeout=15000`. Built Electron measurements PASS for all eight
+chapters at 900/1000/1440px in both sidebar states (48 page/state combinations):
+matching left gutters and no page horizontal overflow. Chapter 1 screenshots
+were inspected at desktop and narrow widths. The full suite and original 9A/9B
+offline/Terminal acceptance gates were not rerun or reclassified.
+
 ### Local AI Chat UI V1 — 2026-09-25
 
 Status: `COMPLETE`. Explicitly authorized renderer-only mock UI on `develop`,

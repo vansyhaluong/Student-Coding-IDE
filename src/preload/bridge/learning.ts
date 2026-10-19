@@ -2,8 +2,9 @@ import { isLearningCourse, LEARNING_CHANNELS, type LearningApi } from '../../sha
 import type { IpcRendererLike } from './lifecycle'
 import { invokeSafely } from './invoke'
 import { parseAppResult } from './result'
+import { createPracticeBridge } from './practice'
 
 export function createLearningBridge(ipc: IpcRendererLike): LearningApi {
-  return { getCourse: async () => parseAppResult(await invokeSafely(ipc, LEARNING_CHANNELS.getCourse, {}),
+  return { practice: createPracticeBridge(ipc), getCourse: async () => parseAppResult(await invokeSafely(ipc, LEARNING_CHANNELS.getCourse, {}),
     isLearningCourse, LEARNING_CHANNELS.getCourse) }
 }
