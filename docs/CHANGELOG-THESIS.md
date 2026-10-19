@@ -2,6 +2,68 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## Academic Chapter 1 introduction — 2026-10-19
+
+- Reworked the course introduction into an academic opening: book-style serif
+  title, concise subject description, three Chapter 1 objectives, course facts
+  and reading guidance. Removed promotional slogans and the overview card.
+  User explicitly selected this direction for the introduction; Learning colors
+  and the left-aligned reading layout remain. Uses installed font fallbacks.
+- Retained authored chapter material/code/sources and the continuous scroll
+  region; the read button still navigates to Chapter 1. Added no unsupported
+  academic credit, duration, prerequisite or assessment metadata.
+- Verified typecheck, lint, production/native Windows build, six focused tests
+  and diff check. Built Electron layout checks passed at three widths with both
+  sidebar states; desktop/narrow Chapter 1 screenshots were inspected. No
+  dependency/architecture/IPC change; full-suite/original gates not rerun.
+
+## Learning header and compact tabs — 2026-10-19
+
+- Moved Lộ trình học and its collapse/expand control beside the logo in the
+  existing App header. Retained App-owned sidebar state, accessible naming,
+  no-drag button behavior and overlay locking. Both logo and expand button
+  remain visible in the 64px collapsed header; removed the old sidebar row.
+- Reduced the Cursor-style tab control to 13px text and content width, with
+  smaller padding and no full-width section divider. Measured about 153 × 31px
+  with 6px vertical margins in built Electron.
+- Typecheck, lint, production/native Windows build, six focused Renderer tests
+  and diff check passed. Electron checked header alignment/fit, button no-drag,
+  compact tab geometry, panel/keyboard behavior and both sidebar screenshots.
+  Full-suite/original phase gates were not rerun. No dependency/IPC/ADR change.
+
+## Learning beUI Tabs follow-up — 2026-10-19
+
+- Replaced theory/practice buttons with official beUI Tabs, using controlled
+  pill tabs. Preserved stock component source and MIT
+  attribution, rewiring only local support imports; reused existing dependencies.
+- Retained guarded saves, per-chapter selection, drafts and theory scroll state;
+  linked accessible panels, keyboard selection and disabled tabs during close.
+  Scoped Learning colors and ensured Practice still fills the available width.
+  The final user reference is Cursor pricing's Individuel / Teams control:
+  5% ink track, 2px inset, #f2f1ed selected pill with subtle shadow, regular 16px
+  labels and no icons. Checked the actual reference in Chrome and verified
+  both sidebar states, colors/weights, panel/keyboard behavior, screenshots,
+  targeted tab/save test, typecheck, lint and final build in Electron.
+- Typecheck, lint, production/native Windows build and diff check passed.
+  Related tests: 15 PASS / seven FAIL due to existing outdated chapter-section
+  counts; the broader group is not claimed PASS. Electron icon/panel/keyboard/
+  width checks and expanded/collapsed screenshot review passed. Stock upstream
+  emitted ResizeObserver notification warnings during animation measurements.
+  No architecture/IPC/runtime change or later-phase authorization.
+
+## Learning document layout correction — 2026-10-19
+
+- Removed nested centering from all eight theory pages; introduction, headings
+  and material share a left gutter with the Roadmap expanded or collapsed.
+- Reworked Chapter 1 using `docs/learning/system-design.md`: responsive overview,
+  light display typography, cream canvas, white hairline panels and 80px section
+  spacing. Preserved authored lessons, code, metadata and retained scroll state.
+- Verified typecheck, lint, production/native Windows build and five focused
+  Renderer tests (15s per-test allowance; seven unselected tests skipped).
+  Built Electron layout checks passed for eight chapters at three widths and
+  both sidebar states; Chapter 1 screenshot QA passed. Full-suite and original
+  phase offline/Terminal gates were not rerun. No architecture/IPC change.
+
 ## Phase 9B — Course Content & Lessons (2026-10-17)
 
 - User-authorized final acceptance closes 9B as COMPLETE, with 9A COMPLETE and

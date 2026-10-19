@@ -2240,6 +2240,13 @@ function installApi(overrides: {
   const api: StudentIdeApi = {
     learning: {
       getCourse: async () => failure('Learning content is not configured in this Project Explorer fixture'),
+      practice: {
+        load: async () => failure('Practice is not configured in this Project Explorer fixture'),
+        save: async () => failure('Practice is not configured in this Project Explorer fixture'),
+        onPrepareClose: () => () => undefined,
+        onResume: () => () => undefined,
+        resolveClose: async () => success(null),
+      },
     },
     ai: {
       getStatus: async () => success('ready'),

@@ -19,7 +19,13 @@
         "3. Ví dụ C# đầu tiên",
         "4. Những khái niệm sẽ gặp trong môn học",
         "5. Học bằng Student Coding IDE",
-        "6. Kết quả mong đợi sau Chương 1"
+        "6. Kết quả mong đợi sau Chương 1",
+        "7. Bài toán, thuật toán và chương trình",
+        "8. Đọc chương trình bằng bảng vết",
+        "9. C# chạy như thế nào và cách đọc một tệp ví dụ",
+        "10. Phân biệt lỗi cú pháp, lỗi khi chạy và lỗi logic",
+        "11. Thiết kế dữ liệu kiểm tra trước khi viết lời giải",
+        "12. Phương pháp tự học và chuẩn trình bày lời giải"
       ],
       "references": [
         {
@@ -31,6 +37,26 @@
           "publisher": "Microsoft Learn",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/tutorials/hello-world",
           "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/program-structure/top-level-statements",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/core/sdk",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/arithmetic-operators",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/exceptions/exception-handling",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
         }
       ],
       "specialIntroductionChapter": true,
@@ -47,7 +73,15 @@
         "2. Các kiểu dữ liệu thường gặp",
         "3. Toán tử và biểu thức",
         "4. Ép kiểu và sai sót thường gặp",
-        "5. Ví dụ tổng hợp — tính diện tích hình tròn"
+        "5. Ví dụ tổng hợp — tính diện tích hình tròn",
+        "6. Miền giá trị, biểu diễn và tràn số nguyên",
+        "7. Chia nguyên, phần dư và chuyển đổi số",
+        "8. Gán kết hợp, tăng giảm và thứ tự đánh giá",
+        "9. Chuyển chuỗi thành số và xác thực dữ liệu",
+        "10. `null`, giá trị mặc định và trạng thái chưa có dữ liệu",
+        "11. Sai số số thực và lựa chọn `decimal`",
+        "12. Định dạng đầu ra và ảnh hưởng của văn hóa",
+        "13. Bài toán tổng hợp — chia tiền và kiểm tra điều kiện tính"
       ],
       "references": [
         {
@@ -64,6 +98,56 @@
           "publisher": "Microsoft Learn",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/arithmetic-operators",
           "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/integral-numeric-types",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/floating-point-numeric-types",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/numeric-conversions",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/checked-and-unchecked",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/standard/base-types/parsing-numeric",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/declarations",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.math.round?view=net-10.0",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
         }
       ],
       "specialIntroductionChapter": false,
@@ -81,7 +165,14 @@
         "3. Kết hợp điều kiện",
         "4. `switch` cho các lựa chọn rời rạc",
         "5. Ví dụ tổng hợp — kiểm tra năm nhuận",
-        "6. Lỗi thường gặp"
+        "6. Lỗi thường gặp",
+        "7. Nhánh độc lập và các nhánh loại trừ nhau",
+        "8. Ngắn mạch và kiểm tra điều kiện bảo vệ",
+        "9. Biểu thức `switch` và pattern theo khoảng",
+        "10. Toán tử điều kiện và điều kiện bảo vệ đầu hàm",
+        "11. Phân loại tam giác với thứ tự kiểm tra rõ ràng",
+        "12. Bài toán tính giá theo từng bậc",
+        "13. Bảng quyết định, phủ nhánh và kiểm tra ngưỡng"
       ],
       "references": [
         {
@@ -93,6 +184,31 @@
           "publisher": "Microsoft Learn",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/",
           "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/boolean-logical-operators",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/switch-expression",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/conditional-operator",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/patterns",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/jump-statements",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
         }
       ],
       "specialIntroductionChapter": false,
@@ -110,13 +226,41 @@
         "3. `while` và `do-while`",
         "4. `break`, `continue` và `foreach`",
         "5. Vòng lặp lồng nhau",
-        "6. Ví dụ tổng hợp — tìm ước của một số"
+        "6. Ví dụ tổng hợp — tìm ước của một số",
+        "7. Bốn thời điểm cần đọc trong một vòng `for`",
+        "8. Mẫu đếm, tích lũy và theo dõi trạng thái",
+        "9. Xử lý chữ số với `do-while`",
+        "10. Thuật toán Euclid và đại lượng giảm để chứng minh dừng",
+        "11. Kiểm tra nguyên tố và cận vòng lặp an toàn",
+        "12. Vòng lặp lồng nhau và phạm vi của `break`",
+        "13. Bất biến vòng lặp và số thao tác",
+        "14. Xây dựng kết quả theo từng lượt và bộ ca biên"
       ],
       "references": [
         {
           "publisher": "Microsoft Learn",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/iteration-statements",
           "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/jump-statements",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/arithmetic-operators",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/declarations",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/arrays",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
         }
       ],
       "specialIntroductionChapter": false,
@@ -134,7 +278,15 @@
         "3. Các phương thức xử lý chuỗi thường dùng",
         "4. So sánh chuỗi",
         "5. Ví dụ — đảo ngược chuỗi ký tự ASCII",
-        "6. Ví dụ — kiểm tra chuỗi đối xứng đơn giản"
+        "6. Ví dụ — kiểm tra chuỗi đối xứng đơn giản",
+        "7. Chuỗi rỗng, `null`, khoảng trắng và tính bất biến",
+        "8. Tìm kiếm và lấy chuỗi con với cận an toàn",
+        "9. Tách từ, loại trường rỗng và ghép lại",
+        "10. Tạo văn bản bằng `StringBuilder`",
+        "11. Unicode: `char`, mã Unicode và ký tự nhìn thấy",
+        "12. Bảng tần suất cho chữ cái tiếng Anh thường",
+        "13. Bài toán tìm từ dài nhất và quy tắc khi hòa",
+        "14. Tiền tố chung và kiểm tra giới hạn chỉ số"
       ],
       "references": [
         {
@@ -146,6 +298,56 @@
           "publisher": "Microsoft Learn",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/tutorials/hello-world",
           "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.string.isnullorwhitespace",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.string.substring?view=net-10.0",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.string.indexof",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.string.split",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/standard/base-types/stringbuilder",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/standard/base-types/best-practices-strings",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/standard/base-types/character-encoding-introduction",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.globalization.stringinfo",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.string.normalize",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.string.enumeraterunes?view=net-10.0",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
         }
       ],
       "specialIntroductionChapter": false,
@@ -163,7 +365,15 @@
         "3. Phạm vi biến và tính dễ kiểm thử",
         "4. Chia bài toán thành nhiều hàm nhỏ",
         "5. Tham trị và lưu ý với kiểu tham chiếu",
-        "6. Lỗi cần tránh"
+        "6. Lỗi cần tránh",
+        "7. Chữ ký hàm, hợp đồng và `void`",
+        "8. Tham trị, `ref`, `out` và thay đổi mảng",
+        "9. Đối số đặt tên, tham số tùy chọn và `params`",
+        "10. Nạp chồng method và phân biệt với local function",
+        "11. Local function, biến bị bắt và `static`",
+        "12. Đệ quy: điều kiện cơ sở và bước thu nhỏ",
+        "13. Phân rã thuật toán và hợp đồng không sửa đầu vào",
+        "14. Kiểm tra hàm theo bảng ca và quan hệ giữa đầu vào/đầu ra"
       ],
       "references": [
         {
@@ -175,6 +385,31 @@
           "publisher": "Microsoft Learn",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods",
           "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/method-parameters",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/local-functions",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/named-and-optional-arguments",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/program-structure/top-level-statements",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/jump-statements",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
         }
       ],
       "specialIntroductionChapter": false,
@@ -192,13 +427,51 @@
         "3. Tìm giá trị lớn nhất / nhỏ nhất",
         "4. Đếm và lọc theo điều kiện",
         "5. Tìm kiếm tuyến tính",
-        "6. Ví dụ — đảo vị trí các phần tử"
+        "6. Ví dụ — đảo vị trí các phần tử",
+        "7. Tham chiếu, sao chép và quyền sửa mảng",
+        "8. Sắp xếp chọn và bất biến đoạn đã xử lý",
+        "9. Tìm kiếm nhị phân và tiền điều kiện đã sắp xếp",
+        "10. Chèn/xóa với độ dài sử dụng riêng",
+        "11. Gom phần tử trùng và ý nghĩa của thứ tự",
+        "12. Tổng tiền tố cho nhiều truy vấn đoạn",
+        "13. Cửa sổ trượt có kích thước cố định",
+        "14. Hai con trỏ trên mảng có thứ tự"
       ],
       "references": [
         {
           "publisher": "Microsoft Learn",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/arrays",
           "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.copy",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.clone",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.sort",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.binarysearch",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/member-access-operators",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/default-values",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
         }
       ],
       "specialIntroductionChapter": false,
@@ -216,13 +489,57 @@
         "3. Tính tổng theo hàng và theo cột",
         "4. Đường chéo của ma trận vuông",
         "5. Tìm phần tử lớn nhất trong bảng",
-        "6. Mảng chữ nhật và mảng răng cưa"
+        "6. Mảng chữ nhật và mảng răng cưa",
+        "7. Số chiều, số ô và mảng có chiều bằng không",
+        "8. Tổng mọi hàng, tổng mọi cột và bảng kiểm tra",
+        "9. Chuyển vị và ánh xạ tọa độ",
+        "10. Cộng và nhân ma trận là hai phép toán khác nhau",
+        "11. Duyệt ô lân cận và kiểm tra biên",
+        "12. Xoay ma trận vuông và tính đúng của ánh xạ",
+        "13. Duyệt xoắn ốc với bốn đường biên",
+        "14. Chuyển đổi mảng răng cưa và tránh dùng chung hàng",
+        "15. Bài toán nâng cao — số đường đi trên bảng"
       ],
       "references": [
         {
           "publisher": "Microsoft Learn",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/arrays",
           "sourceLicenseStatus": "Reference only; not licensed for verbatim redistribution by this package"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.getlength",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.length",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.rank?view=net-10.0",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.copy",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/api/system.array.clone",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/iteration-statements",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
+        },
+        {
+          "publisher": "Microsoft Learn",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/integral-numeric-types",
+          "sourceLicenseStatus": "Reference only; independently authored Vietnamese explanation and C# examples; no source article, code or media redistributed; this flag grants no redistribution rights"
         }
       ],
       "specialIntroductionChapter": false,
