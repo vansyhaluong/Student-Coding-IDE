@@ -549,8 +549,10 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
 ## ADR-025 — Phase 9 Learning and function-based exercises
 
 - **Status:** Accepted design direction per explicit user scope revision,
-  2026-10-16; all Phase 9 packages remain `NOT_STARTED`. Open details below are
-  neither selected implementations nor passed verification gates.
+  2026-10-16. Status reconciled 2026-10-19: 9A–9C COMPLETE under their recorded
+  user acceptance; production 9D–9G NOT_STARTED. Isolated 9D.0 experimentation
+  is authorized, without selecting production architecture or distribution.
+  Open details below are neither selected implementations nor passed gates.
 - **Context/evidence:** Previous Phase 9 planning described future courses, four
   adapters, STDIN/STDOUT problems, partial scoring and function harnesses outside
   V1. The user's revised scope replaces those planned directions. No Phase 2–8,
@@ -570,15 +572,38 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
   student verdicts from internal Judge errors. Failed submissions have no saved
   solution history. Re-submission is allowed; later failure cannot revoke saved
   completion. Hidden offline tests are not absolutely secret.
+- **Practice controls clarified by user, 2026-10-19:** only Run and Submit are
+  student-facing; no Stop/Cancel button. Run executes sample tests and displays
+  results; 9E Submit judges official tests and persists Accepted solutions for
+  My Solutions under the successful-write invariant. 9D stop/cancellation is
+  internal only: timeout/resource limits, exercise/language switch, leaving
+  Learning, IDE close and cleanup. An internal owner-validated stop() contract
+  is allowed without corresponding UI. Exercise cancellation must not affect
+  Project Mode or Terminal. CPU/RAM/timeout figures remain trial proposals, not
+  approved production limits. No UI/production implementation is authorized here.
 - **Persistence:** Main-owned versioned JSON in a separate Learning directory
   under userData, safe writes/recovery, reuse PersistenceService where suitable.
   Accepted snapshots retain code-at-Submit, exercise/language/time/result/test-set
   metadata; multiple versions, no overwriting. My Solutions shows saved Accepted
   records only. Successful persistence is required before reporting saved/newly
   completed progress; write failure remains visible separately from Judge Accepted.
-- **Distribution choice:** Primary: bundle C# SDK/equivalent compilation tooling
-  and suitable Node.js. .NET Runtime alone cannot provide compilation. Fallback:
-  additional runtime pack or detected installed runtime with clear guidance if
+- **Runtime revision approved by user, 2026-10-19:** 9D uses compatible installed
+  .NET SDK and Node.js only, with no runtime download, installation or bundling.
+  Learning owns resolver/harness/execution sessions and may share existing
+  executable files. Missing/incompatible runtime is an explicit dependency error;
+  no automatic installation or switch to an unapproved version. Exact supported
+  versions and resource limits remain open; prototype versions are evidence only.
+  Project Mode must not change: preserve runtime selection, PATH/global.json,
+  RunService, ProcessManager, Terminal, Editor, Explorer and existing native adapters.
+  Reuse internal APIs unchanged; prefer a Learning-only adapter for missing
+  argv/Job/quota capabilities. Present shared initialization/integration changes
+  and new technical decisions to the user before implementing them.
+- **Distribution deferred to packaging:** Keep the requirement for offline use
+  without student runtime setup; discuss and decide installer integration separately.
+  No bundled delivery implementation or exact delivery form is selected for 9D.
+  C# requires SDK/equivalent compilation tooling, not .NET Runtime alone. Candidates
+  include bundling SDK/Node, an additional runtime pack or detected installed runtime
+  with clear guidance if
   size/technical evidence requires it. Bundling supports offline, setup-free use
   but adds package size/maintenance; fallback reduces base size but adds setup.
   Exact versions, size and fallback trigger are not decided here.
@@ -598,8 +623,8 @@ This documentation task installs nothing and selects no runtime versions.
 |---|---|---|
 | P9-STATE | Resolved for 9A by explicit user instruction: React state in App.tsx for workspaceMode, selectedChapterId and Learning sidebar collapse; retain Project UI mounted and hidden/inert. No new store or dependency. ADR-011 remains open for broader shared-state expansion. | Recorded before 9A implementation, 2026-10-17 |
 | P9-CONTENT | Resolved for 9B, 2026-10-17: supplied manifest schemaVersion 1 and eight authored Vietnamese Markdown files in docs/learning; one continuous page per chapter. Main bundles fixed inputs as raw strings at build time, validates and exposes read-only semantic course/material DTOs. Preserve sourceUsePolicy and per-reference review flags, which grant no third-party copying rights. User approved react-markdown + remark-gfm; reuse Monaco tokenization without models/execution for C# display. HTML/remote media disabled; reference URLs displayed as external source text, no renderer navigation authority. | 9B only; later exercise/quiz schemas remain open |
-| P9-HARNESS | Function signatures, supported types, argument/result serialization, starter validation, custom expected-output handling and comparison semantics including numbers/arrays/strings | 9C contracts; verify in 9D/9E |
-| P9-RUNTIME | Exact compiler/SDK/Node versions, offline dependency closure, redistribution rights, Windows compatibility, packaging/update strategy, measured size and fallback threshold/selection | 9D runtime integration; packaged recheck in 9G |
+| P9-HARNESS | 9C contracts delivered and accepted: C#/JavaScript function starters and six types (int32, boolean, string, int32[], string[], int32[][]). Isolated 9D.0 tests synchronous calls/JSON only; production harness/serialization, starter validation, custom expected output and comparison semantics remain open | 9C COMPLETE; production verification/decisions in 9D/9E |
+| P9-RUNTIME | Resolved distribution scope for 9D by user, 2026-10-19: installed .NET SDK/Node only; no download/install/bundling or unapproved version fallback; Project unchanged. Exact approved versions, installed-runtime offline reference closure and Windows compatibility remain open. Redistribution, packaging/update, size and delivery/fallback decisions are deferred to packaging | 9D installed-runtime integration; distribution decision and packaged recheck in 9G |
 | P9-EXECUTION | Temporary workspace policy, time/resource/output limits, Stop during compile/run, compiler/descendant ownership, containment limits and error mapping | 9D execution; 9E Judge verification |
 | P9-STORAGE | Versioned schema, immutable snapshot identity, consistent Accepted-record/completion commit, concurrent submissions, crash recovery, migrations/backups | 9E Accepted storage; extend in 9F |
 | P9-PROGRESS | Draft auto-save scheduling/failure/conflict handling, Chưa làm → Đang làm trigger, chapter aggregation, quiz scoring and last-position schema | 9F; preserve 9C drafts and 9E completion invariant |

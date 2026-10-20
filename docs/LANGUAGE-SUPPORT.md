@@ -41,8 +41,15 @@ Runtime adapter does not grant language-service capabilities or modify Phase 3,
 Phase 4 or Phase 5.5 acceptance. See Implementation Plan Section 13.6 and
 Architecture Section 6 for the approved Learning boundaries.
 
-Primary distribution bundles suitable C# SDK/equivalent compilation tooling (not
-only .NET Runtime) and Node.js. Main coordinates controlled child processes with
+User-approved runtime revision (2026-10-19): 9D uses compatible installed .NET SDK
+and Node.js only, without download, installation or bundled-runtime implementation.
+Learning owns resolver/harness/execution sessions and may share existing executable
+files; missing/incompatible runtime produces a clear error, never automatic setup
+or a switch to an unapproved version. Project runtime selection, PATH/global.json,
+RunService, ProcessManager, Terminal and existing adapters remain unchanged.
+Runtime distribution without student setup remains a packaging-stage requirement;
+installer integration will be discussed and decided separately.
+Main coordinates controlled child processes with
 time/resource limits, Stop and cleanup; student code never executes directly in
 Main/Renderer. Run tests sample/custom cases without completing exercises;
 Submit requires 100% official public/hidden tests, then successful Accepted-record
@@ -53,9 +60,11 @@ absolutely secret. Exercise sessions remain independent from Project Run.
 ADR-025 keeps exact versions, offline compiler dependencies, harness serialization/
 comparison, resource limits, package size and fallback thresholds open. Additional
 runtime packs or detected installed runtimes with guidance are fallback options
-for size/technical barriers. 9D proves feasibility; 9G requires packaged offline
+for size/technical barriers at packaging. 9D verifies installed-runtime execution;
+9G requires packaged offline
 C#/JavaScript Run/Submit on another Windows machine without development tooling.
-This bundled-runtime policy does not alter existing Project Run PATH discovery,
+Neither 9D nor later runtime distribution may alter existing Project Run PATH discovery
+without separate explicit authorization, or silently change
 C# Project Run ADR-024, or Phase 5.5 language-service requirements.
 
 ## V1 capability matrix and implementation status

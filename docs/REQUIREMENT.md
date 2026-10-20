@@ -1624,6 +1624,17 @@ sinh viên không tạo project, mở Terminal hay chạy lệnh compiler. Hiể
 Expected Output, Actual Output, Passed/Failed và lỗi phù hợp. Run không tạo
 Accepted Solution và không đánh dấu hoàn thành bài tập.
 
+Làm rõ giao diện 9D/9E theo xác nhận người dùng ngày 2026-10-19: sinh viên chỉ
+thao tác Run và Submit; không có nút Stop hoặc Cancel trong Learning Practice.
+Run thực thi test mẫu và hiển thị kết quả; Submit chấm bộ test chính thức và lưu
+lời giải Accepted vào My Solutions theo quy tắc ghi thành công của 9E bên dưới.
+Stop/cancellation trong 9D chỉ là cơ chế nội bộ cho timeout, resource limit,
+chuyển bài/ngôn ngữ, rời Learning, đóng IDE và cleanup. Có thể giữ stop() trong
+contract lifecycle nội bộ nhưng không tạo điều khiển UI tương ứng. Việc ngắt
+Exercise không được ảnh hưởng Project Mode hoặc Terminal. CPU/RAM/timeout vẫn
+chỉ là ngưỡng đề xuất thử nghiệm, chưa được duyệt cho production. Làm rõ này
+không cho phép tự triển khai UI hoặc production.
+
 Submit chấm bộ test chính thức gồm công khai và ẩn. Kết quả: Accepted, Wrong
 Answer, Compilation Error, Runtime Error, Time Limit Exceeded; phân biệt riêng
 lỗi nội bộ Judge. Chỉ vượt **100% test case** mới Accepted. Submission không đạt
@@ -1643,8 +1654,18 @@ không báo thành công giả. Hoàn thành từ bản đã lưu trước đó 
 Tiến độ bài tập: Chưa làm, Đang làm, Hoàn thành; dự kiến lưu vị trí học gần nhất,
 tiến độ chương và kết quả trắc nghiệm. Schema/lịch tự lưu/quy tắc tổng hợp còn mở.
 
-Phương án chính là tích hợp C# SDK hoặc công cụ biên dịch tương đương (không chỉ
-.NET Runtime) và Node.js phù hợp vào bản phân phối để không cần sinh viên tự cài.
+Quyết định runtime 9D được người dùng chốt ngày 2026-10-19: trước mắt Learning
+chỉ sử dụng .NET SDK và Node.js phù hợp đã cài trên máy; không tải, cài thêm hoặc
+triển khai bundled runtime trong 9D. Learning dùng resolver, harness và execution
+session riêng, có thể dùng chung executable hiện hữu. Thiếu runtime phù hợp phải
+báo lỗi rõ ràng, không tự cài hoặc chuyển sang phiên bản chưa được duyệt.
+Project Mode phải giữ nguyên: không sửa runtime selection, PATH, global.json,
+RunService, ProcessManager, Terminal, Editor, Explorer hoặc native adapter hiện tại.
+Mọi sửa đổi điểm khởi tạo/tích hợp dùng chung và quyết định kỹ thuật mới phải được
+trình người dùng xác nhận trước khi triển khai.
+Yêu cầu phân phối SDK/công cụ biên dịch (không chỉ .NET Runtime) và Node.js để
+không cần sinh viên tự cài vẫn giữ cho giai đoạn đóng gói; cách tích hợp vào bộ cài
+sẽ được thảo luận và quyết định riêng, không được coi là đã chọn hoặc đã nghiệm thu.
 Exercise Runtime độc lập Project Run, chỉ reuse internal primitives phù hợp,
 không trộn session/vòng đời. Main điều phối qua typed Preload/validated IPC và
 child processes được kiểm soát; không chạy code sinh viên trực tiếp trong Main

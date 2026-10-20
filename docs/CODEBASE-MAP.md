@@ -268,8 +268,8 @@ implementation; packaged/installed acceptance remains Phase 7.
 
 ## Phase 9 Learning modules — ADR-025 / Plan Section 13.6
 
-Status: `IN_PROGRESS` overall. 9A and 9B are COMPLETE by user acceptance;
-9C–9G remain NOT_STARTED. Actual 9A/9B paths below are implemented; later paths
+Status: `IN_PROGRESS` overall. 9A–9C are COMPLETE by user acceptance;
+production 9D–9G remain NOT_STARTED. Actual 9A/9B/9C paths below are implemented; later paths
 remain proposed. One subject and exactly eight chapters, without a course
 selector. Supplied lesson data is separate from React with source/license-review
 metadata; 9B acceptance limits are in `PHASE-9B-ACCEPTANCE.md`.
@@ -281,21 +281,25 @@ metadata; 9B acceptance limits are in `PHASE-9B-ACCEPTANCE.md`.
 | Local content and provenance (actual 9B) | `docs/learning/manifest.json`, `docs/learning/chapters/chapter-01.md`–`chapter-08.md`; `src/main/services/learning/content/course.ts`, `raw-content.d.ts` | Main embeds fixed inputs at build time; no repository paths read at runtime; P9-CONTENT resolved for lessons only |
 | Theory presentation (actual 9B); quiz deferred | `src/renderer/src/features/learning/LearningWorkspace.tsx`, `ChapterMaterial.tsx`, `highlight-csharp.ts`, `use-learning-course.ts`, `learning.css` | Renderer; eight continuous theory pages, safe Markdown/GFM, model-free C# tokenization, source metadata; quizzes remain 9F |
 | Learning section Tabs (authorized UI follow-up) | `src/renderer/src/components/motion/tabs.tsx`, local `lib/ease.ts`, `lib/utils.ts`, `README.md`, `LICENSE` | Stock MIT beUI Tabs with local import rewiring; controlled pill composition styled after Cursor pricing, guarded draft saving and retained theory panels; existing dependencies |
-| Exercise session and workspace | `src/renderer/src/features/learning/practice/` | Renderer, 9C; chapter list, Easy/Medium/Hard, function starters, Description, reused Monaco, Test Cases/Run Result/Submission Result and My Solutions |
-| Semantic Learning contracts (actual 9B) | `src/shared/contracts/learning.ts` | Side-effect-free course/material DTOs and response validation; future exercise/quiz contracts deferred |
+| Exercise session and workspace (actual 9C) | `src/renderer/src/features/learning/practice/` | Renderer; chapter list, Easy/Medium/Hard, independent Monaco/drafts, sample dock, disabled Run/Submit and My Solutions shell |
+| Exercise catalogue and drafts (actual 9C) | `src/main/services/learning/content/exercises.ts`, `src/main/services/learning/practice-store.ts`, `src/shared/contracts/practice.ts` | 63 authored exercises, six types; separate versioned Code Draft storage using PersistenceService, no Accepted records |
+| Narrow Practice bridge (actual 9C) | `src/main/ipc/practice-ipc-service.ts`, `src/preload/bridge/practice.ts` | Validated load/save and owned close/resume handshake, no execution API |
+| Isolated Exercise runtime prototype (9D.0 only) | `spikes/exercise-runtime-9d0/` | Developer-only harness, local SDK/Node and selective argv/Job primitive port; no production service/IPC/UI or shared native/process edits; evidence in REPORT.md |
+| Semantic Learning contracts (actual 9B) | `src/shared/contracts/learning.ts` | Side-effect-free course/material DTOs and response validation; 9C exercise contracts live in practice.ts; quiz contracts deferred |
 | Narrow Learning bridge (actual 9B) | `src/preload/bridge/learning.ts`, `src/main/ipc/learning-ipc-service.ts` | Read-only getCourse; exact empty request validation and Main frame authorization; no path/command input |
 | Exercise coordination | `src/main/services/learning/exercise-service.ts` | Main, 9D; independent from Project Run |
 | C#/JavaScript harness adapters | `src/main/services/learning/runtime/` | Main, 9D; generated driver, controlled compiler/Node processes, limits/Stop/cleanup |
 | Local Judge | `src/main/services/learning/judge-service.ts` | Main, 9E; public/hidden tests, 100% Accepted, distinct internal error |
-| Learning records | `src/main/services/learning/learning-store.ts`; reuse existing `src/main/services/persistence/persistence-service.ts` where suitable | Main, 9E Accepted commit/recovery; 9F durable auto-saved drafts/quiz/progress |
-| Runtime distribution | Exact asset paths pending P9-RUNTIME/P9-PACKAGE | 9D feasibility; 9G packaged offline clean-Windows verification |
+| Future Learning records | `src/main/services/learning/learning-store.ts`; reuse existing `src/main/services/persistence/persistence-service.ts` where suitable | Main, 9E Accepted commit/recovery; 9F extended quiz/progress persistence; existing 9C drafts use practice-store.ts |
+| Runtime resolution/distribution | Learning-only installed-runtime resolver planned under `src/main/services/learning/runtime/`; distribution asset paths deferred | User-approved 2026-10-19: 9D uses installed .NET SDK/Node only, no downloads/install/bundling or Project changes; installer integration decided separately at packaging; 9G clean-Windows evidence retained |
 
 No Python/Java adapters or new language providers. Primary runtime distribution
 bundles C# SDK/equivalent compiler and Node.js; versions/size/fallback remain gates.
 Only narrow internal ownership/cleanup primitives may be reused; Project Run,
 Terminal and language-service sessions/lifecycles remain independent.
 
-Future mutable Learning records reside in a separate directory under Electron userData, never
+Code Drafts already reside in `userData/learning/drafts.json`; future Accepted/progress
+records also reside in a separate directory under Electron userData, never
 installation folders or Project Explorer. Per-exercise/language Code Drafts are
 separate from immutable Accepted snapshots (code-at-Submit, exercise, language,
 timestamp, result, test-set metadata). Retain multiple Accepted versions. My
