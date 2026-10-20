@@ -300,6 +300,17 @@ Actual Output, Passed/Failed and errors. Run never saves an Accepted Solution or
 marks completion. Submit judges official public/hidden cases against the code
 snapshot taken at Submit; only 100% pass earns Accepted.
 
+User clarification (2026-10-19): Practice exposes Run and Submit only, with no
+Stop/Cancel UI. Runtime stop/cancellation is internal lifecycle behavior for
+timeout, resource limits, exercise/language switches, leaving Learning, application
+close and cleanup. A narrow owner-validated stop() contract may support lifecycle
+calls without creating a user-facing control. Unlike mode-state retention,
+leaving Learning cancels active Exercise execution; Project/Terminal sessions
+remain unchanged. Submit/Accepted persistence and My Solutions integration belong
+to 9E, with successful persistence required before saved/completion acknowledgement.
+CPU/RAM/timeout proposals remain experimental and unapproved for production.
+This clarification authorizes no UI or production implementation.
+
 ```text
 Renderer → typed Preload API → IPC → Main
   → Exercise Service → Run sample/custom tests OR Judge official Submit tests
@@ -334,13 +345,25 @@ Full hidden input/output must not be exposed through student-facing result
 payloads or UI. Offline hidden tests are not absolutely secret or tamper-proof.
 Project Output is not the Exercise Run/Judge result store.
 
-Primary distribution bundles a C# SDK/equivalent compiler toolchain (not merely
-.NET Runtime) and suitable Node.js for offline use without student installation.
-If size/technical barriers justify it, fallback may use an additional runtime pack
+User-approved 9D runtime revision (2026-10-19): Learning uses only compatible
+.NET SDK and Node.js already installed on the machine. No runtime download,
+installation or bundling is implemented in 9D. Learning owns its resolver,
+harness and execution sessions and may use the same existing executables.
+Missing/incompatible dependencies produce clear errors; no automatic installation
+or switch to an unapproved version. Project behavior, runtime selection, PATH,
+global.json, RunService, ProcessManager, Terminal, Editor, Explorer and existing
+native adapters must remain unchanged. Reuse existing internal APIs unchanged;
+missing argv/Job/quota support belongs in a Learning-only adapter. Shared
+initialization/integration edits and new technical decisions require prior user
+confirmation. Runtime distribution remains a packaging-stage requirement; its
+installer integration will be discussed and decided separately.
+At packaging, candidates include bundling SDK/Node; if size/technical barriers
+justify it, fallback may use an additional runtime pack
 or detected installed runtime with clear guidance. Exact versions, redistribution,
 package size, fallback threshold, harness/type/comparison policy and execution
 limits remain Open Decision / Pending Verification in ADR-025. 9D verifies
-feasibility; 9G verifies packaged offline Run/Submit on another Windows machine
+installed-runtime execution; 9G verifies packaged offline Run/Submit on another
+Windows machine
 without development tools. Project Run PATH policy and csharp-ls remain unchanged.
 
 #### Learning persistence and Local AI

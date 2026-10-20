@@ -2,6 +2,29 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## Phase 9C closure and isolated 9D.0 runtime prototype — 2026-10-19
+
+- Closed 9C after source/exit-gate review and user-confirmed full manual Electron
+  PASS. Recorded prior user-supplied 87/87 tests, typecheck, production/native
+  Windows build and diff-check evidence separately from this task's rerun:
+  82/82 direct 9C tests plus 4/4 Preload bridge tests. See PHASE-9C-ACCEPTANCE.md.
+- Added only a developer spike for C#/JavaScript function execution. Reuses the
+  unchanged ProcessManager, Windows Job cleanup and 9C contracts/catalogue;
+  selectively ports the argv native primitive/adapter from local C# branch
+  commit b4e23fa into an isolated build, without modifying shared source/artifacts.
+- Final Windows 11 x64 run: 44/44 scenarios plus two runtime inventory checks
+  PASS, including 126 sample calls across all 63 actual starters per language,
+  six JSON types, errors, timeout/output limits, Stop and descendant/temp cleanup.
+  C# compiles once per run; cases use separate processes. SDK 10.0.112 / .NET
+  10.0.12 and Node 24.16.0 are developer installations, not bundled runtimes.
+- Builds use private empty package storage and only installed SDK packs;
+  assets confirm zero package libraries and no remote restore sources. Network
+  was not disabled at OS level; packaged/clean-machine offline acceptance remains
+  open. Strict spike typecheck, scoped lint and isolated native/bundle build PASS.
+- No production 9D architecture, IPC, UI, Run/Submit/Judge or Accepted storage
+  added. 9D/9D.1/9D.2 stay NOT_STARTED; resource/distribution decisions remain
+  open. Full evidence and limitations: spikes/exercise-runtime-9d0/REPORT.md.
+
 ## Academic Chapter 1 introduction — 2026-10-19
 
 - Reworked the course introduction into an academic opening: book-style serif

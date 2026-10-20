@@ -266,7 +266,7 @@ before affected work continues.
 | Phase 6 — Settings & UX | `COMPLETE` | Settings, dependency guidance and Recent Projects; verified 2026-09-14 |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
-| Phase 9 — Learning / Programming Techniques | `IN_PROGRESS` | 9A and 9B COMPLETE by user acceptance; 9C–9G NOT_STARTED; Section 13.6 |
+| Phase 9 — Learning / Programming Techniques | `IN_PROGRESS` | 9A–9C COMPLETE by user acceptance; 9D–9G NOT_STARTED; isolated 9D.0 prototype authorized; Section 13.6 |
 | C# Project Run extension — M1 + M2 | `NOT_STARTED` | Approved planning baseline; Section 13.7; both milestones required for completion |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
@@ -4011,7 +4011,13 @@ records. No scraping, bulk copying or multi-course/CMS functionality.
 
 ### 9C — Practice & Exercise Workspace
 
-Status: `NOT_STARTED`. Prerequisite: 9B exit gate.
+Status: `COMPLETE` — user-confirmed manual Electron PASS, 2026-10-19.
+Prerequisite: 9B COMPLETE with its recorded limitations retained. Reconciled stale
+tracking through IN_PROGRESS to COMPLETE after code/exit-gate review. Prior
+user-supplied evidence: 87/87 related tests, typecheck, production/native Windows
+build and diff check PASS. This review reran 82/82 direct 9C tests and 4/4 Preload
+bridge tests successfully (86/86 selected tests; prior 87/87 recorded separately).
+See [PHASE-9C-ACCEPTANCE.md](PHASE-9C-ACCEPTANCE.md) for evidence and scope limits.
 
 **Scope:** Chapter-based Exercise model; Easy/Medium/Hard; Exercise List and status;
 Exercise Session; Exercise Workspace and Problem panel; reused Monaco foundation;
@@ -4024,34 +4030,74 @@ problem content, independent document/model ownership, per-language draft
 retention, mode round trips and no automatic project file/tree mutations.
 Verify supplied functions do not require student Main()/Console code; source/rights
 metadata accompanies exercises. Runtime/Judge/My Solutions must not present mock
-execution or unsaved solutions as real. Durable draft auto-save is completed in 9F;
-9C must already retain drafts across language/mode switches.
+execution or unsaved solutions as real. Durable per-language Code Draft storage
+is already delivered in 9C; broader quiz/progress persistence acceptance remains
+9F. Drafts survive language/mode switches and are distinct from Accepted records.
 
 ### 9D — Exercise Runtime
 
-Status: `NOT_STARTED`. Prerequisite: 9C exit gate.
+Status: `NOT_STARTED` for production 9D. Prerequisite: 9C COMPLETE.
+An isolated 9D.0 feasibility prototype is authorized (2026-10-19): installed
+developer .NET/Node, no Learning UI/Run/Submit integration, no production runtime
+architecture selection and no shared native/process changes without confirmation.
+This prototype cannot complete 9D or its two production adapter packages.
+9D.0 verification PASS on Windows 11 x64: 44/44 scenarios plus two runtime inventory
+checks; evidence and remaining production gates in
+[`spikes/exercise-runtime-9d0/REPORT.md`](../spikes/exercise-runtime-9d0/REPORT.md).
 
 **Scope:** Function-signature harness/driver abstraction; temporary workspace;
 prepare/compile/call-function lifecycle; time/resource/output limits; Stop;
-error capture and cleanup; only C#/JavaScript adapters; bundled-runtime feasibility.
+error capture and cleanup; only C#/JavaScript adapters; installed-runtime execution.
+
+**User-approved runtime/preparation revision, 2026-10-19:** use compatible .NET SDK
+and Node.js already installed, with Learning-only resolver/harness/session. No
+runtime download, installation or bundling in 9D; no unapproved version fallback.
+Missing/incompatible runtime must report a clear dependency error. Keep Project
+Mode behavior and runtime selection/PATH/global.json, RunService, ProcessManager,
+Terminal, Editor, Explorer and existing native adapters unchanged. Reuse existing
+APIs without modification; use a Learning-only adapter for missing argv/Job/quota.
+Before shared initialization/integration edits or new technical decisions, present
+the exact proposed changes for user confirmation. Runtime distribution remains a
+packaging requirement, with installer integration to be decided separately.
+Common implementation preparation is authorized; this record does not select
+exact versions/limits, authorize shared integration edits or pass any exit gate.
+
+**Common package boundary:** semantic Exercise contracts/IPC/Preload, independent
+session/snapshot and stale-result rejection, workspace ownership/recovery,
+Stop/owner-loss/shutdown, bounded I/O/concurrency and Learning-only process support.
+C# harness/compiler details belong to 9D.1; Node driver details to 9D.2. Judge,
+comparison, Submit and Accepted persistence remain 9E. Validate Learning and
+regress only affected integration surfaces, including live Project Run/Terminal
+isolation. Keep production status NOT_STARTED while only preparing the design.
+
+**Practice controls clarification, user-approved 2026-10-19:** Run and Submit only;
+no Stop/Cancel UI. All 9D Stop criteria mean internal cancellation: timeout,
+resource limit, switching exercise/language, leaving Learning, IDE close and
+cleanup. Retain a narrow lifecycle stop() contract if needed, without a UI button.
+Leaving Learning cancels Exercise execution while preserving Project Mode and
+Terminal behavior. CPU/RAM/timeout values remain trial proposals, not approved
+production limits. Verify these lifecycle triggers, stale-result rejection and
+Project/Terminal isolation after implementation is separately authorized.
 
 | Adapter package | Status | Runtime direction |
 |---|---|---|
-| 9D.1 — C# | `NOT_STARTED` | Bundled SDK/equivalent compiler + generated harness; version pending |
-| 9D.2 — JavaScript | `NOT_STARTED` | Suitable bundled Node.js + generated driver; version pending |
+| 9D.1 — C# | `NOT_STARTED` | Installed compatible .NET SDK + generated harness; approved version pending |
+| 9D.2 — JavaScript | `NOT_STARTED` | Installed compatible Node.js + generated driver; approved version pending |
 
 Each adapter requires the common runtime contract and explicit task scope. The
 two adapters may ship sequentially, but both must pass to complete 9D.
 
 **Goal / exit gate:** Exercise code runs locally in the selected supported
-language without student project/Terminal/compiler setup. Verify function inputs/
+language using preinstalled compatible runtimes, without student project/Terminal
+or compiler-command setup. Verify function inputs/
 returns, harness serialization, preparation/compile/runtime failures, missing/
 invalid runtime, offline dependency closure, bounded time/resources/output,
 Stop during preparation/compile/run, descendant and temporary-file cleanup,
 owner-loss/shutdown and Windows behavior for both adapters. Validate
 IPC/session ownership and stale-result rejection. Runtime support does not imply
-new Project Run or language intelligence support. Record compiler/Node versions,
-redistribution and size evidence, fallback trigger/selection if needed. No claim
+new Project Run or language intelligence support. Record approved compiler/Node
+versions and installed-runtime offline evidence. Defer redistribution, package
+size and delivery/fallback decisions/evidence to the packaging stage. No claim
 that a temporary directory is an OS sandbox. Full packaged acceptance is 9G.
 
 ### 9E — Local Judge & Submit
@@ -4063,6 +4109,12 @@ normalization/comparison; timeout result; Accepted / Wrong Answer / Compilation
 Error / Runtime Error / Time Limit Exceeded, plus distinct internal Judge errors;
 100% Accepted rule; submission result UI; Accepted-only versioned persistence and
 My Solutions integration; Judge/storage regression coverage.
+
+**UI boundary:** expose Run/Submit only, never Stop/Cancel. Run executes sample
+tests and shows results without saving/completing a solution. Submit executes
+official tests; only Accepted plus successful persistence appears in My Solutions.
+Reuse 9D internal cancellation for limits and lifecycle, with no Project/Terminal
+effects. This clarification does not authorize UI or production implementation.
 
 **Goal / exit gate:** Students submit and receive local judging results. Verify
 sample/custom Run Input/Expected/Actual/Passed/Failed, official tests for both
@@ -4133,9 +4185,10 @@ closing it returns to Learning. Preserve Phase 8's fixed local Ollama endpoint,
 automatic exercise/code context, AI Tutor or exercise-aware AI is added; these
 remain separate future extensions. Backend/cloud, accounts, project templates
 are outside this foundation. No course management, chapter 9/10, Python/Java
-Exercise adapters or CMS. 9A and 9B are COMPLETE with the recorded evidence and
-accepted limitations. 9C–9G and 9D.1–9D.2 remain `NOT_STARTED` and require explicit
-implementation authorization. Closing 9B does not authorize the next package.
+Exercise adapters or CMS. 9A–9C are COMPLETE with the recorded evidence and
+accepted limitations. Production 9D–9G and 9D.1–9D.2 remain `NOT_STARTED` and
+require explicit implementation authorization. Only the isolated 9D.0 prototype
+is additionally authorized; closing 9C does not authorize production 9D.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 
