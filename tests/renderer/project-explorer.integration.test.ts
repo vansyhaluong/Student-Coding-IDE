@@ -2240,6 +2240,12 @@ function installApi(overrides: {
   const api: StudentIdeApi = {
     learning: {
       getCourse: async () => failure('Learning content is not configured in this Project Explorer fixture'),
+      exercise: {
+        run: async () => failure('Exercise backend is not configured in this fixture'),
+        snapshot: async () => failure('Exercise backend is not configured in this fixture'),
+        stop: async () => failure('Exercise backend is not configured in this fixture'),
+        onChanged: () => () => undefined,
+      },
       practice: {
         load: async () => failure('Practice is not configured in this Project Explorer fixture'),
         save: async () => failure('Practice is not configured in this Project Explorer fixture'),

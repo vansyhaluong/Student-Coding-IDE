@@ -550,9 +550,11 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
 
 - **Status:** Accepted design direction per explicit user scope revision,
   2026-10-16. Status reconciled 2026-10-19: 9A–9C COMPLETE under their recorded
-  user acceptance; production 9D–9G NOT_STARTED. Isolated 9D.0 experimentation
-  is authorized, without selecting production architecture or distribution.
-  Open details below are neither selected implementations nor passed gates.
+  user acceptance. Production 9D Common is IN_PROGRESS by user approval,
+  2026-10-20; first step: shared contracts/validators/tests and documentation only.
+  9D.1 is IN_PROGRESS through authorized contracts and filesystem SDK resolver; 9D.2 and 9E–9G
+  remain NOT_STARTED. Unresolved details below are neither
+  selected implementations nor passed gates.
 - **Context/evidence:** Previous Phase 9 planning described future courses, four
   adapters, STDIN/STDOUT problems, partial scoring and function harnesses outside
   V1. The user's revised scope replaces those planned directions. No Phase 2–8,
@@ -579,8 +581,8 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
   internal only: timeout/resource limits, exercise/language switch, leaving
   Learning, IDE close and cleanup. An internal owner-validated stop() contract
   is allowed without corresponding UI. Exercise cancellation must not affect
-  Project Mode or Terminal. CPU/RAM/timeout figures remain trial proposals, not
-  approved production limits. No UI/production implementation is authorized here.
+  Project Mode or Terminal. Common limits were subsequently approved on
+  2026-10-20 below; no Stop UI or Judge implementation is authorized.
 - **Persistence:** Main-owned versioned JSON in a separate Learning directory
   under userData, safe writes/recovery, reuse PersistenceService where suitable.
   Accepted snapshots retain code-at-Submit, exercise/language/time/result/test-set
@@ -591,13 +593,67 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
   .NET SDK and Node.js only, with no runtime download, installation or bundling.
   Learning owns resolver/harness/execution sessions and may share existing
   executable files. Missing/incompatible runtime is an explicit dependency error;
-  no automatic installation or switch to an unapproved version. Exact supported
-  versions and resource limits remain open; prototype versions are evidence only.
+  no automatic installation or switch to an unapproved version. The 2026-10-20
+  approval selects stable .NET SDK 10.x and Node.js 24.x without patch locking.
+  Observed patch versions remain evidence, not the supported-version policy.
   Project Mode must not change: preserve runtime selection, PATH/global.json,
   RunService, ProcessManager, Terminal, Editor, Explorer and existing native adapters.
   Reuse internal APIs unchanged; prefer a Learning-only adapter for missing
   argv/Job/quota capabilities. Present shared initialization/integration changes
   and new technical decisions to the user before implementing them.
+- **Common production approval, 2026-10-20:** shutdown/cleanup 30/30 and resource
+  validation 16/16 latest per-variant PASS support Policy B. Historical failed
+  runs remain evidence; see [spike report](../spikes/exercise-shutdown-9d-common/REPORT.md).
+  VERIFIED requires empty current Job membership/ActiveProcesses, all retained
+  identity handles signaled, settled observers/I/O and no unresolved errors or
+  historical coverage gap. TotalProcesses mismatch alone means historical
+  uncertainty, not a live process: classify HISTORY_UNVERIFIED only after current
+  termination conditions pass. Release/finalize with acknowledged quarantine;
+  processClean=false and cleanupComplete=false, workspace retained. Live/pending
+  handles or observer/ownership/query/native errors remain PROCESS_UNRESOLVED,
+  with ownership retained. Watchdog containment is never successful proof.
+  Stages: OWNED → acknowledged RELEASE_READY → Job release → retained handles
+  closed → acknowledged FINALIZED → safe workspace deletion → acknowledged
+  CLEANUP_COMPLETE (last two only for VERIFIED). Persist by write/sync/replace/
+  read-back; retry resumes the retained stage, never respawns or operates on
+  released native state. Recovery takes an exclusive lease and rereads scoped,
+  validated checkpoints, never kills historical PIDs. OWNED/RELEASE_READY and
+  historical gaps quarantine; only VERIFIED/FINALIZED permits deletion recovery.
+  No automatic quarantine deletion is approved.
+- **Approved initial Common bounds:** prepare/probe 10 s total; compile 30 s and
+  2 GiB aggregate Job commit; execute 2 s/case including runtime startup and
+  512 MiB aggregate Job commit; operation 60 s from admission on one monotonic
+  clock across all phases/cases, excluding cleanup. Phase due = min(operation
+  due, phase start + phase budget). Cleanup wait 12 s per caller attempt includes
+  I/O: timeout reports failure, retains ownership and the original pending task;
+  retry joins it until settled. No overlapping destructive cleanup or false
+  finalization. A settled failed task may retry from its retained stage.
+  One Learning operation globally, cases sequential, no queue; pending cleanup
+  blocks replacement admission. Output is 1 MiB combined stdout/stderr UTF-8 per
+  operation; overflow cancels and cleans safely. Quota setup/read-back precedes
+  launch and covers descendants. Runtime OOM alone is not Job-limit proof.
+  Shutdown seals admission/invalidates generation synchronously; unresolved
+  cleanup rejects shutdown and preserves retry. Acknowledged HISTORY_UNVERIFIED
+  can finish service shutdown with quarantine and false clean flags.
+  Reduced spike quotas/deadlines are experimental. Full production integration,
+  deadline coverage, output/concurrency bounds and Windows acceptance remain due.
+  Additive Learning integration points from final review are approved in principle;
+  the first implementation step does not wire Main/IPC/native/UI. Project Mode,
+  Terminal, DesktopApplication, ProcessManager, RunService and Project native
+  adapter implementation/behavior remain unchanged.
+- **C# execution decisions approved by user, 2026-10-20:** use installed stable
+  SDK 10.x Roslyn csc.dll directly, with Learning-only filesystem discovery,
+  no product patch pin/download/install/major fallback or Project resolver.
+  Learning-only extensions for runtime/native stdin/process results/DTO/error
+  mapping are approved in principle, with implementation staged separately.
+  Run executes Main catalogue samples and returns actual values only; no custom
+  cases, comparison, Submit or results persistence in 9D.1. Comparison/Submit/
+  persistence remain 9E; custom-case support needs separate scope approval.
+  Step 1 authorizes declarations, protocol/validators/tests and documentation
+  only. It does not authorize implementing resolver/compiler/adapter/native stdin,
+  composition, IPC wiring or UI. Protocol v1 and minimal failure/diagnostic ports:
+  [C# contracts](PHASE-9D1-CSHARP-CONTRACTS.md). Actual native/adapter/offline and
+  supported-Windows acceptance remains due; Common policy is unchanged.
 - **Distribution deferred to packaging:** Keep the requirement for offline use
   without student runtime setup; discuss and decide installer integration separately.
   No bundled delivery implementation or exact delivery form is selected for 9D.
@@ -617,15 +673,15 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
 ### Phase 9 Open Decisions / Pending Verification
 
 Resolve and record these in authorized work before dependent implementation.
-This documentation task installs nothing and selects no runtime versions.
+Common approval above resolves its policy gates, not adapter/packaging acceptance.
 
 | Gate | Open detail / required evidence | Before dependent work |
 |---|---|---|
 | P9-STATE | Resolved for 9A by explicit user instruction: React state in App.tsx for workspaceMode, selectedChapterId and Learning sidebar collapse; retain Project UI mounted and hidden/inert. No new store or dependency. ADR-011 remains open for broader shared-state expansion. | Recorded before 9A implementation, 2026-10-17 |
 | P9-CONTENT | Resolved for 9B, 2026-10-17: supplied manifest schemaVersion 1 and eight authored Vietnamese Markdown files in docs/learning; one continuous page per chapter. Main bundles fixed inputs as raw strings at build time, validates and exposes read-only semantic course/material DTOs. Preserve sourceUsePolicy and per-reference review flags, which grant no third-party copying rights. User approved react-markdown + remark-gfm; reuse Monaco tokenization without models/execution for C# display. HTML/remote media disabled; reference URLs displayed as external source text, no renderer navigation authority. | 9B only; later exercise/quiz schemas remain open |
-| P9-HARNESS | 9C contracts delivered and accepted: C#/JavaScript function starters and six types (int32, boolean, string, int32[], string[], int32[][]). Isolated 9D.0 tests synchronous calls/JSON only; production harness/serialization, starter validation, custom expected output and comparison semantics remain open | 9C COMPLETE; production verification/decisions in 9D/9E |
-| P9-RUNTIME | Resolved distribution scope for 9D by user, 2026-10-19: installed .NET SDK/Node only; no download/install/bundling or unapproved version fallback; Project unchanged. Exact approved versions, installed-runtime offline reference closure and Windows compatibility remain open. Redistribution, packaging/update, size and delivery/fallback decisions are deferred to packaging | 9D installed-runtime integration; distribution decision and packaged recheck in 9G |
-| P9-EXECUTION | Temporary workspace policy, time/resource/output limits, Stop during compile/run, compiler/descendant ownership, containment limits and error mapping | 9D execution; 9E Judge verification |
+| P9-HARNESS | 9C starters/six types accepted. 9D.1 Step 1 defines synchronous Solution invocation, JSON stdin/response, typed actuals, sample-only execution and bounded failure/diagnostic DTOs. Step 3 implements generation/direct Roslyn compile with real Learning Job evidence; native stdin/invocation remain unverified. JavaScript harness, custom-case scope and comparison remain pending | C# compile-only evidence in PHASE-9D1-CSHARP-COMPILER.md; execution/Windows acceptance later in 9D.1, comparison in 9E |
+| P9-RUNTIME | Installed stable SDK 10.x / Node 24.x approved 2026-10-20; no patch lock, install, download or major fallback; Learning-only resolver, Project unchanged. Offline reference closure and supported-Windows production acceptance remain due; distribution remains packaging scope | Common policy resolved; adapters 9D.1/9D.2 and packaged recheck 9G remain due |
+| P9-EXECUTION | Policy B and Common limits unchanged; bounded Step 7 evidence recorded separately. C# execution failure/result DTOs and protocol declared in Step 1, actual adapter/Core mapping and production end-to-end acceptance pending. JavaScript execution and Judge verdict/comparison remain later packages | Common and C# IN_PROGRESS; remaining 9D.1/9D.2, supported-Windows and 9E acceptance due |
 | P9-STORAGE | Versioned schema, immutable snapshot identity, consistent Accepted-record/completion commit, concurrent submissions, crash recovery, migrations/backups | 9E Accepted storage; extend in 9F |
 | P9-PROGRESS | Draft auto-save scheduling/failure/conflict handling, Chưa làm → Đang làm trigger, chapter aggregation, quiz scoring and last-position schema | 9F; preserve 9C drafts and 9E completion invariant |
 | P9-PACKAGE | Installer/portable delivery form, optional runtime-pack setup, supported Windows 10/11 clean-machine offline evidence without developer tools | 9G; does not replace Phase 7 acceptance |

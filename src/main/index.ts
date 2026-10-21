@@ -3,6 +3,9 @@ import { getBundledCourse } from './services/learning/content/course'
 import { LearningIpcService } from './ipc/learning-ipc-service'
 import { PracticeIpcService } from './ipc/practice-ipc-service'
 import { createPracticeStore } from './services/learning/practice-store'
+import { createWindowsExerciseService } from './services/learning/exercise-service'
+import { ExerciseIpcService } from './ipc/exercise-ipc-service'
+import { EXERCISE_CHANNELS } from '../shared/contracts/exercise'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
 import { CsharpSemanticService } from './services/language/csharp-semantic-service'
@@ -131,6 +134,17 @@ void app.whenReady().then(async () => {
 
   const ipcRegistry = new IpcHandlerRegistry(ipcMain)
   const practiceStore = createPracticeStore(join(app.getPath('userData'), 'learning', 'drafts.json'))
+  const exerciseIpcReference: { current?: ExerciseIpcService } = {}
+  const exerciseService = createWindowsExerciseService(join(app.getPath('userData'), 'learning', 'exercise-runtime'), {
+    onCleanupError: () => console.error('Learning cleanup/recovery failed; ownership remains tracked for retry.'),
+    onSnapshot: (owner, snapshot) => exerciseIpcReference.current?.publish(owner, snapshot),
+  })
+  const exerciseIpc = new ExerciseIpcService(ipcRegistry, exerciseService, authorizePreferencesFrame,
+    (context, snapshot) => {
+      authorizePreferencesFrame(context)
+      webContents.fromId(context.senderId)?.mainFrame.send(EXERCISE_CHANNELS.changed, snapshot)
+    })
+  exerciseIpcReference.current = exerciseIpc
   const practiceIpc = new PracticeIpcService(ipcRegistry, practiceStore, authorizePreferencesFrame,
     (owner, channel, payload) => {
       const target = webContents.fromId(owner)
@@ -199,6 +213,8 @@ void app.whenReady().then(async () => {
       gitDocuments.observe(window.webContents)
       csharpOwners.observe(window.webContents)
       aiIpc.observe(window.webContents)
+      exerciseService.observe(window.webContents)
+      exerciseIpc.observe(window.webContents)
       return window
     },
     openExternal: (url) => shell.openExternal(url),
@@ -382,6 +398,9 @@ void app.whenReady().then(async () => {
     gitIpc,
     searchIpc,
     terminalIpc,
+    // Additive Learning barrier; relative order of every existing service stays intact.
+    exerciseService,
+    exerciseIpc,
     windowManager,
   ], {
     // Keep the close/retry surface alive until every mandatory service cleanup
@@ -391,7 +410,11 @@ void app.whenReady().then(async () => {
 
   removeLifecyclePublisher = desktopApplication.subscribe((status) => {
     // Block starts/events at STOPPING; cleanup stays in managed-service order.
-    if (status.state === 'STOPPING') { runService.beginShutdown(); gitLifecycle.beginShutdown(); csharpSession.beginShutdown() }
+    if (status.state === 'STOPPING') {
+      runService.beginShutdown(); gitLifecycle.beginShutdown(); csharpSession.beginShutdown()
+      exerciseService.beginShutdown()
+      exerciseIpc.beginShutdown()
+    }
     for (const window of BrowserWindow.getAllWindows()) {
       if (!window.isDestroyed()) {
         window.webContents.send(LIFECYCLE_CHANNELS.statusChanged, status)

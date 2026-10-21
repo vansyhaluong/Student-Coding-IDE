@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp, FlaskConical, Maximize2, Minimize2, PanelBottom, PanelRight, Terminal } from 'lucide-react'
 import type { Exercise } from '../../../../../shared/contracts/practice'
+import type { ExerciseRunView } from './use-exercise-runtime'
 
 export type TestPanelSize = 'open' | 'collapsed' | 'expanded'
 export type TestPanelDock = 'editor' | 'bottom'
@@ -9,8 +10,9 @@ interface Props {
   selectedCase: number; onCase(index: number): void
   size: TestPanelSize; onSize(size: TestPanelSize): void
   dock: TestPanelDock; onDock(dock: TestPanelDock): void
+  execution: ExerciseRunView
 }
-export function PracticeTestPanel({ exercise, tab, onTab, selectedCase, onCase, size, onSize, dock, onDock }: Props) {
+export function PracticeTestPanel({ exercise, tab, onTab, selectedCase, onCase, size, onSize, dock, onDock, execution }: Props) {
   const collapsed = size === 'collapsed'
   const expanded = size === 'expanded'
   const selectTab = (value: 'tests' | 'result') => { onTab(value); if (collapsed) onSize('open') }
@@ -45,8 +47,12 @@ export function PracticeTestPanel({ exercise, tab, onTab, selectedCase, onCase, 
       </div>)}
       <div className="practice-test-field"><span>Expected =</span><pre aria-label="Expected output">{JSON.stringify(exercise.samples[selectedCase].expected)}</pre></div>
     </div>
-    <div className="practice-test-body practice-result-empty" id={`test-result-panel-${exercise.id}`} role="region" aria-labelledby={`test-result-tab-${exercise.id}`} hidden={collapsed || tab !== 'result'}>
-      <Terminal aria-hidden="true" /><p>Chưa có kết quả thực thi.</p><span>Run và Submit chưa khả dụng.</span>
+    <div className={`practice-test-body${execution.snapshot?.stdout || execution.snapshot?.stderr ? '' : ' practice-result-empty'}`}
+      id={`test-result-panel-${exercise.id}`} role="region" aria-labelledby={`test-result-tab-${exercise.id}`} hidden={collapsed || tab !== 'result'}>
+      <p role={execution.status === 'error' || execution.status === 'unsupported' ? 'alert' : 'status'}>{execution.message}</p>
+      {execution.status === 'idle' && <span>Chọn Run để kiểm tra khả năng thực thi. Submit chưa khả dụng.</span>}
+      {execution.snapshot?.stdout && <div className="practice-test-field"><span>stdout</span><pre>{execution.snapshot.stdout}</pre></div>}
+      {execution.snapshot?.stderr && <div className="practice-test-field"><span>stderr</span><pre>{execution.snapshot.stderr}</pre></div>}
     </div>
   </section>
 }

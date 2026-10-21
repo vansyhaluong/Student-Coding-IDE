@@ -1,5 +1,6 @@
 import type { AppResult } from './app-error'
 import type { PracticeApi } from './practice'
+import type { ExerciseApi } from './exercise'
 import { isPlainObject } from './validation'
 
 export const LEARNING_CHANNELS = { getCourse: 'learning:get-course' } as const
@@ -30,7 +31,7 @@ export interface LearningManifest {
 }
 export interface LearningMaterial { chapterId: string; markdown: string }
 export interface LearningCourse { manifest: LearningManifest; materials: LearningMaterial[] }
-export interface LearningApi { getCourse(): Promise<AppResult<LearningCourse>>; practice: PracticeApi }
+export interface LearningApi { getCourse(): Promise<AppResult<LearningCourse>>; practice: PracticeApi; exercise: ExerciseApi }
 
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
 function reference(v: unknown): v is LearningReference {

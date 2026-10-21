@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { StudentIdeApi } from '../../src/shared/contracts'
 import type { PracticeState } from '../../src/shared/contracts/practice'
+import type { ExerciseSnapshot } from '../../src/shared/contracts/exercise'
 import { exercises } from '../../src/main/services/learning/content/exercises'
 import { getBundledCourse } from '../../src/main/services/learning/content/course'
 import { LearningWorkspace } from '../../src/renderer/src/features/learning/LearningWorkspace'
@@ -15,6 +16,10 @@ vi.mock('../../src/renderer/src/features/learning/practice/PracticeEditor', () =
     <textarea aria-label="Practice code" value={code} readOnly={readOnly} onChange={e => onChange(e.target.value)} />,
 }))
 vi.mock('../../src/renderer/src/features/learning/highlight-csharp', () => ({ highlightCsharp: async () => [] }))
+// Practice lifecycle is tested here; real material rendering has its own regression suites.
+vi.mock('../../src/renderer/src/features/learning/ChapterMaterial', () => ({
+  ChapterMaterial: ({ chapter }: { chapter: { order: number; title: string } }) => <h1>Chương {chapter.order} — {chapter.title}</h1>,
+}))
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 let persisted: PracticeState
 let close: (token: string) => void
@@ -25,6 +30,12 @@ beforeEach(() => {
   persisted = { drafts: [], languages: [] }; resolveClose.mockClear()
   window.studentIde = { learning: {
     getCourse: vi.fn(async () => ({ ok: true, value: getBundledCourse() })),
+    exercise: {
+      run: vi.fn(async () => ({ ok: false, error: { code: 'UNSUPPORTED', message: 'Backend unavailable', retryable: false } })),
+      snapshot: vi.fn(async () => ({ ok: false, error: { code: 'PERMISSION_DENIED', message: 'No session', retryable: false } })),
+      stop: vi.fn(async () => ({ ok: false, error: { code: 'PERMISSION_DENIED', message: 'No session', retryable: false } })),
+      onChanged: vi.fn(() => vi.fn()),
+    },
     practice: {
       load: vi.fn(async () => ({ ok: true, value: { exercises, state: structuredClone(persisted), recovered: false } })),
       save: vi.fn(async draft => {
@@ -193,7 +204,7 @@ it('flushes on chapter/mode transitions and application close, keeps the editor 
   expect((editor as HTMLTextAreaElement).readOnly).toBe(true)
   await act(async () => resume())
   await waitFor(() => expect((editor as HTMLTextAreaElement).readOnly).toBe(false))
-  expect((screen.getByRole('button', { name: 'Run' }) as HTMLButtonElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: 'Run' }) as HTMLButtonElement).disabled).toBe(false)
   expect((screen.getByRole('button', { name: 'Submit' }) as HTMLButtonElement).disabled).toBe(true)
   expect(screen.queryByText(/^Accepted ·/)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Test Result' }))
@@ -205,7 +216,7 @@ it('shows icon-only Run/Reset and LeetCode-style sample cases without execution 
   const practice = workspace(editor)
   const run = practice.getByRole<HTMLButtonElement>('button', { name: 'Run' })
   const reset = practice.getByRole<HTMLButtonElement>('button', { name: 'Reset Code' })
-  expect(run.disabled).toBe(true)
+  expect(run.disabled).toBe(false)
   expect(run.textContent).toBe('')
   expect(run.querySelector('svg')).toBeTruthy()
   expect(reset.textContent).toBe('')
@@ -224,7 +235,7 @@ it('shows icon-only Run/Reset and LeetCode-style sample cases without execution 
   expect(practice.queryByRole('region', { name: 'Testcase' })).toBeNull()
   const result = within(practice.getByRole('region', { name: 'Test Result' }))
   expect(result.getByText('Chưa có kết quả thực thi.')).toBeTruthy()
-  expect(result.getByText('Run và Submit chưa khả dụng.')).toBeTruthy()
+  expect(result.getByText('Chọn Run để kiểm tra khả năng thực thi. Submit chưa khả dụng.')).toBeTruthy()
   fireEvent.click(practice.getByRole('button', { name: 'Testcase' }))
   expect(cases.getByRole('button', { name: 'Case 2' }).getAttribute('aria-pressed')).toBe('true')
 })
@@ -290,4 +301,45 @@ it('filters My Solutions and confirms before restoring saved Accepted code', () 
   fireEvent.click(screen.getByRole('button', { name: 'Restore Accepted Solution' }))
   fireEvent.click(screen.getByRole('button', { name: 'Xác nhận Restore' }))
   expect(restore).toHaveBeenCalledWith('// accepted')
+})
+
+it('runs captured exercise code through the bridge and shows UNSUPPORTED without a fake result or Stop/Submit control', async () => {
+  render(<Harness />)
+  const editor = await openFirst()
+  fireEvent.change(editor, { target: { value: '// captured source' } })
+  fireEvent.click(workspace(editor).getByRole('button', { name: 'Run' }))
+  await waitFor(() => expect(workspace(editor).getByRole('alert').textContent).toContain('chưa có backend thực thi'))
+  expect(window.studentIde.learning.exercise.run).toHaveBeenCalledWith({ exerciseId: 'ch2-01', language: 'csharp', code: '// captured source', sourceRevision: expect.any(Number) })
+  expect(workspace(editor).getByRole<HTMLButtonElement>('button', { name: 'Submit' }).disabled).toBe(true)
+  expect(workspace(editor).queryByRole('button', { name: /^(Stop|Cancel)$/ })).toBeNull()
+  expect(within(workspace(editor).getByRole('region', { name: 'Test Result' })).queryByText(/Đã kết thúc thực thi|Accepted/)).toBeNull()
+})
+
+it('renders running/pending cleanup safely, cancels on language change and ignores a late old-session event', async () => {
+  const api = window.studentIde.learning.exercise
+  let snapshot!: ExerciseSnapshot
+  vi.mocked(api.run).mockImplementation(async r => {
+    snapshot = { sessionId: 'exercise_12345678-1234-4234-8234-123456789abc', generation: 1, sequence: 1,
+      exerciseId: r.exerciseId, language: r.language, sourceRevision: r.sourceRevision, phase: 'execute', reason: null,
+      stdout: '<img src=x onerror=alert(1)>', stderr: '', cleanup: { state: 'NOT_STARTED', proof: 'PENDING', processClean: false,
+        cleanupComplete: false, workspace: 'RETAINED', pendingIo: false } }
+    return { ok: true, value: snapshot }
+  })
+  vi.mocked(api.snapshot).mockImplementation(async () => ({ ok: true, value: snapshot }))
+  render(<Harness />)
+  const editor = await openFirst(), practice = workspace(editor)
+  fireEvent.click(practice.getByRole('button', { name: 'Run' }))
+  await waitFor(() => expect(practice.getByRole('status').textContent).toBe('Đang chạy…'))
+  expect(practice.getByRole<HTMLButtonElement>('button', { name: 'Run' }).disabled).toBe(true)
+  expect(practice.getByText('<img src=x onerror=alert(1)>').querySelector('img')).toBeNull()
+  const oldEvent = vi.mocked(api.onChanged).mock.calls.at(-1)![0]
+  await act(async () => oldEvent({ ...snapshot, sequence: 2, phase: 'cleanup', reason: 'EXECUTE_TIMEOUT', cleanup: {
+    state: 'PENDING', proof: 'PENDING', processClean: false, cleanupComplete: false, workspace: 'RETAINED', pendingIo: true,
+  } }))
+  expect(practice.getByRole('status').textContent).toBe('Đang thu hồi tài nguyên…')
+  await changeLanguage(editor, 'javascript')
+  expect(api.stop).toHaveBeenCalledWith({ sessionId: snapshot.sessionId, generation: 1, reason: 'CONTEXT_CHANGED' })
+  await act(async () => oldEvent({ ...snapshot, sequence: 3, stdout: 'old output' }))
+  expect(practice.queryByText('old output')).toBeNull()
+  expect(practice.getByRole('status').textContent).toBe('Chưa có kết quả thực thi.')
 })

@@ -29,7 +29,9 @@ Judge in this extension. See Architecture Section 10 and Plan Section 13.7.
 ## Planned Phase 9 Exercise Runtime scope
 
 Phase 9D schedules only independent Exercise Runtime adapters 9D.1 C# and 9D.2
-JavaScript. Both are `NOT_STARTED`; Python/Java are outside Phase 9 V1.
+JavaScript. C# is `IN_PROGRESS` through contracts, filesystem SDK resolver,
+process-result port and compile-only harness/Roslyn Step 3; JavaScript is
+`NOT_STARTED`. Python/Java are outside Phase 9 V1.
 Implementation requires explicit package authorization and runtime acceptance.
 Learning V1 uses supplied functions with per-language parameters/types, return
 type, starter code and compatible tests, executed by generated harnesses/drivers.
@@ -41,8 +43,23 @@ Runtime adapter does not grant language-service capabilities or modify Phase 3,
 Phase 4 or Phase 5.5 acceptance. See Implementation Plan Section 13.6 and
 Architecture Section 6 for the approved Learning boundaries.
 
-User-approved runtime revision (2026-10-19): 9D uses compatible installed .NET SDK
-and Node.js only, without download, installation or bundled-runtime implementation.
+User-approved runtime revision (2026-10-19, versions approved 2026-10-20): Learning
+uses installed stable .NET SDK 10.x and Node.js 24.x without locking patch versions,
+download, installation, major fallback or bundled-runtime implementation. Common
+is IN_PROGRESS through Core/native, Main service/lifecycle and typed IPC/Preload;
+the Renderer Run integration displays UNSUPPORTED without a language backend.
+No C#/JavaScript execution driver is implemented yet; Submit remains disabled.
+C# direct installed Roslyn csc.dll and filesystem discovery are user-approved;
+Step 1 defines protocol/DTO/Main-only ports; Step 2 implements filesystem SDK
+selection with static reference/compiler/runtime validation, without executing
+processes or wiring Run. Step 3 separately implements and verifies direct Roslyn
+compilation with local net10.0 references in a Learning Windows Job, safe
+diagnostics and fixed generated harness/config files. No assembly invocation,
+native stdin or production Run driver/wiring exists. See
+PHASE-9D1-CSHARP-COMPILER.md and PHASE-9D1-SDK-RESOLVER.md. Planned 9D.1 Run executes Main catalogue
+samples and returns actuals without comparison. Custom cases need separate scope;
+comparison, Submit and results persistence remain 9E. No Project resolver reuse,
+patch lock, download/install or major fallback. See PHASE-9D1-CSHARP-CONTRACTS.md.
 Learning owns resolver/harness/execution sessions and may share existing executable
 files; missing/incompatible runtime produces a clear error, never automatic setup
 or a switch to an unapproved version. Project runtime selection, PATH/global.json,
@@ -57,8 +74,10 @@ persistence before newly completed progress. Only saved Accepted records appear
 in My Solutions; no failed-submission history. Offline hidden tests are not
 absolutely secret. Exercise sessions remain independent from Project Run.
 
-ADR-025 keeps exact versions, offline compiler dependencies, harness serialization/
-comparison, resource limits, package size and fallback thresholds open. Additional
+ADR-025 records approved Common limits; their production enforcement is still due.
+Offline compiler dependencies and actual harness execution remain unverified;
+C# protocol declarations are recorded in Step 1. JavaScript harness, comparison,
+package size and packaging fallback thresholds remain open. Additional
 runtime packs or detected installed runtimes with guidance are fallback options
 for size/technical barriers at packaging. 9D verifies installed-runtime execution;
 9G requires packaged offline

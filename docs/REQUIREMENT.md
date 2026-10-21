@@ -1618,7 +1618,10 @@ Reuse Monaco foundation, nhưng Exercise Document/session độc lập Project D
 không tự ghi code vào project/Explorer. Code Draft tự lưu riêng theo bài/ngôn ngữ;
 C# → JavaScript → C# không mất bản nháp trước đó.
 
-Run chỉ thử sample/custom test bằng code hiện tại. Exercise Runtime tự chuẩn bị
+Run chỉ thử sample/custom test bằng code hiện tại. Phạm vi triển khai 9D.1 được
+duyệt ngày 2026-10-20 chỉ thực thi samples do Main catalogue chọn và trả actual
+output; chưa custom cases. Comparison, Submit và lưu kết quả thuộc 9E; custom
+cases cần phạm vi triển khai được duyệt riêng. Exercise Runtime tự chuẩn bị
 function-signature test harness/driver, gọi hàm, biên dịch nếu cần và chạy ngầm;
 sinh viên không tạo project, mở Terminal hay chạy lệnh compiler. Hiển thị Input,
 Expected Output, Actual Output, Passed/Failed và lỗi phù hợp. Run không tạo
@@ -1631,9 +1634,12 @@ lời giải Accepted vào My Solutions theo quy tắc ghi thành công của 9E
 Stop/cancellation trong 9D chỉ là cơ chế nội bộ cho timeout, resource limit,
 chuyển bài/ngôn ngữ, rời Learning, đóng IDE và cleanup. Có thể giữ stop() trong
 contract lifecycle nội bộ nhưng không tạo điều khiển UI tương ứng. Việc ngắt
-Exercise không được ảnh hưởng Project Mode hoặc Terminal. CPU/RAM/timeout vẫn
-chỉ là ngưỡng đề xuất thử nghiệm, chưa được duyệt cho production. Làm rõ này
-không cho phép tự triển khai UI hoặc production.
+Exercise không được ảnh hưởng Project Mode hoặc Terminal. Ngày 2026-10-20 người
+dùng duyệt Policy B và giới hạn Common trong ADR-025: prepare 10s, compile 30s/
+2 GiB, execute 2s/case gồm startup/512 MiB, operation 60s monotonic xuyên các phase,
+cleanup wait 12s/lần giữ ownership/tác vụ I/O pending, một operation không queue,
+output gộp stdout/stderr 1 MiB UTF-8. Bước đầu chỉ triển khai shared contracts,
+validators và tests; không tự triển khai UI, service hoặc các adapter.
 
 Submit chấm bộ test chính thức gồm công khai và ẩn. Kết quả: Accepted, Wrong
 Answer, Compilation Error, Runtime Error, Time Limit Exceeded; phân biệt riêng
@@ -1674,15 +1680,27 @@ lỗi và dọn file tạm/process tree. Thư mục tạm không đồng nghĩa 
 
 Dự phòng khi quá lớn hoặc có trở ngại kỹ thuật: gói runtime bổ sung hoặc runtime
 có sẵn trên máy, kèm phát hiện/hướng dẫn rõ ràng. Phiên bản, kích thước bộ cài,
-ngưỡng fallback, chính sách giới hạn và chi tiết harness còn Open Decision /
-Pending Verification trong ADR-025. Nghiệm thu bản đóng gói trên máy Windows khác
+ngưỡng fallback khi đóng gói và harness JavaScript còn Open Decision / Pending
+Verification trong ADR-025. Protocol C# đã định nghĩa ở 9D.1 Bước 1; implementation/
+acceptance còn pending. Runtime Learning đã duyệt stable SDK 10.x và Node 24.x,
+không khóa patch; giới hạn Common đã duyệt nhưng còn phải triển khai/nghiệm thu.
+Nghiệm thu bản đóng gói trên máy Windows khác
 không cài môi trường lập trình, gồm Run/Submit C# và JavaScript offline; không lấy
 môi trường dev của máy build thay cho bằng chứng này.
 
 Roadmap: 9A Learning Mode & Roadmap; 9B Course Content & Lessons; 9C Practice &
 Exercise Workspace; 9D Exercise Runtime (C#, JavaScript, function-signature harness);
 9E Local Judge & Submit; 9F Quiz & Learning Progress;
-9G Learning UX & Stabilization. Tất cả đều `NOT_STARTED`. Scope, dependencies và
+9G Learning UX & Stabilization. Trạng thái hiện tại: 9A–9C COMPLETE theo nghiệm
+thu; 9D Common IN_PROGRESS qua Core/native/Main lifecycle, typed IPC/Preload và
+Renderer integration và live acceptance trong phạm vi fixture; còn production
+adapter end-to-end/Windows 10. 9D.1 IN_PROGRESS qua contracts Bước 1 và filesystem resolver Bước 2;
+9D.2, 9E–9G NOT_STARTED. C# dùng Roslyn csc.dll trực tiếp từ installed stable
+SDK 10.x, discovery filesystem riêng Learning đã triển khai/kiểm thử đọc file;
+Step 3 đã sinh harness/config và compile Roslyn thật trong Learning Job với
+reference net10.0 cục bộ; chưa native stdin, chạy assembly/sample hoặc wiring.
+Bằng chứng và giới hạn: PHASE-9D1-CSHARP-COMPILER.md. Run production vẫn UNSUPPORTED.
+Scope, dependencies và
 exit gates: Implementation Plan Section 13.6; ownership: Architecture Section 6.
 Roadmap này không mở rộng Project Run/language intelligence hiện tại; Python và
 Java ngoài Phase 9 V1. Giữ nguyên quyết định/nghiệm thu Phase 2–8, 5.5 và C# Project Run.

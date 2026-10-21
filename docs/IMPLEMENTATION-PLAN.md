@@ -266,7 +266,7 @@ before affected work continues.
 | Phase 6 — Settings & UX | `COMPLETE` | Settings, dependency guidance and Recent Projects; verified 2026-09-14 |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
-| Phase 9 — Learning / Programming Techniques | `IN_PROGRESS` | 9A–9C COMPLETE by user acceptance; 9D–9G NOT_STARTED; isolated 9D.0 prototype authorized; Section 13.6 |
+| Phase 9 — Learning / Programming Techniques | `IN_PROGRESS` | 9A–9C COMPLETE; Common IN_PROGRESS with bounded Step 7 evidence; 9D.1 IN_PROGRESS contracts/filesystem resolver; 9D.2 and 9E–9G NOT_STARTED; production adapter/Windows acceptance due; Section 13.6 |
 | C# Project Run extension — M1 + M2 | `NOT_STARTED` | Approved planning baseline; Section 13.7; both milestones required for completion |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
@@ -3902,8 +3902,9 @@ No generic renderer command execution API is allowed.
 
 Primary distribution bundles C# SDK/equivalent compiler tooling (not only .NET
 Runtime) and suitable Node.js. Fallback for size/technical barriers may use an
-additional runtime pack or detected installed runtime with guidance; exact versions,
-size and fallback threshold remain open. Execution must work offline.
+additional runtime pack or detected installed runtime with guidance; packaging
+size/delivery/fallback remain open. Learning installed-runtime policy is now stable
+SDK 10.x / Node 24.x without patch lock (approval 2026-10-20). Execution must work offline.
 
 Learning records live in a dedicated Electron userData directory, never install
 folders or Project Explorer. Main-owned versioned JSON uses safe writes, migration,
@@ -4036,7 +4037,9 @@ is already delivered in 9C; broader quiz/progress persistence acceptance remains
 
 ### 9D — Exercise Runtime
 
-Status: `NOT_STARTED` for production 9D. Prerequisite: 9C COMPLETE.
+Status: `IN_PROGRESS` for production 9D Common by approval 2026-10-20.
+Prerequisite: 9C COMPLETE. 9D.1 IN_PROGRESS through authorized compile-only Roslyn/harness Step 3;
+9D.2 remains NOT_STARTED. Common completion is not claimed.
 An isolated 9D.0 feasibility prototype is authorized (2026-10-19): installed
 developer .NET/Node, no Learning UI/Run/Submit integration, no production runtime
 architecture selection and no shared native/process changes without confirmation.
@@ -4059,8 +4062,8 @@ APIs without modification; use a Learning-only adapter for missing argv/Job/quot
 Before shared initialization/integration edits or new technical decisions, present
 the exact proposed changes for user confirmation. Runtime distribution remains a
 packaging requirement, with installer integration to be decided separately.
-Common implementation preparation is authorized; this record does not select
-exact versions/limits, authorize shared integration edits or pass any exit gate.
+The 2026-10-20 approval below supersedes the earlier preparation-only restriction
+for the bounded Common package; it does not pass the production exit gate.
 
 **Common package boundary:** semantic Exercise contracts/IPC/Preload, independent
 session/snapshot and stale-result rejection, workspace ownership/recovery,
@@ -4068,24 +4071,353 @@ Stop/owner-loss/shutdown, bounded I/O/concurrency and Learning-only process supp
 C# harness/compiler details belong to 9D.1; Node driver details to 9D.2. Judge,
 comparison, Submit and Accepted persistence remain 9E. Validate Learning and
 regress only affected integration surfaces, including live Project Run/Terminal
-isolation. Keep production status NOT_STARTED while only preparing the design.
+isolation. Step 1 implements shared declarations/validators; step 2 adds the
+Learning-only Runtime Core without application composition or native implementation.
+
+**Production Common approval / staged execution, 2026-10-20:** ADR-025 records
+Policy B, stable SDK 10.x/Node 24.x (no patch lock/install/fallback), prepare 10 s,
+compile 30 s/2 GiB, execute 2 s/case including startup/512 MiB, operation due 60 s
+after admission on a monotonic clock across all phases, cleanup wait 12 s including retained pending I/O,
+one operation/no queue and 1 MiB combined UTF-8 stdout/stderr. Additive Learning
+integration points from final review are approved; implementation proceeds in
+small steps with user review between steps. Shutdown 30/30 and latest resource
+16/16 spike PASS are mechanism evidence, not production completion.
+
+Step 1 scope: document approved policy and add `src/shared/contracts/exercise.ts`,
+`exercise-validation.ts`, barrel exports and focused contract unit tests.
+No Main service/IPC handler, Preload wiring, native, UI, adapter or Judge is
+implemented in this step. Request validators enforce exact semantic payloads,
+draft-compatible code bounds, opaque session/generation and safe counters;
+snapshot validators enforce combined UTF-8 output and Policy B clean/quarantine
+invariants. DTO validation is not sender authorization or OS proof. Main catalogue,
+owner/epoch/generation matching and stale-event rejection remain integration work.
+
+Before Common exit: typecheck/build, targeted tests and production lint; validated
+IPC/security, lifecycle/owner-loss/shutdown, stage-aware recovery/retry, one operation
+deadline without phase reset, full cleanup caller deadline with retained I/O, output
+overflow and concurrency rejection; live Project Run/Terminal/PTY isolation on
+affected surfaces. Keep production source linted; report historic spike/archive
+lint separately without editing evidence. Later changes to lint selection require
+their own reviewed scope. Full supported-Windows acceptance remains due.
+
+Step 1 verification (2026-10-20): 67/67 tests across Exercise validators and base
+validation suites PASS; npm run typecheck, npm run build (Windows native included),
+changed-source lint, production/tests/scripts/config lint and git diff --check
+PASS. Full npm run lint FAIL: 1,106 errors, all in spikes (1,053 archived evidence/
+source snapshots, 53 other spike source), none in production. No lint exclusions
+or historical source/evidence changed. Integration/security authorization, actual
+deadlines/cleanup/native behavior and live isolation are not claimed by unit DTO
+tests. Step 1 was accepted by the user before authorizing step 2.
+
+Step 2 authorized scope (2026-10-20): `exercise-session.ts`, `exercise-workspace.ts`,
+`exercise-checkpoint.ts`, `exercise-recovery.ts`, `exercise-limits.ts` and
+`exercise-runtime-adapter.ts` under Learning/runtime. Policy B distinguishes
+VERIFIED/HISTORY_UNVERIFIED/PROCESS_UNRESOLVED; history accounting mismatch alone
+is not a live process. Stage-aware retries retain pending tasks/lease, do not
+repeat completed native actions/deletion, and acknowledge immutable checkpoints.
+Operation admission uses one monotonic 60 s deadline; phase budgets are clamped;
+cleanup callers each wait 12 s, without abandoning underlying I/O. Check clock
+after await as well as timer callbacks to reject late results. Filesystem recovery
+validates records under an exclusive lease, derives paths from session identity,
+rejects reparse ancestors/descendants and identity replacement, and never uses a
+historical PID. Failed/missing initial workspace identity remains unresolved;
+no unsafe deletion or false finalization. Recovery retries also dedupe pending work.
+
+Core tests use a controlled clock/mock runtime adapter and mock OS lease provider;
+workspace/checkpoint/recovery tests additionally exercise temporary filesystem
+directories, atomic checkpoint read-back and junction containment on Windows.
+Native integration must supply crash-released exclusive leases, Job membership/
+accounting and retained identity handles, aggregate quota read-back before launch,
+observer settlement and resumable native actions after partial failure. The core
+does not claim real process/Job enforcement or live Project/Terminal acceptance.
+Application-wide single-operation admission, owner/generation validation and stale
+publication belong to the future ExerciseService/integration step. No Main
+composition, IPC, Preload, native binding, UI or C#/JS/Judge implementation here.
+Step 2 was accepted before user authorization of step 3; Common remains IN_PROGRESS.
+
+Step 2 verification: 114/114 tests PASS (47 Core/session/filesystem/recovery tests
+plus the accepted 67 contract/base-validator tests). Final npm run typecheck,
+npm run build including existing Windows native build, production/tests/scripts/
+config lint, new-source whitespace and git diff --check PASS. Full npm run lint
+still FAILS on the same 1,106 spike/archive errors, zero outside spikes; no lint
+rules/exclusions/evidence changed. Initial test-fixture TypeScript narrowing error
+was corrected before final verification. No protected Project/Terminal/shared
+process/composition/IPC/Preload/Renderer/native source changed. These tests establish
+the Core's behavior against adapter evidence, not actual native proof or live
+Project/Terminal integration acceptance. No additional spike scenarios were run.
+
+Step 3 authorized native Learning integration (2026-10-20): independent Node-API
+Job binding and Windows adapter/lease provider, with a separate build script and
+additive build hook only. CreateProcessW uses an atomic Job list, a strict standard
+handle allowlist and CREATE_SUSPENDED after quota/KILL_ON_JOB_CLOSE read-back;
+root identity/membership and deadline are checked before resume. Descendant handles
+are retained and current membership/accounting/observer evidence gates release.
+Policy B and runtime/quota/deadline values are unchanged. Native post-action state
+reconciliation prevents retries from querying/releasing a closed Job. Core keeps
+JOB_MEMORY_LIMIT distinct from runtime OOM and rejects native errors arriving after
+a phase deadline even before timer delivery. No Main/IPC/Preload/UI/language adapter.
+
+Verification: 126/126 unit/regression tests PASS (11 adapter/native-mapping tests,
+48 Core tests and accepted 67 contract tests). Five targeted real-Windows cases
+have PASS evidence: Core compile/execute Job tree with retained independent handles
+and VERIFIED/CLEANUP_COMPLETE; bounded hard-quota denial/event; ambiguous release
+retry; Electron owner death with lease reacquisition and kill-on-close; invalid
+native authority/spawn rollback. Selected cases were rerun only after fixture or
+launch-deadline source changes; the 30/30 and 16/16 spike matrices were not rerun.
+MSVC /W4 /WX builds and Electron-host module loading PASS. The delayed-start guard
+and late native error are controlled unit tests, not an injected slow OS spawn.
+
+Evidence is development output under `out/learning-native-step3/`:
+2026-10-20T06-59-57-883Z has memory and ambiguous-release proofs; first owner
+readiness timed out (3 cases passed, one failed, final case not run).
+2026-10-20T07-03-10-243Z has owner-diagnostic.json for the diagnostic failure;
+no historical file was overwritten.
+The owner fixture passed an empty environment, causing Node CSPRNG startup failure
+without SystemRoot. Fixed fixture inherits the filtered environment; no quota/
+timeout/assertion relaxation. 2026-10-20T07-04-17-515Z contains owner/validation PASS;
+2026-10-20T07-09-17-387Z rechecks ESM fixtures; 2026-10-20T07-18-04-844Z is the
+final root/Core run after the pre-resume deadline guard. JSON records
+include source/binary hashes and observations; test command results determine PASS.
+
+Memory mechanism probe alone uses a 64 MiB Job and allocator ceiling 96 MiB:
+ALLOC_DENIED at 65,011,712 bytes (62 MiB), Win32 1455, matching event 10 for PID
+17800. Quota read-back 67,108,864 bytes; reported JobMemory 67,031,040 bytes,
+PeakJobMemoryUsed 68,083,712 bytes. Preserve this above-nominal peak accounting;
+do not interpret as RSS or claim zero overshoot. Production compile/execute
+2 GiB/512 MiB read-back was verified using controlled native/process fixtures,
+not C#/JS exercise drivers or a 2 GiB stress allocation. Electron 44.0.0 host
+(Node v24.18.1) loaded the binding; external Node v24.16.0 ran the fixture. This
+does not lock runtime patch versions or implement a Learning runtime resolver.
+
+Pending step 4: service composition, global admission, IPC/sender/session/generation
+validation, bounded publication and owner/navigation/shutdown integration. Native
+Windows 10 and other-machine acceptance, live Project/Terminal integration
+regression, real language adapters and packaging remain their respective gates.
+No production status is COMPLETE; stop for user review before step 4.
+
+Final step 3 quality: npm run typecheck, production build (both existing Project
+native and separate Learning native build), production/tests/scripts/config lint,
+targeted unit/integration checks, new-source whitespace and git diff --check PASS.
+Full lint retains the historical 1,106 spike/archive errors, zero outside spikes;
+no rules/exclusions changed. No Project Mode/Terminal/DesktopApplication/
+ProcessManager/RunService/Project native adapter source changes. Only the approved
+additive build hook changes shared integration. No application composition or
+additional spike runs; ready for user review of the step 4 package, not Common exit.
+
+Step 4 authorized ExerciseService/Main lifecycle (2026-10-20): added
+`src/main/services/learning/exercise-service.ts` and additive composition in
+`src/main/index.ts`. Service owns global single-operation/no-queue admission,
+session UUID/generation/host epoch, owner invalidation and stale work suppression.
+Core receives Main-issued metadata; one operation deadline spans all phase calls.
+An admitted session cancelled before phase start records scoped ownership during
+cleanup without running a driver. Pending cleanup/recovery stays tracked across
+12 s caller deadlines; retries join/dedupe original work and preserve Policy B.
+Startup recovery is managed asynchronously, not awaited by Desktop startup; it
+blocks Learning admission until ready. Corrupt/failed recovery remains blocked and
+is retried conservatively, never silently discarded or reported clean. Orphan
+directories without checkpoint stay untouched/quarantined; no PID-based adoption.
+
+Service is immediately before WindowManager in the managed list; all pre-existing
+relative order remains unchanged. STOPPING preserves existing Run/Git/C# sealing
+calls, then seals Learning synchronously and starts cleanup. Learning failure
+prevents graceful completion/window teardown and retains retry through unchanged
+DesktopApplication and quit coordinator. WebContents main-frame full navigation,
+render-process loss and destruction invalidate only the owning Exercise; subframe/
+in-place navigation and another owner's events do not. Hook cleanup occurs after
+successful managed stop. No Exercise IPC, Preload, renderer or C#/JS driver is added.
+The default Windows service factory lazily loads Learning native/lease support
+only when needed; missing language drivers explicitly reject before admission.
+
+Targeted verification: 209/209 tests PASS across ten files: 22 new service tests,
+127 Common/contract tests and 60 existing Desktop/quit/Project Run/Terminal lifecycle
+regressions. Tests cover one global operation, identity/generation rejection,
+invalidation/stale publication, 60 s across prepare/compile/cases, pending I/O and
+12 s retry ownership, owner-loss failure, startup recovery/quarantine and actual
+DesktopApplication/quit coordination with mock adapter/owner/window ports. The
+strict narrow reference validator initially rejected a full-snapshot fixture;
+fixed test inputs, not validation. The quit fixture also now waits for the previous
+attempt's finally microtask before simulating another user event; no sleep/timeout
+increase or protected lifecycle implementation change. Common remains IN_PROGRESS;
+stop for review before step 5. Native step 3 and historical spike matrices were not rerun.
+
+Step 4 quality gates: typecheck, production lint, production/native build and diff
+checks PASS. Full repository lint remains FAIL with 1,106 historical spike errors
+and zero errors outside spikes; no production source excluded. Live Electron/IPC
+and Project Run/PTY acceptance remains pending the subsequent integration scope.
+
+Step 5 authorized typed IPC/Preload integration (2026-10-20): implemented
+`exercise-ipc-service.ts` and `preload/bridge/exercise.ts`, exposed only through
+`LearningApi.exercise`/Learning bridge, and added Main composition/owner hooks.
+Service adds only an ownership-checked lifecycle-stop entry point and native
+factory snapshot callback; Core/Native, Policy B and limits remain unchanged.
+Exact requests reject privileged fields; authorization derives owner/current main
+frame from Electron metadata and registered app owners. IPC-owned document epochs
+reject delayed results across navigation even with an unchanged frame token;
+run/snapshot replies recheck the current service identity. Events validate output
+and route only to their owner/frame/epoch/session/generation with increasing
+sequence. Preload validates responses/events, buffers at most one pre-reply event,
+shares one listener across subscriptions, and removes listeners on unsubscribe/
+unload. Public errors omit raw domain/native diagnostics. Lifecycle stop retires
+the generation before waiting for real cleanup; a 12 s failure retains ownership
+and pending work, with managed retry still joining that work.
+
+Managed IPC starts after Learning service, stops before it, and seals at STOPPING.
+Existing protected service order and implementations are unchanged. Default Run
+returns typed UNSUPPORTED; no fake C#/JS driver, UI, Judge or Submit was added.
+253/253 targeted tests PASS in 17 files, including 11 new IPC and nine new Preload
+tests, Common/contracts and existing Project/Terminal/IPC/lifecycle regressions.
+Active execution/output/cancellation/pending cleanup tests use mock adapters and
+owners with real Core/scoped filesystem work. Typecheck, production lint and
+production/native build PASS. Repository-wide lint baseline is recorded separately;
+no production exclusions or spike/evidence changes are made.
+Final repository-wide lint reports 1,106 historical errors, all in spikes and zero
+outside spikes (`out/phase-9d-common-step5-lint-final.json`). Diff checks, including
+whitespace checks on new untracked source files, PASS.
+
+Live Electron 44.0.0 production Main/Preload smoke PASS:
+`out/learning-ipc-step5-1792485217424/evidence.json`. Verified secure BrowserWindow
+preferences, real renderer invokes returning UNSUPPORTED, malformed/privileged
+payload and stale reference rejection, reload/unsubscribe, unregistered real
+WebContents rejection and managed idle shutdown reaching will-quit without forced
+termination. This is not evidence for active native execution over IPC or concurrent
+live Project Run/PTY isolation. Historical spike/native matrices were not rerun.
+Common remains IN_PROGRESS; stop for user review before the next work package.
+
+Step 6 authorized Renderer integration (2026-10-20): added Learning-only
+`practice/use-exercise-runtime.ts` and connected LearningWorkspace/use-practice,
+PracticeWorkspace and PracticeTestPanel to run/snapshot/internal stop/onChanged.
+Run captures code plus source revision; only Main replies bind identity. One
+context-owned subscription/attempt filters session/generation/sequence and captured
+exercise/language/revision; late results never enter a replacement view. Snapshot
+observation (one nonoverlapping probe per 500 ms while active) recovers early/missed
+events and pending cleanup status without changing operation/cleanup deadlines.
+Exercise/language change, leaving Learning, pagehide and unmount retire the old
+context, unsubscribe and stop the Main-issued session. A late admission after
+disposal can only trigger old-session cleanup. Pending Draft/close/navigation
+callbacks also guard against updates after unmount.
+
+The existing Run icon opens the existing Result panel. Safe statuses cover idle,
+running, error, unsupported, cancellation and unresolved cleanup; no false clean
+or Judge/Accepted result. Output is React-escaped text. Submit remains disabled;
+no Stop/Cancel UI, language drivers, Main/IPC/Core/Native changes or protected
+Project/Terminal implementation changes. Shared policies/limits stay unchanged.
+
+Verification: 298/298 targeted tests PASS in 22 files: 45 Learning tests plus
+253 Common/contract/IPC/Core/lifecycle regressions. Active operations use mock APIs/
+adapters. Existing theory tests contained stale heading counts (6/7 versus current
+authored 14/15/16); updated exact expectations, with no content changes. Practice
+fixtures now stub unrelated full material rendering, covered separately. Roadmap
+accessibility queries are scoped to their sidebar/header/page; no timeout increase
+or weakened assertions. Typecheck, production lint and production/native build PASS.
+Full repo lint retains 1,106 historical spike errors, zero outside spikes; no
+exclusions added. Final diff/new-source whitespace checks PASS; protected source,
+authored Learning content and historical spike/evidence files are unchanged.
+
+Live Electron 44 Renderer -> Preload -> IPC smoke PASS, evidence and screenshot:
+`out/learning-renderer-step6-1792488905034/`. Real C# and JavaScript UI invokes return
+UNSUPPORTED (source revisions 1 and 2); no fake native success. Verified language/
+exercise/mode changes clear old results, reload, disabled Submit/no Stop, secure
+window preferences and managed idle will-quit. Two earlier FAIL artifacts remain
+at `out/learning-renderer-step6-1792488594073/` and `...1792488668373/`: harness used
+exact textContent matching against beUI's duplicated aria-hidden animated label,
+before any Exercise invoke. Added stage diagnostics/readiness and changed only
+the harness selector to existing role/data-tabs-value; no production workaround.
+Live active native operations and concurrent Project Run/PTY acceptance remain due.
+No spike matrices rerun, commit/push/merge or Common completion. Stop for Step 7 review.
+
+Step 7 authorized live acceptance (2026-10-20): test-only Electron composition
+uses existing injection ports and fixed Main process fixtures, absent from production
+entries. Fourteen groups completed across preserved partial/remaining-run artifacts:
+real Job/tree/identity/quota read-back, 2s and cross-phase 60s timeout, real owner
+navigation/crash, typed IPC stale rejection, injected cleanup/history/I/O faults,
+startup recovery and shutdown/retry, with actual unchanged Project Run/Terminal PTY
+isolation. Real 60s run including cleanup: 60,115.627ms, 28 Jobs; retained pending
+I/O caller wait: 12,224.106ms, one original write. Production Main/Preload smoke
+retains UNSUPPORTED and reaches idle will-quit. No production behavior/source fix.
+284/284 targeted regressions, final typecheck, production lint, production/native
+build and whitespace checks PASS. Full lint remains 1,106 spike errors, zero outside
+spikes. Three harness lease/checkpoint seed failures remain preserved; previously
+completed groups were not rerun after fixture correction. Classification, evidence,
+failed attempts and limitations: [Step 7 report](PHASE-9D-COMMON-STEP7-ACCEPTANCE.md).
+Windows 10 and active production C#/JS adapter end-to-end acceptance remain
+NOT_OBSERVED. Common remains IN_PROGRESS; no adapter/Judge/packaging/spike work or
+commit/push/merge. Stop for explicit user review; do not infer Common completion.
 
 **Practice controls clarification, user-approved 2026-10-19:** Run and Submit only;
 no Stop/Cancel UI. All 9D Stop criteria mean internal cancellation: timeout,
 resource limit, switching exercise/language, leaving Learning, IDE close and
 cleanup. Retain a narrow lifecycle stop() contract if needed, without a UI button.
 Leaving Learning cancels Exercise execution while preserving Project Mode and
-Terminal behavior. CPU/RAM/timeout values remain trial proposals, not approved
-production limits. Verify these lifecycle triggers, stale-result rejection and
-Project/Terminal isolation after implementation is separately authorized.
+Terminal behavior. Initial Common RAM/time/output/concurrency bounds are approved
+above; reduced spike settings remain experimental. Verify lifecycle triggers,
+stale-result rejection and Project/Terminal isolation during staged implementation.
 
 | Adapter package | Status | Runtime direction |
 |---|---|---|
-| 9D.1 — C# | `NOT_STARTED` | Installed compatible .NET SDK + generated harness; approved version pending |
-| 9D.2 — JavaScript | `NOT_STARTED` | Installed compatible Node.js + generated driver; approved version pending |
+| 9D.1 — C# | `IN_PROGRESS` | Contracts, SDK resolver, process-result port and Step 3 harness/direct Roslyn compiler implemented and compile-tested; native stdin/execute/adapter/wiring and supported-Windows acceptance remain due |
+| 9D.2 — JavaScript | `NOT_STARTED` | Installed stable Node.js 24.x; no patch lock; driver implementation/acceptance remain due |
 
 Each adapter requires the common runtime contract and explicit task scope. The
 two adapters may ship sequentially, but both must pass to complete 9D.
+
+9D.1 Step 1 authorized 2026-10-20: standalone C# result/diagnostic/failure DTOs,
+bounded exact validators, JSON stdin/response protocol and Main-only SDK resolver,
+compiler/process-result/adapter ports. Existing Exercise API/Snapshot, native,
+service composition, IPC and Renderer are unchanged. Main selects samples only;
+no custom-case request, expected/comparison verdict or persistence. User-approved
+direct Roslyn/filesystem discovery and staged Learning-only extensions are recorded
+in ADR-025. Specification: [C# contracts](PHASE-9D1-CSHARP-CONTRACTS.md).
+Contracts do not prove installed SDK/offline closure, process execution or cleanup.
+Focused C#/Common contracts: 141/141 tests across three files PASS; typecheck and
+targeted lint, production build (existing Project/Learning native hooks included)
+and final tracked/new-file whitespace checks PASS. No runtime execution or spike
+matrix was run; full repository lint was not rerun in this bounded contract step.
+9D.1 and Common remain IN_PROGRESS. Stop for user approval before Step 2; no
+resolver/compiler/adapter/native stdin, JavaScript, Judge/Submit or packaging work.
+
+9D.1 Step 2 authorized/verified 2026-10-20: added Learning-only filesystem resolver
+and tests, no process discovery or composition. Numeric highest-compatible stable
+10.x SDK/runtime/targeting-pack selection validates contained paths, PE/CLR identities,
+compiler/runtime manifests and actual harness reference closure; immutable per-call
+selection, safe typed configuration/I/O/cancellation errors, no global configuration
+mutation. 183/183 focused tests PASS (41 controlled resolver cases, one actual
+installed-filesystem observation, 141 contract regressions); typecheck, targeted
+lint, production/native build and final whitespace/diff checks PASS. Two initial
+real-observation FAIL artifacts remain: over-broad compatibility-facade closure
+was corrected with regression coverage, without fetching optional packages.
+Actual SDK 10.0.112/runtime+pack 10.0.12/167 references are observations, not locks.
+Evidence/limitations: [Step 2 report](PHASE-9D1-SDK-RESOLVER.md), final artifact
+`out/learning-csharp-sdk-step2-1792511679992/evidence.json`. No compiler/source/
+harness generation, native stdin, adapter, IPC/UI wiring, protected-domain changes,
+spike/full lint rerun or commit/push/merge. 9D.1/Common stay IN_PROGRESS. Stop for
+user approval before Step 3; actual C# execution/offline binding and Windows 10 remain due.
+
+9D.1 compiler unblock package authorized 2026-10-20: Main-only
+`LearningProcessResultPort` added to the Learning Windows adapter. Nonzero OS exit
+is observable data for future compiler diagnostics; existing Common `runPhase`
+keeps its rejection behavior. Root/stream settlement, typed failures and native
+Job-limit evidence are separate from Policy B cleanup proof. Output still uses
+Core's unchanged aggregate limiter; no native stdin, compiler/harness, public API,
+IPC/UI or protected-domain changes. Report:
+[Process result port](PHASE-9D1-PROCESS-RESULT-PORT.md). The process-result blocker
+is removed; Roslyn compiler/harness implementation awaits renewed user approval.
+9D.1 and Common remain IN_PROGRESS; no compiler or supported-Windows completion claim.
+
+9D.1 Step 3 resumed by explicit user authorization; compile-only verification
+finished 2026-10-21. Added fixed typed harness/source/runtimeconfig/response
+generation, exclusive contained workspace files and direct Roslyn compiler under
+the Learning Windows Job. Exact SDK selection is revalidated without upgrading
+the operation's patch. Safe bounded diagnostics distinguish source/signature
+errors from compiler/dependency/infrastructure failure; raw-byte accounting is
+Main-only and precedes redaction, preserving the same aggregate output limit.
+303 focused/regression tests PASS; 10 real installed Roslyn compile/cancellation
+tests plus one native process-result regression PASS, with no assembly execution.
+Initial CS0136 generator defect and catalogue fixture assumption were corrected;
+failed evidence remains preserved. Typecheck, targeted lint, production/native
+build and final diff checks PASS. Evidence/limits:
+[Step 3 compiler report](PHASE-9D1-CSHARP-COMPILER.md). No native stdin, execute,
+production driver/IPC/UI, Submit/Judge, protected-domain or policy changes.
+9D.1/Common remain IN_PROGRESS. Stop for approval before the execute package.
 
 **Goal / exit gate:** Exercise code runs locally in the selected supported
 language using preinstalled compatible runtimes, without student project/Terminal
@@ -4186,9 +4518,10 @@ automatic exercise/code context, AI Tutor or exercise-aware AI is added; these
 remain separate future extensions. Backend/cloud, accounts, project templates
 are outside this foundation. No course management, chapter 9/10, Python/Java
 Exercise adapters or CMS. 9A–9C are COMPLETE with the recorded evidence and
-accepted limitations. Production 9D–9G and 9D.1–9D.2 remain `NOT_STARTED` and
-require explicit implementation authorization. Only the isolated 9D.0 prototype
-is additionally authorized; closing 9C does not authorize production 9D.
+accepted limitations. Production 9D Common is IN_PROGRESS by explicit approval
+2026-10-20, initially shared contracts/validators/tests only. 9D.1 is IN_PROGRESS
+through explicitly authorized filesystem resolver Step 2; 9D.2 and 9E–9G remain NOT_STARTED.
+Closing 9C alone does not authorize those later packages or later C# steps.
 
 ## 13.7 C# PROJECT RUN — CORE, CONSOLE INPUT & COMPLETION
 
