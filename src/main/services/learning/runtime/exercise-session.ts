@@ -41,6 +41,7 @@ export class ExerciseSession {
   private preparationStarted = false
   private readonly phaseTasks = new Set<Promise<void>>()
   private activePhase = false
+  private orchestrationClaimed = false
   private task?: Promise<void>
   private proof: ExerciseFinalProof | null = null
   private unresolved = false
@@ -116,13 +117,39 @@ export class ExerciseSession {
         return work
       })
       this.lastExecutionPhase = phase
+      this.sequence++ // A settled observation differs from the phase-entry snapshot.
     } catch (error) {
       this.phaseError = error
-      if (error instanceof DomainError && error.details?.reason === 'JOB_MEMORY_LIMIT') this.limits.cancel('JOB_MEMORY_LIMIT')
+      // Trusted Main drivers map existing semantic failures; never infer a Job
+      // quota violation from runtime text or a renderer-supplied error.
+      if (error instanceof DomainError) {
+        const reason = error.details?.reason
+        if (reason === 'JOB_MEMORY_LIMIT' || reason === 'OUTPUT_LIMIT' || reason === 'INTERNAL_ERROR'
+          || phase === 'prepare' && (reason === 'DEPENDENCY_MISSING' || reason === 'INVALID_RUNTIME')) this.limits.cancel(reason)
+      }
       this.backgroundClose(this.limits.reason ?? (phase === 'prepare' ? 'PREPARATION_FAILED'
         : phase === 'compile' ? 'COMPILATION_FAILED' : 'RUNTIME_FAILED'))
       throw error
     } finally { this.activePhase = false }
+  }
+  /** One Main driver for this exact admitted session; never a second operation/queue. */
+  claimOrchestration(adapter: ExerciseRuntimeAdapter): void {
+    if (adapter !== this.options.adapter || this.orchestrationClaimed || this.activePhase || this.lastExecutionPhase !== null
+      || this.reason || this.complete) throw exerciseCoreError('ADMISSION_CLOSED')
+    this.limits.checkOperation()
+    this.orchestrationClaimed = true
+  }
+  async verifyExecutionBarrier(): Promise<void> {
+    if (this.reason || this.complete || this.activePhase || !this.options.adapter.verifyBetweenCases) throw exerciseCoreError('ADMISSION_CLOSED')
+    this.limits.checkOperation()
+    this.activePhase = true
+    const work = Promise.resolve().then(() => this.options.adapter.verifyBetweenCases!({
+      signal: this.limits.controller.signal, deadline: this.limits.operationDeadline }))
+    this.phaseTasks.add(work)
+    void work.finally(() => this.phaseTasks.delete(work)).catch(() => {})
+    try { await this.limits.barrier(work) }
+    catch (error) { this.backgroundClose(this.limits.reason ?? 'INTERNAL_ERROR'); throw error }
+    finally { this.activePhase = false }
   }
   /** Each caller has its own wait budget; the underlying cleanup remains singular. */
   async close(reason: ExerciseEndReason = 'COMPLETED'): Promise<void> {

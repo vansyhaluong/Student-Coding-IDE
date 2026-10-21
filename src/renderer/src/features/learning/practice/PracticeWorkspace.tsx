@@ -4,15 +4,17 @@ import type { Exercise, ExerciseLanguage, ExerciseDraft } from '../../../../../s
 import { MySolutions } from './MySolutions'
 import { PracticeTestPanel, type TestPanelDock, type TestPanelSize } from './PracticeTestPanel'
 import type { ExerciseRunView } from './use-exercise-runtime'
+import type { PracticeSourceReplacement } from './use-practice'
 const PracticeEditor = lazy(async () => ({ default: (await import('./PracticeEditor')).PracticeEditor }))
 
 interface Props {
   exercises: Exercise[]; chapter: number; drafts: ExerciseDraft[]; exercise: Exercise | undefined
   language: ExerciseLanguage; code: string; ready: boolean; locked: boolean
   execution: ExerciseRunView; onRun(): void
-  onOpen(exercise?: Exercise): void; onLanguage(language: ExerciseLanguage): void; onEdit(code: string): void
+  sourceReplacement?: PracticeSourceReplacement
+  onOpen(exercise?: Exercise): void; onLanguage(language: ExerciseLanguage): void; onEdit(code: string): void; onReplace(code: string): void
 }
-export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, execution, onRun, onOpen, onLanguage, onEdit }: Props) {
+export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, execution, onRun, onOpen, onLanguage, onEdit, onReplace, sourceReplacement }: Props) {
   const [reset, setReset] = useState(false)
   const [tab, setTab] = useState<'tests' | 'result'>('tests')
   const [selectedCase, setSelectedCase] = useState(0)
@@ -47,7 +49,7 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
         <h2>Ví dụ Input / Output</h2>{exercise.samples.map((sample, i) => <pre key={i}>Input: {JSON.stringify(sample.args)}{'\n'}Output: {JSON.stringify(sample.expected)}</pre>)}
         <h2>Constraints</h2><ul>{exercise.constraints.map(c => <li key={c}>{c}</li>)}</ul>
         <details><summary>Nguồn tham khảo · {exercise.source.publisher}</summary><p className="practice-source">{exercise.source.url}</p><p>{exercise.source.usage}</p></details>
-        <MySolutions key={`${exercise.id}/${language}`} solutions={[]} disabled={locked} onRestore={onEdit} />
+        <MySolutions key={`${exercise.id}/${language}`} solutions={[]} disabled={locked} onRestore={onReplace} />
       </article>
       <div className="practice-code-column" hidden={panelDock === 'bottom' && panelSize === 'expanded'}>
         <div className="practice-editor-heading" hidden={panelDock === 'editor' && panelSize === 'expanded'}><span>Code Editor</span>
@@ -58,10 +60,10 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
         </div>
         {reset && <div className="practice-confirm" role="alertdialog" aria-modal="false" aria-label="Xác nhận Reset Code" hidden={panelDock === 'editor' && panelSize === 'expanded'}>
           <p>Thay Code Draft {language === 'csharp' ? 'C#' : 'JavaScript'} của bài này bằng hàm mẫu?</p>
-          <button type="button" disabled={locked} onClick={() => { onEdit(exercise.languages[language].starter); setReset(false) }}>Xác nhận Reset</button>
+          <button type="button" disabled={locked} onClick={() => { onReplace(exercise.languages[language].starter); setReset(false) }}>Xác nhận Reset</button>
           <button type="button" onClick={() => setReset(false)}>Hủy</button>
         </div>}
-        <div className="practice-editor" aria-label="Code Editor" hidden={panelDock === 'editor' && panelSize === 'expanded'}><Suspense fallback={<p>Đang tải Code Editor…</p>}><PracticeEditor exercise={exercise} language={language} code={code} readOnly={locked} onChange={onEdit} /></Suspense></div>
+        <div className="practice-editor" aria-label="Code Editor" hidden={panelDock === 'editor' && panelSize === 'expanded'}><Suspense fallback={<p>Đang tải Code Editor…</p>}><PracticeEditor key={`${exercise.id}/${language}`} exercise={exercise} language={language} code={code} sourceReplacement={sourceReplacement} readOnly={locked} onChange={onEdit} /></Suspense></div>
         {panelDock === 'editor' && testPanel}
       </div>
       {panelDock === 'bottom' && testPanel}

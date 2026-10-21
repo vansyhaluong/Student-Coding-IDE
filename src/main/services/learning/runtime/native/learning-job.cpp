@@ -24,6 +24,21 @@ struct Handle {
 };
 struct Process { Handle handle; DWORD pid = 0; std::string created; };
 struct Job {
+  PTP_WORK disposal = nullptr;
+  // Overlapped storage lives with the Job until completion, including cancellation.
+  Handle input, inputEvent;
+  OVERLAPPED inputIo{};
+  std::vector<char> inputBytes;
+  size_t inputOffset = 0;
+  bool inputSubmitted = false, inputPending = false, inputSettled = true, inputFailed = false;
+  ~Job() {
+    // Pending-I/O destruction runs only on the preallocated disposal worker.
+    if (inputPending) {
+      CancelIoEx(input.value, &inputIo);
+      DWORD count = 0; GetOverlappedResult(input.value, &inputIo, &count, TRUE);
+    }
+    if (disposal) CloseThreadpoolWork(disposal);
+  }
   Handle job, port, out, err, rootThread;
   std::vector<std::unique_ptr<Process>> retained;
   DWORD rootPid = 0;
@@ -113,6 +128,7 @@ static JOBOBJECT_BASIC_ACCOUNTING_INFORMATION accounting(Job* j) {
   require(QueryInformationJobObject(j->job.value, JobObjectBasicAccountingInformation, &a, sizeof(a), nullptr), "LEARNING_QUERY"); return a;
 }
 static bool safeToRelease(Job* j) {
+  if (!j->inputSettled) return false;
   if (!j->outEof || !j->errEof || !members(j).empty() || accounting(j).ActiveProcesses) return false;
   for (const auto& p : j->retained) if (!signaled(p->handle.value)) return false;
   return true; // Historical accounting mismatch is not evidence of a live process.
@@ -149,8 +165,23 @@ static napi_value start(napi_env e, napi_callback_info i) {
     require(CreatePipe(&j->out.value, &outWrite.value, &sa, 0), "LEARNING_PIPE");
     require(CreatePipe(&j->err.value, &errWrite.value, &sa, 0), "LEARNING_PIPE");
     require(SetHandleInformation(j->out.value, HANDLE_FLAG_INHERIT, 0) && SetHandleInformation(j->err.value, HANDLE_FLAG_INHERIT, 0), "LEARNING_PIPE");
-    input.value = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, nullptr);
+    static unsigned long sequence = 0;
+    const auto pipeName = L"\\\\.\\pipe\\student-learning-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(++sequence);
+    j->input.value = CreateNamedPipeW(pipeName.c_str(), PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED | FILE_FLAG_FIRST_PIPE_INSTANCE,
+      PIPE_TYPE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS, 1, 4096, 4096, 0, nullptr);
+    require(j->input.value != INVALID_HANDLE_VALUE, "LEARNING_PIPE");
+    input.value = CreateFileW(pipeName.c_str(), GENERIC_READ, 0, &sa, OPEN_EXISTING, 0, nullptr);
     require(input.value != INVALID_HANDLE_VALUE, "LEARNING_PIPE");
+    j->inputEvent.value = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    require(j->inputEvent.value != nullptr, "LEARNING_PIPE");
+    j->inputIo.hEvent = j->inputEvent.value;
+    j->disposal = CreateThreadpoolWork([](PTP_CALLBACK_INSTANCE, void* context, PTP_WORK work) {
+      auto value = static_cast<Job*>(context); value->disposal = nullptr;
+      // Defensive owner-loss containment; never exposed as cleanup proof.
+      if (value->job.value && !value->released) TerminateJobObject(value->job.value, 1);
+      delete value; CloseThreadpoolWork(work);
+    }, j.get(), nullptr);
+    require(j->disposal != nullptr, "LEARNING_CREATE");
     SIZE_T size = 0; InitializeProcThreadAttributeList(nullptr, 2, 0, &size); std::vector<unsigned char> bytes(size);
     auto attributes = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(bytes.data());
     require(InitializeProcThreadAttributeList(attributes, 2, 0, &size), "LEARNING_CREATE");
@@ -171,12 +202,54 @@ static napi_value start(napi_env e, napi_callback_info i) {
     outWrite.close(); errWrite.close(); input.close();
     // External owner and every native resource exist BEFORE untrusted code resumes.
     napi_value external; auto ptr = j.get(); jobs.insert(ptr);
-    try { js(napi_create_external(e, ptr, [](napi_env, void* p, void*) { auto value = static_cast<Job*>(p); jobs.erase(value); delete value; }, nullptr, &external)); }
+    try { js(napi_create_external(e, ptr, [](napi_env, void* p, void*) {
+      auto value = static_cast<Job*>(p); jobs.erase(value);
+      // Never block Main waiting for a cancelled kernel write. The Learning-owned
+      // Job/storage stays alive on its preallocated disposal task until settled.
+      if (value->inputPending) SubmitThreadpoolWork(value->disposal);
+      else delete value;
+    }, nullptr, &external)); }
     catch (...) { jobs.erase(ptr); throw; }
     // Return ownership while STILL suspended. Main stores the external before
     // resume, so resume failure remains retryable through the same owned Job.
     j.release();
     return external;
+  } catch (const std::exception& ex) { return error(e, ex); }
+}
+static void finishInput(Job* j, bool failed) {
+  j->inputPending = false; j->inputSettled = true; j->inputFailed = failed;
+  j->input.close(); j->inputBytes.clear();
+}
+static void pumpInput(Job* j) {
+  if (j->inputSettled) return;
+  DWORD count = 0;
+  if (j->inputPending) {
+    if (!GetOverlappedResult(j->input.value, &j->inputIo, &count, FALSE)) {
+      if (GetLastError() == ERROR_IO_INCOMPLETE) return;
+      finishInput(j, true); return;
+    }
+    j->inputPending = false; j->inputOffset += count;
+    if (!count) { finishInput(j, true); return; }
+  }
+  if (j->terminated) { finishInput(j, true); return; }
+  if (j->inputOffset == j->inputBytes.size()) { finishInput(j, false); return; }
+  ResetEvent(j->inputEvent.value);
+  const DWORD size = static_cast<DWORD>(std::min<size_t>(16384, j->inputBytes.size() - j->inputOffset));
+  if (WriteFile(j->input.value, j->inputBytes.data() + j->inputOffset, size, &count, &j->inputIo)) {
+    j->inputOffset += count;
+    if (!count) finishInput(j, true);
+  } else if (GetLastError() == ERROR_IO_PENDING) j->inputPending = true;
+  else finishInput(j, true);
+}
+static napi_value submitInput(napi_env e, napi_callback_info i) {
+  try {
+    auto a = args(e, i, 2); auto j = owned(e, a[0]);
+    require(!j->released && !j->terminated && !j->inputSubmitted, "LEARNING_OWNERSHIP");
+    void* data = nullptr; size_t size = 0; js(napi_get_buffer_info(e, a[1], &data, &size));
+    require(size <= 1024 * 1024, "LEARNING_ARGUMENT");
+    if (size) j->inputBytes.assign(static_cast<char*>(data), static_cast<char*>(data) + size);
+    j->inputSubmitted = true; j->inputSettled = false;
+    pumpInput(j); return undef(e);
   } catch (const std::exception& ex) { return error(e, ex); }
 }
 static napi_value readPipe(napi_env e, Handle& pipe, bool& eof) {
@@ -191,6 +264,7 @@ static napi_value readPipe(napi_env e, Handle& pipe, bool& eof) {
 static napi_value poll(napi_env e, napi_callback_info i) {
   try {
     auto a = args(e, i, 1); auto j = owned(e, a[0]); require(!j->released, "LEARNING_OWNERSHIP");
+    pumpInput(j);
     auto list = members(j); for (DWORD pid : list) capture(j, pid);
     auto v = object(e); napi_value array; js(napi_create_array(e, &array));
     for (uint32_t n = 0; n < j->retained.size(); ++n) { const auto& p = j->retained[n]; auto id = identity(e, p->handle.value);
@@ -200,7 +274,9 @@ static napi_value poll(napi_env e, napi_callback_info i) {
     prop(e, v, "members", array);
     auto acc = accounting(j); number(e, v, "activeProcesses", acc.ActiveProcesses); number(e, v, "totalProcesses", acc.TotalProcesses);
     prop(e, v, "stdout", readPipe(e, j->out, j->outEof)); prop(e, v, "stderr", readPipe(e, j->err, j->errEof));
-    boolean(e, v, "observerSettled", j->outEof && j->errEof && signaled(j->retained[0]->handle.value));
+    boolean(e, v, "stdinSettled", j->inputSettled); boolean(e, v, "stdinFailed", j->inputFailed);
+    number(e, v, "stdinBytesWritten", static_cast<double>(j->inputOffset));
+    boolean(e, v, "observerSettled", j->inputSettled && j->outEof && j->errEof && signaled(j->retained[0]->handle.value));
     boolean(e, v, "coverageComplete", !j->gap); number(e, v, "rootPid", j->rootPid);
     DWORD exit = STILL_ACTIVE; require(GetExitCodeProcess(j->retained[0]->handle.value, &exit), "LEARNING_QUERY"); number(e, v, "exitCode", exit);
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit{};
@@ -229,13 +305,16 @@ static napi_value control(napi_env e, napi_callback_info i) {
     } else if (op == L"terminate") {
       require(!j->released, "LEARNING_OWNERSHIP");
       if (!j->terminated) { require(TerminateJobObject(j->job.value, 1), "LEARNING_TERMINATE"); j->terminated = true; }
+      if (j->inputPending && !CancelIoEx(j->input.value, &j->inputIo)) require(GetLastError() == ERROR_NOT_FOUND, "LEARNING_PIPE");
+      if (!j->inputPending) { j->input.close(); j->inputBytes.clear(); j->inputSettled = true; }
     } else if (op == L"release") {
       if (!j->released) { require(safeToRelease(j), "LEARNING_NOT_READY"); j->job.close(); j->released = true; }
     } else if (op == L"closeHandles") {
       require(j->released, "LEARNING_NOT_READY");
       if (!j->handlesClosed) {
-        j->out.close(); j->err.close(); j->port.close(); j->rootThread.close();
+        j->input.close(); j->inputEvent.close(); j->out.close(); j->err.close(); j->port.close(); j->rootThread.close();
         for (auto& p : j->retained) p->handle.close();
+        if (j->disposal) { CloseThreadpoolWork(j->disposal); j->disposal = nullptr; }
         j->handlesClosed = true;
       }
     } else throw Failure("LEARNING_ARGUMENT", 0);
@@ -287,6 +366,7 @@ static napi_value observation(napi_env e, napi_callback_info i) {
 }
 static napi_value init(napi_env e, napi_value exports) {
   napi_property_descriptor methods[] = {
+    {"submitInput", nullptr, submitInput, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"start", nullptr, start, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"poll", nullptr, poll, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"control", nullptr, control, nullptr, nullptr, nullptr, napi_default, nullptr},
@@ -295,6 +375,6 @@ static napi_value init(napi_env e, napi_value exports) {
     {"watch", nullptr, watch, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"observation", nullptr, observation, nullptr, nullptr, nullptr, napi_default, nullptr},
   };
-  js(napi_define_properties(e, exports, 7, methods)); prop(e, exports, "capability", text(e, "student-ide-learning-job-v1")); return exports;
+  js(napi_define_properties(e, exports, 8, methods)); prop(e, exports, "capability", text(e, "student-ide-learning-job-v1")); return exports;
 }
 NAPI_MODULE(NODE_GYP_MODULE_NAME, init)

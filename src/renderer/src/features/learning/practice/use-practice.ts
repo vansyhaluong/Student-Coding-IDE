@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import type { Exercise, ExerciseLanguage, PracticeState } from '../../../../../shared/contracts/practice'
 import { DraftQueue } from './draft-queue'
 
+/** Explicit source replacement intent, separate from ordinary draft echoes. Renderer-only. */
+export interface PracticeSourceReplacement { exerciseId: string; language: ExerciseLanguage; code: string }
+
 export function usePractice(active: boolean) {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [state, setState] = useState<PracticeState>({ drafts: [], languages: [] })
@@ -11,6 +14,7 @@ export function usePractice(active: boolean) {
   const [closing, setClosing] = useState(false)
   const [revision, setRevision] = useState(0)
   const [sourceRevision, setSourceRevision] = useState(0)
+  const [sourceReplacement, setSourceReplacement] = useState<PracticeSourceReplacement>()
   const locked = useRef(false)
   const mounted = useRef(false)
   const api = window.studentIde.learning.practice
@@ -45,20 +49,27 @@ export function usePractice(active: boolean) {
   const codeFor = (exercise: Exercise, language: ExerciseLanguage): string =>
     state.drafts.find(d => d.exerciseId === exercise.id && d.language === language)?.code ?? exercise.languages[language].starter
   const edit = (exercise: Exercise, language: ExerciseLanguage, code: string) => {
-    if (!mounted.current || locked.current || !ready) return
+    if (!mounted.current || locked.current || !ready) return false
     const draft = { exerciseId: exercise.id, language, code }
+    // A later edit/context selection retires an old replacement intent. It must
+    // never replay when that exercise's editor is mounted again.
+    setSourceReplacement(undefined)
     setSourceRevision(value => value + 1)
     setState(current => ({
       drafts: [...current.drafts.filter(d => d.exerciseId !== draft.exerciseId || d.language !== language), draft],
       languages: [...current.languages.filter(l => l.exerciseId !== draft.exerciseId), { exerciseId: draft.exerciseId, language }],
     }))
     queue.enqueue(draft)
+    return true
+  }
+  const replaceSource = (exercise: Exercise, language: ExerciseLanguage, code: string) => {
+    if (edit(exercise, language, code)) setSourceReplacement({ exerciseId: exercise.id, language, code })
   }
   const selectLanguage = async (exercise: Exercise, language: ExerciseLanguage) => {
     if (locked.current || !await queue.flush() || !mounted.current) return false
     edit(exercise, language, codeFor(exercise, language))
     return queue.flush()
   }
-  return { exercises, state, ready, error, recovered, closing, sourceRevision, languageFor, codeFor, edit, selectLanguage,
+  return { exercises, state, ready, error, recovered, closing, sourceRevision, sourceReplacement, replaceSource, languageFor, codeFor, edit, selectLanguage,
     hasPending: () => queue.hasPending(), flush: () => queue.flush(), retry: () => { if (ready) void queue.flush(); else setRevision(r => r + 1) } }
 }

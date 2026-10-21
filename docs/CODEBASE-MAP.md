@@ -271,7 +271,39 @@ implementation; packaged/installed acceptance remains Phase 7.
 Status: `IN_PROGRESS` overall. 9A–9C are COMPLETE by user acceptance;
 9D Common is IN_PROGRESS (contracts/Core/native/Main lifecycle, typed IPC/Preload
 and Renderer integration, approved 2026-10-20); remaining live acceptance is due;
-9D.1 is IN_PROGRESS through contracts, filesystem SDK resolver and compile-only Roslyn/harness; 9D.2 and 9E–9G remain NOT_STARTED.
+9D.1 is IN_PROGRESS through C# production wiring and Windows 11 live UI verification; final acceptance/Windows 10/packaging remain due. 9D.2 and 9E–9G remain NOT_STARTED.
+
+Step 5 actual modules: `src/main/services/learning/runtime/csharp-execution-adapter.ts`
+and `csharp-runtime-files.ts`, with retained artifact verification in the compiler/
+compile workspace and additive raw-byte/semantic-failure integration in Learning
+adapter/Core. Actual tests: `tests/main/csharp-execution-adapter.test.ts`,
+`csharp-runtime-files.test.ts`, `csharp-execution.integration.test.ts`. Evidence:
+`docs/PHASE-9D1-CSHARP-EXECUTION.md`.
+
+Step 6 actual driver: `src/main/services/learning/runtime/csharp-orchestrator.ts`;
+additive Learning Core barrier in `exercise-session.ts`/`exercise-limits.ts`,
+adapter/port extensions and exact `notRunCaseIndices` contract validation. New
+real integration: `tests/main/csharp-multicase.integration.test.ts`; extended
+contract, adapter, Core and single-sample regression tests. Evidence:
+`docs/PHASE-9D1-CSHARP-MULTICASE.md`.
+
+Step 7 extends the existing `src/main/services/learning/exercise-service.ts`
+Windows factory with the C# driver. Optional typed observation/validation lives in
+shared `exercise.ts`, `exercise-validation.ts` and `csharp-execution-validation.ts`;
+the existing IPC/Preload routes reuse those validators. Existing
+`practice/use-exercise-runtime.ts` and `PracticeTestPanel.tsx` handle progress,
+actuals, diagnostics and stale-invoke/event ordering. New UI tests:
+`tests/renderer/csharp-result-panel.test.tsx`. Production Electron acceptance:
+`scripts/run-learning-csharp-ui-acceptance.mjs` and `smoke-learning-csharp-run.mjs`.
+Evidence and full file list: `docs/PHASE-9D1-CSHARP-UI.md`. No new IPC channel or
+DesktopApplication/Project/Terminal/native implementation change in Step 7.
+
+9D.1 Step 4 extends existing `runtime/native/learning-job.cpp`,
+`windows-exercise-native.ts` and `windows-exercise-adapter.ts` with one-shot bounded
+UTF-8 stdin/EOF and retained overlapped I/O. Actual verification paths:
+`tests/main/learning-stdin.integration.test.ts`,
+`tests/fixtures/learning/stdin-owner.mjs`, and adapter regressions. Evidence:
+`docs/PHASE-9D1-NATIVE-STDIN.md`. Step 4 itself adds no C# execution driver or public path capability.
 Actual 9A/9B/9C paths below are implemented; later paths
 remain proposed. One subject and exactly eight chapters, without a course
 selector. Supplied lesson data is separate from React with source/license-review
@@ -285,6 +317,7 @@ metadata; 9B acceptance limits are in `PHASE-9B-ACCEPTANCE.md`.
 | Theory presentation (actual 9B); quiz deferred | `src/renderer/src/features/learning/LearningWorkspace.tsx`, `ChapterMaterial.tsx`, `highlight-csharp.ts`, `use-learning-course.ts`, `learning.css` | Renderer; eight continuous theory pages, safe Markdown/GFM, model-free C# tokenization, source metadata; quizzes remain 9F |
 | Learning section Tabs (authorized UI follow-up) | `src/renderer/src/components/motion/tabs.tsx`, local `lib/ease.ts`, `lib/utils.ts`, `README.md`, `LICENSE` | Stock MIT beUI Tabs with local import rewiring; controlled pill composition styled after Cursor pricing, guarded draft saving and retained theory panels; existing dependencies |
 | Exercise session and workspace (actual 9C; runtime UI added Common step 6) | `src/renderer/src/features/learning/practice/` | Renderer; chapter list, independent Monaco/drafts, sample/result dock and My Solutions shell; Run invokes Exercise API with safe unsupported status until drivers exist; Submit disabled |
+| Learning editor synchronization correction | `practice/PracticeEditor.tsx`, `use-practice.ts`, `PracticeWorkspace.tsx`; `tests/renderer/practice-editor-sync.test.tsx`; `scripts/smoke-learning-editor-sync.mjs` | Monaco owns live edits; initial context draft plus explicit Reset/Restore intent, no controlled stale draft echo. Existing autosave and context isolation retained; real Monaco evidence in PHASE-9D1-EDITOR-SYNC.md |
 | Exercise Renderer lifecycle (actual Common step 6) | `src/renderer/src/features/learning/practice/use-exercise-runtime.ts`; LearningWorkspace, PracticeWorkspace, PracticeTestPanel and use-practice | Context-owned subscription/probe/attempt, Main-issued identity and sequence filtering, internal lifecycle stop and late-result disposal, source revision and safe status/output; tests/renderer/exercise-runtime.test.tsx and practice-workspace.test.tsx; scripts/smoke-exercise-renderer.mjs for production unsupported path |
 | Exercise catalogue and drafts (actual 9C) | `src/main/services/learning/content/exercises.ts`, `src/main/services/learning/practice-store.ts`, `src/shared/contracts/practice.ts` | 63 authored exercises, six types; separate versioned Code Draft storage using PersistenceService, no Accepted records |
 | Narrow Practice bridge (actual 9C) | `src/main/ipc/practice-ipc-service.ts`, `src/preload/bridge/practice.ts` | Validated load/save and owned close/resume handshake, no execution API |

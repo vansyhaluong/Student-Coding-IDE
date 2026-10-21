@@ -68,6 +68,7 @@ async function changeLanguage(editor: HTMLElement, language: 'csharp' | 'javascr
   const select = workspace(editor).getByRole<HTMLSelectElement>('combobox')
   fireEvent.change(select, { target: { value: language } })
   await waitFor(() => expect(select.value).toBe(language))
+  return screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Practice code' })
 }
 it('switches beUI tabs with keyboard support and keeps Practice selected when draft saving fails', async () => {
   const view = render(<Harness />)
@@ -103,16 +104,16 @@ it('switches beUI tabs with keyboard support and keeps Practice selected when dr
 })
 it('switches C# → JavaScript → C# without losing independent drafts, including empty code', async () => {
   render(<Harness />)
-  const editor = await openFirst() as HTMLTextAreaElement
+  let editor = await openFirst() as HTMLTextAreaElement
   expect(workspace(editor).getByRole<HTMLSelectElement>('combobox').value).toBe('csharp')
   expect(editor.value).toBe(exercises[0].languages.csharp.starter)
   fireEvent.change(editor, { target: { value: '// C# draft' } })
-  await changeLanguage(editor, 'javascript')
+  editor = await changeLanguage(editor, 'javascript')
   expect(editor.value).toBe(exercises[0].languages.javascript.starter)
   fireEvent.change(editor, { target: { value: '' } })
-  await changeLanguage(editor, 'csharp')
+  editor = await changeLanguage(editor, 'csharp')
   expect(editor.value).toBe('// C# draft')
-  await changeLanguage(editor, 'javascript')
+  editor = await changeLanguage(editor, 'javascript')
   expect(editor.value).toBe('')
 })
 it('cancels Reset without edits and confirms Reset for the current language only', async () => {
@@ -122,7 +123,7 @@ it('cancels Reset without edits and confirms Reset for the current language only
     languages: [{ exerciseId: 'ch2-01', language: 'csharp' }],
   }
   render(<Harness />)
-  const editor = await openFirst() as HTMLTextAreaElement
+  let editor = await openFirst() as HTMLTextAreaElement
   const practice = workspace(editor)
   fireEvent.click(practice.getByRole('button', { name: 'Reset Code' }))
   expect(practice.getByRole('alertdialog', { name: 'Xác nhận Reset Code' })).toBeTruthy()
@@ -132,15 +133,15 @@ it('cancels Reset without edits and confirms Reset for the current language only
   fireEvent.click(practice.getByRole('button', { name: 'Reset Code' }))
   fireEvent.click(practice.getByRole('button', { name: 'Xác nhận Reset' }))
   expect(editor.value).toBe(exercises[0].languages.csharp.starter)
-  await changeLanguage(editor, 'javascript')
+  editor = await changeLanguage(editor, 'javascript')
   expect(editor.value).toBe('// JS draft')
   expect(persisted.drafts.find(d => d.language === 'csharp')?.code).toBe(exercises[0].languages.csharp.starter)
 })
 it('persists both drafts and last language before reopening a fresh workspace', async () => {
   const view = render(<Harness />)
-  const editor = await openFirst() as HTMLTextAreaElement
+  let editor = await openFirst() as HTMLTextAreaElement
   fireEvent.change(editor, { target: { value: '// restart C#' } })
-  await changeLanguage(editor, 'javascript')
+  editor = await changeLanguage(editor, 'javascript')
   fireEvent.change(editor, { target: { value: '// restart JS' } })
   fireEvent.click(workspace(editor).getByRole('button', { name: '← Danh sách' }))
   await screen.findByRole('region', { name: 'Bài tập chương 2' })
@@ -148,22 +149,22 @@ it('persists both drafts and last language before reopening a fresh workspace', 
   expect(persisted.drafts.find(d => d.language === 'javascript')?.code).toBe('// restart JS')
   expect(persisted.languages).toEqual([{ exerciseId: 'ch2-01', language: 'javascript' }])
   view.unmount(); render(<Harness />)
-  const restored = await openFirst() as HTMLTextAreaElement
+  let restored = await openFirst() as HTMLTextAreaElement
   expect(workspace(restored).getByRole<HTMLSelectElement>('combobox').value).toBe('javascript')
   expect(restored.value).toBe('// restart JS')
-  await changeLanguage(restored, 'csharp')
+  restored = await changeLanguage(restored, 'csharp')
   expect(restored.value).toBe('// restart C#')
 })
 it('lists 9 exercises by difficulty, isolates languages, confirms Reset and restores drafts on restart', async () => {
   const view = render(<Harness />)
-  const editor = await openFirst()
+  let editor = await openFirst()
   const practice = workspace(editor)
   expect((practice.getByRole('combobox') as HTMLSelectElement).value).toBe('csharp')
   expect((editor as HTMLTextAreaElement).value).toBe(exercises[0].languages.csharp.starter)
   fireEvent.change(editor, { target: { value: '// student cs' } })
-  await changeLanguage(editor, 'javascript')
+  editor = await changeLanguage(editor, 'javascript')
   fireEvent.change(editor, { target: { value: '// student js' } })
-  await changeLanguage(editor, 'csharp')
+  editor = await changeLanguage(editor, 'csharp')
   await waitFor(() => expect((editor as HTMLTextAreaElement).value).toBe('// student cs'))
   fireEvent.click(practice.getByRole('button', { name: 'Reset Code' }))
   fireEvent.click(practice.getByRole('button', { name: 'Hủy' }))
@@ -171,7 +172,7 @@ it('lists 9 exercises by difficulty, isolates languages, confirms Reset and rest
   fireEvent.click(practice.getByRole('button', { name: 'Reset Code' }))
   fireEvent.click(practice.getByRole('button', { name: 'Xác nhận Reset' }))
   expect((editor as HTMLTextAreaElement).value).toBe(exercises[0].languages.csharp.starter)
-  await changeLanguage(editor, 'javascript')
+  editor = await changeLanguage(editor, 'javascript')
   await waitFor(() => expect((editor as HTMLTextAreaElement).value).toBe('// student js'))
   fireEvent.click(practice.getByRole('button', { name: '← Danh sách' }))
   const list = within(await screen.findByRole('region', { name: 'Bài tập chương 2' }))
@@ -235,7 +236,7 @@ it('shows icon-only Run/Reset and LeetCode-style sample cases without execution 
   expect(practice.queryByRole('region', { name: 'Testcase' })).toBeNull()
   const result = within(practice.getByRole('region', { name: 'Test Result' }))
   expect(result.getByText('Chưa có kết quả thực thi.')).toBeTruthy()
-  expect(result.getByText('Chọn Run để kiểm tra khả năng thực thi. Submit chưa khả dụng.')).toBeTruthy()
+  expect(result.getByText('Chọn Run để xem Output của các test mẫu.')).toBeTruthy()
   fireEvent.click(practice.getByRole('button', { name: 'Testcase' }))
   expect(cases.getByRole('button', { name: 'Case 2' }).getAttribute('aria-pressed')).toBe('true')
 })

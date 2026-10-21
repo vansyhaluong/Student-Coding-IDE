@@ -24,7 +24,7 @@ export class CsharpCompileWorkspace {
   readonly runtimeConfig: string
   private readonly files = new Map<string, BigIntStats>()
   private directoryIdentity?: Awaited<ReturnType<typeof workspaceIdentity>>
-  constructor(private readonly workspace: ExerciseWorkspace, private readonly context: CsharpPreparationContext) {
+  constructor(private readonly workspace: ExerciseWorkspace, private context: CsharpPreparationContext) {
     this.directory = join(workspace.path, 'csharp')
     this.solution = join(this.directory, 'Solution.cs'); this.harness = join(this.directory, 'Harness.cs')
     this.response = join(this.directory, 'compile.rsp'); this.assembly = join(this.directory, 'Learning.dll')
@@ -97,5 +97,11 @@ export class CsharpCompileWorkspace {
       if (!same(before, await handle.stat({ bigint: true })) || !same(before, await lstat(this.assembly, { bigint: true }))) throw exerciseCoreError('WORKSPACE_REPLACED')
     } finally { await handle.close() }
     await this.verifyFiles()
+    this.files.set(this.assembly, before)
+  }
+  /** Same retained identities, with the caller's execute deadline; no path adoption. */
+  async revalidateArtifact(context: CsharpPreparationContext): Promise<void> {
+    this.context = context
+    await this.validateAssembly()
   }
 }

@@ -3,7 +3,7 @@ import { performance } from 'node:perf_hooks'
 import { EXERCISE_LIMITS } from '../../../../shared/contracts/exercise'
 import type { CsharpCompileResult, CsharpFailureKind } from '../../../../shared/contracts/csharp-execution'
 import { DomainError } from '../../../errors/app-error'
-import type { CsharpCompilation, CsharpCompiler, CsharpPreparedExecution, CsharpSdkSelection } from './csharp-execution-contracts'
+import type { CsharpCompilation, CsharpCompiledArtifact, CsharpCompiler, CsharpPreparedExecution, CsharpSdkSelection } from './csharp-execution-contracts'
 import type { ExercisePhaseContext } from './exercise-runtime-adapter'
 import { WindowsExerciseRuntimeAdapter, type LearningProcessSpec } from './windows-exercise-adapter'
 import type { LearningNativeBinding } from './windows-exercise-native'
@@ -34,19 +34,27 @@ export function csharpRuntimeConfig(sdk: CsharpSdkSelection): string {
   // This operation binds the resolver's chosen patch; later operations rediscover normally.
   return JSON.stringify({ runtimeOptions: { tfm: 'net10.0', framework: { name: 'Microsoft.NETCore.App', version: sdk.runtimeVersion }, rollForward: 'Disable' } }, null, 2) + '\n'
 }
+/** Same minimal environment for Roslyn and the selected runtime; never inherit dotnet overrides. */
+export function csharpEnvironment(workspace: ExerciseWorkspace): NodeJS.ProcessEnv {
+  const systemRoot = Object.entries(process.env).find(([key]) => key.toLowerCase() === 'systemroot')?.[1]
+  return { ...(systemRoot ? { SystemRoot: systemRoot, WINDIR: systemRoot } : {}),
+    TEMP: workspace.path, TMP: workspace.path, DOTNET_CLI_HOME: workspace.path,
+    DOTNET_EnableDiagnostics: '0', DOTNET_MULTILEVEL_LOOKUP: '0', DOTNET_ROLL_FORWARD_TO_PRERELEASE: '0',
+    DOTNET_CLI_TELEMETRY_OPTOUT: '1', DOTNET_NOLOGO: '1' }
+}
 /** Per-operation compiler. The admitting Core/driver MUST own runtime for Policy B cleanup. */
 export class RoslynCsharpCompiler implements CsharpCompiler {
   readonly runtime: WindowsExerciseRuntimeAdapter
   private plan: LearningProcessSpec | null = null
   private used = false
+  private artifactFiles?: CsharpCompileWorkspace
   constructor(native: LearningNativeBinding, private readonly workspace: ExerciseWorkspace) {
-    const systemRoot = Object.entries(process.env).find(([key]) => key.toLowerCase() === 'systemroot')?.[1]
-    this.runtime = new WindowsExerciseRuntimeAdapter(native, phase => phase === 'compile' ? this.plan : null, {
-      ...(systemRoot ? { SystemRoot: systemRoot, WINDIR: systemRoot } : {}),
-      TEMP: workspace.path, TMP: workspace.path, DOTNET_CLI_HOME: workspace.path,
-      DOTNET_EnableDiagnostics: '0', DOTNET_MULTILEVEL_LOOKUP: '0', DOTNET_ROLL_FORWARD_TO_PRERELEASE: '0',
-      DOTNET_CLI_TELEMETRY_OPTOUT: '1', DOTNET_NOLOGO: '1',
-    })
+    this.runtime = new WindowsExerciseRuntimeAdapter(native, phase => phase === 'compile' ? this.plan : null, csharpEnvironment(workspace))
+  }
+  async revalidateArtifact(artifact: CsharpCompiledArtifact, context: ExercisePhaseContext): Promise<void> {
+    if (!this.artifactFiles || artifact.assemblyPath !== this.artifactFiles.assembly
+      || artifact.runtimeConfigPath !== this.artifactFiles.runtimeConfig) throw exerciseCoreError('COMPILER_ARTIFACT')
+    await this.artifactFiles.revalidateArtifact(context)
   }
   async compile(input: CsharpPreparedExecution, context: ExercisePhaseContext): Promise<CsharpCompilation> {
     if (this.used) throw exerciseCoreError('ADMISSION_CLOSED')
@@ -90,6 +98,7 @@ export class RoslynCsharpCompiler implements CsharpCompiler {
       if (process.exitCode !== 0) return failed(diagnostics.sourceError && !diagnostics.infrastructureError ? 'COMPILE_ERROR' : 'INFRASTRUCTURE_FAILURE')
       if (process.failure || diagnostics.sourceError || diagnostics.infrastructureError) return failed('INFRASTRUCTURE_FAILURE')
       await files.validateAssembly(); checkCsharpWork(phaseContext)
+      this.artifactFiles = files
       const result: CsharpCompileResult & { status: 'SUCCEEDED' } = { status: 'SUCCEEDED', exitCode: 0,
         diagnostics: [...diagnostics.diagnostics], ...diagnostics.streams(), failure: null }
       return { result, artifact: Object.freeze({ assemblyPath: files.assembly, runtimeConfigPath: files.runtimeConfig }) }

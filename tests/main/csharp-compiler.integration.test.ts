@@ -43,7 +43,7 @@ describe.skipIf(!enabled)('Real installed Roslyn compilation in Learning Windows
   async function compile(name: string, exercise: Exercise, code: string, cancel = false) {
     const directory = join(root, name); await mkdir(directory)
     let launched = 0, pendingStop: Promise<void> | undefined
-    const binding: LearningNativeBinding = { capability: native.capability, poll: native.poll, control: native.control,
+    const binding: LearningNativeBinding = { capability: native.capability, poll: native.poll, control: native.control, submitInput: native.submitInput,
       state: native.state, acquireLease: native.acquireLease, watch: native.watch, observation: native.observation,
       start: (...args) => {
         const handle = native.start(...args); launched++

@@ -90,6 +90,7 @@ describe.skipIf(!supported)('Learning native Windows integration (real processes
     const binding: LearningNativeBinding = { ...native, capability: native.capability,
       // N-API functions are non-enumerable; explicitly retain the whole port.
       poll: native.poll, control: native.control, state: native.state, acquireLease: native.acquireLease,
+      submitInput: native.submitInput,
       watch: native.watch, observation: native.observation,
       start: (...args) => { const job = native.start(...args); jobs.push(job); suspended = native.poll(job); return job },
     }
@@ -170,6 +171,7 @@ describe.skipIf(!supported)('Learning native Windows integration (real processes
   it('retains real native ownership across an ambiguous release error and retries without re-query/release', async () => {
     let job: object | undefined, fail = true, releaseCalls = 0, queriesAfterRelease = 0
     const binding: LearningNativeBinding = { capability: native.capability, start: (...a) => { job = native.start(...a); return job },
+      submitInput: native.submitInput,
       state: native.state, acquireLease: native.acquireLease, watch: native.watch, observation: native.observation,
       poll: h => { if (native.state(h).released) queriesAfterRelease++; return native.poll(h) },
       control: (h, op) => {

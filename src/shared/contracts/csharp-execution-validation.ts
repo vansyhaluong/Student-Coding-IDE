@@ -39,6 +39,10 @@ function bounded(v: unknown): boolean {
   }
   return visit(v, 0) && bytes(JSON.stringify(v)) <= EXERCISE_LIMITS.outputBytes
 }
+export function isCsharpSampleSchema(s: unknown): s is CsharpSampleSchema {
+  if (!isPlainObject(s) || !exact(s, ['parameterTypes', 'returnType', 'sampleCount'])) return false
+  return schema(s as unknown as CsharpSampleSchema)
+}
 function schema(s: CsharpSampleSchema): boolean {
   return bounded(s) && integer(s.sampleCount) && s.sampleCount > 0 && Array.isArray(s.parameterTypes)
     && s.parameterTypes.every(t => types.includes(t)) && types.includes(s.returnType)
@@ -106,10 +110,12 @@ function sameFailure(a: CsharpExecutionFailure | null, b: CsharpExecutionFailure
   return a === null || b === null ? a === b : a.kind === b.kind && a.phase === b.phase && a.caseIndex === b.caseIndex
 }
 export function validateCsharpExecutionResult(v: unknown, s: CsharpSampleSchema): ValidationResult<CsharpExecutionResult> {
-  if (!schema(s) || !bounded(v) || !exact(v, ['compile', 'cases', 'failure']) || !Array.isArray(v.cases)
+  if (!schema(s) || !bounded(v) || !exact(v, ['compile', 'cases', 'notRunCaseIndices', 'failure']) || !Array.isArray(v.cases)
     || v.cases.length > s.sampleCount || v.failure !== null && !failure(v.failure, s.sampleCount)
     || v.compile !== null && !compilation(v.compile, s.sampleCount)) return invalid()
   const cases = v.cases
+  if (!Array.isArray(v.notRunCaseIndices) || v.notRunCaseIndices.length !== s.sampleCount - cases.length
+    || !v.notRunCaseIndices.every((caseIndex, i) => caseIndex === cases.length + i)) return invalid()
   if (cases.some((c, i) => !caseResult(c, s) || c.caseIndex !== i || i < cases.length - 1 && c.outcome === 'FAILED')) return invalid()
   if (cases.length && (v.compile === null || v.compile.status !== 'SUCCEEDED')) return invalid()
   if (v.compile?.status === 'FAILED' && !sameFailure(v.failure, v.compile.failure)) return invalid()
@@ -120,7 +126,7 @@ export function validateCsharpExecutionResult(v: unknown, s: CsharpSampleSchema)
       || v.failure.phase === 'prepare' && (v.compile !== null || cases.length)
       || v.failure.phase === 'execute' && last?.outcome !== 'FAILED') return invalid()
   }
-  return { ok: true, value: copy({ compile: v.compile, cases, failure: v.failure }) }
+  return { ok: true, value: copy({ compile: v.compile, cases, notRunCaseIndices: v.notRunCaseIndices, failure: v.failure }) }
 }
 export function validateCsharpHarnessRequest(v: unknown, s: CsharpSampleSchema, caseIndex: number): ValidationResult<CsharpHarnessRequest> {
   if (!schema(s) || !bounded(v) || !exact(v, ['protocolVersion', 'caseIndex', 'args']) || v.protocolVersion !== CSHARP_HARNESS_VERSION

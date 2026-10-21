@@ -5,6 +5,7 @@ import type { ExerciseCheckpoint, ExerciseCheckpointStore } from '../../src/main
 import type { ExercisePhaseContext, ExerciseRuntimeAdapter, ExerciseTerminationEvidence } from '../../src/main/services/learning/runtime/exercise-runtime-adapter'
 import { validateExerciseSnapshot } from '../../src/shared/contracts/exercise-validation'
 import { EXERCISE_LIMITS } from '../../src/shared/contracts/exercise'
+import { exerciseCoreError } from '../../src/main/services/learning/runtime/exercise-limits'
 
 const sessionId = 'exercise_12345678-1234-4234-8234-123456789abc'
 function gate() {
@@ -50,6 +51,53 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(0) })
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers() })
 
 describe('Learning Policy B stages', () => {
+  it('gives each execute its own 2s phase, clamped to the original operation due including barriers', async () => {
+    const f = fixture(), deadlines: number[] = [], barrierDeadlines: number[] = []
+    await f.session.runPhase('prepare'); await f.session.runPhase('compile')
+    const barrier = vi.fn(async (context: { deadline: number }) => { barrierDeadlines.push(context.deadline); await vi.advanceTimersByTimeAsync(600) })
+    Object.assign(f.adapter, { verifyBetweenCases: barrier })
+    await vi.advanceTimersByTimeAsync(57_500)
+    f.adapter.runPhase.mockImplementation(async (_phase, context) => { deadlines.push(context.deadline); await vi.advanceTimersByTimeAsync(deadlines.length === 1 ? 1500 : 500) })
+    await f.session.runPhase('execute'); await f.session.verifyExecutionBarrier()
+    await expect(f.session.runPhase('execute')).rejects.toThrow()
+    await f.session.close()
+    expect(deadlines).toEqual([59_500, 60_000]); expect(barrierDeadlines).toEqual([60_000])
+    expect(f.session.snapshot().reason).toBe('OPERATION_TIMEOUT')
+    await expect(f.session.runPhase('execute')).rejects.toThrow()
+  })
+  it('retains a pending barrier through the 12s caller wait and cleanup retry, without admitting another case', async () => {
+    const f = fixture(), pending = gate()
+    await f.session.runPhase('prepare'); await f.session.runPhase('compile')
+    Object.assign(f.adapter, { verifyBetweenCases: vi.fn(() => pending.promise) })
+    const barrier = f.session.verifyExecutionBarrier(); void barrier.catch(() => {})
+    await Promise.resolve()
+    await expect(f.session.runPhase('execute')).rejects.toThrow()
+    await vi.advanceTimersByTimeAsync(12_000)
+    await expect(barrier).rejects.toMatchObject({ details: { reason: 'CLEANUP_DEADLINE' } })
+    expect(f.session.ownsResources).toBe(true); expect(f.adapter.release).not.toHaveBeenCalled()
+    const cleanup = f.session.close(); void cleanup.catch(() => {})
+    pending.resolve(); await cleanup
+    expect(f.adapter.release).toHaveBeenCalledTimes(1); expect(f.session.snapshot().cleanup.cleanupComplete).toBe(true)
+    expect(f.adapter.runPhase).toHaveBeenCalledTimes(2)
+  })
+  it('does not turn a barrier resolving after cancellation into permission to launch', async () => {
+    const f = fixture(), pending = gate()
+    await f.session.runPhase('prepare'); await f.session.runPhase('compile')
+    Object.assign(f.adapter, { verifyBetweenCases: vi.fn(() => pending.promise) })
+    const barrier = f.session.verifyExecutionBarrier(); void barrier.catch(() => {})
+    const cleanup = f.session.close('OWNER_LOST'); void cleanup.catch(() => {})
+    await expect(barrier).rejects.toThrow(); expect(f.adapter.release).not.toHaveBeenCalled()
+    pending.resolve(); await cleanup
+    await expect(f.session.runPhase('execute')).rejects.toThrow()
+    expect(f.session.snapshot().reason).toBe('OWNER_LOST')
+  })
+  it.each(['DEPENDENCY_MISSING', 'INVALID_RUNTIME', 'INTERNAL_ERROR', 'OUTPUT_LIMIT', 'JOB_MEMORY_LIMIT'] as const)('retains existing semantic driver reason %s in Core cleanup', async reason => {
+    const f = fixture()
+    f.adapter.runPhase.mockRejectedValueOnce(exerciseCoreError(reason))
+    await expect(f.session.runPhase('prepare')).rejects.toThrow(); await f.session.close()
+    expect(f.session.snapshot().reason).toBe(reason)
+    expect(f.session.snapshot().cleanup.cleanupComplete).toBe(true)
+  })
   it('counts raw compiler bytes across phases while keeping redacted snapshot streams empty', async () => {
     const f = fixture(); await f.session.runPhase('prepare')
     f.adapter.runPhase.mockImplementationOnce(async (_phase, context) => { context.output('stdout', '', 600 * 1024) })

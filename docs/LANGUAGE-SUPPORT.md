@@ -47,15 +47,25 @@ User-approved runtime revision (2026-10-19, versions approved 2026-10-20): Learn
 uses installed stable .NET SDK 10.x and Node.js 24.x without locking patch versions,
 download, installation, major fallback or bundled-runtime implementation. Common
 is IN_PROGRESS through Core/native, Main service/lifecycle and typed IPC/Preload;
-the Renderer Run integration displays UNSUPPORTED without a language backend.
-No C#/JavaScript execution driver is implemented yet; Submit remains disabled.
+the Renderer Run integration displays UNSUPPORTED for JavaScript.
+Step 7 wires the production C# Run driver; Submit remains disabled. C# Step 5 supplies
+a Main-internal single-sample adapter, extended by Step 6 sequential multi-case
+orchestration; JavaScript remains unimplemented.
 C# direct installed Roslyn csc.dll and filesystem discovery are user-approved;
 Step 1 defines protocol/DTO/Main-only ports; Step 2 implements filesystem SDK
 selection with static reference/compiler/runtime validation, without executing
 processes or wiring Run. Step 3 separately implements and verifies direct Roslyn
 compilation with local net10.0 references in a Learning Windows Job, safe
-diagnostics and fixed generated harness/config files. No assembly invocation,
-native stdin or production Run driver/wiring exists. See
+diagnostics and fixed generated harness/config files. Step 4 adds verified Learning-only bounded
+native stdin/EOF transport with retained cleanup; see PHASE-9D1-NATIVE-STDIN.md.
+Step 5 verifies actual single-sample harness invocation, all six types and failure/
+cleanup handling through production Learning Jobs; see PHASE-9D1-CSHARP-EXECUTION.md.
+Step 6 adds compile-once sequential catalogue samples, VERIFIED barriers and exact
+not-run indices with shared operation/output budgets; see PHASE-9D1-CSHARP-MULTICASE.md.
+Step 7 verifies production C# UI → Preload → IPC → real Roslyn/.NET → Result Panel
+on Windows 11, with bounded typed results/diagnostics, lifecycle invalidation and
+live Project Run/PTY isolation; see PHASE-9D1-CSHARP-UI.md. Final user acceptance,
+Windows 10 and packaging remain due; 9D.1/Common are IN_PROGRESS. See
 PHASE-9D1-CSHARP-COMPILER.md and PHASE-9D1-SDK-RESOLVER.md. Planned 9D.1 Run executes Main catalogue
 samples and returns actuals without comparison. Custom cases need separate scope;
 comparison, Submit and results persistence remain 9E. No Project resolver reuse,

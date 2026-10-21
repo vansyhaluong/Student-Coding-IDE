@@ -7,7 +7,11 @@ import type { ExerciseExecutionPhase, ExercisePhaseContext, LearningProcessFailu
 import { mapLearningNativeError, type LearningJobSample, type LearningNativeBinding } from './windows-exercise-native'
 
 /** Trusted Main-only preparation, never accepted from renderer/IPC. No language driver here. */
-export interface LearningProcessSpec { executable: string; args: readonly string[]; cwd: string }
+export interface LearningProcessSpec {
+  executable: string; args: readonly string[]; cwd: string; stdin?: string
+  /** Trusted Main byte observer, before lossy presentation decoding. Never an IPC capability. */
+  observeBytes?(stream: 'stdout' | 'stderr', bytes: Buffer): void
+}
 interface OwnedJob {
   handle: object
   context: ExercisePhaseContext
@@ -19,6 +23,7 @@ interface OwnedJob {
   released: boolean
   closed: boolean
   memoryEvents: { message: number; pid: number }[]
+  observeBytes?: LearningProcessSpec['observeBytes']
 }
 export function learningEnvironment(environment: NodeJS.ProcessEnv): string[] {
   return Object.entries(environment).filter(([key, value]) => value !== undefined && !key.includes('=') && !key.includes('\0') && !value.includes('\0')
@@ -54,6 +59,8 @@ export class WindowsExerciseRuntimeAdapter implements LearningProcessResultPort 
     job.sample = sample
     // Keep evidence bounded even if a process repeatedly hits the Job quota.
     for (const event of sample.events) if (event.message === 10 && job.memoryEvents.length < 64) job.memoryEvents.push({ ...event })
+    if (sample.stdout.length) job.observeBytes?.('stdout', sample.stdout)
+    if (sample.stderr.length) job.observeBytes?.('stderr', sample.stderr)
     const out = job.out.write(sample.stdout), err = job.err.write(sample.stderr)
     if (out) job.context.output('stdout', out)
     if (err) job.context.output('stderr', err)
@@ -71,10 +78,14 @@ export class WindowsExerciseRuntimeAdapter implements LearningProcessResultPort 
       if (phaseResult && (job.context.signal.aborted || this.sealed)) throw exerciseCoreError('PROCESS_INTERRUPTED')
       if (phaseResult && performance.now() >= job.context.deadline) throw exerciseCoreError('PHASE_DEADLINE')
       if (phaseResult && job.memoryEvents.length) throw exerciseCoreError('JOB_MEMORY_LIMIT')
+      if (phaseResult && s.stdinFailed) throw exerciseCoreError('STDIN_DELIVERY_FAILED')
       if (s.observerSettled && !s.members.length && !s.activeProcesses && s.retained.every(p => p.signaled)) {
         return
       }
-      await new Promise<void>(resolve => setTimeout(resolve, 15))
+      // Yield every bounded read, but drain productive pipes promptly. A fixed
+      // 15ms pause per 4-KiB Windows pipe buffer can consume a 2s execute budget
+      // before a bounded 1-MiB response/overflow reaches Main.
+      await new Promise<void>(resolve => setTimeout(resolve, s.stdout.length || s.stderr.length ? 0 : 15))
     }
   }
   async runPhase(phase: ExerciseExecutionPhase, context: ExercisePhaseContext): Promise<void> {
@@ -104,15 +115,21 @@ export class WindowsExerciseRuntimeAdapter implements LearningProcessResultPort 
     try {
       const spec = this.plan(phase)
       if (!spec) { this.latest = undefined; return null }
+      // Reject malformed Unicode instead of silently replacing lone surrogates.
+      if (spec.stdin !== undefined && (typeof spec.stdin !== 'string' || /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(spec.stdin)
+        || Buffer.byteLength(spec.stdin, 'utf8') > EXERCISE_LIMITS.outputBytes)) throw exerciseCoreError('STDIN_CONFIGURATION')
+      const input = Buffer.from(spec.stdin ?? '', 'utf8')
       if (performance.now() >= context.deadline) throw exerciseCoreError('PHASE_DEADLINE')
       const quota = phase === 'compile' ? EXERCISE_LIMITS.compileJobMemoryBytes : phase === 'execute' ? EXERCISE_LIMITS.executeJobMemoryBytes : null
       if (quota === null || quota !== context.jobMemoryBytes) throw exerciseCoreError('QUOTA_CONFIGURATION')
       const handle = this.call(() => this.native.start(spec.executable, spec.args, spec.cwd, quota, this.environment))
       // Retain ownership immediately, even if first observation/resume fails.
       const job = { handle, context, out: new StringDecoder('utf8'), err: new StringDecoder('utf8'), flushed: false,
-        terminated: false, released: false, closed: false, memoryEvents: [], sample: undefined as unknown as LearningJobSample } satisfies OwnedJob
+        terminated: false, released: false, closed: false, memoryEvents: [], observeBytes: spec.observeBytes,
+        sample: undefined as unknown as LearningJobSample } satisfies OwnedJob
       this.jobs.push(job)
       this.latest.job = job
+      this.call(() => this.native.submitInput(handle, input))
       const initial = this.refresh(job)
       if (initial.quotaBytes !== quota || !initial.members.includes(initial.rootPid)
         || !initial.retained.some(p => p.pid === initial.rootPid && !p.signaled)) throw exerciseCoreError('QUOTA_OR_OWNERSHIP')

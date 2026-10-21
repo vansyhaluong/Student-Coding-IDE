@@ -1699,7 +1699,20 @@ adapter end-to-end/Windows 10. 9D.1 IN_PROGRESS qua contracts Bước 1 và file
 SDK 10.x, discovery filesystem riêng Learning đã triển khai/kiểm thử đọc file;
 Step 3 đã sinh harness/config và compile Roslyn thật trong Learning Job với
 reference net10.0 cục bộ; chưa native stdin, chạy assembly/sample hoặc wiring.
-Bằng chứng và giới hạn: PHASE-9D1-CSHARP-COMPILER.md. Run production vẫn UNSUPPORTED.
+Bằng chứng và giới hạn: PHASE-9D1-CSHARP-COMPILER.md. Step 4 bổ sung transport
+stdin/EOF UTF-8 có giới hạn riêng Learning, đã kiểm thử với process Windows thật;
+chưa chạy assembly/sample C#. Xem PHASE-9D1-NATIVE-STDIN.md.
+Step 5 đã kiểm chứng Main-internal chạy sample đầu bằng Roslyn/.NET thật, JSON
+stdin/EOF, sáu kiểu dữ liệu, lỗi và Policy B cleanup. Xem
+PHASE-9D1-CSHARP-EXECUTION.md. Step 6 triển khai Main-internal compile một lần,
+chạy sample catalogue tuần tự trong các Job riêng, fail-fast, barrier VERIFIED
+giữa cases và notRunCaseIndices chính xác; giữ deadline/output xuyên operation
+và Policy B. Xem PHASE-9D1-CSHARP-MULTICASE.md. Step 7 nối production C# Run
+qua ExerciseService → IPC/Preload → Result Panel, đã kiểm chứng Electron thật
+trên Windows 11, actuals, diagnostics, lỗi/resource limits, lifecycle và isolation
+Project Run/PTY. JavaScript vẫn UNSUPPORTED; Submit disabled, không comparison
+hoặc lưu kết quả chấm. Xem PHASE-9D1-CSHARP-UI.md. 9D.1/Common vẫn IN_PROGRESS,
+chờ người dùng nghiệm thu cuối; Windows 10/packaging chưa kiểm chứng trong bước này.
 Scope, dependencies và
 exit gates: Implementation Plan Section 13.6; ownership: Architecture Section 6.
 Roadmap này không mở rộng Project Run/language intelligence hiện tại; Python và
