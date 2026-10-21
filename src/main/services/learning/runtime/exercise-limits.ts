@@ -62,6 +62,26 @@ export class ExerciseLimits {
     } finally { cancelTimer(); remove() }
   }
   finishOperation(): void { this.cancelOperation() }
+  checkOperation(): void {
+    if (this.clock.now() >= this.operationDeadline) this.cancel('OPERATION_TIMEOUT')
+    if (this.controller.signal.aborted) throw this.controller.signal.reason
+  }
+  /** Race only the caller; Core continues owning the original barrier task. */
+  async barrier<T>(task: Promise<T>): Promise<T> {
+    this.checkOperation()
+    const signal = this.controller.signal
+    let remove = () => {}
+    const aborted = new Promise<never>((_, reject) => {
+      const listener = () => reject(signal.reason)
+      signal.addEventListener('abort', listener, { once: true })
+      remove = () => signal.removeEventListener('abort', listener)
+    })
+    try {
+      const result = await Promise.race([this.waitCleanup(task), aborted])
+      this.checkOperation()
+      return result
+    } finally { remove() }
+  }
   /** This races only the caller. It never cancels/forgets the underlying task. */
   async waitCleanup<T>(task: Promise<T>): Promise<T> {
     return waitForExerciseCleanup(task, this.clock)

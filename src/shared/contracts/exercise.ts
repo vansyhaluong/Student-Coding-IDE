@@ -1,5 +1,6 @@
 import type { AppResult } from './app-error'
 import type { ExerciseDraft, ExerciseLanguage } from './practice'
+import type { CsharpExecutionResult, CsharpSampleSchema } from './csharp-execution'
 
 /** Approved initial Learning policy. Neither Project Run nor Terminal uses this. */
 export const EXERCISE_LIMITS = Object.freeze({
@@ -81,6 +82,8 @@ export interface ExerciseSnapshot extends ExerciseSessionReference {
   stdout: string
   stderr: string
   cleanup: ExerciseCleanupSnapshot
+  /** Main catalogue schema; no commands, paths, expected values or process metadata. */
+  csharp?: { schema: CsharpSampleSchema; result: CsharpExecutionResult }
 }
 
 export interface ExerciseApi {

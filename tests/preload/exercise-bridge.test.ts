@@ -30,6 +30,24 @@ it('exposes only the four semantic methods and explicitly declared channels', as
   expect(f.invoke.mock.calls.map(c => c[0])).toEqual([EXERCISE_CHANNELS.run, EXERCISE_CHANNELS.snapshot, EXERCISE_CHANNELS.stop])
 })
 
+it('carries detached typed C# results and rejects malformed or privileged nested data before delivery', async () => {
+  const f = fixture(), listener = vi.fn()
+  const csharp: NonNullable<ExerciseSnapshot['csharp']> = { schema: { parameterTypes: ['int32', 'int32'], returnType: 'int32', sampleCount: 2 },
+    result: { compile: { status: 'SUCCEEDED', exitCode: 0, diagnostics: [], stdout: '', stderr: '', failure: null },
+      cases: [{ caseIndex: 0, outcome: 'RETURNED', actual: 8, stdout: '', stderr: '', exitCode: 0, failure: null }], notRunCaseIndices: [1], failure: null } }
+  f.bridge.onChanged(listener)
+  f.invoke.mockResolvedValueOnce({ ok: true, value: { ...snapshot(), language: 'csharp', csharp } })
+  const admitted = await f.bridge.run({ ...request, language: 'csharp' })
+  expect(admitted.ok).toBe(true)
+  for (const payload of [{ ...csharp, nativeHandle: 12 }, { ...csharp, result: { ...csharp.result, notRunCaseIndices: [0] } },
+    { ...csharp, schema: { ...csharp.schema, returnType: 'boolean' } }]) f.emit({ ...snapshot(1, 1), language: 'csharp', csharp: payload })
+  expect(listener).not.toHaveBeenCalled()
+  f.emit({ ...snapshot(1, 2), language: 'csharp', csharp })
+  expect(listener).toHaveBeenCalledOnce(); expect(listener.mock.calls[0][0].csharp.result.cases[0].actual).toBe(8)
+  listener.mock.calls[0][0].csharp.result.cases[0].actual = 99
+  if (admitted.ok) expect(admitted.value.csharp?.result.cases[0].actual).toBe(8)
+})
+
 it('validates all requests locally and rejects arbitrary ownership/native/path authority', async () => {
   const f = fixture()
   for (const v of [null, {}, { ...request, owner: 2 }, { ...request, command: 'x' }, { ...request, code: 'x'.repeat(262145) }]) {

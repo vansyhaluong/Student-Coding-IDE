@@ -13,10 +13,11 @@ function mockNative() {
   let pid = 10
   const native: LearningNativeBinding = {
     capability: 'student-ide-learning-job-v1',
+    submitInput: vi.fn(),
     start: vi.fn((_exe, _args, _cwd, quota) => {
       const h = {}, rootPid = ++pid
       states.set(h, { terminated: false, released: false, handlesClosed: false })
-      samples.set(h, { rootPid, quotaBytes: quota, peakJobCommitBytes: 100, reportedJobCommitBytes: 90,
+      samples.set(h, { stdinSettled: true, stdinFailed: false, stdinBytesWritten: 0, rootPid, quotaBytes: quota, peakJobCommitBytes: 100, reportedJobCommitBytes: 90,
         members: [rootPid], activeProcesses: 1, totalProcesses: 1, retained: [{ pid: rootPid, created: `time-${pid}`, signaled: false }],
         coverageComplete: true, observerSettled: false, exitCode: 259, events: [], stdout: Buffer.alloc(0), stderr: Buffer.alloc(0) })
       return h
@@ -47,6 +48,71 @@ function context(quota = 512 * 1024 ** 2): ExercisePhaseContext {
 const spec = { executable: 'C:\\node.exe', args: ['fixture'], cwd: 'C:\\learning' }
 
 describe('Learning Windows adapter', () => {
+  it('observes physical split UTF-8 bytes before decoding and yields promptly while draining output', async () => {
+    const { native, samples } = mockNative(), observed: Buffer[] = []
+    let resumed = false, reads = 0
+    const original = vi.mocked(native.control).getMockImplementation()!
+    vi.mocked(native.control).mockImplementation((h, op) => { if (op === 'resume') resumed = true; else original(h, op) })
+    vi.mocked(native.poll).mockImplementation(h => {
+      const s = samples.get(h)!
+      if (resumed) {
+        reads++
+        s.stdout = reads === 1 ? Buffer.from([0xc3]) : reads === 2 ? Buffer.from([0xa9]) : Buffer.alloc(0)
+        if (reads > 2) { s.members = []; s.activeProcesses = 0; s.retained[0].signaled = true; s.exitCode = 0; s.observerSettled = true }
+      }
+      return { ...s }
+    })
+    const adapter = new WindowsExerciseRuntimeAdapter(native, () => ({ ...spec, observeBytes: (_stream, bytes) => observed.push(Buffer.from(bytes)) }), {})
+    const timer = vi.spyOn(globalThis, 'setTimeout'), ctx = context()
+    try {
+      await adapter.runProcessPhase('execute', ctx)
+      expect(observed).toEqual([Buffer.from([0xc3]), Buffer.from([0xa9])])
+      expect(ctx.output).toHaveBeenCalledExactlyOnceWith('stdout', 'é')
+      expect(timer.mock.calls.map(call => call[1])).toEqual([0, 0])
+      await adapter.terminate(); await adapter.settleObservers(); await adapter.release(); await adapter.closeHandles()
+    } finally { timer.mockRestore() }
+  })
+  it.each(['\ud800', 'é'.repeat(524289)])('rejects malformed or oversized UTF-8 before native launch', async stdin => {
+    const { native } = mockNative(), adapter = new WindowsExerciseRuntimeAdapter(native, () => ({ ...spec, stdin }), {})
+    await expect(adapter.runProcessPhase('execute', context())).rejects.toMatchObject({ details: { reason: 'STDIN_CONFIGURATION' } })
+    expect(native.start).not.toHaveBeenCalled()
+  })
+
+  it('submits detached UTF-8 once before resume and sends empty EOF for compile', async () => {
+    const { native } = mockNative(), adapter = new WindowsExerciseRuntimeAdapter(native, phase => ({ ...spec, stdin: phase === 'execute' ? 'Việt 😀' : undefined }), {})
+    await adapter.runProcessPhase('compile', context(2 * 1024 ** 3))
+    await adapter.runProcessPhase('execute', context())
+    const calls = vi.mocked(native.submitInput).mock.calls
+    expect(calls[0][1]).toEqual(Buffer.alloc(0)); expect(calls[1][1]).toEqual(Buffer.from('Việt 😀'))
+    expect(vi.mocked(native.submitInput).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(native.control).mock.invocationCallOrder[0])
+    await adapter.terminate(); await adapter.settleObservers(); await adapter.release(); await adapter.closeHandles()
+  })
+
+  it('retains native ownership on input submission error for managed cleanup', async () => {
+    const { native } = mockNative(), adapter = new WindowsExerciseRuntimeAdapter(native, () => ({ ...spec, stdin: 'x' }), {})
+    vi.mocked(native.submitInput).mockImplementation(() => { throw { code: 'LEARNING_PIPE' } })
+    await expect(adapter.runProcessPhase('execute', context())).rejects.toThrow()
+    expect(native.control).not.toHaveBeenCalled()
+    expect(adapter.processResult()).toMatchObject({ failure: 'INFRASTRUCTURE_FAILURE', observerSettled: false })
+    await adapter.terminate(); await adapter.settleObservers(); await adapter.release(); await adapter.closeHandles()
+    expect(adapter.diagnostics()[0]).toMatchObject({ released: true, handlesClosed: true })
+  })
+
+  it('keeps process completion pending while stdin remains pending and drains after broken pipe', async () => {
+    const { native, samples } = mockNative(), adapter = new WindowsExerciseRuntimeAdapter(native, () => ({ ...spec, stdin: 'x' }), {})
+    const original = vi.mocked(native.control).getMockImplementation()!
+    vi.mocked(native.control).mockImplementation((h, op) => { original(h, op); if (op === 'resume') {
+      samples.get(h)!.stdinSettled = false; samples.get(h)!.observerSettled = false
+    } })
+    const task = adapter.runProcessPhase('execute', context())
+    let settled = false; void task.then(() => { settled = true }, () => { settled = true })
+    await new Promise(r => setTimeout(r, 20)); expect(settled).toBe(false)
+    await expect(adapter.release()).rejects.toThrow()
+    const sample = samples.values().next().value!
+    sample.stdinSettled = true; sample.stdinFailed = true; sample.observerSettled = true
+    await expect(task).rejects.toMatchObject({ details: { reason: 'STDIN_DELIVERY_FAILED' } })
+    await adapter.terminate(); await adapter.settleObservers(); await adapter.release(); await adapter.closeHandles()
+  })
   it('returns nonzero compiler exit as detached data while Common runPhase still rejects it', async () => {
     const { native, samples } = mockNative(), adapter = new WindowsExerciseRuntimeAdapter(native, () => spec, {})
     const control = vi.mocked(native.control).getMockImplementation()!

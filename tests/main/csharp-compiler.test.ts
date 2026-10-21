@@ -20,13 +20,13 @@ async function fixture(exitCode = 1, output = 'Solution.cs(1,2): error CS1002: C
   const root = await mkdtemp(join(tmpdir(), 'compile-fixture-'))
   const workspace = new ExerciseWorkspace(root, 'exercise_12345678-1234-4234-8234-123456789abc', { acquire: async () => ({ release: async () => {} }) })
   await workspace.prepare()
-  const sample: LearningJobSample = { rootPid: 12, members: [12], activeProcesses: 1, totalProcesses: 1, retained: [{ pid: 12, created: 'identity', signaled: false }],
+  const sample: LearningJobSample = { stdinSettled: true, stdinFailed: false, stdinBytesWritten: 0, rootPid: 12, members: [12], activeProcesses: 1, totalProcesses: 1, retained: [{ pid: 12, created: 'identity', signaled: false }],
     coverageComplete: true, observerSettled: false, exitCode: 259, quotaBytes: EXERCISE_LIMITS.compileJobMemoryBytes,
     peakJobCommitBytes: 0, reportedJobCommitBytes: 0, events: [], stdout: Buffer.alloc(0), stderr: Buffer.alloc(0) }
   const state = { terminated: false, released: false, handlesClosed: false }
   const finish = () => { sample.members = []; sample.activeProcesses = 0; sample.retained[0].signaled = true; sample.observerSettled = true; sample.exitCode = exitCode }
   const native: LearningNativeBinding = {
-    capability: 'student-ide-learning-job-v1', start: vi.fn(() => ({})),
+    capability: 'student-ide-learning-job-v1', start: vi.fn(() => ({})), submitInput: vi.fn(),
     poll: vi.fn(() => { const result = { ...sample }; sample.stdout = Buffer.alloc(0); sample.stderr = Buffer.alloc(0); sample.events = []; return result }),
     control: vi.fn((_h, op) => {
       if (op === 'resume' && !running) { finish(); sample.stdout = Buffer.from(output) }

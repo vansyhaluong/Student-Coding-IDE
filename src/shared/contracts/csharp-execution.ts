@@ -58,6 +58,8 @@ export interface CsharpExecutionResult {
   compile: CsharpCompileResult | null
   /** Contiguous sample prefix, sequential/fail-fast; no cases after the first failure. */
   cases: CsharpCaseResult[]
+  /** Exact increasing suffix of samples not yet attempted. No fabricated case result. */
+  notRunCaseIndices: number[]
   failure: CsharpExecutionFailure | null
 }
 

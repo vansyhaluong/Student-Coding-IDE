@@ -84,7 +84,7 @@ async function ready(s: ExerciseSnapshot) {
 function nativeExecution(workspace: ExerciseWorkspace, options: { phases?: ExerciseExecution['phases']; compileMs?: number;
   executeMs?: number; tree?: boolean; releaseFault?: boolean; historyGap?: boolean; executeScript?: string; missing?: boolean } = {}): ExerciseExecution {
   let fail = options.releaseFault ?? false
-  const binding: LearningNativeBinding = { capability: native.capability, state: native.state,
+  const binding: LearningNativeBinding = { capability: native.capability, state: native.state, submitInput: native.submitInput,
     acquireLease: native.acquireLease, watch: native.watch, observation: native.observation,
     poll: native.poll, start: (...args) => { const handle = native.start(...args); jobs.push({ handle, initial: native.poll(handle) }); return handle },
     control: (h, action) => {

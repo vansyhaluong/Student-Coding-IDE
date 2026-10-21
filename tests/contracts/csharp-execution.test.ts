@@ -14,7 +14,7 @@ const compiled: CsharpCompileResult = { status: 'SUCCEEDED', exitCode: 0, diagno
 const returned = { caseIndex: 0, outcome: 'RETURNED', actual: 8, stdout: '', stderr: '', exitCode: 0, failure: null }
 const runtimeFailure: CsharpExecutionFailure = { kind: 'RUNTIME_ERROR', phase: 'execute', caseIndex: 0 }
 const failed = { ...returned, outcome: 'FAILED', actual: null, exitCode: 23, failure: runtimeFailure }
-const report = { compile: compiled, cases: [returned], failure: null }
+const report = { compile: compiled, cases: [returned], notRunCaseIndices: [1], failure: null }
 const draft = { exerciseId: 'ch2-01', language: 'csharp', code: 'public class Solution {}', sourceRevision: 1 }
 
 describe('C# harness JSON and catalogue schema', () => {
@@ -142,7 +142,7 @@ describe('C# sample results are unjudged bounded observations', () => {
     expect(validateCsharpCaseResult({ ...returned, exitCode: 1 }, schema).ok).toBe(false)
   })
   it('requires successful compile before a contiguous sequential sample prefix; fails fast', () => {
-    expect(validateCsharpExecutionResult({ compile: null, cases: [], failure: null }, schema).ok).toBe(true)
+    expect(validateCsharpExecutionResult({ compile: null, cases: [], notRunCaseIndices: [0, 1], failure: null }, schema).ok).toBe(true)
     expect(validateCsharpExecutionResult(report, schema).ok).toBe(true)
     expect(validateCsharpExecutionResult({ ...report, cases: [failed], failure: runtimeFailure }, schema).ok).toBe(true)
     const reordered = { caseIndex: 0, phase: 'execute', kind: 'RUNTIME_ERROR' }
@@ -156,7 +156,7 @@ describe('C# sample results are unjudged bounded observations', () => {
   it('applies a single bounded report envelope, not a fresh output allowance per case', () => {
     const half = 'x'.repeat(EXERCISE_LIMITS.outputBytes / 2)
     expect(validateCsharpExecutionResult({ ...report, cases: [{ ...returned, stdout: half },
-      { ...returned, caseIndex: 1, stderr: half }] }, schema).ok).toBe(false)
+      { ...returned, caseIndex: 1, stderr: half }], notRunCaseIndices: [] }, schema).ok).toBe(false)
     expect(validateCsharpExecutionResult({ ...report, compile: { ...compiled, stdout: half }, cases: [{ ...returned, stdout: half }] }, schema).ok).toBe(false)
   })
   it.each(['expected', 'verdict', 'passed', 'accepted', 'cleanupComplete', 'workspacePath', 'pid', 'nativeHandle']) (
@@ -165,6 +165,19 @@ describe('C# sample results are unjudged bounded observations', () => {
       expect(validateCsharpCaseResult({ ...returned, [field]: 'untrusted' }, schema).ok).toBe(false)
     },
   )
+  it('requires exact coverage by attempted prefix and increasing not-run suffix', () => {
+    const s = { ...schema, sampleCount: 3 }
+    const valid = { ...report, notRunCaseIndices: [1, 2] }
+    expect(validateCsharpExecutionResult(valid, s).ok).toBe(true)
+    for (const notRunCaseIndices of [[], [1], [2], [2, 1], [1, 1], [0, 2], [-1, 2], [1, 3], [1.5, 2], new Array(2)]) {
+      expect(validateCsharpExecutionResult({ ...valid, notRunCaseIndices }, s).ok).toBe(false)
+    }
+    const compile = { ...compiled, status: 'FAILED', exitCode: 1, diagnostics: [diagnostic], failure: { kind: 'COMPILE_ERROR', phase: 'compile', caseIndex: null } }
+    expect(validateCsharpExecutionResult({ compile, cases: [], notRunCaseIndices: [0, 1, 2], failure: compile.failure }, s).ok).toBe(true)
+    expect(validateCsharpExecutionResult({ compile, cases: [], notRunCaseIndices: [1, 2], failure: compile.failure }, s).ok).toBe(false)
+    expect(validateCsharpExecutionResult({ ...report, cases: [returned, { ...failed, caseIndex: 1, failure: { ...runtimeFailure, caseIndex: 1 } }],
+      notRunCaseIndices: [2], failure: { ...runtimeFailure, caseIndex: 1 } }, s).ok).toBe(true)
+  })
   it.each(['args', 'command', 'path', 'compilerArguments', 'sdkPath', 'samples', 'customCases', 'signature']) (
     'keeps Renderer Run unable to supply %s', field => {
       expect(validateExerciseRunRequest({ ...draft, [field]: 'untrusted' }).ok).toBe(false)

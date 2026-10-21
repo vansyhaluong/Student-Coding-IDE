@@ -2,6 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import type { ExerciseApi, ExerciseRunRequest, ExerciseSnapshot, ExerciseStopRequest } from '../../../../../shared/contracts/exercise'
 import { validateExerciseSnapshot } from '../../../../../shared/contracts/exercise-validation'
 import type { ExerciseLanguage } from '../../../../../shared/contracts/practice'
+import type { CsharpFailureKind } from '../../../../../shared/contracts/csharp-execution'
+
+export const csharpFailureMessage: Record<CsharpFailureKind, string> = {
+  SDK_MISSING: 'Chưa tìm thấy .NET SDK 10.x đã cài đặt.',
+  SDK_INCOMPATIBLE: '.NET SDK đã cài đặt không phù hợp hoặc không hợp lệ.',
+  COMPILE_ERROR: 'Không thể biên dịch. Kiểm tra cú pháp và chữ ký hàm.',
+  RUNTIME_ERROR: 'Hàm gặp lỗi khi chạy hoặc trả về dữ liệu không hợp lệ.',
+  TIMEOUT: 'Thực thi đã dừng vì vượt thời gian cho phép.',
+  JOB_MEMORY_LIMIT: 'Thực thi đã dừng vì vượt giới hạn bộ nhớ.',
+  OUTPUT_LIMIT: 'Thực thi đã dừng vì vượt giới hạn đầu ra.',
+  INFRASTRUCTURE_FAILURE: 'Không thể hoàn tất thực thi hoặc thu hồi tài nguyên an toàn.',
+}
 
 export interface ExerciseRunView {
   status: 'idle' | 'running' | 'error' | 'unsupported' | 'cancelled' | 'cleanup-pending' | 'finished'
@@ -23,12 +35,13 @@ function viewFor(s: ExerciseSnapshot): ExerciseRunView {
   if (s.cleanup.proof === 'HISTORY_UNVERIFIED') return { status: 'finished', busy: false, snapshot: s,
     message: 'Đã kết thúc. Tài nguyên được giữ cách ly vì chưa đủ bằng chứng thu hồi.' }
   const cancelled = ['CONTEXT_CHANGED', 'LEARNING_LEFT', 'OWNER_LOST', 'SHUTDOWN'].includes(s.reason ?? '')
-  const message = cancelled ? 'Đã dừng thực thi.' : s.reason === 'COMPLETED' ? 'Đã kết thúc thực thi.'
+  const failure = s.csharp?.result.failure
+  const message = cancelled ? 'Đã dừng thực thi.' : failure ? csharpFailureMessage[failure.kind] : s.reason === 'COMPLETED' ? 'Đã kết thúc thực thi.'
     : s.reason?.endsWith('_TIMEOUT') ? 'Thực thi đã dừng vì vượt thời gian cho phép.'
       : s.reason === 'OUTPUT_LIMIT' ? 'Thực thi đã dừng vì vượt giới hạn đầu ra.'
         : s.reason === 'JOB_MEMORY_LIMIT' ? 'Thực thi đã dừng vì vượt giới hạn bộ nhớ.'
           : 'Không thể hoàn tất thực thi.'
-  return { status: cancelled ? 'cancelled' : s.reason === 'COMPLETED' ? 'finished' : 'error', busy: false, message, snapshot: s }
+  return { status: cancelled ? 'cancelled' : !failure && s.reason === 'COMPLETED' ? 'finished' : 'error', busy: false, message, snapshot: s }
 }
 
 /** Renderer observes Main-issued references; local context tokens only discard stale UI work. */
@@ -72,7 +85,14 @@ export function useExerciseRuntime(input: { active: boolean; exerciseId?: string
     const s = attempt.snapshot
     try {
       const result = await api.snapshot({ sessionId: s.sessionId, generation: s.generation })
-      if (!current(ctx, attempt)) return
+      if (!current(ctx, attempt) || attempt.terminal) return
+      // A newer authorized event may beat this in-flight invoke. Its older
+      // response is correctly rejected by Preload; never overwrite that event
+      // with a transport error or stop observing the live operation.
+      if (attempt.snapshot && attempt.snapshot.sequence > s.sequence) {
+        ctx.timer = setTimeout(() => { void probe(ctx, attempt) }, 500)
+        return
+      }
       if (!result.ok) throw Error('Snapshot unavailable')
       const validated = validateExerciseSnapshot(result.value)
       if (!validated.ok || validated.value.sessionId !== s.sessionId || validated.value.generation !== s.generation
@@ -81,8 +101,11 @@ export function useExerciseRuntime(input: { active: boolean; exerciseId?: string
       accept(ctx, attempt, result.value)
       if (!attempt.terminal) ctx.timer = setTimeout(() => { void probe(ctx, attempt) }, 500)
     } catch {
-      if (current(ctx, attempt)) setState({ key: ctx.key, view: { status: 'error', busy: true,
-        message: 'Không thể cập nhật trạng thái thực thi. Phiên chưa được xác nhận thu hồi.' } })
+      if (current(ctx, attempt) && !attempt.terminal) {
+        if (attempt.snapshot && attempt.snapshot.sequence > s.sequence) ctx.timer = setTimeout(() => { void probe(ctx, attempt) }, 500)
+        else setState({ key: ctx.key, view: { status: 'error', busy: true,
+          message: 'Không thể cập nhật trạng thái thực thi. Phiên chưa được xác nhận thu hồi.' } })
+      }
     }
   }
   useEffect(() => {

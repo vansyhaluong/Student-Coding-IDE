@@ -75,6 +75,21 @@ it('fetches snapshot after admission to recover an event that preceded its invok
   expect(f.api.stop).not.toHaveBeenCalled()
 })
 
+it.each([false, true])('preserves a newer event when an older in-flight snapshot is rejected (terminal=%s)', async terminal => {
+  const f = fixture(), pending = deferred<Awaited<ReturnType<ExerciseApi['snapshot']>>>()
+  f.api.snapshot.mockReturnValueOnce(pending.promise)
+  await f.run()
+  f.emit(terminal ? final() : { ...snapshot(3), phase: 'compile' })
+  await act(async () => { pending.resolve(fail); await Promise.resolve() })
+  expect(f.result.current.view.status).toBe(terminal ? 'finished' : 'running')
+  expect(f.result.current.view.busy).toBe(!terminal)
+  if (!terminal) {
+    f.api.snapshot.mockResolvedValueOnce({ ok: true, value: final() })
+    await act(async () => { await vi.advanceTimersByTimeAsync(500) })
+    expect(f.result.current.view.status).toBe('finished')
+  }
+})
+
 it.each(['exercise', 'language'] as const)('cancels a known session on %s change and never renders the old result', async change => {
   const f = fixture(); await f.run(); const callback = [...f.listeners][0]
   f.rerender({ ...f.initialProps, ...(change === 'exercise' ? { exerciseId: 'ch2-02' } : { language: 'javascript' as const }) })

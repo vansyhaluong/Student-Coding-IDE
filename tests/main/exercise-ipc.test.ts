@@ -108,6 +108,9 @@ it('publishes only the current owner/session/generation and increasing sequence;
   const listener = vi.fn(); f.bridge.onChanged(listener)
   const op = await f.run(); await entered.promise
   const current = f.service.snapshot(1, op.ref)
+  // Legitimate phase-settlement events can precede this manual routing probe.
+  f.changed.mockClear()
+  listener.mockClear()
   f.ipc.publish(2, current); expect(f.changed).not.toHaveBeenCalled()
   f.ipc.publish(1, { ...current, generation: 100 }); expect(f.changed).not.toHaveBeenCalled()
   f.ipc.publish(1, { ...current, sequence: current.sequence + 100 }); expect(f.changed).not.toHaveBeenCalled()

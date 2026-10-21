@@ -5,6 +5,7 @@ import {
 } from './exercise'
 import { isExerciseId, isExerciseLanguage, validateExerciseDraft } from './practice'
 import { validateExactObject, type ValidationResult } from './validation'
+import { isCsharpSampleSchema, validateCsharpExecutionResult } from './csharp-execution-validation'
 
 const invalid = <T>(message: string): ValidationResult<T> => ({ ok: false, issues: [{ path: '$', message }] })
 const counter = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0
@@ -80,7 +81,7 @@ function boundedOutput(stdout: unknown, stderr: unknown): stdout is string {
 
 export function validateExerciseSnapshot(v: unknown): ValidationResult<ExerciseSnapshot> {
   const r = validateExactObject(v, ['sessionId', 'generation', 'exerciseId', 'language', 'sourceRevision',
-    'sequence', 'phase', 'reason', 'stdout', 'stderr', 'cleanup'])
+    'sequence', 'phase', 'reason', 'stdout', 'stderr', 'cleanup', 'csharp'])
   if (!r.ok) return r
   const s = r.value
   const cleanup = validateExerciseCleanupSnapshot(s.cleanup)
@@ -95,7 +96,17 @@ export function validateExerciseSnapshot(v: unknown): ValidationResult<ExerciseS
   if (s.phase === 'cleanup' && (s.reason === null || cleanup.value.state === 'NOT_STARTED' || cleanup.value.state === 'FINALIZED')) {
     return invalid('Invalid cleanup phase')
   }
-  return { ok: true, value: { sessionId: s.sessionId, generation: s.generation, exerciseId: s.exerciseId,
+  let csharp: ExerciseSnapshot['csharp']
+  if ('csharp' in s) {
+    const payload = validateExactObject(s.csharp, ['schema', 'result'])
+    if (!payload.ok || s.language !== 'csharp' || !isCsharpSampleSchema(payload.value.schema)) return invalid('Invalid C# observation')
+    const result = validateCsharpExecutionResult(payload.value.result, payload.value.schema)
+    if (!result.ok) return invalid('Invalid C# observation')
+    csharp = { schema: structuredClone(payload.value.schema), result: result.value }
+  }
+  const snapshot: ExerciseSnapshot = { sessionId: s.sessionId, generation: s.generation, exerciseId: s.exerciseId,
     language: s.language, sourceRevision: s.sourceRevision, sequence: s.sequence, phase: s.phase,
-    reason: s.reason, stdout: s.stdout, stderr: s.stderr, cleanup: cleanup.value } }
+    reason: s.reason, stdout: s.stdout, stderr: s.stderr, cleanup: cleanup.value, ...(csharp ? { csharp } : {}) }
+  if (csharp && new TextEncoder().encode(JSON.stringify(snapshot)).byteLength > EXERCISE_LIMITS.outputBytes) return invalid('Learning snapshot exceeds payload limit')
+  return { ok: true, value: snapshot }
 }

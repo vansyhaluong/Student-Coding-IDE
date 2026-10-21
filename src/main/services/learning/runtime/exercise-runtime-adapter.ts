@@ -49,6 +49,8 @@ export interface ExerciseTerminationEvidence {
  * Native implementation and language drivers are deliberately not supplied here.
  */
 export interface ExerciseRuntimeAdapter {
+  /** Main-only operation barrier: no release/finalization and no new phase budget. */
+  verifyBetweenCases?(context: Pick<ExercisePhaseContext, 'signal' | 'deadline'>): Promise<void>
   runPhase(phase: ExerciseExecutionPhase, context: ExercisePhaseContext): Promise<void>
   terminate(reason: ExerciseEndReason): Promise<void>
   evidence(): Promise<ExerciseTerminationEvidence>

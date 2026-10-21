@@ -3,7 +3,7 @@ import { readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import type { AppError } from '../../../shared/contracts/app-error'
 import type { ExerciseEndReason, ExerciseRunRequest, ExerciseSessionReference, ExerciseSnapshot, ExerciseStopRequest } from '../../../shared/contracts/exercise'
-import { isExerciseSessionId, validateExerciseRunRequest, validateExerciseSessionReference, validateExerciseStopRequest } from '../../../shared/contracts/exercise-validation'
+import { isExerciseSessionId, validateExerciseRunRequest, validateExerciseSessionReference, validateExerciseSnapshot, validateExerciseStopRequest } from '../../../shared/contracts/exercise-validation'
 import { DomainError, serializeAppError } from '../../errors/app-error'
 import { FileExerciseCheckpointStore, type ExerciseCheckpointStore } from './runtime/exercise-checkpoint'
 import { exerciseClock, exerciseCoreError, waitForExerciseCleanup, type ExerciseClock } from './runtime/exercise-limits'
@@ -14,6 +14,9 @@ import type { ExerciseExecutionPhase, ExerciseLeaseProvider, ExerciseRuntimeAdap
 import { WindowsExerciseRuntimeAdapter, type LearningProcessSpec } from './runtime/windows-exercise-adapter'
 import { WindowsExerciseLeaseProvider } from './runtime/windows-exercise-lease'
 import { loadLearningNative, type LearningNativeBinding } from './runtime/windows-exercise-native'
+import { WindowsCsharpExecutionAdapter } from './runtime/csharp-execution-adapter'
+import { runCsharpSamples } from './runtime/csharp-orchestrator'
+import { exercises } from './content/exercises'
 
 type Navigation = (event: unknown, url: string, inPlace: boolean, mainFrame: boolean) => void
 export interface ExerciseOwner {
@@ -28,6 +31,8 @@ export interface ExerciseExecution {
   adapter: ExerciseRuntimeAdapter
   /** Trusted finite language-driver plan; prepare is always owned by Core first. */
   phases: readonly ('compile' | 'execute')[]
+  orchestrate?(session: ExerciseSession, progress: () => void): Promise<unknown>
+  observation?(): ExerciseSnapshot['csharp']
 }
 export interface ExerciseServiceOptions {
   root: string
@@ -49,6 +54,7 @@ interface Operation {
   executionDone: boolean
   lastPublished: number
   completion: Promise<ExerciseSnapshot>
+  execution: ExerciseExecution
 }
 interface RecoveryEntry {
   workspace: ExerciseWorkspace
@@ -170,13 +176,23 @@ export class ExerciseService {
     const session = new ExerciseSession({ request: request.value, ownerId: `webcontents:${owner}`, generation,
       hostEpoch: this.hostEpoch, workspace, adapter: execution.adapter, checkpoints: this.store(workspace), clock: this.clock })
     const operation: Operation = { owner, ownerEntry: entry, generation, session, invalidated: false,
-      executionDone: false, lastPublished: -1, completion: undefined as unknown as Promise<ExerciseSnapshot> }
+      executionDone: false, lastPublished: -1, execution, completion: undefined as unknown as Promise<ExerciseSnapshot> }
     this.last = undefined; this.active = operation
     // Begin Core prepare immediately, before returning admission to the caller.
     operation.completion = this.execute(operation, [...execution.phases])
     void operation.completion.catch(error => { if (operation.session.ownsResources) this.report(error) })
     this.publish(operation)
-    return session.snapshot()
+    return this.observation(operation)
+  }
+  private observation(op: Operation): ExerciseSnapshot {
+    const snapshot = op.session.snapshot()
+    if (this.isCurrent(op) && op.execution.observation) {
+      const csharp = op.execution.observation()
+      if (csharp) snapshot.csharp = csharp
+    }
+    const checked = validateExerciseSnapshot(snapshot)
+    if (!checked.ok) throw serviceError('INVALID_OBSERVATION')
+    return checked.value
   }
   private isCurrent(op: Operation): boolean {
     return !this.sealed && !op.invalidated && op.generation === this.generation
@@ -184,17 +200,22 @@ export class ExerciseService {
   }
   private publish(op: Operation): void {
     if (!this.isCurrent(op)) return
-    const snapshot = op.session.snapshot()
-    if (snapshot.sequence <= op.lastPublished) return
-    op.lastPublished = snapshot.sequence
-    try { this.options.onSnapshot?.(op.owner, structuredClone(snapshot)) } catch (error) { this.report(error) }
+    try {
+      const snapshot = this.observation(op)
+      if (snapshot.sequence <= op.lastPublished) return
+      op.lastPublished = snapshot.sequence
+      this.options.onSnapshot?.(op.owner, structuredClone(snapshot))
+    } catch (error) { this.report(error) }
   }
   private async execute(op: Operation, phases: readonly ('compile' | 'execute')[]): Promise<ExerciseSnapshot> {
     try {
-      await op.session.runPhase('prepare'); this.publish(op)
-      for (const phase of phases) {
-        if (!this.isCurrent(op)) throw serviceError('STALE_SESSION', 'PERMISSION_DENIED')
-        await op.session.runPhase(phase); this.publish(op)
+      if (op.execution.orchestrate) await op.execution.orchestrate(op.session, () => this.publish(op))
+      else {
+        await op.session.runPhase('prepare'); this.publish(op)
+        for (const phase of phases) {
+          if (!this.isCurrent(op)) throw serviceError('STALE_SESSION', 'PERMISSION_DENIED')
+          await op.session.runPhase(phase); this.publish(op)
+        }
       }
     } catch { /* Core retains execution reason/error and starts Policy B cleanup. */ }
     finally { op.executionDone = true }
@@ -205,7 +226,7 @@ export class ExerciseService {
   private async cleanup(op: Operation, reason: ExerciseEndReason = 'COMPLETED'): Promise<ExerciseSnapshot> {
     try { await op.session.close(reason) }
     catch (error) { this.report(error); throw error }
-    const snapshot = op.session.snapshot()
+    const snapshot = this.observation(op)
     this.publish(op)
     if (!op.session.ownsResources && op.executionDone && this.active === op) {
       if (this.isCurrent(op)) this.last = { owner: op.owner, ownerEntry: op.ownerEntry, snapshot: structuredClone(snapshot) }
@@ -217,7 +238,7 @@ export class ExerciseService {
     if (!validateExerciseSessionReference(reference).ok) throw serviceError('INVALID_REFERENCE', 'INVALID_INPUT')
     const op = this.active
     if (op && op.owner === owner && this.isCurrent(op)) {
-      const s = op.session.snapshot()
+      const s = this.observation(op)
       if (s.sessionId === reference.sessionId && s.generation === reference.generation) return s
     }
     const last = this.last
@@ -278,7 +299,7 @@ export class ExerciseService {
   }
 }
 
-/** Optional future language-driver configuration; no C#/JS driver is supplied by step 4. */
+/** Main-only fixed-driver injection for controlled tests; never an IPC capability. */
 export interface WindowsExerciseDriver {
   phases: ExerciseExecution['phases']
   plan(phase: ExerciseExecutionPhase): LearningProcessSpec | null
@@ -293,6 +314,23 @@ export function createWindowsExerciseService(root: string, options: {
   return new ExerciseService({ root, onCleanupError: options.onCleanupError, onSnapshot: options.onSnapshot,
     leases: { acquire: id => new WindowsExerciseLeaseProvider(root, binding()).acquire(id) },
     createExecution: (request, workspace) => {
+      if (!options.driver && request.language === 'csharp') {
+        const exercise = exercises.find(e => e.id === request.exerciseId)
+        if (!exercise) throw serviceError('INVALID_EXERCISE', 'INVALID_INPUT')
+        // Bound schema/identity/cleanup envelope separately from the unchanged
+        // Core raw-byte quota. Reject an oversized actual as OUTPUT_LIMIT.
+        const adapter = new WindowsCsharpExecutionAdapter(request, workspace, binding(), undefined, exercises, 4096)
+        const schema = { parameterTypes: exercise.parameters.map(p => p.type), returnType: exercise.returnType, sampleCount: exercise.samples.length }
+        return { adapter, phases: ['compile', 'execute'], orchestrate: (session, progress) => runCsharpSamples(session, adapter, progress),
+          observation: () => {
+            try { return { schema, result: adapter.result() } }
+            catch (error) {
+              const reason = error instanceof DomainError ? error.details?.reason : undefined
+              if (reason === 'RESULT_PENDING' || reason === 'RESULT_INVALIDATED') return undefined
+              throw error
+            }
+          } }
+      }
       const driver = options.driver?.(request, workspace)
       if (!driver) throw serviceError('LANGUAGE_ADAPTER_UNAVAILABLE', 'UNSUPPORTED')
       return { phases: driver.phases, adapter: new WindowsExerciseRuntimeAdapter(binding(), phase => driver.plan(phase)) }

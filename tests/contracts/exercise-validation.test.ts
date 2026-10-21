@@ -99,6 +99,26 @@ describe('Policy B public cleanup invariants', () => {
 })
 
 describe('Exercise snapshot boundary', () => {
+  it('validates and detaches the typed C# result/schema without accepting privileged fields', () => {
+    const csharp = { schema: { parameterTypes: ['int32' as const], returnType: 'boolean' as const, sampleCount: 2 },
+      result: { compile: { status: 'SUCCEEDED' as const, exitCode: 0, diagnostics: [], stdout: '', stderr: '', failure: null },
+        cases: [{ caseIndex: 0, outcome: 'RETURNED' as const, actual: false, stdout: '', stderr: '', exitCode: 0, failure: null }],
+        notRunCaseIndices: [1], failure: null } }
+    const checked = validateExerciseSnapshot({ ...snapshot, csharp })
+    expect(checked.ok).toBe(true)
+    csharp.result.cases[0].actual = true
+    if (checked.ok) expect(checked.value.csharp?.result.cases[0].actual).toBe(false)
+    for (const value of [
+      { ...snapshot, language: 'javascript', csharp },
+      { ...snapshot, csharp: { ...csharp, command: 'secret' } },
+      { ...snapshot, csharp: { ...csharp, schema: { ...csharp.schema, path: 'secret' } } },
+      { ...snapshot, csharp: { ...csharp, result: { ...csharp.result, notRunCaseIndices: [0] } } },
+      { ...snapshot, csharp: { ...csharp, schema: { ...csharp.schema, returnType: 'int32' } } },
+    ]) expect(validateExerciseSnapshot(value).ok).toBe(false)
+    csharp.result.cases[0].stdout = 'x'.repeat(EXERCISE_LIMITS.outputBytes - 450)
+    // Individually bounded result + transport envelope must fit together.
+    expect(validateExerciseSnapshot({ ...snapshot, csharp }).ok).toBe(false)
+  })
   it('accepts active, cleanup-pending, clean and quarantined snapshots', () => {
     const values = [snapshot,
       { ...snapshot, phase: 'cleanup', reason: 'EXECUTE_TIMEOUT', cleanup: { ...idle, state: 'PENDING', pendingIo: true } },

@@ -266,7 +266,7 @@ before affected work continues.
 | Phase 6 — Settings & UX | `COMPLETE` | Settings, dependency guidance and Recent Projects; verified 2026-09-14 |
 | Phase 7 — Testing, Stabilization & Windows Packaging | `NOT_STARTED` | V1 acceptance, packaging, installer, and final review |
 | Phase 8 — Local AI Chat | `COMPLETE` | Existing 8A–8C completion evidence in Section 13.5 |
-| Phase 9 — Learning / Programming Techniques | `IN_PROGRESS` | 9A–9C COMPLETE; Common IN_PROGRESS with bounded Step 7 evidence; 9D.1 IN_PROGRESS contracts/filesystem resolver; 9D.2 and 9E–9G NOT_STARTED; production adapter/Windows acceptance due; Section 13.6 |
+| Phase 9 — Learning / Programming Techniques | `IN_PROGRESS` | 9A–9C COMPLETE; Common IN_PROGRESS; 9D.1 IN_PROGRESS through production C# UI Step 7 on Windows 11; 9D.2 and 9E–9G NOT_STARTED; final user acceptance/Windows 10/packaging due; Section 13.6 |
 | C# Project Run extension — M1 + M2 | `NOT_STARTED` | Approved planning baseline; Section 13.7; both milestones required for completion |
 
 Allowed tracking states are `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, and
@@ -4038,7 +4038,7 @@ is already delivered in 9C; broader quiz/progress persistence acceptance remains
 ### 9D — Exercise Runtime
 
 Status: `IN_PROGRESS` for production 9D Common by approval 2026-10-20.
-Prerequisite: 9C COMPLETE. 9D.1 IN_PROGRESS through authorized compile-only Roslyn/harness Step 3;
+Prerequisite: 9C COMPLETE. 9D.1 IN_PROGRESS through authorized production C# UI Step 7 on Windows 11;
 9D.2 remains NOT_STARTED. Common completion is not claimed.
 An isolated 9D.0 feasibility prototype is authorized (2026-10-19): installed
 developer .NET/Node, no Learning UI/Run/Submit integration, no production runtime
@@ -4354,7 +4354,7 @@ stale-result rejection and Project/Terminal isolation during staged implementati
 
 | Adapter package | Status | Runtime direction |
 |---|---|---|
-| 9D.1 — C# | `IN_PROGRESS` | Contracts, SDK resolver, process-result port and Step 3 harness/direct Roslyn compiler implemented and compile-tested; native stdin/execute/adapter/wiring and supported-Windows acceptance remain due |
+| 9D.1 — C# | `IN_PROGRESS` | Production C# UI/IPC/Preload/Roslyn/.NET flow verified on Windows 11 through Step 7; final user acceptance, Windows 10/packaging remain due |
 | 9D.2 — JavaScript | `NOT_STARTED` | Installed stable Node.js 24.x; no patch lock; driver implementation/acceptance remain due |
 
 Each adapter requires the common runtime contract and explicit task scope. The
@@ -4418,6 +4418,69 @@ build and final diff checks PASS. Evidence/limits:
 [Step 3 compiler report](PHASE-9D1-CSHARP-COMPILER.md). No native stdin, execute,
 production driver/IPC/UI, Submit/Judge, protected-domain or policy changes.
 9D.1/Common remain IN_PROGRESS. Stop for approval before the execute package.
+
+9D.1 Step 4 authorized/verified 2026-10-21: Learning-only bounded UTF-8
+stdin/EOF, nonblocking overlapped writes and retained I/O through Policy B cleanup.
+275 focused/regression tests (including nine real native stdin cases) and one
+native process-result regression PASS; typecheck, targeted lint and production/
+native build PASS. Evidence/limits: [stdin report](PHASE-9D1-NATIVE-STDIN.md).
+No assembly/sample execution, multi-case, production wiring or protected-domain
+change. 9D.1/Common remain IN_PROGRESS. Stop for approval before Step 5.
+
+9D.1 Step 5 authorized/verified 2026-10-21: Main-internal C# adapter executes
+sample index 0 through discovery, compile, separate Learning Job, native JSON
+stdin/EOF, harness invocation and validated actual result. 346 focused/regression
+tests PASS (1 standalone observation SKIP), including nine native stdin cases;
+22 real Roslyn/.NET execution cases PASS. Typecheck, targeted lint and production/
+native build PASS. Evidence/corrections: [execution report](PHASE-9D1-CSHARP-EXECUTION.md).
+Core maps existing semantic failures; bounded runtime identity revalidation and
+productive pipe draining fit unchanged 2s/60s/12s budgets, quotas and Policy B.
+No multi-case loop, production IPC/Renderer wiring or protected-domain changes.
+9D.1/Common remain IN_PROGRESS. Stop for approval before the next step.
+
+9D.1 Step 6 authorized/verified 2026-10-21, including explicit approval of the
+result/barrier amendment: compile exactly once, execute Main-catalogue samples
+sequentially in separate Jobs, return an attempted prefix plus exact ordered
+notRunCaseIndices. Core owns every pending VERIFIED barrier task; retained native
+identities/checkpoints are released only by final Policy B cleanup. Original
+60s operation deadline and 1 MiB output limit span compile and all cases; 2s
+execute and 12s cleanup caller waits remain unchanged. Focused tests and real
+multi-case evidence: PHASE-9D1-CSHARP-MULTICASE.md. No IPC/Renderer wiring,
+comparison, new operation/queue or protected-domain changes. 9D.1/Common remain
+IN_PROGRESS. Stop for approval of Step 7 Production Wiring & UI Integration.
+
+9D.1 Step 7 authorized/verified 2026-10-21: the existing Windows ExerciseService
+factory now selects the C# adapter/orchestrator; JavaScript stays UNSUPPORTED.
+Existing Exercise channels carry an optional bounded schema/result observation,
+compiler diagnostics and exact not-run suffix. Main/catalogue authority, frame/
+document epoch, generation/sequence and cancellation ownership stay enforced.
+Core sequence distinguishes phase entry/settlement; the Renderer preserves newer
+events against stale in-flight invoke failures. Existing Result Panel/Run controls
+show actuals and safe failures; no Stop/Cancel, comparison, Submit or persistence.
+Focused regressions: 411 PASS / 1 historical SDK opt-in SKIP. Windows 11 production
+Electron acceptance PASS across 12 C# operations / 25 real Jobs, plus JavaScript
+UNSUPPORTED and five concurrent real Project Run/PTY probes. Targeted native
+regressions: 2/2 PASS (17 other tests name-filtered). Typecheck, targeted lint,
+production/native build and diff checks PASS; full evidence/limitations:
+PHASE-9D1-CSHARP-UI.md. No protected-domain or runtime-policy edits; no packaging
+or Windows 10 claim. 9D.1/Common remain IN_PROGRESS. Stop for final user acceptance.
+
+Post-Step-7 presentation refinement authorized/verified 2026-10-21: horizontal
+case selection and one Input/Output/Expected view use existing validated catalogue
+and execution DTOs; no backend/contracts/IPC change. Renderer regressions 49/49
+PASS and reduced real Windows 11 Electron acceptance 4 operations PASS, with
+screenshots. Typecheck, targeted lint, production/native build and diff checks
+PASS. See PHASE-9D1-RESULT-PRESENTATION.md. 9D.1/Common remain IN_PROGRESS; stop
+for user UI acceptance, without rerunning the full spike/Step 7 matrix.
+
+Learning editor correction authorized/verified 2026-10-21: removed stale controlled
+React draft feedback into the live Monaco model; explicit context-checked source
+replacement retains Reset/Restore, undo, independent drafts and autosave.
+38 targeted regressions PASS; real Monaco/Electron typing, selection, Unicode,
+undo/redo, context switching, Reset and reload verification PASS. Typecheck,
+targeted lint, production/native build and diff checks PASS. See
+PHASE-9D1-EDITOR-SYNC.md. 9D.1/Common remain IN_PROGRESS pending user acceptance;
+no C# runtime/policy/Project changes or performance optimization.
 
 **Goal / exit gate:** Exercise code runs locally in the selected supported
 language using preinstalled compatible runtimes, without student project/Terminal

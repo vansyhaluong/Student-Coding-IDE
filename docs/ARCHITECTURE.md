@@ -408,6 +408,53 @@ File leases use non-inheritable FILE_SHARE_NONE handles, reject reparse files,
 and release automatically on owner process death. Recovery continues using scoped
 checkpoint/filesystem validation and leases; no PID-kill API is introduced.
 
+9D.1 Step 4 adds Main-only one-shot UTF-8 stdin (1 MiB), inherited child read
+handle and non-inherited parent overlapped pipe/event. Bounded nonblocking polls
+advance partial writes; last completion closes EOF. CancelIoEx requests cancellation
+while Job-owned storage remains until settlement; native observer/release gates
+include pending stdin. Core retains deadlines, cleanup/retry and Policy B.
+Evidence: [Learning native stdin](PHASE-9D1-NATIVE-STDIN.md). No C# invocation
+or public capability is introduced by this transport step.
+
+9D.1 Step 5 supplies `WindowsCsharpExecutionAdapter` for Main-internal sample
+index 0 under ExerciseSession, owning distinct compiler/execute Jobs through
+the existing Policy B barrier. SDK discovery/compile remain fully validated;
+execute revalidates retained runtime/host-tree and artifact identities within the
+original 2s due, without rediscovery. A trusted Main byte observer accounts raw
+stdout/stderr before strict UTF-8 protocol validation. Productive bounded pipe
+reads yield promptly; idle polls remain 15ms. Existing semantic failure reasons
+map into Core without public DTO/API changes. Single-sample evidence:
+[C# execution](PHASE-9D1-CSHARP-EXECUTION.md).
+
+Step 6 adds Main-only `runCsharpSamples` over an already admitted ExerciseSession:
+compile once, then sequential catalogue cases in distinct retained Jobs. Before
+each execute, a Core-owned barrier must prove aggregate VERIFIED tree and I/O
+settlement; it neither releases handles nor closes the session. Pending barrier
+tasks remain session-owned through cancellation and 12s caller waits. The original
+60s deadline and 1 MiB byte counter span all phases/cases; each execute still has
+2s including startup/I/O. Results contain the attempted prefix and exact ordered
+`notRunCaseIndices` suffix; owner-invalidated observations cannot be published.
+Final cleanup/retry uses unchanged Policy B. Evidence:
+[C# multi-case](PHASE-9D1-CSHARP-MULTICASE.md). Step 6 itself did not wire production.
+
+9D.1 Step 7 connects the existing Windows ExerciseService factory to the C#
+adapter/orchestrator. Production C# Run now uses the existing Exercise channels;
+JavaScript remains UNSUPPORTED. An optional C# snapshot observation carries a
+Main-catalogue schema, bounded compile diagnostics and attempted/not-run results.
+Main validates the observation, IPC/Preload revalidate it and the panel binds its
+schema to the displayed exercise. No request gains cases, expected values, paths,
+commands or handles. A 4-KiB transport-envelope reserve in C# result composition
+keeps the full snapshot below 1 MiB; the original raw-output quota is unchanged.
+Pending/invalidated attempts have no publishable C# DTO. Core sequence advances
+at phase entry and settlement so progress and completed observations remain
+ordered. Renderer polling preserves newer events if an older invoke is rejected,
+and cannot overwrite a final event with a transport error. The existing Result
+panel shows actuals, NOT_RUN and safe diagnostics/failure messages without
+comparison, persistence or Stop/Cancel controls. Windows 11 production Electron
+and live Project Run/PTY isolation evidence:
+[C# production wiring](PHASE-9D1-CSHARP-UI.md). Final acceptance, Windows 10 and
+packaging remain separate; 9D.1/Common stay IN_PROGRESS.
+
 The additive native build hook produces a Learning-only artifact and leaves the
 Project native implementation/build script unchanged. No Main composition, IPC,
 Preload, renderer or language harness is wired by this step. Native proof has
@@ -479,7 +526,7 @@ UTF-8 output remains capped by unchanged Core plus outbound snapshot validation.
 
 The managed IPC service starts after ExerciseService and stops before it; existing
 Project/Terminal/service relative shutdown order is unchanged. STOPPING seals both
-Learning service and IPC synchronously. Default production Run remains UNSUPPORTED:
+Learning service and IPC synchronously. At Common step 5, production Run was UNSUPPORTED:
 no C#/JS drivers, Renderer UI, Judge or Submit is enabled. Targeted tests use mock
 adapters/owners for active execution and pending cleanup. A production Main/Preload
 Electron 44 smoke verified real invoke/security/reload/unregistered-owner rejection
@@ -508,7 +555,7 @@ Run stays disabled during admission/execution/unresolved cleanup. UI distinguish
 idle/running/error/unsupported/cancellation/cleanup-pending/finalization; quarantine
 retains false clean flags. Errors use fixed safe messages and output is escaped
 text, without Judge verdicts. Submit remains disabled and no Stop/Cancel is added.
-Default production C#/JS Run returns UNSUPPORTED; no language execution is faked.
+Common step 6 verified production C#/JS Run returning UNSUPPORTED; no language execution was faked.
 Renderer/active-operation unit tests use mock APIs. A production Renderer/Preload/
 Main Electron smoke verifies the real unsupported path and idle lifecycle; native
 execution with live IPC/Renderer and concurrent Project Run/PTY remains acceptance.

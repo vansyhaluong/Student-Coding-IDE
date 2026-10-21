@@ -46,7 +46,10 @@ export interface CsharpCompiler {
 /** Observed only once process and its pipes settle; not itself proof of tree cleanup. */
 export interface CsharpProcessResult { exitCode: number; stdout: string; stderr: string }
 export interface CsharpExecutionAdapter extends ExerciseRuntimeAdapter {
-  /** Detached bounded data; must be attached to a Main-issued snapshot before public routing. */
+  hasNextCase(): boolean
+  verifyBetweenCases(context: CsharpPreparationContext): Promise<void>
+  /** Detached completed-attempt prefix + exact not-run suffix. Throws while an attempt is pending
+   * or owner invalidation discarded it. Bind to a Main-issued snapshot before public routing. */
   result(): CsharpExecutionResult
 }
 export interface CsharpExecutionAdapterFactory {

@@ -2,6 +2,93 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## Phase 9D.1 — Learning editor draft synchronization correction — 2026-10-21
+
+- Fixed stale React draft echoes overwriting newer Monaco text, moving the caret
+  outside the method and dropping characters. Local text remains in Monaco;
+  context-keyed initialization and explicit Reset/Restore preserve draft behavior.
+- 38 focused regressions PASS; real Monaco/Electron verifies rapid input,
+  Unicode paste, selection, undo/redo, context switching, Reset and disk reload,
+  with zero stale full-model writes. Typecheck, targeted lint, production/native
+  build and diff checks PASS. [Evidence report](PHASE-9D1-EDITOR-SYNC.md).
+- Runtime/Policy B/Project unchanged; no commit/push/merge. 9D.1/Common remain
+  IN_PROGRESS, awaiting user acceptance.
+
+## Phase 9D.1 — Test Result presentation refinement — 2026-10-21
+
+- Preserved the IDE styling and existing tabs; added horizontal case selection
+  with one detail view, named catalogue Input, structured actual Output and
+  catalogue Expected. Diagnostics, NOT_RUN and Console remain distinct; no
+  comparison, fabricated duration, backend, contract or IPC change.
+- Renderer regressions 49/49 PASS; reduced real Windows 11 Electron acceptance
+  4 operations PASS. Typecheck, targeted lint, production/native build and diff
+  checks PASS. Screenshots and scope: [UI report](PHASE-9D1-RESULT-PRESENTATION.md).
+- 9D.1/Common remain IN_PROGRESS awaiting UI acceptance. No commit/push/merge.
+
+## Phase 9D.1 — Production C# Run / Result Panel Step 7 — 2026-10-21
+
+- Connected the existing Learning factory to the compile-once C# orchestrator;
+  production Renderer Run uses real Roslyn/.NET via the existing Exercise API.
+  Added bounded typed snapshot observations, safe diagnostics/actuals/NOT_RUN and
+  preserved owner/frame/document/generation/sequence validation. Fixed a Learning
+  polling race where a rejected older invoke could overwrite a newer event.
+- Windows 11 Electron 44 acceptance PASS: 12 C# operations / 25 real Jobs,
+  actuals [8,0], syntax/signature/runtime failures, timeout/output/memory limits,
+  context/reload cancellation and native cleanup-query failure with managed retry.
+  Five actual Project Run/PTY probes verify isolation. JavaScript remains
+  UNSUPPORTED; Submit disabled; no comparison, Stop/Cancel UI or saved results.
+- Focused regressions 411 PASS / 1 existing SDK opt-in SKIP; targeted real-native
+  regressions 2/2 PASS. Typecheck, targeted lint, production/native build and diff
+  checks PASS. Evidence, screenshot, exact file list and limits:
+  [Step 7 report](PHASE-9D1-CSHARP-UI.md).
+- No protected-domain/runtime-policy change or commit/push/merge. Windows 10 and
+  packaging remain untested here; 9D.1/Common remain IN_PROGRESS pending final
+  user acceptance.
+
+## Phase 9D.1 — Multi-case C# orchestration Step 6 — 2026-10-21
+
+- Added a Main-only driver over one admitted Learning session: compile once,
+  execute catalogue samples sequentially in separate Jobs, fail fast and collect
+  actuals without comparison. Approved result amendment adds exact ordered
+  `notRunCaseIndices` alongside the attempted prefix; Harness Protocol v1 stays.
+- Added a VERIFIED tree/I/O barrier that retains Jobs, handles, checkpoint and
+  pending-task ownership until final Policy B cleanup. Shared 60s operation and
+  1 MiB output budgets, per-case 2s and cleanup caller 12s remain unchanged.
+- Focused regressions: 350 PASS / 1 existing opt-in SKIP. Real Windows/.NET:
+  13/13 multi-case integrations PASS, including six types, middle-case failures,
+  cumulative output, owner loss and injected barrier query failure/retry.
+  Typecheck, targeted lint and production/native build PASS. Evidence and final
+  rebuilt-artifact/diff verification: [Step 6 report](PHASE-9D1-CSHARP-MULTICASE.md).
+- No production wiring, comparison/Judge/Submit, protected-domain change or
+  commit/push/merge. 9D.1/Common remain IN_PROGRESS; stop for Step 7 approval.
+
+## Phase 9D.1 — Single-sample C# execution Step 5 — 2026-10-21
+
+- Added Main-internal sample-0 execution adapter over production Roslyn, Learning
+  Jobs/stdin/EOF and the generated typed harness. Strict byte/protocol/result
+  validation, bounded raw output accounting and aggregate Job cleanup remain Main.
+- Retained runtime/artifact identities avoid repeating SDK discovery inside the
+  2s execute due; productive pipe draining yields promptly. Core maps existing
+  semantic failures. No Policy B, quota/deadline or SDK support policy change.
+- 346 focused/regression tests PASS (1 opt-in observation SKIP), including nine
+  native stdin cases; 22 real .NET execution cases PASS. Typecheck, targeted lint
+  and production/native build PASS. Initial deadline/drain failures and fixes:
+  `docs/PHASE-9D1-CSHARP-EXECUTION.md`.
+- No multi-case, production IPC/Renderer wiring, JavaScript, custom cases,
+  comparison, Judge/Submit or protected-domain changes. 9D.1/Common remain
+  IN_PROGRESS. Stop for approval before the next step; no commit/push/merge.
+
+## Phase 9D.1 — Native stdin/EOF Step 4 — 2026-10-21
+
+- Added Learning-only one-shot bounded UTF-8 input and EOF, overlapped pipe writes,
+  partial-progress/backpressure handling and retained cancellation settlement.
+  Existing Job-before-resume, deadlines/quotas/output and Policy B remain unchanged.
+- 275 focused/regression tests PASS, including nine real Windows stdin cases;
+  one process-result regression PASS. Typecheck, targeted lint and production/
+  native build PASS. Evidence/limits: `docs/PHASE-9D1-NATIVE-STDIN.md`.
+- No C# assembly/sample, multi-case, IPC/Renderer or protected-domain changes.
+  9D.1/Common remain IN_PROGRESS. Stop for approval before Step 5.
+
 ## Phase 9D.1 — Roslyn compiler and generated harness Step 3 — 2026-10-21
 
 - Implemented Main-owned typed C# harness/config/source generation and direct

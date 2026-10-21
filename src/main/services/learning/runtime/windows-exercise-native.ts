@@ -4,6 +4,9 @@ import { DomainError } from '../../../errors/app-error'
 import type { ExerciseProcessIdentity } from './exercise-runtime-adapter'
 
 export interface LearningJobSample {
+  stdinSettled: boolean
+  stdinFailed: boolean
+  stdinBytesWritten: number
   rootPid: number
   members: number[]
   retained: (ExerciseProcessIdentity & { signaled: boolean })[]
@@ -20,6 +23,8 @@ export interface LearningJobSample {
   stderr: Buffer
 }
 export interface LearningNativeBinding {
+  /** One bounded delivery followed by EOF; progressed by nonblocking poll. */
+  submitInput(job: object, input: Buffer): void
   capability: 'student-ide-learning-job-v1'
   start(executable: string, args: readonly string[], cwd: string, quotaBytes: number, environment: string[]): object
   poll(job: object): LearningJobSample
@@ -46,7 +51,7 @@ export function loadLearningNative(path = join(__dirname, 'native/learning/learn
   try {
     const module: LearningNativeBinding = createRequire(__filename)(path)
     if (module.capability !== 'student-ide-learning-job-v1'
-      || !['start', 'poll', 'control', 'state', 'acquireLease', 'watch', 'observation'].every(k => typeof module[k as keyof LearningNativeBinding] === 'function')) {
+      || !['start', 'submitInput', 'poll', 'control', 'state', 'acquireLease', 'watch', 'observation'].every(k => typeof module[k as keyof LearningNativeBinding] === 'function')) {
       throw Error('Native capability mismatch')
     }
     return module
