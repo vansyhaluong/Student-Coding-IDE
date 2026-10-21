@@ -3,14 +3,16 @@ import { Play, RotateCcw } from 'lucide-react'
 import type { Exercise, ExerciseLanguage, ExerciseDraft } from '../../../../../shared/contracts/practice'
 import { MySolutions } from './MySolutions'
 import { PracticeTestPanel, type TestPanelDock, type TestPanelSize } from './PracticeTestPanel'
+import type { ExerciseRunView } from './use-exercise-runtime'
 const PracticeEditor = lazy(async () => ({ default: (await import('./PracticeEditor')).PracticeEditor }))
 
 interface Props {
   exercises: Exercise[]; chapter: number; drafts: ExerciseDraft[]; exercise: Exercise | undefined
   language: ExerciseLanguage; code: string; ready: boolean; locked: boolean
+  execution: ExerciseRunView; onRun(): void
   onOpen(exercise?: Exercise): void; onLanguage(language: ExerciseLanguage): void; onEdit(code: string): void
 }
-export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, onOpen, onLanguage, onEdit }: Props) {
+export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, execution, onRun, onOpen, onLanguage, onEdit }: Props) {
   const [reset, setReset] = useState(false)
   const [tab, setTab] = useState<'tests' | 'result'>('tests')
   const [selectedCase, setSelectedCase] = useState(0)
@@ -29,11 +31,12 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
     </section>)}
   </section>
   const testPanel = <PracticeTestPanel exercise={exercise} tab={tab} onTab={setTab} selectedCase={selectedCase} onCase={setSelectedCase}
-    size={panelSize} onSize={setPanelSize} dock={panelDock} onDock={setPanelDock} />
+    size={panelSize} onSize={setPanelSize} dock={panelDock} onDock={setPanelDock} execution={execution} />
   return <div className="practice-workspace">
     <header className="practice-heading"><button type="button" disabled={locked} onClick={() => { setReset(false); onOpen() }}>← Danh sách</button>
       <span>Chương {chapter} / {exercise.title}</span><span className="practice-difficulty" data-level={exercise.difficulty}>{exercise.difficulty}</span>
-      <button type="button" className="practice-icon-button practice-run" disabled aria-label="Run" title="Run — chưa khả dụng"><Play aria-hidden="true" fill="currentColor" /></button>
+      <button type="button" className="practice-icon-button practice-run" disabled={locked || execution.busy} aria-label="Run" title="Run"
+        onClick={() => { setTab('result'); if (panelSize === 'collapsed') setPanelSize('open'); onRun() }}><Play aria-hidden="true" fill="currentColor" /></button>
       <button type="button" disabled title="Submit — chưa khả dụng">Submit</button>
     </header>
     <div className="practice-split" data-panel-dock={panelDock} data-panel-size={panelSize}>

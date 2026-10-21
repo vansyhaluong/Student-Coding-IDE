@@ -19,6 +19,11 @@ export default defineConfig({
       execFileSync(process.execPath, [resolve('scripts/build-run-native.mjs')], {
         stdio: 'inherit', windowsHide: true,
       })
+    } }, { name: 'learning-native-artifact', closeBundle() {
+      if (process.platform !== 'win32' || process.arch !== 'x64') return
+      execFileSync(process.execPath, [resolve('scripts/build-learning-native.mjs')], {
+        stdio: 'inherit', windowsHide: true,
+      })
     } }],
   },
 

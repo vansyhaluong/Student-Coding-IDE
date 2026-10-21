@@ -26,10 +26,12 @@ function Workspace() {
 }
 
 it('exposes the approved eight chapters in order, retaining selection while collapsing', async () => {
-  render(<Workspace />)
-  await screen.findByRole('heading', { name: /Chương 1 —/ })
-  const navigation = screen.getByRole('navigation')
-  const collapseButton = screen.getByRole('button', { name: 'Thu gọn lộ trình' })
+  const view = render(<Workspace />)
+  // Scope accessibility queries to the feature under test; eight full theory pages stay mounted.
+  await within(view.container.querySelector<HTMLElement>('#learning-chapter-one')!).findByRole('heading', { name: /Chương 1 —/ })
+  const navigation = within(view.container.querySelector<HTMLElement>('.learning-sidebar')!).getByRole('navigation')
+  const header = within(view.container.querySelector<HTMLElement>('header')!)
+  const collapseButton = header.getByRole('button', { name: 'Thu gọn lộ trình' })
   expect(collapseButton.closest('header')).not.toBeNull()
   expect(collapseButton.getAttribute('aria-controls')).toBe(navigation.id)
   expect(navigation.closest('aside')!.querySelector('.learning-sidebar-toggle')).toBeNull()
@@ -41,11 +43,11 @@ it('exposes the approved eight chapters in order, retaining selection while coll
   ])
   fireEvent.click(buttons[5])
   expect(buttons[5].getAttribute('aria-current')).toBe('page')
-  expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Chương 6 — Hàm')
-  fireEvent.click(screen.getByRole('button', { name: 'Thu gọn lộ trình' }))
+  expect(within(view.container.querySelector<HTMLElement>('.learning-page:not([hidden])')!).getByRole('heading', { level: 1 }).textContent).toBe('Chương 6 — Hàm')
+  fireEvent.click(header.getByRole('button', { name: 'Thu gọn lộ trình' }))
   expect(within(navigation).getAllByRole('button')).toHaveLength(8)
   expect(buttons[5].getAttribute('aria-current')).toBe('page')
-  fireEvent.click(screen.getByRole('button', { name: 'Mở rộng lộ trình' }))
+  fireEvent.click(header.getByRole('button', { name: 'Mở rộng lộ trình' }))
   expect(buttons[5].textContent).toContain('Hàm')
 })
 
@@ -95,7 +97,8 @@ it.each(learningChapters.slice(1))('renders real chapter $id without exercise ac
   fireEvent.click(screen.getByRole('button', { name: `Chương ${chapter.id}: ${chapter.title}` }))
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(`Chương ${chapter.id} — ${chapter.title}`)
   const page = screen.getByRole('region', { name: `Nội dung chương ${chapter.id}` })
-  expect(page.querySelectorAll('.learning-material > h2').length).toBe(chapter.id === 2 ? 6 : 7)
+  // Exact counts for the currently authored chapters; content itself is unchanged by 9D.
+  expect(page.querySelectorAll('.learning-material > h2').length).toBe(({ 2: 14, 3: 14, 4: 15, 5: 15, 6: 15, 7: 15, 8: 16 } as Record<number, number>)[chapter.id])
   expect(page.querySelectorAll('code.language-csharp').length).toBeGreaterThan(0)
   expect(screen.queryByRole('button', { name: /Run|Submit/ })).toBeNull()
   expect(screen.queryByRole('combobox')).toBeNull()

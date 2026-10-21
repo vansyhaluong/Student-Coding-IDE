@@ -332,9 +332,186 @@ Renderer remains unprivileged. Main runtime-validates typed requests, allowed
 languages/actions and exercise/session/operation ownership, controls temporary
 paths and compiler/runtime invocation, rejects stale results, bounds execution
 and output, and cleans up owned processes/resources. Preserve existing Windows
-ownership and shutdown rules. Concrete execution limits and runtime policies must
-be specified and verified in 9D/9E; temporary workspaces do not alone establish
-OS sandboxing.
+ownership and shutdown rules. Common policy was approved on 2026-10-20 in ADR-025;
+integration and production acceptance remain due. Temporary workspaces do not
+alone establish OS sandboxing.
+
+**9D Common contract (approved 2026-10-20):** Main issues opaque Exercise session
+IDs/generations; IPC derives owner from the authorized sender/frame, never a
+renderer-supplied owner or Project ID. Run captures code/source revision; snapshots
+carry session/generation/sequence for stale-result rejection. Lifecycle stop is
+context change/leaving Learning; timeout, resource, owner-loss and shutdown causes
+originate in Main. DTO validation does not authorize a sender or prove termination.
+Public DTOs contain no paths, argv, PIDs, Job handles, hidden tests or Judge verdicts.
+Shared declarations live in `src/shared/contracts/exercise.ts` and
+`exercise-validation.ts`; step 1 does not wire StudentIdeApi, IPC, native or UI.
+
+Learning owns its manager lifetime, process adapter/Job and managed cleanup
+barrier; reuse ProcessManager APIs unchanged. Main composition registers additive
+Learning dependencies/service/IPC/owner subscriptions so reverse shutdown stops
+admission/events before dependencies disappear. STOPPING seals admission and
+invalidates generation synchronously. Owner navigation/destruction, context
+switch and leaving Learning cancel only Exercise. DesktopApplication and quit
+coordinator retain their existing failure/retry behavior; unresolved Learning
+cleanup rejects stop and prevents final quit. Project/Terminal/shared process
+and Project native implementation remain unchanged.
+
+One Learning operation, sequential cases, no queue. Operation due is 60 s after
+admission on a monotonic clock, never reset by phases. Prepare/probe is 10 s total,
+compile 30 s, execute 2 s/case including startup; each phase is clamped to operation
+due. Cleanup is outside this budget, with a 12 s caller wait over all cleanup,
+including I/O. Timeout rejects the caller while retaining task, lease and ownership.
+Retry joins pending work; after a failed task settles it can resume its retained
+stage. No overlapping destructive cleanup or replacement admission over unresolved
+ownership. The spike demonstrated the caller-boundary pattern at a reduced deadline;
+its PolicySession is not an already complete whole-I/O deadline implementation.
+Compile/execute Jobs have 2 GiB/512 MiB aggregate committed-memory limits, set/read
+back before launch and covering descendants. Output is 1 MiB combined stdout/stderr
+UTF-8 per operation; overflow cancels and cleans safely. These are initial approved
+settings, not universal workload guarantees. Runtime OOM alone is not quota proof.
+
+Policy B separates current termination proof, historical coverage and service
+finalization. Empty Job/ActiveProcesses, retained identity handles signaled and
+settled observers without unresolved errors establish current termination.
+TotalProcesses mismatch alone is a historical gap, not a live process. Complete
+coverage gives VERIFIED; incomplete coverage gives HISTORY_UNVERIFIED, quarantine
+and false processClean/cleanupComplete even after service finalization. Pending
+handles or failed verification give PROCESS_UNRESOLVED with retained ownership.
+Acknowledged stages: OWNED → RELEASE_READY → native release/handle closure →
+FINALIZED; only VERIFIED then permits identity/containment-checked deletion and
+CLEANUP_COMPLETE. Write/sync/replace/read-back checkpoints; retry never operates
+on released native state. Recovery validates checkpoint/workspace under an exclusive
+lease, never kills recorded PIDs; OWNED/RELEASE_READY and historical gaps quarantine,
+VERIFIED/FINALIZED may finish deletion. No automatic quarantine removal is approved.
+
+**Native Learning implementation (Common step 3, 2026-10-20):** private Node-API
+8 binding `runtime/native/learning-job.cpp`, loaded by `windows-exercise-native.ts`;
+`windows-exercise-adapter.ts` implements the Core port and
+`windows-exercise-lease.ts` implements the exclusive lease port. Each process
+phase has an independent Job; adapter evidence aggregates every phase Job and
+keeps old identity handles until staged cleanup. The binding sets/read-backs hard
+Job commit and KILL_ON_JOB_CLOSE before CreateProcessW with JOB_LIST/HANDLE_LIST
+attributes and CREATE_SUSPENDED. Root membership/creation identity is retained
+before returning the suspended owner; Main retains it, checks quota/ownership and
+deadline, then resumes. A delayed synchronous launch never resumes after its
+deadline. This is process containment, not a full filesystem/network sandbox.
+
+Bounded nonblocking pipe/Job polling retains descendant process handles and PID +
+creation identity. Current members, ActiveProcesses, signaled handles and EOF/root
+observer settlement gate release; TotalProcesses mismatch remains historical
+uncertainty. Job memory-limit completion event 10 is distinct from runtime OOM
+stderr/nonzero exit. Metrics are Job committed memory, never RSS. Native stage
+query works after OS Job release so ambiguous errors can be reconciled without
+querying/releasing a closed Job. Per-Job/per-handle successful actions are retained
+for partial-failure retry. Finalizer/owner death containment is not clean proof.
+File leases use non-inheritable FILE_SHARE_NONE handles, reject reparse files,
+and release automatically on owner process death. Recovery continues using scoped
+checkpoint/filesystem validation and leases; no PID-kill API is introduced.
+
+The additive native build hook produces a Learning-only artifact and leaves the
+Project native implementation/build script unchanged. No Main composition, IPC,
+Preload, renderer or language harness is wired by this step. Native proof has
+targeted Windows 11 x64 evidence; application lifecycle/IPC/owner validation,
+global admission and live Project/Terminal regression remain integration gates.
+
+**ExerciseService/Main integration (Common step 4, 2026-10-20):**
+`learning/exercise-service.ts` owns one operation globally, no queue, issues UUID
+session IDs and increasing generations, and supplies a shared Main host epoch to
+Core. A synchronous factory configures a trusted driver before admission; it may
+not launch/probe/do I/O. Core starts its single monotonic operation clock at
+admission and runs owned prepare followed by the finite configured phase plan.
+Language drivers are absent in this step: default Main composition rejects run
+as LANGUAGE_ADAPTER_UNAVAILABLE, never performs an empty successful execution.
+
+Main registers the service immediately before WindowManager, leaving the relative
+order of every existing managed service intact. At STOPPING, existing Project/
+Git/C# beginShutdown calls remain in order and Learning synchronously seals
+admission, invalidates generation/publication and begins owned cleanup. Reverse
+managed shutdown waits for Learning before stopping existing domains; WindowManager
+remains shutdownLast. Failure rejects stop and preserves the retry surface through
+the unchanged DesktopApplication/quit coordinator. No shared ProcessManager, Run,
+Terminal or Project native implementation changes.
+
+The service observes WebContents full main-frame navigation, render-process-gone
+and destruction. Only its owning Exercise is invalidated/cancelled; subframe and
+in-place navigation do not cancel. A new completed document load can accept a new
+operation after prior ownership cleanup; old session/generation/completion and
+publication stay invalid. Live sender/frame IPC authority is still a step 5 gate;
+owner IDs and internal service methods are not a renderer API. One final snapshot
+is cached at most, cleared on replacement/invalidation, with cloned bounded DTOs.
+
+Managed start schedules recovery and returns synchronously so the service is
+registered before waiting on filesystem/lease I/O. Learning admission is blocked
+while recovery is pending/failed; Project startup is not awaited on that work.
+Validated checkpoint discovery delegates to lease-owned Core recovery; orphan
+workspaces remain untouched/quarantined. Recovery failures remain visible and
+must resolve through retry before graceful shutdown succeeds. A caller deadline
+never abandons the retained recovery workspace/task/lease. Core likewise audits
+a cancelled admitted session that has not started a phase using an actual scoped
+OWNED checkpoint before cleanup, without invoking a language driver.
+
+Only additive Main composition/owner/STOPPING hooks are connected. No Exercise
+IPC, Preload, renderer UI or C#/JS driver is wired. Unit tests exercise actual
+DesktopApplication/quit coordination with mock owners/adapters/window stop ports;
+live Main windows, IPC routing, Project Run/PTY concurrency remain later acceptance.
+
+**Exercise IPC/Preload integration (Common step 5, 2026-10-20):**
+`exercise-ipc-service.ts` registers only run/snapshot/lifecycle-stop channels;
+`preload/bridge/exercise.ts` exposes `studentIde.learning.exercise` with run,
+snapshot, stop and onChanged, without raw IPC or generic execution capability.
+Exact shared validators reject ownership/path/command/PID/handle/native options.
+Main authorizes a current Electron main frame and a registered app owner, then
+ExerciseService verifies Main-issued session/generation ownership. An IPC-owned
+document epoch additionally rejects replies after navigation/process loss even
+if Electron reuses the same frame token. Awaited replies reauthorize the frame;
+run/snapshot replies also recheck the current service reference. Lifecycle stop
+checks ownership before retiring the generation and awaiting actual Policy B
+cleanup; failure does not discard the service's pending task or ownership.
+
+Publication uses one bounded route tied to the original owner/frame/document
+epoch/session/generation. Main validates the bounded snapshot and current service
+sequence; the Preload rejects unsolicited identities, stale generations and
+non-increasing events. One buffered event can precede a run reply, but only the
+authorized reply may bind that identity. Preload subscriptions share one transport
+listener, have independent/idempotent removers, and dispose on unload. Domain/native
+errors are normalized to safe typed errors with no raw messages/details. Combined
+UTF-8 output remains capped by unchanged Core plus outbound snapshot validation.
+
+The managed IPC service starts after ExerciseService and stops before it; existing
+Project/Terminal/service relative shutdown order is unchanged. STOPPING seals both
+Learning service and IPC synchronously. Default production Run remains UNSUPPORTED:
+no C#/JS drivers, Renderer UI, Judge or Submit is enabled. Targeted tests use mock
+adapters/owners for active execution and pending cleanup. A production Main/Preload
+Electron 44 smoke verified real invoke/security/reload/unregistered-owner rejection
+and graceful idle shutdown; active native IPC operations and live Project Run/PTY
+concurrency remain acceptance work.
+
+**Learning Renderer integration (Common step 6, 2026-10-20):** LearningWorkspace
+uses `practice/use-exercise-runtime.ts` for the existing Exercise API. Run captures
+the current exercise/language/code and a local source revision; only Main's reply
+can bind a session/generation. Local context tokens revoke UI work, never authorize
+execution. A context has one subscription and one attempt; events require the
+bound identity, matching exercise/language/source revision and increasing sequence.
+Admission generations must increase. A snapshot probe after admission recovers
+events delivered before the invoke reply; subsequent 500 ms observation polls do
+not overlap I/O, stop at finalization/context disposal and do not alter deadlines.
+
+Exercise/language change sends internal CONTEXT_CHANGED stop; leaving the kept-
+mounted Learning surface, unmount or pagehide sends LEARNING_LEFT. Late admission
+replies are used only to stop the old Main-issued session, never to update a new
+view. Unsubscribe/timer disposal and live/context checks protect async results.
+Draft/close/navigation callbacks likewise guard unmount. Main owner loss remains
+the authoritative fallback when a renderer cannot deliver its best-effort stop.
+
+The existing Run icon now calls the API and opens the existing Result panel.
+Run stays disabled during admission/execution/unresolved cleanup. UI distinguishes
+idle/running/error/unsupported/cancellation/cleanup-pending/finalization; quarantine
+retains false clean flags. Errors use fixed safe messages and output is escaped
+text, without Judge verdicts. Submit remains disabled and no Stop/Cancel is added.
+Default production C#/JS Run returns UNSUPPORTED; no language execution is faked.
+Renderer/active-operation unit tests use mock APIs. A production Renderer/Preload/
+Main Electron smoke verifies the real unsupported path and idle lifecycle; native
+execution with live IPC/Renderer and concurrent Project Run/PTY remains acceptance.
 
 Judge outcomes are Accepted, Wrong Answer, Compilation Error, Runtime Error and
 Time Limit Exceeded; internal Judge errors are a separate category. Partial test
@@ -345,8 +522,9 @@ Full hidden input/output must not be exposed through student-facing result
 payloads or UI. Offline hidden tests are not absolutely secret or tamper-proof.
 Project Output is not the Exercise Run/Judge result store.
 
-User-approved 9D runtime revision (2026-10-19): Learning uses only compatible
-.NET SDK and Node.js already installed on the machine. No runtime download,
+User-approved 9D runtime revision (2026-10-19, versions approved 2026-10-20):
+Learning uses installed stable .NET SDK 10.x and Node.js 24.x without patch locking.
+No runtime download,
 installation or bundling is implemented in 9D. Learning owns its resolver,
 harness and execution sessions and may use the same existing executables.
 Missing/incompatible dependencies produce clear errors; no automatic installation
@@ -359,9 +537,16 @@ confirmation. Runtime distribution remains a packaging-stage requirement; its
 installer integration will be discussed and decided separately.
 At packaging, candidates include bundling SDK/Node; if size/technical barriers
 justify it, fallback may use an additional runtime pack
-or detected installed runtime with clear guidance. Exact versions, redistribution,
-package size, fallback threshold, harness/type/comparison policy and execution
-limits remain Open Decision / Pending Verification in ADR-025. 9D verifies
+or detected installed runtime with clear guidance. Redistribution, package size,
+packaging fallback threshold and remaining JavaScript/custom-case/comparison
+details remain open in ADR-025. C# direct Roslyn/filesystem discovery and sample-only
+Run are approved; [9D.1 Step 1](PHASE-9D1-CSHARP-CONTRACTS.md) declares JSON
+stdin/actual-result protocol, safe diagnostic/failure DTOs and Main-only SDK/
+compiler/adapter ports. No resolver/compiler/native stdin/adapter or wiring is
+implemented by this step. Result data must be bound to existing Main session/
+generation/sequence before later public routing; it never grants cleanup proof
+or Judge verdicts. Existing Exercise API/Snapshot and Common policies are unchanged.
+Production enforcement/acceptance of Common policy remains due. 9D verifies
 installed-runtime execution; 9G verifies packaged offline Run/Submit on another
 Windows machine
 without development tools. Project Run PATH policy and csharp-ls remain unchanged.

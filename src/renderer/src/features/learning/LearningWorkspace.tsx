@@ -1,11 +1,12 @@
 import { ArrowDown } from 'lucide-react'
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger } from '../../components/motion/tabs'
 import { learningChapters, type ChapterId } from './chapters'
 import { ChapterMaterial } from './ChapterMaterial'
 import { useLearningCourse } from './use-learning-course'
 import { usePractice } from './practice/use-practice'
 import { PracticeWorkspace } from './practice/PracticeWorkspace'
+import { useExerciseRuntime } from './practice/use-exercise-runtime'
 
 interface Props {
   selectedChapterId: ChapterId
@@ -17,6 +18,8 @@ interface Props {
 
 export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelectChapter, active = true, exitGuard }: Props) {
   const introduction = useRef<HTMLElement>(null)
+  const mounted = useRef(false)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const sectionId = useId()
   const { course, error, retry } = useLearningCourse()
   const practice = usePractice(active)
@@ -26,10 +29,12 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
   const practicing = selectedChapterId !== 1 && !!practiceChapters[selectedChapterId]
   const exercise = practice.exercises.find(e => e.id === selectedExercises[selectedChapterId])
   const language = exercise ? practice.languageFor(exercise.id) : 'csharp'
+  const runtime = useExerciseRuntime({ active: active && !practice.closing,
+    exerciseId: practicing && practice.ready ? exercise?.id : undefined, language })
   const navigate = (action: () => void) => {
     if (practice.closing) return
     if (!practice.hasPending()) action()
-    else void practice.flush().then(saved => { if (saved) action() })
+    else void practice.flush().then(saved => { if (saved && mounted.current) action() })
   }
   const chapters = course ? course.manifest.chapters.map(chapter => ({ id: chapter.order, title: chapter.title })) : learningChapters
   return (
@@ -118,7 +123,9 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
         aria-labelledby={selectedChapterId !== 1 ? `${sectionId}-practice-tab` : undefined}>
       {practicing && <PracticeWorkspace key={selectedChapterId} chapter={selectedChapterId} exercises={practice.exercises}
         exercise={exercise} drafts={practice.state.drafts} language={language} code={exercise ? practice.codeFor(exercise, language) : ''}
-        ready={practice.ready} locked={practice.closing} onOpen={e => navigate(() => {
+        ready={practice.ready} locked={practice.closing} execution={runtime.view}
+        onRun={() => { if (exercise && active && !practice.closing) void runtime.run({ exerciseId: exercise.id, language,
+          code: practice.codeFor(exercise, language), sourceRevision: practice.sourceRevision }) }} onOpen={e => navigate(() => {
           setSelectedExercises(s => ({ ...s, [selectedChapterId]: e?.id }))
           if (e) { const l = practice.languageFor(e.id); practice.edit(e, l, practice.codeFor(e, l)) }
         })} onLanguage={l => { if (exercise) void practice.selectLanguage(exercise, l) }}
