@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { javascriptObservation } from '../fixtures/learning/javascript-observation'
 import {
   EXERCISE_LIMITS, validateExerciseCleanupSnapshot, validateExerciseRunRequest,
   validateExerciseSessionReference, validateExerciseSnapshot, validateExerciseStopRequest,
@@ -23,6 +24,21 @@ const snapshot: ExerciseSnapshot = {
   ...ref, exerciseId: 'ch2-01', language: 'csharp', sourceRevision: 0, sequence: 0,
   phase: 'prepare', reason: null, stdout: '', stderr: '', cleanup: idle,
 }
+
+it('validates independent JavaScript observations and rejects foreign/mixed/malformed/oversized envelopes', () => {
+  const value = { ...snapshot, language: 'javascript', javascript: javascriptObservation }
+  expect(validateExerciseSnapshot(value).ok).toBe(true)
+  for (const bad of [
+    { ...value, language: 'csharp' }, { ...value, csharp: {} },
+    { ...value, javascript: { ...javascriptObservation, command: 'node' } },
+    { ...value, javascript: { ...javascriptObservation, schema: { ...javascriptObservation.schema, returnType: 'boolean' } } },
+    { ...value, javascript: { ...javascriptObservation, result: { ...javascriptObservation.result, compile: {} } } },
+    { ...value, javascript: { ...javascriptObservation, result: { ...javascriptObservation.result, notRunCaseIndices: [0] } } },
+    { ...value, stdout: 'x'.repeat(EXERCISE_LIMITS.outputBytes - 50) },
+  ]) expect(validateExerciseSnapshot(bad).ok).toBe(false)
+  const parsed = validateExerciseSnapshot(value)
+  if (parsed.ok) { parsed.value.javascript!.result.cases[0].actual = 999; expect(javascriptObservation.result.cases[0].actual).toBe(8) }
+})
 
 describe('Exercise requests are bounded semantic capabilities', () => {
   it('accepts both languages and preserves an immutable code/revision snapshot', () => {

@@ -1578,8 +1578,14 @@ Không yêu cầu coverage percentage cao trong V1. Test phải ưu tiên:
 
 ### Phase 9 — Learning / Programming Techniques
 
-Status: `NOT_STARTED`. Roadmap chính thức được phê duyệt; cập nhật docs không
-cấp phép implementation và không thay đổi các quyết định Phase 1–8.
+Status: Phase 9 `IN_PROGRESS`; 9A–9C COMPLETE. Ngày 2026-10-23, người dùng nghiệm
+thu 9D Common, 9D.1, 9D.2 và toàn bộ 9D **COMPLETE — PASS WITH LIMITATIONS**;
+A01/A02/A03 FIXED — PASS. 9E–9G vẫn NOT_STARTED, cần phê duyệt riêng.
+[Final Review 9D](PHASE-9D-FINAL-REVIEW.md) ghi evidence và giới hạn đã chấp nhận;
+Windows 10/UNC/9G và các mục UNVERIFIED không trở thành PASS, full lint vẫn FAIL
+1.106 lỗi lịch sử. Không thay đổi yêu cầu hay quyết định Phase 1–8/ADR-025.
+Các ghi chú trạng thái theo từng bước bên dưới được giữ làm lịch sử thực hiện;
+trạng thái nghiệm thu hiện hành là dòng tổng hợp này và Implementation Plan.
 
 Learning là application workspace mode riêng bên cạnh Project Mode, chỉ cho môn
 Kỹ thuật lập trình; không có chọn/quản lý nhiều môn. Header có Learning cạnh Local AI. Trong Learning,
@@ -1680,22 +1686,67 @@ lỗi và dọn file tạm/process tree. Thư mục tạm không đồng nghĩa 
 
 Dự phòng khi quá lớn hoặc có trở ngại kỹ thuật: gói runtime bổ sung hoặc runtime
 có sẵn trên máy, kèm phát hiện/hướng dẫn rõ ràng. Phiên bản, kích thước bộ cài,
-ngưỡng fallback khi đóng gói và harness JavaScript còn Open Decision / Pending
-Verification trong ADR-025. Protocol C# đã định nghĩa ở 9D.1 Bước 1; implementation/
-acceptance còn pending. Runtime Learning đã duyệt stable SDK 10.x và Node 24.x,
-không khóa patch; giới hạn Common đã duyệt nhưng còn phải triển khai/nghiệm thu.
+ngưỡng fallback khi đóng gói còn Open Decision / Pending Verification trong
+ADR-025. Kiến trúc JavaScript đã được duyệt ngày 2026-10-22 như dưới đây;
+triển khai và nghiệm thu còn chờ. Protocol C# đã định nghĩa ở 9D.1 Bước 1; 9D.1 đã được
+người dùng nghiệm thu COMPLETE — PASS WITH LIMITATIONS ngày 2026-10-21 trong
+phạm vi installed-runtime Windows 11. Runtime Learning đã duyệt stable SDK 10.x
+và Node 24.x, không khóa patch; 9D Common vẫn IN_PROGRESS, không đổi policy/giới hạn.
 Nghiệm thu bản đóng gói trên máy Windows khác
 không cài môi trường lập trình, gồm Run/Submit C# và JavaScript offline; không lấy
 môi trường dev của máy build thay cho bằng chứng này.
+
+Phê duyệt thiết kế 9D.2 ngày 2026-10-22: mỗi sample catalogue do Main chọn chạy
+trong Node process/ Learning Windows Job riêng, harness cố định + `node:vm` tách
+context; không cam kết security sandbox chống malicious code, hạn chế file/network
+hay chống giả mạo kết quả tuyệt đối. Learning tự xác minh stable Node 24.x từ PATH,
+không khóa patch/fallback major/tự tải/dùng Project resolver; junction/nvm chỉ khi
+xác minh an toàn. Probe phải thuộc Learning Job trong Prepare, quota 512 MiB,
+không vượt tổng Prepare 10s. Giữ nguyên Policy B, các quota/deadline khác,
+cancellation, barrier, ownership, cleanup/recovery và isolation.
+Harness chỉ hỗ trợ hàm đồng bộ và sáu kiểu hiện có; chưa imports/npm/async.
+JSON stdin/stdout kiểm tra nghiêm ngặt; tách syntax error, runtime error và
+protocol failure. DTO kết quả JavaScript riêng, reuse Exercise IPC channels và
+Result Panel, không đổi hợp đồng C#. Chỉ trả actual samples, chưa Judge/comparison,
+Submit hay Accepted/Wrong Answer. Bundling Node thuộc 9G; 9D.2 chỉ runtime cài sẵn
+để phát triển/kiểm thử. [Kế hoạch sáu bước](PHASE-9D2-JAVASCRIPT-PLAN.md) có phạm vi,
+tiêu chí nghiệm thu, targeted tests và bằng chứng Windows 10/11 cần bổ sung.
+Step 1 được cấp phép riêng ngày 2026-10-22: DTO/strict protocol validators và
+Main-only ports đã triển khai, 308 targeted contract tests PASS; chưa runtime/IPC.
+[Bằng chứng Step 1](PHASE-9D2-JAVASCRIPT-CONTRACTS.md) ghi giới hạn full-repo lint.
+Step 1 COMPLETE — PASS WITH LIMITATIONS theo nghiệm thu ngày 2026-10-22;
+1.106 lỗi lint có sẵn ngoài phạm vi được chấp nhận là giới hạn. 9D.2 và 9D Common
+giữ IN_PROGRESS. Step 2 COMPLETE — PASS WITH LIMITATIONS theo nghiệm thu ngày
+2026-10-22: resolver/owned Prepare probe đã kiểm chứng trên Windows 11 x64 với
+Node v24.16.0, 169 targeted tests PASS gồm 10 Jobs probe thật và một C# Sum
+regression thật. [Bằng chứng/giới hạn Step 2](PHASE-9D2-NODE-RESOLVER-PROBE.md).
+Step 3 được cấp phép và nghiệm thu riêng ngày 2026-10-22: COMPLETE — PASS WITH LIMITATIONS; fixed
+harness/vm context, exclusive identity/hash-verified workspace, syntax chỉ parse
+không chạy top-level và Main-internal sample index 0 đã kiểm chứng; 259 targeted
+tests PASS gồm 60 native cases / 172 Jobs VERIFIED trên Windows 11 / Node v24.16.0
+x64. [Bằng chứng/giới hạn Step 3](PHASE-9D2-JAVASCRIPT-HARNESS-SYNTAX.md).
+Step 4 được nghiệm thu ngày 2026-10-23: COMPLETE — PASS WITH LIMITATIONS; đã triển
+khai Main-internal multi-case adapter/orchestrator, VERIFIED barriers và fail-fast
+đúng prefix/suffix. 160 targeted tests PASS, gồm 16 native cases / 57 JavaScript
+Jobs cleanup VERIFIED, handles đóng và leases giải phóng; một C# multi-case thật PASS.
+[Bằng chứng/giới hạn Step 4](PHASE-9D2-JAVASCRIPT-ORCHESTRATOR.md).
+Step 5 COMPLETE — PASS WITH LIMITATIONS theo nghiệm thu ngày 2026-10-23; Step 6 IN_PROGRESS — PENDING USER ACCEPTANCE. Evidence UI/IPC: PHASE-9D2-JAVASCRIPT-UI-IPC.md;
+Windows 10/UNC thực tế, concurrent Project Run/PTY smoke hoặc packaging/bundled
+Node (9G). Không nâng phạm vi chưa kiểm chứng thành PASS.
+Không đổi yêu cầu quota/Policy B/C#.
 
 Roadmap: 9A Learning Mode & Roadmap; 9B Course Content & Lessons; 9C Practice &
 Exercise Workspace; 9D Exercise Runtime (C#, JavaScript, function-signature harness);
 9E Local Judge & Submit; 9F Quiz & Learning Progress;
 9G Learning UX & Stabilization. Trạng thái hiện tại: 9A–9C COMPLETE theo nghiệm
 thu; 9D Common IN_PROGRESS qua Core/native/Main lifecycle, typed IPC/Preload và
-Renderer integration và live acceptance trong phạm vi fixture; còn production
-adapter end-to-end/Windows 10. 9D.1 IN_PROGRESS qua contracts Bước 1 và filesystem resolver Bước 2;
-9D.2, 9E–9G NOT_STARTED. C# dùng Roslyn csc.dll trực tiếp từ installed stable
+Renderer integration và evidence thực tế Windows 11. 9D.1 COMPLETE — PASS WITH
+LIMITATIONS theo xác nhận người dùng ngày 2026-10-21; đủ điều kiện chuyển sang
+9D.2 IN_PROGRESS; Step 1 COMPLETE — PASS WITH LIMITATIONS ngày 2026-10-22,
+Step 2 COMPLETE — PASS WITH LIMITATIONS; Step 3 COMPLETE — PASS WITH LIMITATIONS theo nghiệm thu ngày 2026-10-22,
+Step 4 COMPLETE — PASS WITH LIMITATIONS ngày 2026-10-23; Step 5 COMPLETE — PASS WITH LIMITATIONS theo nghiệm thu ngày 2026-10-23; Step 6 IN_PROGRESS — PENDING USER ACCEPTANCE. 9E–9G NOT_STARTED;
+Windows 10/packaging chưa xác minh. Các mô tả Bước 1–7 sau đây là lịch sử từng bước.
+C# dùng Roslyn csc.dll trực tiếp từ installed stable
 SDK 10.x, discovery filesystem riêng Learning đã triển khai/kiểm thử đọc file;
 Step 3 đã sinh harness/config và compile Roslyn thật trong Learning Job với
 reference net10.0 cục bộ; chưa native stdin, chạy assembly/sample hoặc wiring.
@@ -1711,8 +1762,11 @@ và Policy B. Xem PHASE-9D1-CSHARP-MULTICASE.md. Step 7 nối production C# Run
 qua ExerciseService → IPC/Preload → Result Panel, đã kiểm chứng Electron thật
 trên Windows 11, actuals, diagnostics, lỗi/resource limits, lifecycle và isolation
 Project Run/PTY. JavaScript vẫn UNSUPPORTED; Submit disabled, không comparison
-hoặc lưu kết quả chấm. Xem PHASE-9D1-CSHARP-UI.md. 9D.1/Common vẫn IN_PROGRESS,
-chờ người dùng nghiệm thu cuối; Windows 10/packaging chưa kiểm chứng trong bước này.
+hoặc lưu kết quả chấm. Xem PHASE-9D1-CSHARP-UI.md và
+[nghiệm thu cuối](PHASE-9D1-FINAL-REVIEW.md). 9D.1 COMPLETE — PASS WITH LIMITATIONS;
+9D Common vẫn IN_PROGRESS. Run C# khoảng 7–8 giây được chấp nhận tạm, tối ưu sau
+khi hoàn thành Phase 9. Windows 10/packaging chưa xác minh; Restore với production
+Accepted records chờ Phase 9E. Không nâng các phạm vi này thành PASS.
 Scope, dependencies và
 exit gates: Implementation Plan Section 13.6; ownership: Architecture Section 6.
 Roadmap này không mở rộng Project Run/language intelligence hiện tại; Python và

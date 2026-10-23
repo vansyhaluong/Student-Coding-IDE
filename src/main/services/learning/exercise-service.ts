@@ -16,6 +16,8 @@ import { WindowsExerciseLeaseProvider } from './runtime/windows-exercise-lease'
 import { loadLearningNative, type LearningNativeBinding } from './runtime/windows-exercise-native'
 import { WindowsCsharpExecutionAdapter } from './runtime/csharp-execution-adapter'
 import { runCsharpSamples } from './runtime/csharp-orchestrator'
+import { WindowsJavascriptExecutionAdapter } from './runtime/javascript-execution-adapter'
+import { runJavascriptSamples } from './runtime/javascript-orchestrator'
 import { exercises } from './content/exercises'
 
 type Navigation = (event: unknown, url: string, inPlace: boolean, mainFrame: boolean) => void
@@ -33,6 +35,7 @@ export interface ExerciseExecution {
   phases: readonly ('compile' | 'execute')[]
   orchestrate?(session: ExerciseSession, progress: () => void): Promise<unknown>
   observation?(): ExerciseSnapshot['csharp']
+  javascriptObservation?(): ExerciseSnapshot['javascript']
 }
 export interface ExerciseServiceOptions {
   root: string
@@ -190,6 +193,10 @@ export class ExerciseService {
       const csharp = op.execution.observation()
       if (csharp) snapshot.csharp = csharp
     }
+    if (this.isCurrent(op) && op.execution.javascriptObservation) {
+      const javascript = op.execution.javascriptObservation()
+      if (javascript) snapshot.javascript = javascript
+    }
     const checked = validateExerciseSnapshot(snapshot)
     if (!checked.ok) throw serviceError('INVALID_OBSERVATION')
     return checked.value
@@ -314,6 +321,21 @@ export function createWindowsExerciseService(root: string, options: {
   return new ExerciseService({ root, onCleanupError: options.onCleanupError, onSnapshot: options.onSnapshot,
     leases: { acquire: id => new WindowsExerciseLeaseProvider(root, binding()).acquire(id) },
     createExecution: (request, workspace) => {
+      if (!options.driver && request.language === 'javascript') {
+        const exercise = exercises.find(e => e.id === request.exerciseId)
+        if (!exercise) throw serviceError('INVALID_EXERCISE', 'INVALID_INPUT')
+        const adapter = new WindowsJavascriptExecutionAdapter(request, workspace, binding(), undefined, exercises, 4096)
+        const schema = { parameterTypes: exercise.parameters.map(p => p.type), returnType: exercise.returnType, sampleCount: exercise.samples.length }
+        return { adapter, phases: ['compile', 'execute'], orchestrate: (session, progress) => runJavascriptSamples(session, adapter, progress),
+          javascriptObservation: () => {
+            try { return { schema, result: adapter.result() } }
+            catch (error) {
+              const reason = error instanceof DomainError ? error.details?.reason : undefined
+              if (reason === 'RESULT_PENDING' || reason === 'RESULT_INVALIDATED') return undefined
+              throw error
+            }
+          } }
+      }
       if (!options.driver && request.language === 'csharp') {
         const exercise = exercises.find(e => e.id === request.exerciseId)
         if (!exercise) throw serviceError('INVALID_EXERCISE', 'INVALID_INPUT')

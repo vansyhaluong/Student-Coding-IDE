@@ -18,12 +18,14 @@ export function createExerciseBridge(ipc: IpcRendererLike,
   const listeners = new Set<(snapshot: ExerciseSnapshot) => void>()
   let current: ExerciseSnapshot | undefined, buffered: ExerciseSnapshot | undefined
   let highestGeneration = 0, runsPending = 0, subscribed = false, disposed = false
+  const sameContext = (a: ExerciseSnapshot, b: ExerciseSnapshot) => a.exerciseId === b.exerciseId
+    && a.language === b.language && a.sourceRevision === b.sourceRevision
   const response = (value: unknown, channel: string) => parseAppResult(value,
     (v): v is ExerciseSnapshot => validateExerciseSnapshot(v).ok, channel)
   const accept = (snapshot: ExerciseSnapshot): boolean => {
     if (snapshot.generation < highestGeneration) return false
     if (snapshot.generation === highestGeneration && (!current || current.sessionId !== snapshot.sessionId
-      || snapshot.sequence < current.sequence)) return false
+      || !sameContext(snapshot, current) || snapshot.sequence < current.sequence)) return false
     highestGeneration = snapshot.generation; current = structuredClone(snapshot); return true
   }
   const wrapped = (_event: unknown, value: unknown) => {
@@ -37,7 +39,7 @@ export function createExerciseBridge(ipc: IpcRendererLike,
       return
     }
     if (!current) return
-    if (s.sessionId !== current.sessionId || s.generation !== current.generation || s.sequence <= current.sequence) return
+    if (s.sessionId !== current.sessionId || s.generation !== current.generation || !sameContext(s, current) || s.sequence <= current.sequence) return
     current = structuredClone(s)
     for (const listener of [...listeners]) if (listeners.has(listener)) {
       try { listener(structuredClone(s)) } catch { /* One consumer cannot disrupt transport or other subscriptions. */ }
@@ -56,10 +58,12 @@ export function createExerciseBridge(ipc: IpcRendererLike,
       runsPending++
       const result = response(await invokeSafely(ipc, EXERCISE_CHANNELS.run, r.value), EXERCISE_CHANNELS.run)
       runsPending--
-      if (result.ok && (disposed || !accept(result.value))) return invalid(EXERCISE_CHANNELS.run)
+      if (result.ok && (disposed || result.value.exerciseId !== r.value.exerciseId || result.value.language !== r.value.language
+        || result.value.sourceRevision !== r.value.sourceRevision || !accept(result.value))) return invalid(EXERCISE_CHANNELS.run)
       const pending = buffered
       if (!runsPending) buffered = undefined
       if (result.ok && pending?.sessionId === result.value.sessionId && pending.generation === result.value.generation) wrapped({}, pending)
+      if (result.ok && current?.sessionId === result.value.sessionId && current.generation === result.value.generation) return { ok: true, value: structuredClone(current) }
       return result
     },
     async snapshot(request) {

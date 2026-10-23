@@ -6,6 +6,7 @@ import {
 import { isExerciseId, isExerciseLanguage, validateExerciseDraft } from './practice'
 import { validateExactObject, type ValidationResult } from './validation'
 import { isCsharpSampleSchema, validateCsharpExecutionResult } from './csharp-execution-validation'
+import { validateJavascriptSampleSchema, validateJavascriptExecutionResult } from './javascript-execution-validation'
 
 const invalid = <T>(message: string): ValidationResult<T> => ({ ok: false, issues: [{ path: '$', message }] })
 const counter = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0
@@ -81,7 +82,7 @@ function boundedOutput(stdout: unknown, stderr: unknown): stdout is string {
 
 export function validateExerciseSnapshot(v: unknown): ValidationResult<ExerciseSnapshot> {
   const r = validateExactObject(v, ['sessionId', 'generation', 'exerciseId', 'language', 'sourceRevision',
-    'sequence', 'phase', 'reason', 'stdout', 'stderr', 'cleanup', 'csharp'])
+    'sequence', 'phase', 'reason', 'stdout', 'stderr', 'cleanup', 'csharp', 'javascript'])
   if (!r.ok) return r
   const s = r.value
   const cleanup = validateExerciseCleanupSnapshot(s.cleanup)
@@ -97,6 +98,17 @@ export function validateExerciseSnapshot(v: unknown): ValidationResult<ExerciseS
     return invalid('Invalid cleanup phase')
   }
   let csharp: ExerciseSnapshot['csharp']
+  let javascript: ExerciseSnapshot['javascript']
+  if ('csharp' in s && 'javascript' in s) return invalid('Conflicting language observations')
+  if ('javascript' in s) {
+    const payload = validateExactObject(s.javascript, ['schema', 'result'])
+    if (!payload.ok || s.language !== 'javascript') return invalid('Invalid JavaScript observation')
+    const schema = validateJavascriptSampleSchema(payload.value.schema)
+    if (!schema.ok) return invalid('Invalid JavaScript schema')
+    const result = validateJavascriptExecutionResult(payload.value.result, schema.value)
+    if (!result.ok) return invalid('Invalid JavaScript observation')
+    javascript = { schema: schema.value, result: result.value }
+  }
   if ('csharp' in s) {
     const payload = validateExactObject(s.csharp, ['schema', 'result'])
     if (!payload.ok || s.language !== 'csharp' || !isCsharpSampleSchema(payload.value.schema)) return invalid('Invalid C# observation')
@@ -106,7 +118,7 @@ export function validateExerciseSnapshot(v: unknown): ValidationResult<ExerciseS
   }
   const snapshot: ExerciseSnapshot = { sessionId: s.sessionId, generation: s.generation, exerciseId: s.exerciseId,
     language: s.language, sourceRevision: s.sourceRevision, sequence: s.sequence, phase: s.phase,
-    reason: s.reason, stdout: s.stdout, stderr: s.stderr, cleanup: cleanup.value, ...(csharp ? { csharp } : {}) }
-  if (csharp && new TextEncoder().encode(JSON.stringify(snapshot)).byteLength > EXERCISE_LIMITS.outputBytes) return invalid('Learning snapshot exceeds payload limit')
+    reason: s.reason, stdout: s.stdout, stderr: s.stderr, cleanup: cleanup.value, ...(csharp ? { csharp } : {}), ...(javascript ? { javascript } : {}) }
+  if ((csharp || javascript) && new TextEncoder().encode(JSON.stringify(snapshot)).byteLength > EXERCISE_LIMITS.outputBytes) return invalid('Learning snapshot exceeds payload limit')
   return { ok: true, value: snapshot }
 }

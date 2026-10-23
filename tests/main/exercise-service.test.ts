@@ -4,6 +4,8 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ExerciseService, createWindowsExerciseService, type ExerciseExecution } from '../../src/main/services/learning/exercise-service'
+import * as nativeModule from '../../src/main/services/learning/runtime/windows-exercise-native'
+import { fakeNode, probeNative, probeReport } from '../fixtures/learning/javascript-node-files'
 import { ExerciseWorkspace } from '../../src/main/services/learning/runtime/exercise-workspace'
 import { FileExerciseCheckpointStore, makeExerciseCheckpoint, type ExerciseCheckpoint } from '../../src/main/services/learning/runtime/exercise-checkpoint'
 import type { ExerciseLeaseProvider, ExerciseRuntimeAdapter } from '../../src/main/services/learning/runtime/exercise-runtime-adapter'
@@ -70,6 +72,7 @@ async function fixture(options: {
 }
 afterEach(async () => {
   for (const service of services.splice(0)) await service.stop().catch(() => {})
+  vi.restoreAllMocks(); vi.unstubAllEnvs()
   vi.clearAllTimers(); vi.useRealTimers()
   for (const root of roots.splice(0)) {
     if (dirname(resolve(root)) !== resolve(tmpdir()) || !basename(root).startsWith('exercise-service-')) throw Error('Unsafe test cleanup')
@@ -112,7 +115,7 @@ describe('ExerciseService admission and Main identity', () => {
     const f = await fixture()
     expect(() => f.service.run(999, request)).toThrow()
     expect(() => f.service.run(1, { ...request, language: 'python' } as unknown as ExerciseRunRequest)).toThrow()
-    const unconfigured = createWindowsExerciseService(join(f.root, 'no-drivers'))
+    const unconfigured = new ExerciseService({ root: join(f.root, 'no-drivers'), leases: f.leases })
     services.push(unconfigured); unconfigured.start(); await unconfigured.ready(); unconfigured.observe(f.owner)
     expect(() => unconfigured.run(1, request)).toThrow()
     expect(unconfigured.status().active).toBe(false)
@@ -138,6 +141,34 @@ describe('ExerciseService admission and Main identity', () => {
     f.service.invalidate(1, 'LEARNING_LEFT'); await f.service.retryCleanup(); await stale
     expect(f.held.size).toBe(0); expect(f.service.status().active).toBe(false)
   })
+})
+
+it('production JavaScript factory binds immutable source/revision and Main samples to independent observations', async () => {
+  const f = await fixture(), nodeDirectory = join(f.root, 'node'), node = await fakeNode(nodeDirectory)
+  let mode = 'probe', args = { caseIndex: 0, args: [0, 0] }
+  const mocked = probeNative(() => Buffer.from(mode === 'probe' ? probeReport({ canonicalPath: node }) : mode === 'syntax'
+    ? '{"status":"SUCCEEDED"}' : JSON.stringify({ protocolVersion: 1, caseIndex: args.caseIndex, outcome: 'RETURNED',
+      actual: args.args[0] + args.args[1], stdout: '', stderr: '' })))
+  const start = vi.mocked(mocked.native.start).getMockImplementation()!
+  vi.mocked(mocked.native.start).mockImplementation((...input) => {
+    mode = input[1].at(-1) === 'syntax' ? 'syntax' : input[1].at(-1) === 'execute' ? 'execute' : 'probe'
+    return start(...input)
+  })
+  vi.mocked(mocked.native.submitInput).mockImplementation((_h, bytes) => { if (bytes.length) args = JSON.parse(bytes.toString()) })
+  vi.spyOn(nativeModule, 'loadLearningNative').mockReturnValue(mocked.native)
+  vi.stubEnv('PATH', nodeDirectory); vi.stubEnv('Path', nodeDirectory)
+  const published: import('../../src/shared/contracts/exercise').ExerciseSnapshot[] = []
+  const service = createWindowsExerciseService(join(f.root, 'production'), { onSnapshot: (_owner, s) => published.push(s) })
+  services.push(service); service.start(); await service.ready(); service.observe(f.owner)
+  const input = { ...request, code: 'function Sum(a,b){return a+b;}' }, ref = admit(service, 1, input)
+  input.code = 'changed'; input.sourceRevision = 100
+  const final = await service.completion(1, ref)
+  expect(final.sourceRevision).toBe(4)
+  expect(final.javascript?.result.cases.map(c => c.actual)).toEqual([8, 0])
+  expect(final.csharp).toBeUndefined(); expect(final.cleanup.cleanupComplete).toBe(true)
+  expect(published.some(s => s.javascript?.result.cases.length === 1)).toBe(true)
+  expect([...mocked.states.values()].every(s => s.released && s.handlesClosed)).toBe(true)
+  expect(mocked.native.start).toHaveBeenCalledTimes(4)
 })
 
 describe('Owner loss and stale work', () => {

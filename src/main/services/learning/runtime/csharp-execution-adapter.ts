@@ -128,6 +128,10 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
         await this.execute(context)
       }
     } catch (error) {
+      // Core can expire Prepare before the resolver's cancellation reaches us.
+      // Report only that trusted deadline abort; lifecycle invalidations still escape.
+      if (phase === 'prepare' && context.signal.aborted && this.abortReason() === 'PREPARE_TIMEOUT'
+        && !this.observation.failure) this.reject(this.failure('TIMEOUT', 'prepare'))
       if (context.signal.aborted) throw error // Core lifecycle reason remains authoritative.
       if (!this.observation.failure && phase !== 'execute') {
         const why = error instanceof DomainError ? error.details?.reason : undefined

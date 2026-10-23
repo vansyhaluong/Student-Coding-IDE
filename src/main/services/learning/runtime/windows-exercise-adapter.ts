@@ -120,8 +120,11 @@ export class WindowsExerciseRuntimeAdapter implements LearningProcessResultPort 
         || Buffer.byteLength(spec.stdin, 'utf8') > EXERCISE_LIMITS.outputBytes)) throw exerciseCoreError('STDIN_CONFIGURATION')
       const input = Buffer.from(spec.stdin ?? '', 'utf8')
       if (performance.now() >= context.deadline) throw exerciseCoreError('PHASE_DEADLINE')
-      const quota = phase === 'compile' ? EXERCISE_LIMITS.compileJobMemoryBytes : phase === 'execute' ? EXERCISE_LIMITS.executeJobMemoryBytes : null
+      // Learning-only Prepare probes use the approved execute-size Job quota.
+      // C# preparation has no process plan and retains its null Core context.
+      const quota = phase === 'compile' ? EXERCISE_LIMITS.compileJobMemoryBytes : EXERCISE_LIMITS.executeJobMemoryBytes
       if (quota === null || quota !== context.jobMemoryBytes) throw exerciseCoreError('QUOTA_CONFIGURATION')
+      if (context.signal.aborted || this.sealed) throw exerciseCoreError('PROCESS_INTERRUPTED')
       const handle = this.call(() => this.native.start(spec.executable, spec.args, spec.cwd, quota, this.environment))
       // Retain ownership immediately, even if first observation/resume fails.
       const job = { handle, context, out: new StringDecoder('utf8'), err: new StringDecoder('utf8'), flushed: false,
