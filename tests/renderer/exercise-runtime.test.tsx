@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { useExerciseRuntime } from '../../src/renderer/src/features/learning/practice/use-exercise-runtime'
 import type { ExerciseApi, ExerciseRunRequest, ExerciseSnapshot } from '../../src/shared/contracts/exercise'
 import type { ExerciseLanguage } from '../../src/shared/contracts/practice'
+import { javascriptObservation } from '../fixtures/learning/javascript-observation'
 
 const request: ExerciseRunRequest = { exerciseId: 'ch2-01', language: 'csharp', code: 'captured', sourceRevision: 3 }
 const snapshot = (sequence = 1, generation = 1): ExerciseSnapshot => ({ sessionId: `exercise_${String(generation).padStart(8, '0')}-1234-4234-8234-123456789abc`,
@@ -15,23 +16,43 @@ const final = (s = snapshot(5)): ExerciseSnapshot => ({ ...s, phase: 'finished',
 } })
 const fail = { ok: false as const, error: { code: 'PROCESS_FAILED' as const, message: 'C:\\private native pid=9 handle=secret', retryable: true } }
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(r => { resolve = r }); return { promise, resolve } }
-function fixture(strict = false) {
+function fixture(strict = false, language: ExerciseLanguage = request.language) {
   vi.useFakeTimers()
   const listeners = new Set<(s: ExerciseSnapshot) => void>(), removed = vi.fn()
   const api = {
-    run: vi.fn<ExerciseApi['run']>().mockResolvedValue({ ok: true, value: snapshot() }),
-    snapshot: vi.fn<ExerciseApi['snapshot']>().mockResolvedValue({ ok: true, value: snapshot() }),
+    run: vi.fn<ExerciseApi['run']>().mockResolvedValue({ ok: true, value: { ...snapshot(), language } }),
+    snapshot: vi.fn<ExerciseApi['snapshot']>().mockResolvedValue({ ok: true, value: { ...snapshot(), language } }),
     stop: vi.fn<ExerciseApi['stop']>().mockResolvedValue({ ok: true, value: final() }),
     onChanged: vi.fn<ExerciseApi['onChanged']>(listener => { listeners.add(listener); return () => { listeners.delete(listener); removed() } }),
   }
-  const initialProps: { active: boolean; exerciseId?: string; language: ExerciseLanguage } = { active: true, exerciseId: request.exerciseId, language: request.language }
+  const initialProps: { active: boolean; exerciseId?: string; language: ExerciseLanguage } = { active: true, exerciseId: request.exerciseId, language }
   const hook = renderHook(input => useExerciseRuntime(input, api), { initialProps,
     wrapper: strict ? ({ children }: { children: ReactNode }) => <StrictMode>{children}</StrictMode> : undefined })
-  const run = () => act(async () => { await hook.result.current.run(request) })
+  const run = () => act(async () => { await hook.result.current.run({ ...request, language }) })
   const emit = (s: ExerciseSnapshot) => act(() => { for (const l of [...listeners]) l(s) })
   return { ...hook, api, listeners, removed, run, emit, initialProps }
 }
 afterEach(() => { cleanup(); vi.clearAllTimers(); vi.useRealTimers() })
+
+it.each(['exercise', 'language', 'pagehide'] as const)('keeps JavaScript results current through races and %s invalidation', async change => {
+  const f = fixture(false, 'javascript'), pending = deferred<Awaited<ReturnType<ExerciseApi['snapshot']>>>()
+  f.api.snapshot.mockReturnValueOnce(pending.promise)
+  await f.run()
+  const current = { ...snapshot(3), language: 'javascript' as const, javascript: javascriptObservation }
+  f.emit(current)
+  await act(async () => { pending.resolve(fail) })
+  expect(f.result.current.view.snapshot?.javascript?.result.cases[0].actual).toBe(8)
+  for (const overrides of [{ sourceRevision: 99 }, { exerciseId: 'ch2-02' }, { language: 'csharp' as const }, { generation: 99 }]) {
+    f.emit({ ...current, sequence: 4, ...overrides })
+  }
+  expect(f.result.current.view.snapshot?.sequence).toBe(3)
+  const callback = [...f.listeners][0]
+  if (change === 'pagehide') act(() => window.dispatchEvent(new Event('pagehide')))
+  else f.rerender({ ...f.initialProps, ...(change === 'exercise' ? { exerciseId: 'ch2-02' } : { language: 'csharp' as const }) })
+  act(() => callback({ ...final(current), sequence: 8 }))
+  expect(f.api.stop).toHaveBeenCalledOnce()
+  if (change !== 'pagehide') expect(f.result.current.view.status).toBe('idle')
+})
 
 it('is idle without a session and does not subscribe while Learning/exercise is inactive', () => {
   const f = fixture()

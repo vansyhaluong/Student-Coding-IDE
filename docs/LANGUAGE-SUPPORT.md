@@ -29,9 +29,22 @@ Judge in this extension. See Architecture Section 10 and Plan Section 13.7.
 ## Planned Phase 9 Exercise Runtime scope
 
 Phase 9D schedules only independent Exercise Runtime adapters 9D.1 C# and 9D.2
-JavaScript. C# is `IN_PROGRESS` through contracts, filesystem SDK resolver,
-process-result port and compile-only harness/Roslyn Step 3; JavaScript is
-`NOT_STARTED`. Python/Java are outside Phase 9 V1.
+JavaScript. C# is `COMPLETE` — PASS WITH LIMITATIONS by user acceptance
+2026-10-21 for installed-runtime Windows 11 scope. Common and overall 9D are
+**COMPLETE — PASS WITH LIMITATIONS** by final user acceptance 2026-10-23;
+JavaScript 9D.2 (Steps 1–6) is also COMPLETE — PASS WITH LIMITATIONS.
+A01/A02/A03 remain FIXED — PASS; 9E–9G remain NOT_STARTED.
+[Accepted final review](PHASE-9D-FINAL-REVIEW.md) records evidence and retained
+Windows/UNC/9G/9E, worker/coverage, startup console, C# latency and full-lint
+limits. No UNVERIFIED gate is promoted to PASS. The following step-specific
+status/verification notes preserve execution-time history.
+Step 1 standalone contracts are `COMPLETE`
+— PASS WITH LIMITATIONS by user acceptance 2026-10-22, pre-existing lint limitation accepted.
+Step 2 resolver/probe is COMPLETE — PASS WITH LIMITATIONS by user acceptance
+2026-10-22; 169 targeted tests PASS and recorded limits accepted. Step 3 was
+separately authorized/implemented and accepted 2026-10-22: COMPLETE — PASS WITH
+LIMITATIONS; Step 4 COMPLETE — PASS WITH LIMITATIONS by user acceptance 2026-10-23;
+Step 5 COMPLETE — PASS WITH LIMITATIONS by user acceptance 2026-10-23; Step 6 IN_PROGRESS — PENDING USER ACCEPTANCE. Python/Java are outside Phase 9 V1.
 Implementation requires explicit package authorization and runtime acceptance.
 Learning V1 uses supplied functions with per-language parameters/types, return
 type, starter code and compatible tests, executed by generated harnesses/drivers.
@@ -64,9 +77,11 @@ Step 6 adds compile-once sequential catalogue samples, VERIFIED barriers and exa
 not-run indices with shared operation/output budgets; see PHASE-9D1-CSHARP-MULTICASE.md.
 Step 7 verifies production C# UI → Preload → IPC → real Roslyn/.NET → Result Panel
 on Windows 11, with bounded typed results/diagnostics, lifecycle invalidation and
-live Project Run/PTY isolation; see PHASE-9D1-CSHARP-UI.md. Final user acceptance,
-Windows 10 and packaging remain due; 9D.1/Common are IN_PROGRESS. See
-PHASE-9D1-CSHARP-COMPILER.md and PHASE-9D1-SDK-RESOLVER.md. Planned 9D.1 Run executes Main catalogue
+live Project Run/PTY isolation; see PHASE-9D1-CSHARP-UI.md. User accepted 9D.1
+COMPLETE — PASS WITH LIMITATIONS; see [final review](PHASE-9D1-FINAL-REVIEW.md).
+Windows 10/packaging remain unverified. C# Run ~7–8s optimization is after Phase 9;
+production Accepted-record Restore awaits 9E. Common remains IN_PROGRESS. See
+PHASE-9D1-CSHARP-COMPILER.md and PHASE-9D1-SDK-RESOLVER.md. 9D.1 Run executes Main catalogue
 samples and returns actuals without comparison. Custom cases need separate scope;
 comparison, Submit and results persistence remain 9E. No Project resolver reuse,
 patch lock, download/install or major fallback. See PHASE-9D1-CSHARP-CONTRACTS.md.
@@ -84,9 +99,46 @@ persistence before newly completed progress. Only saved Accepted records appear
 in My Solutions; no failed-submission history. Offline hidden tests are not
 absolutely secret. Exercise sessions remain independent from Project Run.
 
-ADR-025 records approved Common limits; their production enforcement is still due.
-Offline compiler dependencies and actual harness execution remain unverified;
-C# protocol declarations are recorded in Step 1. JavaScript harness, comparison,
+JavaScript design approved 2026-10-22; production integration implemented in Step 5
+(COMPLETE — PASS WITH LIMITATIONS by user acceptance 2026-10-23). Evidence: PHASE-9D2-JAVASCRIPT-UI-IPC.md.
+Use a fresh Node process/Learning Job per
+Main-catalogue sample, fixed harness and `node:vm` context separation, not a
+malicious-code security sandbox. Synchronous functions only; int32, boolean,
+string, int32[], string[], rectangular int32[][]; no imports/npm/async. Strict JSON
+stdin/stdout separates syntax/runtime/protocol failures. Independent JS DTOs reuse
+Exercise channels/Result Panel without changing C# contracts or adding Judge,
+comparison, Submit, Accepted/Wrong Answer. Learning-only first verified stable
+24.x PATH candidate, safe junction/nvm verification, no patch lock/major fallback/
+download. Prepare probe is owned by Learning Job, 512 MiB within total 10 s;
+Step 2 implements Prepare quota/context mapping only for JavaScript; C# Prepare
+remains null/non-process. Fixed probe/identity selection verified in 10 real Jobs
+on Windows 11 x64 / installed Node v24.16.0; no student execution or Run factory.
+Existing
+deadlines/barriers/cancellation/cleanup/recovery/Policy B and Project isolation
+remain unchanged. [Six-step plan](PHASE-9D2-JAVASCRIPT-PLAN.md) records acceptance,
+targeted tests and pending Windows 10/11 evidence. Step 1 declarations/validators
+and Main-only ports are implemented; 308 targeted JS/Common/C# tests PASS.
+[Step 1 evidence](PHASE-9D2-JAVASCRIPT-CONTRACTS.md); no production capability is
+added. Step 2 evidence: [resolver/probe report](PHASE-9D2-NODE-RESOLVER-PROBE.md),
+159 unit/regression + 9 native probe + one real C# Sum test PASS. Step 2 is
+COMPLETE — PASS WITH LIMITATIONS by user acceptance 2026-10-22. Step 3 now supplies
+a Main-internal single catalogue sample harness/syntax path: fixed trusted raw
+asset, fresh vm context, strict JSON/UTF-8/EOF and Step 1 validation, bounded
+console/serialization, exclusive identity/hash-verified files and delegated
+Job/lifecycle cleanup. 259 targeted tests PASS (60 native operations / 172 Jobs)
+on Windows 11 / installed Node v24.16.0 x64. [Step 3 report](PHASE-9D2-JAVASCRIPT-HARNESS-SYNTAX.md).
+Step 3 COMPLETE — PASS WITH LIMITATIONS by user acceptance 2026-10-22.
+Step 4 implements Main-internal multi-case execution over one admitted session,
+fresh Jobs and VERIFIED barriers. 160 targeted tests PASS, 16 real JS operations /
+57 Jobs VERIFIED/closed; selected real C# multi-case PASS. Step 4 COMPLETE — PASS WITH LIMITATIONS
+by user acceptance 2026-10-23; [report](PHASE-9D2-JAVASCRIPT-ORCHESTRATOR.md). Production integration is Step 5 (COMPLETE — PASS WITH LIMITATIONS, accepted 2026-10-23);
+see PHASE-9D2-JAVASCRIPT-UI-IPC.md. Step 6 IN_PROGRESS — PENDING USER ACCEPTANCE. Windows 10/actual UNC/concurrent
+Project Run/PTY smoke/packaging remain unverified. Bundled Node remains 9G.
+
+ADR-025 records approved Common limits; remaining production acceptance is due.
+C# installed-runtime evidence is accepted within the limitations recorded above;
+JavaScript single-sample installed-runtime execution evidence is recorded in
+Steps 3–4; production UI/IPC/end-to-end and offline distribution acceptance remain pending. Comparison,
 package size and packaging fallback thresholds remain open. Additional
 runtime packs or detected installed runtimes with guidance are fallback options
 for size/technical barriers at packaging. 9D verifies installed-runtime execution;

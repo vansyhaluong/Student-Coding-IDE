@@ -30,6 +30,10 @@ export default defineConfig({
   preload: {},
 
   renderer: {
+    worker: {
+      // TypeScript's binder has required side effects despite upstream pure annotations.
+      rollupOptions: { treeshake: { annotations: false } },
+    },
     plugins: [
       react(),
       tailwindcss(),

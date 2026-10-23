@@ -203,9 +203,15 @@ React local state and focused feature stores are sufficient initially. Selection
 
 ### Phase 9 direction — workspace modes and Learning ownership
 
-Status: planned (`NOT_STARTED`); this records approved architecture direction,
-not implemented behavior. The detailed 9A–9G roadmap is in Implementation Plan
-Section 13.6. Existing Phase 1–8 decisions remain unchanged.
+Status: Phase 9 IN_PROGRESS; 9A–9C COMPLETE. 9D Common, 9D.1, 9D.2 and overall
+9D are **COMPLETE — PASS WITH LIMITATIONS**, finally accepted by the user
+2026-10-23; A01/A02/A03 FIXED — PASS. 9E–9G remain NOT_STARTED. This status-only
+reconciliation changes no architecture, security boundary, Policy B or budget.
+[Accepted 9D review](PHASE-9D-FINAL-REVIEW.md) preserves scoped Windows 11 evidence,
+unverified Windows/UNC/9G and all other named limits; repository lint remains FAIL.
+Execution-time status notes below are historical and superseded by this closure.
+The detailed 9A–9G roadmap is in Implementation Plan Section 13.6.
+Existing Phase 1–8 decisions remain unchanged.
 
 The current three-column Project Mode layout in `App.tsx` remains authoritative:
 
@@ -288,6 +294,67 @@ code, compatible test cases, Monaco language id and runtime adapter. Only C# and
 JavaScript are in Phase 9 V1; Python/Java are excluded. This does not expand current Project
 Run or language intelligence capabilities.
 
+#### Approved 9D.2 JavaScript architecture (2026-10-22; single-sample internal execution verified)
+
+Use one fresh Node.js process/Learning Windows Job per Main-catalogue sample,
+a fixed harness and `node:vm` context separation. This is local process
+containment, not a malicious-code security sandbox: vm/Jobs/workspaces do not
+restrict filesystem/network/account rights or guarantee authentic child results.
+Never evaluate student code or serialize its live objects in Main/Renderer.
+Only synchronous functions and existing int32/boolean/string/int32[]/string[]/
+int32[][] types are supported; imports/npm/async are excluded.
+
+A Learning-only resolver selects the first verified compatible stable Node 24.x
+on absolute Main PATH entries, without patch pin, shell/CWD search, Project
+resolver, auto-download or major fallback. Junction/nvm is permitted only with
+safe canonical target/identity verification; retain and revalidate selection
+within the operation. Fixed version/capability probes run in an owned Learning
+Job during Prepare with 512 MiB aggregate commit and within the original 10 s
+Prepare/60 s operation due. Step 2 implements the narrow Learning-only Prepare
+quota/context mapping: JavaScript gets 512 MiB, C# retains null/non-process Prepare.
+No unowned probe or relabelled execute. The fixed probe retains all Jobs and raw
+I/O accounting in the existing adapter; selection revalidation captures alias and
+canonical ancestry/file metadata. Native/Policy B implementation is unchanged.
+
+Parse-only syntax checking uses the existing compile phase (30 s/2 GiB), without
+running student top-level code. Each execute retains 2 s including startup/
+serialization/I/O and 512 MiB. Strict versioned UTF-8 JSON stdin/EOF and one stdout
+response are schema/index/type/size validated; distinguish syntax, runtime and
+protocol failures. Raw bytes across all processes retain the 1 MiB operation cap.
+Sequential samples require the existing VERIFIED barrier; cancellation, ownership,
+cleanup/retry/recovery, one-operation admission and Policy B remain unchanged.
+
+Add a JavaScript-specific result DTO/optional observation over existing Exercise
+channels and Result Panel; preserve C# contracts. Reject language/schema/ownership/
+revision mismatches and stale results; bound the full snapshot envelope. No Judge,
+comparison, Submit, Accepted/Wrong Answer, persistence or new Stop/Cancel UI.
+Installed Node only in 9D.2; bundling/distribution is 9G. Six implementation steps,
+targeted tests and Windows 10/11 verification requirements:
+[9D.2 plan](PHASE-9D2-JAVASCRIPT-PLAN.md). Step 1 separately authorized 2026-10-22:
+standalone DTOs/strict protocol validators and Main-only ports implemented;
+[contracts evidence](PHASE-9D2-JAVASCRIPT-CONTRACTS.md). Step 1 COMPLETE — PASS WITH
+LIMITATIONS by user acceptance 2026-10-22 (pre-existing full-repo lint limitation
+accepted); 9D.2/Common IN_PROGRESS. Step 2 COMPLETE — PASS WITH LIMITATIONS by
+user acceptance 2026-10-22, with 169 targeted tests PASS,
+including 10 real Prepare Jobs on Windows 11 x64 and one real C# Sum regression;
+[Step 2 evidence/accepted limitations](PHASE-9D2-NODE-RESOLVER-PROBE.md).
+Step 3 separately authorized/implemented and accepted 2026-10-22 is COMPLETE —
+PASS WITH LIMITATIONS: fixed raw child asset, exclusive identity/hash-verified files,
+parse-only vm.Script syntax check and Main-internal sample-0 execution. A fresh
+context receives primitive JSON only; console/arguments/result normalization are
+context-owned, and Main sees validated bytes only. Strict Step 1 request/response
+validation and private syntax frames separate syntax/runtime/protocol errors.
+259 targeted tests PASS, including 60 native operations / 172 Jobs with VERIFIED
+cleanup on Windows 11 / Node v24.16.0 x64. [Step 3 evidence/limits](PHASE-9D2-JAVASCRIPT-HARNESS-SYNTAX.md).
+Step 4 separately authorized/implemented 2026-10-22 is COMPLETE — PASS WITH LIMITATIONS
+by user acceptance 2026-10-23: Main-only JavaScript adapter/orchestrator, Prepare/Syntax once,
+sequential fresh Jobs, VERIFIED barriers and fail-fast with exact suffix.
+160 targeted tests PASS, including 16 native cases / 57 JavaScript Jobs all
+VERIFIED/closed; selected real C# multi-case regression PASS.
+[Step 4 evidence/limits](PHASE-9D2-JAVASCRIPT-ORCHESTRATOR.md). Step 5 COMPLETE — PASS WITH LIMITATIONS (accepted 2026-10-23); Step 6 IN_PROGRESS — PENDING USER ACCEPTANCE;
+production integration evidence: PHASE-9D2-JAVASCRIPT-UI-IPC.md. Step 6 was separately authorized 2026-10-23; no next-phase work is authorized. No architecture/Policy B, existing
+runtime/native, Step 1 or C# contract changes.
+
 #### Exercise, Judge and runtime boundary
 
 Learning V1 uses function-signature test harnesses. Students implement the supplied
@@ -308,7 +375,8 @@ calls without creating a user-facing control. Unlike mode-state retention,
 leaving Learning cancels active Exercise execution; Project/Terminal sessions
 remain unchanged. Submit/Accepted persistence and My Solutions integration belong
 to 9E, with successful persistence required before saved/completion acknowledgement.
-CPU/RAM/timeout proposals remain experimental and unapproved for production.
+Initial Common quotas/deadlines were subsequently approved on 2026-10-20;
+the JavaScript Prepare probe mapping was approved on 2026-10-22 below.
 This clarification authorizes no UI or production implementation.
 
 ```text
@@ -452,8 +520,13 @@ and cannot overwrite a final event with a transport error. The existing Result
 panel shows actuals, NOT_RUN and safe diagnostics/failure messages without
 comparison, persistence or Stop/Cancel controls. Windows 11 production Electron
 and live Project Run/PTY isolation evidence:
-[C# production wiring](PHASE-9D1-CSHARP-UI.md). Final acceptance, Windows 10 and
-packaging remain separate; 9D.1/Common stay IN_PROGRESS.
+[C# production wiring](PHASE-9D1-CSHARP-UI.md). User accepted 9D.1 COMPLETE —
+PASS WITH LIMITATIONS on 2026-10-21; [final review](PHASE-9D1-FINAL-REVIEW.md).
+Common and 9D.2 remain IN_PROGRESS; Step 1 COMPLETE — PASS WITH LIMITATIONS by
+user acceptance 2026-10-22; Step 2 COMPLETE — PASS WITH LIMITATIONS by user
+acceptance 2026-10-22, Step 3 COMPLETE — PASS WITH LIMITATIONS by user acceptance 2026-10-22;
+Step 4 COMPLETE — PASS WITH LIMITATIONS (accepted 2026-10-23), Step 5 COMPLETE — PASS WITH LIMITATIONS (accepted 2026-10-23); Step 6 IN_PROGRESS — PENDING USER ACCEPTANCE. Windows 10/packaging remain unverified; production Accepted-record
+Restore awaits 9E. C# Run ~7–8s optimization is backlog after Phase 9.
 
 The additive native build hook produces a Learning-only artifact and leaves the
 Project native implementation/build script unchanged. No Main composition, IPC,
@@ -585,8 +658,9 @@ installer integration will be discussed and decided separately.
 At packaging, candidates include bundling SDK/Node; if size/technical barriers
 justify it, fallback may use an additional runtime pack
 or detected installed runtime with clear guidance. Redistribution, package size,
-packaging fallback threshold and remaining JavaScript/custom-case/comparison
-details remain open in ADR-025. C# direct Roslyn/filesystem discovery and sample-only
+packaging fallback threshold and custom-case/comparison details remain open in
+ADR-025. JavaScript architecture was approved on 2026-10-22; implementation and
+Windows acceptance remain due. C# direct Roslyn/filesystem discovery and sample-only
 Run are approved; [9D.1 Step 1](PHASE-9D1-CSHARP-CONTRACTS.md) declares JSON
 stdin/actual-result protocol, safe diagnostic/failure DTOs and Main-only SDK/
 compiler/adapter ports. No resolver/compiler/native stdin/adapter or wiring is

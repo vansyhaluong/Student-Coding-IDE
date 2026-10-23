@@ -109,7 +109,8 @@ export class ExerciseSession {
           if (this.limits.controller.signal.aborted) return
           await this.options.adapter.runPhase(phase, { signal: this.limits.controller.signal, deadline,
             jobMemoryBytes: phase === 'compile' ? EXERCISE_LIMITS.compileJobMemoryBytes
-              : phase === 'execute' ? EXERCISE_LIMITS.executeJobMemoryBytes : null,
+              : phase === 'execute' || phase === 'prepare' && this.request.language === 'javascript'
+                ? EXERCISE_LIMITS.executeJobMemoryBytes : null,
             output: (stream, text, rawBytes) => this.output(stream, text, rawBytes) })
         })()
         this.phaseTasks.add(work)

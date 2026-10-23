@@ -13,7 +13,7 @@ function gate() {
   const promise = new Promise<void>(r => { resolve = r })
   return { promise, resolve }
 }
-function fixture() {
+function fixture(language: 'csharp' | 'javascript' = 'csharp') {
   let leased = false
   const release = vi.fn(async () => { leased = false })
   const workspace = new ExerciseWorkspace('test-learning-root', sessionId, { acquire: async () => {
@@ -41,7 +41,7 @@ function fixture() {
     release: vi.fn<ExerciseRuntimeAdapter['release']>().mockResolvedValue(),
     closeHandles: vi.fn<ExerciseRuntimeAdapter['closeHandles']>().mockResolvedValue(),
   }
-  const session = new ExerciseSession({ request: { exerciseId: 'ch2-01', language: 'csharp', code: 'code', sourceRevision: 5 },
+  const session = new ExerciseSession({ request: { exerciseId: 'ch2-01', language, code: 'code', sourceRevision: 5 },
     ownerId: 'owner-1', workspace, checkpoints, adapter,
     clock: { now: () => Date.now(), schedule: (callback, ms) => { const timer = setTimeout(callback, ms); return () => clearTimeout(timer) } } })
   return { session, adapter, workspace, checkpoints, evidence, records, release }
@@ -51,6 +51,14 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(0) })
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers() })
 
 describe('Learning Policy B stages', () => {
+  it.each(['csharp', 'javascript'] as const)('maps Prepare probe quota only for %s without changing deadlines', async language => {
+    const f = fixture(language)
+    await f.session.runPhase('prepare')
+    expect(f.adapter.runPhase.mock.calls[0][1]).toMatchObject({ deadline: 10_000,
+      jobMemoryBytes: language === 'javascript' ? EXERCISE_LIMITS.executeJobMemoryBytes : null })
+    expect(f.session.limits.operationDeadline).toBe(60_000)
+    await f.session.close()
+  })
   it('gives each execute its own 2s phase, clamped to the original operation due including barriers', async () => {
     const f = fixture(), deadlines: number[] = [], barrierDeadlines: number[] = []
     await f.session.runPhase('prepare'); await f.session.runPhase('compile')

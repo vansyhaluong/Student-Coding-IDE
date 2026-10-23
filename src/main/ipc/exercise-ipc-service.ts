@@ -106,7 +106,8 @@ export class ExerciseIpcService {
       const snapshot = this.safeSnapshot(value)
       if (snapshot.sessionId !== route.sessionId || snapshot.generation !== route.generation || snapshot.sequence <= route.sequence) return
       const current = this.service.snapshot(owner, { sessionId: snapshot.sessionId, generation: snapshot.generation })
-      if (current.sequence !== snapshot.sequence) return
+      if (current.sequence !== snapshot.sequence || current.exerciseId !== snapshot.exerciseId
+        || current.language !== snapshot.language || current.sourceRevision !== snapshot.sourceRevision) return
       route.sequence = snapshot.sequence
       this.send(route.context, snapshot)
     } catch { this.publication = undefined /* Owner loss/stale/invalid result revokes routing, never broadcasts. */ }

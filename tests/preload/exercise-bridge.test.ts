@@ -1,4 +1,5 @@
 import { expect, it, vi } from 'vitest'
+import { javascriptObservation } from '../fixtures/learning/javascript-observation'
 import { createExerciseBridge } from '../../src/preload/bridge/exercise'
 import { EXERCISE_CHANNELS, EXERCISE_LIMITS, type ExerciseSnapshot } from '../../src/shared/contracts/exercise'
 
@@ -20,6 +21,49 @@ function fixture() {
   })
   return { bridge, invoke, on, removeListener, listeners, unload, emit: (v: unknown) => [...listeners].forEach(l => l({}, v)) }
 }
+
+it('binds JavaScript observations to exercise/language/revision and returns the newest buffered event', async () => {
+  const f = fixture(), listener = vi.fn()
+  f.bridge.onChanged(listener)
+  let resolve!: (v: unknown) => void
+  f.invoke.mockImplementationOnce(() => new Promise(r => { resolve = r }))
+  const admission = f.bridge.run(request)
+  f.emit({ ...snapshot(1, 5), javascript: javascriptObservation })
+  resolve({ ok: true, value: snapshot() })
+  const result = await admission
+  expect(result).toMatchObject({ ok: true, value: { sequence: 5, javascript: javascriptObservation } })
+  for (const change of [{ language: 'csharp' }, { exerciseId: 'ch2-02' }, { sourceRevision: 99 }]) {
+    f.emit({ ...snapshot(1, 6), ...change })
+    f.invoke.mockResolvedValueOnce({ ok: true, value: { ...snapshot(1, 6), ...change } })
+    expect((await f.bridge.snapshot(ref(snapshot()))).ok).toBe(false)
+  }
+  expect(listener).toHaveBeenCalledOnce()
+  f.emit({ ...snapshot(1, 7), javascript: javascriptObservation })
+  expect(listener).toHaveBeenCalledTimes(2)
+})
+
+it('rejects foreign JavaScript admission context and invalid/mixed/oversized observations on both replies and events', async () => {
+  const f = fixture(), listener = vi.fn()
+  f.bridge.onChanged(listener)
+  for (const change of [{ exerciseId: 'ch2-02' }, { language: 'csharp' }, { sourceRevision: 99 }]) {
+    f.invoke.mockResolvedValueOnce({ ok: true, value: { ...snapshot(), ...change } })
+    expect((await f.bridge.run(request)).ok).toBe(false)
+  }
+  await f.bridge.run(request)
+  for (const change of [
+    { javascript: { ...javascriptObservation, command: 'node' } },
+    { javascript: javascriptObservation, csharp: {} },
+    { language: 'csharp', javascript: javascriptObservation },
+    { javascript: { ...javascriptObservation, schema: { ...javascriptObservation.schema, returnType: 'boolean' } } },
+    { javascript: javascriptObservation, stdout: 'x'.repeat(EXERCISE_LIMITS.outputBytes - 50) },
+  ]) {
+    const bad = { ...snapshot(1, 3), ...change }
+    f.emit(bad)
+    f.invoke.mockResolvedValueOnce({ ok: true, value: bad })
+    expect((await f.bridge.snapshot(ref(snapshot()))).ok).toBe(false)
+  }
+  expect(listener).not.toHaveBeenCalled()
+})
 
 it('exposes only the four semantic methods and explicitly declared channels', async () => {
   const f = fixture()

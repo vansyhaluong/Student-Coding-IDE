@@ -6,7 +6,7 @@ import type { LearningJobSample, LearningNativeBinding } from '../../src/main/se
 import type { ExercisePhaseContext } from '../../src/main/services/learning/runtime/exercise-runtime-adapter'
 import { ExerciseWorkspace } from '../../src/main/services/learning/runtime/exercise-workspace'
 import { exercises } from '../../src/main/services/learning/content/exercises'
-import { exerciseCoreError } from '../../src/main/services/learning/runtime/exercise-limits'
+import { exerciseCoreError, type ExerciseClock } from '../../src/main/services/learning/runtime/exercise-limits'
 import { ExerciseSession } from '../../src/main/services/learning/runtime/exercise-session'
 import { runCsharpSamples } from '../../src/main/services/learning/runtime/csharp-orchestrator'
 import type { Exercise } from '../../src/shared/contracts/practice'
@@ -60,16 +60,66 @@ function fixture(wire: Buffer | ((request: { caseIndex: number; args: unknown[] 
   const cleanup = async () => { await adapter.terminate('COMPLETED'); await adapter.settleObservers(); await adapter.release(); await adapter.closeHandles() }
   return { adapter, native, sample, context, abort, prepare, execute, cleanup, resolver, samples, workspace, request }
 }
-function sessionFor(f: ReturnType<typeof fixture>) {
+function sessionFor(f: ReturnType<typeof fixture>, clock?: ExerciseClock) {
   vi.spyOn(f.workspace, 'prepare').mockImplementation(async () => { await f.workspace.acquire(); f.workspace.identity = { dev: '1', ino: '2', birthtimeNs: '3' } })
   vi.spyOn(f.workspace, 'remove').mockResolvedValue()
-  return new ExerciseSession({ request: f.request, ownerId: 'orchestration-unit', workspace: f.workspace, adapter: f.adapter,
+  return new ExerciseSession({ request: f.request, ownerId: 'orchestration-unit', workspace: f.workspace, adapter: f.adapter, clock,
     checkpoints: { write: vi.fn(async () => {}), read: vi.fn() } })
 }
 const threeSamples: Exercise = { ...exercises[0], samples: [{ args: [14, -6], expected: 999 }, { args: [0, 0], expected: 999 }, { args: [1, 2], expected: 999 }] }
 const typedWire = (request: { caseIndex: number; args: unknown[] }) => Buffer.from(JSON.stringify({ ...JSON.parse(response()),
   caseIndex: request.caseIndex, actual: Number(request.args[0]) + Number(request.args[1]) }))
 describe('C# single-sample execution (mock compiler/runtime dependencies; fake native process)', () => {
+  it('A03 records TIMEOUT/prepare after Core expires before the resolver settles', async () => {
+    let now = performance.now()
+    const timers = new Map<number, () => void>()
+    const clock: ExerciseClock = { now: () => now, schedule: (callback, ms) => {
+      const due = now + ms; timers.set(due, callback); return () => { timers.delete(due) }
+    } }
+    const f = fixture(), session = sessionFor(f, clock)
+    let entered!: () => void, settle!: () => void
+    const ready = new Promise<void>(r => { entered = r }), pending = new Promise<void>(r => { settle = r })
+    f.resolver.resolve.mockImplementationOnce(async context => { entered(); await pending; throw context.signal.reason })
+    const release = vi.spyOn(f.workspace, 'releaseLease')
+    const work = runCsharpSamples(session, f.adapter); void work.catch(() => {})
+    await ready
+    const due = Math.min(...timers.keys()), expire = timers.get(due)!
+    expect(due - now).toBe(10_000); now = due; expire()
+    expect(session.limits.reason).toBe('PREPARE_TIMEOUT'); settle()
+    await expect(work).resolves.toEqual({ compile: null, cases: [], notRunCaseIndices: [0, 1],
+      failure: { kind: 'TIMEOUT', phase: 'prepare', caseIndex: null } })
+    expect(session.snapshot()).toMatchObject({ reason: 'PREPARE_TIMEOUT',
+      cleanup: { proof: 'VERIFIED', cleanupComplete: true, workspace: 'REMOVED' } })
+    expect(f.native.start).not.toHaveBeenCalled(); expect(mocks.compile).not.toHaveBeenCalled()
+    expect(release).toHaveBeenCalledOnce(); expect(f.workspace.ownsLease).toBe(false)
+  })
+  it.each(['CONTEXT_CHANGED', 'LEARNING_LEFT', 'OWNER_LOST', 'SHUTDOWN'] as const)(
+    'A03 suppresses Prepare publication after %s without inventing a timeout', async reason => {
+      const f = fixture(), session = sessionFor(f)
+      let entered!: () => void, settle!: () => void
+      const ready = new Promise<void>(r => { entered = r }), pending = new Promise<void>(r => { settle = r })
+      f.resolver.resolve.mockImplementationOnce(async context => { entered(); await pending; throw context.signal.reason })
+      const release = vi.spyOn(f.workspace, 'releaseLease')
+      const work = runCsharpSamples(session, f.adapter); void work.catch(() => {})
+      await ready
+      const close = session.close(reason); void close.catch(() => {})
+      settle(); await close
+      await expect(work).rejects.toMatchObject({ details: { reason: 'RESULT_INVALIDATED' } })
+      expect(() => f.adapter.result()).toThrow()
+      expect(session.snapshot()).toMatchObject({ reason,
+        cleanup: { proof: 'VERIFIED', cleanupComplete: true, workspace: 'REMOVED' } })
+      expect(f.native.start).not.toHaveBeenCalled(); expect(mocks.compile).not.toHaveBeenCalled()
+      expect(release).toHaveBeenCalledOnce(); expect(f.workspace.ownsLease).toBe(false)
+    })
+  it('A03 requires a trusted aborted reason rather than timeout-shaped data', async () => {
+    const f = fixture()
+    f.resolver.resolve.mockImplementationOnce(async () => {
+      f.abort.abort({ details: { reason: 'PREPARE_TIMEOUT' } }); throw f.abort.signal.reason
+    })
+    await expect(f.adapter.runPhase('prepare', f.context)).rejects.toEqual({ details: { reason: 'PREPARE_TIMEOUT' } })
+    expect(f.adapter.result()).toEqual({ compile: null, cases: [], notRunCaseIndices: [0, 1], failure: null })
+    expect(f.native.start).not.toHaveBeenCalled(); await f.cleanup()
+  })
   it.each(['MISSING', 'INVALID_CONFIGURATION'] as const)('records SDK %s without compilation or launch', async state => {
     const f = fixture()
     f.resolver.resolve.mockResolvedValueOnce(state === 'MISSING' ? { state, reason: 'SDK_NOT_FOUND' } : { state, reason: 'SDK_INCOMPATIBLE' })

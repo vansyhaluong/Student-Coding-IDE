@@ -12,6 +12,7 @@ import { EXERCISE_CHANNELS, EXERCISE_LIMITS, type ExerciseSnapshot } from '../..
 import { createExerciseBridge } from '../../src/preload/bridge/exercise'
 import type { IpcRendererLike } from '../../src/preload/bridge/lifecycle'
 import { DesktopApplication } from '../../src/main/app/desktop-application'
+import { javascriptObservation } from '../fixtures/learning/javascript-observation'
 
 class Owner extends EventEmitter { constructor(readonly id: number) { super() } isDestroyed() { return false } }
 const request = { exerciseId: 'ch2-01', language: 'javascript' as const, code: 'source', sourceRevision: 4 }
@@ -25,7 +26,7 @@ afterEach(async () => {
     await rm(root, { recursive: true, force: true })
   }
 })
-async function fixture(options: { unsupported?: boolean; run?: (phase: string, context: ExercisePhaseContext) => Promise<void> } = {}) {
+async function fixture(options: { unsupported?: boolean; javascript?: boolean; run?: (phase: string, context: ExercisePhaseContext) => Promise<void> } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'exercise-ipc-')); roots.push(root)
   const owner = new Owner(1), other = new Owner(2)
   const frame = { processId: 10, frameToken: 'current', detached: false, isDestroyed: () => false }
@@ -42,7 +43,8 @@ async function fixture(options: { unsupported?: boolean; run?: (phase: string, c
   const service = new ExerciseService({ root, leases: { acquire: async id => {
     held.add(id); return { release: async () => { held.delete(id) } }
   } }, clock: { now: () => Date.now(), schedule: (callback, ms) => { const timer = setTimeout(callback, ms); return () => clearTimeout(timer) } },
-  createExecution: options.unsupported ? undefined : () => ({ adapter, phases: ['execute'] }),
+  createExecution: options.unsupported ? undefined : () => ({ adapter, phases: ['execute'],
+    ...(options.javascript ? { javascriptObservation: () => structuredClone(javascriptObservation) } : {}) }),
   onSnapshot: (id, s) => ipc.publish(id, s) })
   const authorize = vi.fn((c: IpcRequestContext) => {
     if (c.senderId !== 1 && c.senderId !== 2 || !c.senderFrame || c.senderFrame !== currentFrame
@@ -63,6 +65,16 @@ async function fixture(options: { unsupported?: boolean; run?: (phase: string, c
   return { service, ipc, handlers, bridge, invoke, context, frame, owner, other, held, changed, adapter, authorize, run,
     replaceFrame: () => { currentFrame = { ...frame, frameToken: 'replacement' }; return currentFrame } }
 }
+
+it('transports detached JavaScript observations from ExerciseService through IPC and Preload without C# payloads', async () => {
+  const f = await fixture({ javascript: true }), listener = vi.fn()
+  f.bridge.onChanged(listener)
+  const op = await f.run(); await op.completion
+  const result = await f.bridge.snapshot(op.ref)
+  expect(result).toMatchObject({ ok: true, value: { sourceRevision: 4, language: 'javascript', javascript: javascriptObservation } })
+  if (result.ok) expect(result.value.csharp).toBeUndefined()
+  expect(listener.mock.calls.some(([s]) => s.javascript?.result.cases[0].actual === 8)).toBe(true)
+})
 
 it('registers only declared channels, validates malformed input and never accepts privileged fields', async () => {
   const f = await fixture({ unsupported: true })
@@ -114,6 +126,9 @@ it('publishes only the current owner/session/generation and increasing sequence;
   f.ipc.publish(2, current); expect(f.changed).not.toHaveBeenCalled()
   f.ipc.publish(1, { ...current, generation: 100 }); expect(f.changed).not.toHaveBeenCalled()
   f.ipc.publish(1, { ...current, sequence: current.sequence + 100 }); expect(f.changed).not.toHaveBeenCalled()
+  for (const change of [{ exerciseId: 'ch2-02' }, { language: 'csharp' as const }, { sourceRevision: 99 }]) {
+    f.ipc.publish(1, { ...current, ...change }); expect(f.changed).not.toHaveBeenCalled()
+  }
   f.ipc.publish(1, current); expect(f.changed).toHaveBeenCalledOnce()
   f.ipc.publish(1, current); expect(f.changed).toHaveBeenCalledOnce()
   f.owner.emit('did-start-navigation', {}, 'new', false, true); f.replaceFrame()

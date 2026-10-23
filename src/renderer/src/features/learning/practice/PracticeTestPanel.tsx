@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp, FlaskConical, Maximize2, Minimize2, PanelBottom, PanelRight, Terminal } from 'lucide-react'
 import type { Exercise } from '../../../../../shared/contracts/practice'
-import { csharpFailureMessage, type ExerciseRunView } from './use-exercise-runtime'
+import { csharpFailureMessage, javascriptFailureMessage, type ExerciseRunView } from './use-exercise-runtime'
 
 export type TestPanelSize = 'open' | 'collapsed' | 'expanded'
 export type TestPanelDock = 'editor' | 'bottom'
@@ -19,7 +19,8 @@ export function PracticeTestPanel({ exercise, tab, onTab, selectedCase, onCase, 
   const collapseLabel = collapsed ? 'Mở Testcase / Test Result' : 'Thu gọn Testcase / Test Result'
   const expandLabel = expanded ? 'Khôi phục kích thước panel' : 'Phóng to panel kiểm thử'
   const dockLabel = dock === 'editor' ? 'Dock xuống dưới workspace' : 'Dock dưới Code Editor'
-  const payload = execution.snapshot?.csharp
+  const snapshot = execution.snapshot
+  const payload = snapshot?.exerciseId === exercise.id ? snapshot.javascript ?? snapshot.csharp : undefined
   // Bind even a validated transport observation to the currently displayed catalogue.
   const result = payload && payload.schema.returnType === exercise.returnType
     && payload.schema.sampleCount === exercise.samples.length
@@ -28,6 +29,8 @@ export function PracticeTestPanel({ exercise, tab, onTab, selectedCase, onCase, 
   const sample = exercise.samples[index]
   const row = result?.cases.find(c => c.caseIndex === index)
   const notRun = result?.notRunCaseIndices.includes(index)
+  const compile = result && 'compile' in result ? result.compile : undefined
+  const syntax = result && 'syntax' in result ? result.syntax : undefined
   const complete = execution.status === 'finished' && execution.snapshot?.reason === 'COMPLETED'
     && execution.snapshot.cleanup.cleanupComplete && !result?.failure
   const status = complete ? 'Đã chạy xong' : execution.message
@@ -70,8 +73,11 @@ export function PracticeTestPanel({ exercise, tab, onTab, selectedCase, onCase, 
         <p role={execution.status === 'error' || execution.status === 'unsupported' ? 'alert' : 'status'}>{status}</p>
         {execution.status === 'idle' && <span>Chọn Run để xem Output của các test mẫu.</span>}
       </div>
-      {result?.compile?.diagnostics.length ? <div className="practice-result-diagnostics"><span>Compiler diagnostics</span><ul aria-label="Compiler diagnostics">
-        {result.compile.diagnostics.map((d, i) => <li key={i}>{d.code} · {d.severity === 'error' ? 'Lỗi' : 'Cảnh báo'}
+      {syntax?.diagnostics.length ? <div className="practice-result-diagnostics"><span>Syntax diagnostics</span><ul aria-label="Syntax diagnostics">
+        {syntax.diagnostics.map((d, i) => <li key={i}>Syntax error{d.source === 'solution' && d.line !== null ? ` · Dòng ${d.line}, cột ${d.column}` : ''}</li>)}
+      </ul></div> : null}
+      {compile?.diagnostics.length ? <div className="practice-result-diagnostics"><span>Compiler diagnostics</span><ul aria-label="Compiler diagnostics">
+        {compile.diagnostics.map((d, i) => <li key={i}>{d.code} · {d.severity === 'error' ? 'Lỗi' : 'Cảnh báo'}
           {d.source === 'solution' ? ` · Dòng ${d.line}, cột ${d.column}` : ' · Harness/compiler'}</li>)}
       </ul></div> : null}
       <div className="practice-result-cases" role="tablist" aria-label="Kết quả sample cases">
@@ -103,7 +109,9 @@ export function PracticeTestPanel({ exercise, tab, onTab, selectedCase, onCase, 
         <div className="practice-result-field"><span>Output</span>
           {row?.outcome === 'RETURNED' ? <pre aria-label={`Actual Case ${index + 1}`}>{JSON.stringify(row.actual)}</pre>
             : <p className="practice-result-unavailable" aria-label={`Output Case ${index + 1}`}>
-              {notRun ? 'Chưa chạy (NOT_RUN)' : row?.failure ? csharpFailureMessage[row.failure.kind]
+              {notRun ? 'Chưa chạy (NOT_RUN)' : row?.failure ? snapshot?.javascript
+                ? javascriptFailureMessage[row.failure.kind as keyof typeof javascriptFailureMessage]
+                : csharpFailureMessage[row.failure.kind as keyof typeof csharpFailureMessage]
                 : execution.busy ? 'Đang chờ kết quả.' : 'Chưa có kết quả.'}
             </p>}
         </div>

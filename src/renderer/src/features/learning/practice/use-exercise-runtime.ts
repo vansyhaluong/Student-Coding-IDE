@@ -3,6 +3,19 @@ import type { ExerciseApi, ExerciseRunRequest, ExerciseSnapshot, ExerciseStopReq
 import { validateExerciseSnapshot } from '../../../../../shared/contracts/exercise-validation'
 import type { ExerciseLanguage } from '../../../../../shared/contracts/practice'
 import type { CsharpFailureKind } from '../../../../../shared/contracts/csharp-execution'
+import type { JavascriptFailureKind } from '../../../../../shared/contracts/javascript-execution'
+
+export const javascriptFailureMessage: Record<JavascriptFailureKind, string> = {
+  NODE_MISSING: 'Chưa tìm thấy Node.js 24.x đã cài đặt.',
+  NODE_INCOMPATIBLE: 'Node.js đã cài đặt không phù hợp hoặc không hợp lệ.',
+  SYNTAX_ERROR: 'Syntax error: kiểm tra cú pháp và chữ ký hàm.',
+  RUNTIME_ERROR: 'Runtime error: hàm gặp lỗi hoặc trả về dữ liệu không hợp lệ.',
+  PROTOCOL_FAILURE: 'Protocol error: không thể đọc kết quả thực thi hợp lệ.',
+  TIMEOUT: 'Thực thi đã dừng vì vượt thời gian cho phép.',
+  JOB_MEMORY_LIMIT: 'Thực thi đã dừng vì vượt giới hạn bộ nhớ.',
+  OUTPUT_LIMIT: 'Thực thi đã dừng vì vượt giới hạn đầu ra.',
+  INFRASTRUCTURE_FAILURE: 'Không thể hoàn tất thực thi hoặc thu hồi tài nguyên an toàn.',
+}
 
 export const csharpFailureMessage: Record<CsharpFailureKind, string> = {
   SDK_MISSING: 'Chưa tìm thấy .NET SDK 10.x đã cài đặt.',
@@ -35,8 +48,10 @@ function viewFor(s: ExerciseSnapshot): ExerciseRunView {
   if (s.cleanup.proof === 'HISTORY_UNVERIFIED') return { status: 'finished', busy: false, snapshot: s,
     message: 'Đã kết thúc. Tài nguyên được giữ cách ly vì chưa đủ bằng chứng thu hồi.' }
   const cancelled = ['CONTEXT_CHANGED', 'LEARNING_LEFT', 'OWNER_LOST', 'SHUTDOWN'].includes(s.reason ?? '')
-  const failure = s.csharp?.result.failure
-  const message = cancelled ? 'Đã dừng thực thi.' : failure ? csharpFailureMessage[failure.kind] : s.reason === 'COMPLETED' ? 'Đã kết thúc thực thi.'
+  const failure = s.javascript?.result.failure ?? s.csharp?.result.failure
+  const failureMessage = s.javascript?.result.failure ? javascriptFailureMessage[s.javascript.result.failure.kind]
+    : s.csharp?.result.failure ? csharpFailureMessage[s.csharp.result.failure.kind] : undefined
+  const message = cancelled ? 'Đã dừng thực thi.' : failureMessage ? failureMessage : s.reason === 'COMPLETED' ? 'Đã kết thúc thực thi.'
     : s.reason?.endsWith('_TIMEOUT') ? 'Thực thi đã dừng vì vượt thời gian cho phép.'
       : s.reason === 'OUTPUT_LIMIT' ? 'Thực thi đã dừng vì vượt giới hạn đầu ra.'
         : s.reason === 'JOB_MEMORY_LIMIT' ? 'Thực thi đã dừng vì vượt giới hạn bộ nhớ.'
