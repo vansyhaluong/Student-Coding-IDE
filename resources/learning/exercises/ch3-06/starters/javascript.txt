@@ -1,0 +1,9 @@
+/**
+ * @param {number} month
+ * @param {number} year
+ * @returns {number}
+ */
+function DaysInMonth(month, year) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

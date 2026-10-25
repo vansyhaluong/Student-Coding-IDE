@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch7-07",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 7,
+    "order": 51,
+    "title": "Số dương đầu tiên còn thiếu",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/first-missing-positive/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về số nguyên dương nhỏ nhất không có trong nums. Hướng đến việc sử dụng chính mảng để đánh dấu.",
+  "constraints": [
+    "0 ≤ nums.length ≤ 10000; |nums[i]| ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "860592f37974dcb722c4114e7b55dd47a5e05d20da723840dccff80bb428c265",
+    "functionName": "FirstMissingPositive",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch7-07-official",
+    "version": 1,
+    "hash": "23db8b669d48e0664d351192cfbb64b377d6f4dfaecbb7332699ff8c1a00d041"
+  }
+}

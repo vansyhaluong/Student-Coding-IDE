@@ -1,0 +1,9 @@
+/**
+ * @param {number} a
+ * @param {number} b
+ * @returns {number}
+ */
+function Minimum(a, b) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-05",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 2,
+    "order": 4,
+    "title": "Tổng ba chữ số",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Tách hàng trăm, chục, đơn vị của n và trả về tổng ba chữ số.",
+  "constraints": [
+    "100 ≤ n ≤ 999.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "417529923b139563af52145f87f9c0a67a69435fcde2e2584d10783b55e11cb4",
+    "functionName": "DigitSum3",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch2-05-official",
+    "version": 1,
+    "hash": "29f861b49038a6827d4a8b845133935552f0df7c43de002188614d4bc50e1137"
+  }
+}

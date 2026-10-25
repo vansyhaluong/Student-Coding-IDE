@@ -3,10 +3,15 @@ import { createHash } from 'node:crypto'
 import { release, tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { performance } from 'node:perf_hooks'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import fileSystemPromises from 'node:fs/promises'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FilesystemCsharpSdkResolver, revalidateCsharpSdk, type CsharpSdkFileSystem } from '../../src/main/services/learning/runtime/csharp-sdk-resolver'
 import type { CsharpSdkResolution } from '../../src/main/services/learning/runtime/csharp-execution-contracts'
 import { serializeAppError } from '../../src/main/errors/app-error'
+import { loadPrototype, prototypeDisk } from '../fixtures/learning/sdk-concurrency-loader'
+
+// Explicit test-only invocation runs the exact same installations/assertions.
+const TestResolver = process.env.S5_R1_PROTOTYPE === '1' ? await loadPrototype() : FilesystemCsharpSdkResolver
 
 const windows = process.platform === 'win32' && process.arch === 'x64'
 const references = ['System.Runtime', 'System.Console', 'System.Text.Json', 'System.Text.Encodings.Web', 'System.Memory',
@@ -73,7 +78,7 @@ async function install(sdk = '10.0.100', runtime = '10.0.0', location = root) {
   await put(join(pack, 'data', 'FrameworkList.xml'), manifest())
 }
 function resolver(options: ConstructorParameters<typeof FilesystemCsharpSdkResolver>[0] = {}) {
-  return new FilesystemCsharpSdkResolver({ roots: [root], ...options })
+  return new TestResolver({ roots: [root], ...options })
 }
 const compilerPath = () => join(root, 'sdk', '10.0.100', 'Roslyn', 'bincore', 'csc.dll')
 const packPath = () => join(root, 'packs', 'Microsoft.NETCore.App.Ref', '10.0.0')
@@ -263,6 +268,88 @@ describe.skipIf(!windows)('C# SDK controlled filesystem installations (synthetic
     expect(await revalidateCsharpSdk(first.selection, context())).toBe(true)
     await writeFile(first.selection.compilerPath, 'corrupt')
     expect(await revalidateCsharpSdk(first.selection, context())).toBe(false)
+  })
+  it('drains all started independent runtime-file I/O on owned cancellation', async () => {
+    await install(); const controller = new AbortController(), disk = await prototypeDisk()
+    let entered!: () => void, release!: () => void, active = 0, calls = 0, settled = false
+    const ready = new Promise<void>(r => { entered = r }), gate = new Promise<void>(r => { release = r })
+    const files = { ...disk, readFile: async (file: string, stat: Parameters<CsharpSdkFileSystem['readFile']>[1]) => {
+      if (!file.includes(join('shared', 'Microsoft.NETCore.App')) || !file.endsWith('.dll')) return disk.readFile(file, stat)
+      active++; calls++; if (calls === (process.env.S5_R1_PROTOTYPE === '1' ? 4 : 1)) entered()
+      try { await gate; return await disk.readFile(file, stat) } finally { active-- }
+    } }
+    globalThis.__sdkPrototypeMetrics = []
+    const work = resolver({ files }).resolve({ signal: controller.signal, deadline: performance.now() + 10_000 })
+      .then(() => { settled = true; return null }, e => { settled = true; return serializeAppError(e) })
+    await ready; controller.abort(); await Promise.resolve(); expect(settled).toBe(false)
+    expect(active).toBe(process.env.S5_R1_PROTOTYPE === '1' ? 4 : 1); release()
+    expect((await work)?.code).toBe('PROCESS_CANCELLED'); expect(active).toBe(0)
+    for (const metrics of globalThis.__sdkPrototypeMetrics) expect(metrics).toMatchObject({ active: 0, bytes: 0, pendingCredits: 0 })
+  })
+  it('keeps a first invalid-PE outcome ahead of a later permission error in a runtime group', async () => {
+    await install(); const disk = await prototypeDisk()
+    const runtime = join(root, 'shared', 'Microsoft.NETCore.App', '10.0.0')
+    const files = { ...disk, readFile: async (file: string, stat: Parameters<CsharpSdkFileSystem['readFile']>[1]) => {
+      if (file === join(runtime, 'System.Runtime.dll')) return Buffer.alloc(stat.size)
+      if (file === join(runtime, 'System.Console.dll')) throw Object.assign(Error('later'), { code: 'EACCES' })
+      return disk.readFile(file, stat)
+    } }
+    expect(await resolver({ files }).resolve(context())).toEqual(invalid)
+  })
+  it.each(['cancel', 'deadline', 'shutdown'])('closes four actual paused read handles and leaves no late I/O after %s', async stop => {
+    await install(); const Prototype = await loadPrototype(), controller = new AbortController()
+    let entered!: () => void, release!: () => void, opened = 0, closed = 0, reading = 0, settled = false, tick = 0
+    const ready = new Promise<void>(r => { entered = r }), gate = new Promise<void>(r => { release = r })
+    const originalOpen = fileSystemPromises.open
+    const spy = vi.spyOn(fileSystemPromises, 'open').mockImplementation(async (...args) => {
+      const handle = await originalOpen(...args)
+      if (String(args[0]).includes(join('shared', 'Microsoft.NETCore.App')) && String(args[0]).endsWith('.dll')) {
+        opened++
+        const methods = handle as unknown as { read(...a: unknown[]): Promise<unknown>; close(): Promise<void> }
+        const read = methods.read.bind(handle), close = methods.close.bind(handle)
+        methods.read = async (...input) => { reading++; if (reading === 4) entered(); try { await gate; return await read(...input) } finally { reading-- } }
+        methods.close = async () => { try { await close() } finally { closed++ } }
+      }
+      return handle
+    })
+    try {
+      globalThis.__sdkPrototypeMetrics = []
+      const work = new Prototype({ roots: [root], now: () => tick }).resolve({ signal: controller.signal, deadline: 10 })
+        .then(() => { settled = true; return null }, error => { settled = true; return serializeAppError(error) })
+      await ready
+      if (stop === 'deadline') tick = 11; else controller.abort(Error(stop))
+      await Promise.resolve(); expect(settled).toBe(false); expect(closed).toBe(0)
+      release(); const result = await work
+      expect(result?.code).toBe(stop === 'deadline' ? 'PROCESS_FAILED' : 'PROCESS_CANCELLED')
+      expect({ opened, closed, reading }).toEqual({ opened: 4, closed: 4, reading: 0 })
+      for (const metric of globalThis.__sdkPrototypeMetrics) expect(metric).toMatchObject({ active: 0, bytes: 0, pendingCredits: 0 })
+      await new Promise<void>(r => setImmediate(r)); expect(opened).toBe(4)
+    } finally { release(); spy.mockRestore() }
+  })
+  it('records a cross-file temporal freshness counterexample for parallel verification', async () => {
+    await install(); const disk = await prototypeDisk(), Prototype = await loadPrototype()
+    const outcomes: string[] = [], runtime = join(root, 'shared', 'Microsoft.NETCore.App', '10.0.0')
+    for (const [Class, parallel] of [[FilesystemCsharpSdkResolver, false], [Prototype, true]] as const) {
+      await install(); let start!: () => void, release!: () => void, bFinished!: () => void, bRealpaths = 0
+      const aStarted = new Promise<void>(r => { start = r }), gate = new Promise<void>(r => { release = r }), bReady = new Promise<void>(r => { bFinished = r })
+      const files = { ...disk, realpath: async (file: string) => {
+        const result = await disk.realpath(file)
+        if (file === join(runtime, 'System.Console.dll') && ++bRealpaths === 2) bFinished()
+        return result
+      }, readFile: async (file: string, stat: Parameters<CsharpSdkFileSystem['readFile']>[1]) => {
+        const data = await disk.readFile(file, stat)
+        if (file === join(runtime, 'System.Runtime.dll')) { start(); await gate }
+        return data
+      } }
+      const task = new Class({ roots: [root], files }).resolve(context())
+      await aStarted
+      if (parallel) { await bReady; await new Promise<void>(r => setImmediate(r)) }
+      // Same external event while the first file is suspended. In parallel B
+      // already passed safe-after; sequential B has not yet been verified.
+      await writeFile(join(runtime, 'System.Console.dll'), Buffer.alloc(4096)); release()
+      outcomes.push((await task).state)
+    }
+    expect(outcomes).toEqual(['INVALID_CONFIGURATION', 'AVAILABLE'])
   })
 })
 

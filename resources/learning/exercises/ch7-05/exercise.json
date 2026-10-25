@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch7-05",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 7,
+    "order": 49,
+    "title": "Tích ngoài vị trí",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://leetcode.com/problems/product-of-array-except-self/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Kết quả tại i bằng tích mọi phần tử trừ nums[i]. Không dùng phép chia; xử lý cả phần tử 0.",
+  "constraints": [
+    "2 ≤ nums.length ≤ 20; -2 ≤ nums[i] ≤ 2; mọi tích nằm trong int32.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "4293e77cdd51296610f0f19c43d382cc606aea971ac541948ba8bf39a13f4977",
+    "functionName": "ProductExceptSelf",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32[]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch7-05-official",
+    "version": 1,
+    "hash": "2bd53e947c4d7d5df3d4a6a8e5563e30473fa44f45b7454cf05ca5203ac39c7d"
+  }
+}

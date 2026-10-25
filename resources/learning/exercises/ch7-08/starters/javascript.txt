@@ -1,0 +1,8 @@
+/**
+ * @param {number[]} heights
+ * @returns {number}
+ */
+function TrappedWater(heights) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

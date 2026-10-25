@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-03",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 2,
+    "order": 2,
+    "title": "Đổi phút thành giây",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về số giây tương ứng với minutes phút.",
+  "constraints": [
+    "0 ≤ minutes ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "7f1e4dae16bb6557a5fe7c44045025d7cb3a3e5d0e2bd0ffd2fac17dde73ab0a",
+    "functionName": "Seconds",
+    "parameters": [
+      {
+        "name": "minutes",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch2-03-official",
+    "version": 1,
+    "hash": "a8d174cb0903a850949c2931967e620d746cbb3bcb4583225d39ba11205db77b"
+  }
+}

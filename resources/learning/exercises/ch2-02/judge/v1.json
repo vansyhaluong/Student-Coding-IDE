@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-02",
+  "testSetId": "ch2-02-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "48fcce127828a741a1b36ec86e089a143bc91565862335f428b37ae808f72ff1",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "args": [
+        7,
+        4
+      ],
+      "expected": 22,
+      "visibility": "public",
+      "sampleId": "sample-1"
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        1,
+        1
+      ],
+      "expected": 4,
+      "visibility": "public",
+      "sampleId": "sample-2"
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        10000,
+        10000
+      ],
+      "expected": 40000
+    }
+  ]
+}

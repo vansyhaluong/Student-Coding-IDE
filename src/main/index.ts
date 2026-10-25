@@ -3,6 +3,8 @@ import { getBundledCourse } from './services/learning/content/course'
 import { LearningIpcService } from './ipc/learning-ipc-service'
 import { PracticeIpcService } from './ipc/practice-ipc-service'
 import { createPracticeStore } from './services/learning/practice-store'
+import { ExercisePackageRegistry } from './services/learning/content/exercise-package-registry'
+import { openBundledExerciseResources } from './services/learning/content/exercise-package-resources-runtime'
 import { createWindowsExerciseService } from './services/learning/exercise-service'
 import { ExerciseIpcService } from './ipc/exercise-ipc-service'
 import { EXERCISE_CHANNELS } from '../shared/contracts/exercise'
@@ -134,8 +136,12 @@ void app.whenReady().then(async () => {
 
   const ipcRegistry = new IpcHandlerRegistry(ipcMain)
   const practiceStore = createPracticeStore(join(app.getPath('userData'), 'learning', 'drafts.json'))
+  const exercisePackages = new ExercisePackageRegistry((scope, control) => openBundledExerciseResources({
+    packaged: app.isPackaged, resourcesPath: process.resourcesPath,
+  }, scope, control))
   const exerciseIpcReference: { current?: ExerciseIpcService } = {}
   const exerciseService = createWindowsExerciseService(join(app.getPath('userData'), 'learning', 'exercise-runtime'), {
+    packages: exercisePackages,
     onCleanupError: () => console.error('Learning cleanup/recovery failed; ownership remains tracked for retry.'),
     onSnapshot: (owner, snapshot) => exerciseIpcReference.current?.publish(owner, snapshot),
   })
@@ -149,7 +155,7 @@ void app.whenReady().then(async () => {
     (owner, channel, payload) => {
       const target = webContents.fromId(owner)
       if (target && !target.isDestroyed()) target.send(channel, payload)
-    })
+    }, exercisePackages)
   const aiService = new OllamaService()
   const aiIpc = new AiIpcService(ipcRegistry, aiService, authorizePreferencesFrame,
     (ownerId, event) => {
@@ -375,6 +381,7 @@ void app.whenReady().then(async () => {
     aiService,
     aiIpc,
     new LearningIpcService(ipcRegistry, getBundledCourse, authorizePreferencesFrame),
+    exercisePackages,
     practiceIpc,
     unsavedTransitionService,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
@@ -413,6 +420,8 @@ void app.whenReady().then(async () => {
     if (status.state === 'STOPPING') {
       runService.beginShutdown(); gitLifecycle.beginShutdown(); csharpSession.beginShutdown()
       exerciseService.beginShutdown()
+      practiceIpc.beginShutdown()
+      exercisePackages.beginShutdown()
       exerciseIpc.beginShutdown()
     }
     for (const window of BrowserWindow.getAllWindows()) {

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-07",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 3,
+    "order": 15,
+    "title": "Giá vé theo tuổi và ngày",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Vé cơ bản là 100. Trẻ dưới 6 tuổi miễn phí; tuổi 6–17 trả 50; tuổi 18–59 trả 100; từ 60 trả 70. Cuối tuần cộng 20 cho vé có trả tiền, vé miễn phí vẫn bằng 0.",
+  "constraints": [
+    "0 ≤ age ≤ 120.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "0e2077cdb574358a4aab07238a59e0108ffcd16e74abfb1fc4b1793ce6cdae4d",
+    "functionName": "Ticket",
+    "parameters": [
+      {
+        "name": "age",
+        "type": "int32"
+      },
+      {
+        "name": "weekend",
+        "type": "boolean"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch3-07-official",
+    "version": 1,
+    "hash": "4e0bedeb2519b547c2a943b1b3f85c7abc8c8d455ec01da3eaf1e3c44e9cff8b"
+  }
+}

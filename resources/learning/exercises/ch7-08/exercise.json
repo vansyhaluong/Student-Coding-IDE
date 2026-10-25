@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch7-08",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 7,
+    "order": 52,
+    "title": "Nước giữa các cột",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/trapping-rain-water/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Các cột có bề rộng 1 và chiều cao cho trong heights. Sau mưa, tính tổng đơn vị nước giữ lại giữa các cột.",
+  "constraints": [
+    "0 ≤ heights.length ≤ 10000; 0 ≤ heights[i] ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "50ab3661beb633702b26507d861905ebfbc87bb6ef8db5d17a38379009b1e20e",
+    "functionName": "TrappedWater",
+    "parameters": [
+      {
+        "name": "heights",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch7-08-official",
+    "version": 1,
+    "hash": "d5fa49b1765165219179a48e5237ac3a57dc8d9a68866ad116bc429ca22da306"
+  }
+}

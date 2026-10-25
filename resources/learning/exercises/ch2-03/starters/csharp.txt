@@ -1,0 +1,8 @@
+public class Solution
+{
+    public int Seconds(int minutes)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

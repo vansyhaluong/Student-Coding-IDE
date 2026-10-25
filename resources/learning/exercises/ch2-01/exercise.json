@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-01",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 2,
+    "order": 0,
+    "title": "Tổng hai số",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Tính tổng hai số nguyên a và b.",
+  "constraints": [
+    "|a|, |b| ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "1e9880fe84b3e8c300dc656e90a65179e850745d6d0c7a7de084e756f23d5abb",
+    "functionName": "Sum",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch2-01-official",
+    "version": 1,
+    "hash": "b695ab1c0355f8ab82e2b0af44f18b40a8271f69b2ea21bd1d5514d2dc3d1b66"
+  }
+}

@@ -1,0 +1,8 @@
+public class Solution
+{
+    public int FindFirst(string text, string pattern)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

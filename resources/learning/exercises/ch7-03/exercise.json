@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch7-03",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 7,
+    "order": 47,
+    "title": "Cộng một vào dãy chữ số",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/plus-one/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Mảng digits ghi một số thập phân từ hàng cao xuống thấp. Trả về mảng chữ số của số đó cộng 1.",
+  "constraints": [
+    "1 ≤ digits.length ≤ 100; 0 ≤ digits[i] ≤ 9; không có số 0 đầu trừ số 0.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "6b65662b6825acf7a166408b1bf690c1fa380f744f7fd902daaafd059f795b40",
+    "functionName": "PlusOne",
+    "parameters": [
+      {
+        "name": "digits",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32[]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch7-03-official",
+    "version": 1,
+    "hash": "154b3e45efd70b76bae1723dddc52524f176249512fc163a4c10686a0ffd878d"
+  }
+}

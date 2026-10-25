@@ -1,0 +1,9 @@
+/**
+ * @param {number} width
+ * @param {number} height
+ * @returns {number}
+ */
+function Perimeter(width, height) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

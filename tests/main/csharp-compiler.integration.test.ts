@@ -15,7 +15,7 @@ import type { CsharpCompilation, CsharpSdkSelection } from '../../src/main/servi
 import { exerciseCoreError } from '../../src/main/services/learning/runtime/exercise-limits'
 import { validateCsharpCompileResult } from '../../src/shared/contracts/csharp-execution-validation'
 import type { Exercise } from '../../src/shared/contracts/practice'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 
 const enabled = process.platform === 'win32' && process.arch === 'x64' && process.env.LEARNING_CSHARP_COMPILE_LIVE === '1'
 const id = 'exercise_12345678-1234-4234-8234-123456789abc'

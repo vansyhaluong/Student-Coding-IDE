@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-05",
+  "testSetId": "ch3-05-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "b9b77d21d2c6d2a149b22833df7f7b885b6271c691a9a66f2c9c000c61de959d",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "args": [
+        4,
+        4,
+        7
+      ],
+      "expected": "isosceles",
+      "visibility": "public",
+      "sampleId": "sample-1"
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        2,
+        3,
+        5
+      ],
+      "expected": "invalid",
+      "visibility": "public",
+      "sampleId": "sample-2"
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        10000,
+        10000,
+        10000
+      ],
+      "expected": "equilateral"
+    },
+    {
+      "id": "hidden-002",
+      "visibility": "hidden",
+      "args": [
+        1,
+        1,
+        10000
+      ],
+      "expected": "invalid"
+    },
+    {
+      "id": "hidden-003",
+      "visibility": "hidden",
+      "args": [
+        10000,
+        1,
+        1
+      ],
+      "expected": "invalid"
+    },
+    {
+      "id": "hidden-004",
+      "visibility": "hidden",
+      "args": [
+        1,
+        10000,
+        1
+      ],
+      "expected": "invalid"
+    },
+    {
+      "id": "hidden-005",
+      "visibility": "hidden",
+      "args": [
+        5,
+        2,
+        3
+      ],
+      "expected": "invalid"
+    },
+    {
+      "id": "hidden-006",
+      "visibility": "hidden",
+      "args": [
+        3,
+        5,
+        2
+      ],
+      "expected": "invalid"
+    },
+    {
+      "id": "hidden-007",
+      "visibility": "hidden",
+      "args": [
+        4,
+        7,
+        4
+      ],
+      "expected": "isosceles"
+    },
+    {
+      "id": "hidden-008",
+      "visibility": "hidden",
+      "args": [
+        7,
+        4,
+        4
+      ],
+      "expected": "isosceles"
+    },
+    {
+      "id": "hidden-009",
+      "visibility": "hidden",
+      "args": [
+        3,
+        4,
+        5
+      ],
+      "expected": "scalene"
+    }
+  ]
+}

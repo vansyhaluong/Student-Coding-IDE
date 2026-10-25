@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-03",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 6,
+    "order": 38,
+    "title": "Hàm nhỏ nhất",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Viết hàm nhận hai số nguyên và trả về giá trị nhỏ hơn; hai số bằng nhau thì trả về giá trị đó.",
+  "constraints": [
+    "|a|, |b| ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "a92e6ee2e766b2528ae8a28837406543a80db490e6b45a6e30d9d7a8be11a52a",
+    "functionName": "Minimum",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch6-03-official",
+    "version": 1,
+    "hash": "046bdcfe129b5404361bc1401ff83bcac4b2e93e3498660712d6d60a304a92a2"
+  }
+}

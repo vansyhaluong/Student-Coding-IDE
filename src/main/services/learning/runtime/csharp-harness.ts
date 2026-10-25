@@ -1,3 +1,5 @@
+import type { ExecutionSignature } from './execution-plan'
+import { checkExecutionSignature } from './execution-plan'
 import { EXERCISE_LIMITS } from '../../../../shared/contracts/exercise'
 import type { Exercise, ExerciseType } from '../../../../shared/contracts/practice'
 import type { CsharpSampleSchema } from '../../../../shared/contracts/csharp-execution'
@@ -10,8 +12,14 @@ const kinds: readonly ExerciseType[] = ['int32', 'boolean', 'string', 'int32[]',
 export const CSHARP_ENTRY_POINT = 'StudentLearning.Harness'
 /** Pure generation from a Main catalogue signature; no sample values or expected outputs embedded. */
 export function generateCsharpHarness(exercise: Readonly<Exercise>, schema: CsharpSampleSchema): string {
+  if (schema.sampleCount !== exercise.samples.length) throw exerciseCoreError('HARNESS_SCHEMA')
+  return generateCsharpSignatureHarness(exercise, schema)
+}
+/** Input-only generation seam; public wrapper retains its sample-length check. */
+export function generateCsharpSignatureHarness(exercise: ExecutionSignature, schema: CsharpSampleSchema): string {
+  checkExecutionSignature(exercise, schema.sampleCount)
   if (!/^[A-Za-z][A-Za-z0-9]*$/.test(exercise.functionName) || exercise.parameters.length > 16
-    || !Number.isSafeInteger(schema.sampleCount) || schema.sampleCount < 1 || schema.sampleCount !== exercise.samples.length
+    || !Number.isSafeInteger(schema.sampleCount) || schema.sampleCount < 1
     || schema.parameterTypes.length !== exercise.parameters.length || !kinds.includes(exercise.returnType)
     || schema.returnType !== exercise.returnType || !exercise.parameters.every((p, i) => kinds.includes(p.type) && p.type === schema.parameterTypes[i])) {
     throw exerciseCoreError('HARNESS_SCHEMA')

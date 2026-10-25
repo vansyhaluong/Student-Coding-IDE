@@ -1,0 +1,8 @@
+/**
+ * @param {number[]} prices
+ * @returns {number}
+ */
+function MaxProfit(prices) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-04",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 2,
+    "order": 3,
+    "title": "Thương và số dư",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Chia a cho b. Trả về [thương nguyên, số dư] theo đúng thứ tự này.",
+  "constraints": [
+    "0 ≤ a ≤ 1000000; 1 ≤ b ≤ 1000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "973256d8657cb889e277e4e5e515cc75211ac264dee1e49b57bd5262bfab4708",
+    "functionName": "Divide",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch2-04-official",
+    "version": 1,
+    "hash": "1f328129d578c95354034581e356420d521ec8705f92beeee0dbbf21a0959a5a"
+  }
+}

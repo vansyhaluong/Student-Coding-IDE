@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch8-09",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 8,
+    "order": 62,
+    "title": "Năng lượng đi qua mê cung",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/dungeon-game/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Đi từ góc trên trái đến góc dưới phải, chỉ được sang phải hoặc xuống. Giá trị mỗi ô được cộng vào năng lượng ngay khi bước vào, kể cả ô đầu. Năng lượng luôn phải ít nhất 1. Trả về năng lượng ban đầu nhỏ nhất có thể.",
+  "constraints": [
+    "Ma trận chữ nhật 1–50 hàng/cột; -100 ≤ grid[i][j] ≤ 100.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "f67fdbff86cca8e5d1ec5ddf83002a53d42a09a060c38fc67c3602f3a16b3dc1",
+    "functionName": "MinimumHealth",
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch8-09-official",
+    "version": 1,
+    "hash": "b5cea547426e23ec3dff30729ce916f3a9074e12fde1cc23ca9380032a1812fb"
+  }
+}

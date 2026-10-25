@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-08",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 4,
+    "order": 25,
+    "title": "Số hoàn hảo",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về true nếu tổng các ước dương nhỏ hơn n bằng chính n. Số 1 không là số hoàn hảo.",
+  "constraints": [
+    "1 ≤ n ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "cfecd43931869cdc41e6ae4e8f9bb14b638d53143aeac492b7ef0c12cfac8b36",
+    "functionName": "IsPerfect",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch4-08-official",
+    "version": 1,
+    "hash": "f386051c8b0b54ef43c9c3054ca0c51acb4a5d05019233e23caa62c74265f731"
+  }
+}

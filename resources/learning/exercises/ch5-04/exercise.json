@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-04",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 30,
+    "title": "Đảo thứ tự các từ",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://leetcode.com/problems/reverse-words-in-a-string/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Đảo thứ tự các từ trong s; các từ ở kết quả ngăn bởi đúng một dấu cách và không có dấu cách ở hai đầu.",
+  "constraints": [
+    "1 ≤ s.length ≤ 1000; chỉ a–z và dấu cách; có ít nhất một từ.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "baa2aafb24e4faebe2ee5593d8f9ba39d05bcbf66c264f1736b23412c5e1cd9c",
+    "functionName": "ReverseWords",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "returnType": "string"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-04-official",
+    "version": 1,
+    "hash": "80e90c3ca17c2a7005f08a6f48faea4b5768e2b5321ff993e8849a84c1267e3c"
+  }
+}

@@ -1,0 +1,8 @@
+/**
+ * @param {string} s
+ * @returns {number}
+ */
+function LongestUnique(s) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

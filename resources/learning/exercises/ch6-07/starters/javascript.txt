@@ -1,0 +1,9 @@
+/**
+ * @param {number} n
+ * @param {number} k
+ * @returns {number}
+ */
+function Choose(n, k) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

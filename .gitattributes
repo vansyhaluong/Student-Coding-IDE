@@ -1,0 +1,3 @@
+# Raw asset hashes/byte lengths are part of the Exercise Package contract.
+# Preserve accepted bytes across Windows checkouts; never rewrite line endings.
+resources/learning/exercises/** -text

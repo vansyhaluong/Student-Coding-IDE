@@ -1,0 +1,8 @@
+/**
+ * @param {number[][]} grid
+ * @returns {number}
+ */
+function MinimumHealth(grid) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

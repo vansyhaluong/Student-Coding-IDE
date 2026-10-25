@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-06",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 3,
+    "order": 14,
+    "title": "Số ngày trong tháng",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về số ngày của month trong year theo lịch Gregory. Áp dụng quy tắc năm nhuận cho tháng 2.",
+  "constraints": [
+    "1 ≤ month ≤ 12; 1 ≤ year ≤ 9999.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "51f04b649139e2f69bdaada097401c758698d0efbde5d74114375ee9b45753ec",
+    "functionName": "DaysInMonth",
+    "parameters": [
+      {
+        "name": "month",
+        "type": "int32"
+      },
+      {
+        "name": "year",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch3-06-official",
+    "version": 1,
+    "hash": "9d7786ec62bf6adba006c352787a08b9611220dbb25f20be389f3ed58d7d847c"
+  }
+}

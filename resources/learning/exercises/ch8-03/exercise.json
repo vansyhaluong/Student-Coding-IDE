@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch8-03",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 8,
+    "order": 56,
+    "title": "Tổng hai đường chéo",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/matrix-diagonal-sum/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Với ma trận vuông, cộng các phần tử trên đường chéo chính và phụ. Ô thuộc cả hai đường chỉ tính một lần.",
+  "constraints": [
+    "Ma trận vuông cạnh 1–50; |matrix[i][j]| ≤ 1000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "57ef87dfacc748c4f62562238d80524674624b86586bcb26c6bcd96dd95e3531",
+    "functionName": "DiagonalSum",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch8-03-official",
+    "version": 1,
+    "hash": "13cfe2badeb10eed9fb806af07e3a35ef9fdbbe48f62851dea430d377bfcfe70"
+  }
+}

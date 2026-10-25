@@ -1,0 +1,8 @@
+public class Solution
+{
+    public bool LeapYear(int year)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

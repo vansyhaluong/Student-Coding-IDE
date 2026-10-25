@@ -1,0 +1,10 @@
+/**
+ * @param {number} a
+ * @param {number} b
+ * @param {number} c
+ * @returns {string}
+ */
+function Triangle(a, b, c) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

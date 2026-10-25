@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import { isExercise, isPracticeLoad, matchesExerciseType, validateExerciseDraft, isPracticeState } from '../../src/shared/contracts/practice'
 
 describe('9C authored catalogue and function contract', () => {

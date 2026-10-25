@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-06",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 6,
+    "order": 41,
+    "title": "Danh sách ước số",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Viết hàm trả về tất cả ước dương của n theo thứ tự tăng dần, mỗi ước xuất hiện một lần.",
+  "constraints": [
+    "1 ≤ n ≤ 100000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "bfcb44459477798c051655cab6ab152acd6a9a289a92739701dc9037203e3021",
+    "functionName": "Divisors",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch6-06-official",
+    "version": 1,
+    "hash": "82d07efdcdd2ec2b0fbfe77248bba3d029eb1102e5205e887301ce705e622d82"
+  }
+}

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <NuGetAudit>false</NuGetAudit>
+    <RestoreIgnoreFailedSources>false</RestoreIgnoreFailedSources>
+    <!-- Fixed trusted inputs even if an editor creates adjacent obj/Debug files.
+         BaseIntermediateOutputPath lives elsewhere; never rely on default globs. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+<Compile Include="WaveAProgram.cs" />
+<Compile Include="ch2-01/Solution.cs" />
+<Compile Include="ch2-02/Solution.cs" />
+<Compile Include="ch2-03/Solution.cs" />
+<Compile Include="ch2-05/Solution.cs" />
+<Compile Include="ch2-06/Solution.cs" />
+<Compile Include="ch2-07/Solution.cs" />
+<Compile Include="ch2-08/Solution.cs" />
+<Compile Include="ch2-09/Solution.cs" />
+<Compile Include="ch3-01/Solution.cs" />
+<Compile Include="ch3-02/Solution.cs" />
+<Compile Include="ch3-03/Solution.cs" />
+<Compile Include="ch3-05/Solution.cs" />
+<Compile Include="ch3-06/Solution.cs" />
+<Compile Include="ch3-07/Solution.cs" />
+<Compile Include="ch3-08/Solution.cs" />
+<Compile Include="ch3-09/Solution.cs" />
+<Compile Include="ch4-01/Solution.cs" />
+<Compile Include="ch4-02/Solution.cs" />
+<Compile Include="ch4-03/Solution.cs" />
+<Compile Include="ch4-04/Solution.cs" />
+<Compile Include="ch4-05/Solution.cs" />
+<Compile Include="ch4-06/Solution.cs" />
+<Compile Include="ch4-07/Solution.cs" />
+<Compile Include="ch4-08/Solution.cs" />
+</ItemGroup>
+</Project>

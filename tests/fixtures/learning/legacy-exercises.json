@@ -1,0 +1,3520 @@
+[
+  {
+    "id": "ch2-01",
+    "chapter": 2,
+    "title": "Tổng hai số",
+    "difficulty": "Easy",
+    "description": "Tính tổng hai số nguyên a và b.",
+    "constraints": [
+      "|a|, |b| ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Sum",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          14,
+          -6
+        ],
+        "expected": 8
+      },
+      {
+        "args": [
+          0,
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Sum(int a, int b)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} a\n * @param {number} b\n * @returns {number}\n */\nfunction Sum(a, b) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch2-02",
+    "chapter": 2,
+    "title": "Chu vi hình chữ nhật",
+    "difficulty": "Easy",
+    "description": "Một khung ảnh có chiều rộng width và chiều cao height. Trả về chu vi khung.",
+    "constraints": [
+      "1 ≤ width, height ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Perimeter",
+    "parameters": [
+      {
+        "name": "width",
+        "type": "int32"
+      },
+      {
+        "name": "height",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          7,
+          4
+        ],
+        "expected": 22
+      },
+      {
+        "args": [
+          1,
+          1
+        ],
+        "expected": 4
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Perimeter(int width, int height)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} width\n * @param {number} height\n * @returns {number}\n */\nfunction Perimeter(width, height) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch2-03",
+    "chapter": 2,
+    "title": "Đổi phút thành giây",
+    "difficulty": "Easy",
+    "description": "Trả về số giây tương ứng với minutes phút.",
+    "constraints": [
+      "0 ≤ minutes ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Seconds",
+    "parameters": [
+      {
+        "name": "minutes",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          9
+        ],
+        "expected": 540
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Seconds(int minutes)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} minutes\n * @returns {number}\n */\nfunction Seconds(minutes) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch2-04",
+    "chapter": 2,
+    "title": "Thương và số dư",
+    "difficulty": "Medium",
+    "description": "Chia a cho b. Trả về [thương nguyên, số dư] theo đúng thứ tự này.",
+    "constraints": [
+      "0 ≤ a ≤ 1000000; 1 ≤ b ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Divide",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[]",
+    "samples": [
+      {
+        "args": [
+          29,
+          6
+        ],
+        "expected": [
+          4,
+          5
+        ]
+      },
+      {
+        "args": [
+          3,
+          8
+        ],
+        "expected": [
+          0,
+          3
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[] Divide(int a, int b)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} a\n * @param {number} b\n * @returns {number[]}\n */\nfunction Divide(a, b) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch2-05",
+    "chapter": 2,
+    "title": "Tổng ba chữ số",
+    "difficulty": "Medium",
+    "description": "Tách hàng trăm, chục, đơn vị của n và trả về tổng ba chữ số.",
+    "constraints": [
+      "100 ≤ n ≤ 999.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "DigitSum3",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          581
+        ],
+        "expected": 14
+      },
+      {
+        "args": [
+          100
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int DigitSum3(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction DigitSum3(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch2-06",
+    "chapter": 2,
+    "title": "Đảo số ba chữ số",
+    "difficulty": "Medium",
+    "description": "Đảo thứ tự ba chữ số của n rồi trả về giá trị nguyên; các số 0 ở đầu kết quả không được giữ lại.",
+    "constraints": [
+      "100 ≤ n ≤ 999.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Reverse3",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          260
+        ],
+        "expected": 62
+      },
+      {
+        "args": [
+          731
+        ],
+        "expected": 137
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Reverse3(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction Reverse3(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch2-07",
+    "chapter": 2,
+    "title": "Đồng hồ sau một khoảng thời gian",
+    "difficulty": "Hard",
+    "description": "seconds là số giây tính từ đầu ngày. Sau elapsed giây, trả về số giây tính từ đầu ngày mới, quay vòng mỗi 86400 giây.",
+    "constraints": [
+      "0 ≤ seconds < 86400; 0 ≤ elapsed ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Clock",
+    "parameters": [
+      {
+        "name": "seconds",
+        "type": "int32"
+      },
+      {
+        "name": "elapsed",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          86380,
+          50
+        ],
+        "expected": 30
+      },
+      {
+        "args": [
+          100,
+          0
+        ],
+        "expected": 100
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Clock(int seconds, int elapsed)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} seconds\n * @param {number} elapsed\n * @returns {number}\n */\nfunction Clock(seconds, elapsed) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch2-08",
+    "chapter": 2,
+    "title": "Đóng thùng",
+    "difficulty": "Hard",
+    "description": "Có items vật giống nhau, mỗi thùng chứa tối đa capacity vật. Tính số thùng ít nhất cần dùng, kể cả thùng cuối chưa đầy.",
+    "constraints": [
+      "0 ≤ items ≤ 1000000; 1 ≤ capacity ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Boxes",
+    "parameters": [
+      {
+        "name": "items",
+        "type": "int32"
+      },
+      {
+        "name": "capacity",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          23,
+          5
+        ],
+        "expected": 5
+      },
+      {
+        "args": [
+          0,
+          3
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Boxes(int items, int capacity)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} items\n * @param {number} capacity\n * @returns {number}\n */\nfunction Boxes(items, capacity) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch2-09",
+    "chapter": 2,
+    "title": "Tổng cấp số cộng",
+    "difficulty": "Hard",
+    "description": "Dãy bắt đầu bằng first; mỗi số sau tăng thêm step. Trả về tổng count số đầu tiên bằng biểu thức số học.",
+    "constraints": [
+      "0 ≤ first, step ≤ 100; 1 ≤ count ≤ 1000; kết quả nằm trong int32.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "ProgressionSum",
+    "parameters": [
+      {
+        "name": "first",
+        "type": "int32"
+      },
+      {
+        "name": "step",
+        "type": "int32"
+      },
+      {
+        "name": "count",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          3,
+          4,
+          5
+        ],
+        "expected": 55
+      },
+      {
+        "args": [
+          7,
+          0,
+          3
+        ],
+        "expected": 21
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int ProgressionSum(int first, int step, int count)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} first\n * @param {number} step\n * @param {number} count\n * @returns {number}\n */\nfunction ProgressionSum(first, step, count) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-01",
+    "chapter": 3,
+    "title": "Kiểm tra chẵn",
+    "difficulty": "Easy",
+    "description": "Trả về true nếu n chia hết cho 2, ngược lại false.",
+    "constraints": [
+      "|n| ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "IsEven",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean",
+    "samples": [
+      {
+        "args": [
+          -8
+        ],
+        "expected": true
+      },
+      {
+        "args": [
+          7
+        ],
+        "expected": false
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public bool IsEven(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {boolean}\n */\nfunction IsEven(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-02",
+    "chapter": 3,
+    "title": "Dấu của một số",
+    "difficulty": "Easy",
+    "description": "Trả về -1 khi n âm, 0 khi n bằng 0 và 1 khi n dương.",
+    "constraints": [
+      "|n| ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Sign",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          -14
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Sign(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction Sign(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-03",
+    "chapter": 3,
+    "title": "Số lớn nhất trong ba số",
+    "difficulty": "Easy",
+    "description": "Dùng rẽ nhánh tìm giá trị lớn nhất trong a, b và c; cho phép các số bằng nhau.",
+    "constraints": [
+      "|a|, |b|, |c| ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Max3",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      },
+      {
+        "name": "c",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          9,
+          2,
+          9
+        ],
+        "expected": 9
+      },
+      {
+        "args": [
+          -5,
+          -2,
+          -8
+        ],
+        "expected": -2
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Max3(int a, int b, int c)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} a\n * @param {number} b\n * @param {number} c\n * @returns {number}\n */\nfunction Max3(a, b, c) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-04",
+    "chapter": 3,
+    "title": "Năm nhuận",
+    "difficulty": "Medium",
+    "description": "Theo lịch Gregory, năm chia hết cho 400 hoặc chia hết cho 4 nhưng không chia hết cho 100 là năm nhuận. Trả về kết quả kiểm tra.",
+    "constraints": [
+      "1 ≤ year ≤ 9999.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "LeapYear",
+    "parameters": [
+      {
+        "name": "year",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean",
+    "samples": [
+      {
+        "args": [
+          2400
+        ],
+        "expected": true
+      },
+      {
+        "args": [
+          2100
+        ],
+        "expected": false
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public bool LeapYear(int year)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} year\n * @returns {boolean}\n */\nfunction LeapYear(year) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-05",
+    "chapter": 3,
+    "title": "Phân loại tam giác",
+    "difficulty": "Medium",
+    "description": "Trả về \"invalid\" nếu ba cạnh không tạo thành tam giác; nếu hợp lệ trả về \"equilateral\" (đều), \"isosceles\" (cân) hoặc \"scalene\" (thường).",
+    "constraints": [
+      "1 ≤ a, b, c ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Triangle",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      },
+      {
+        "name": "c",
+        "type": "int32"
+      }
+    ],
+    "returnType": "string",
+    "samples": [
+      {
+        "args": [
+          4,
+          4,
+          7
+        ],
+        "expected": "isosceles"
+      },
+      {
+        "args": [
+          2,
+          3,
+          5
+        ],
+        "expected": "invalid"
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public string Triangle(int a, int b, int c)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} a\n * @param {number} b\n * @param {number} c\n * @returns {string}\n */\nfunction Triangle(a, b, c) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-06",
+    "chapter": 3,
+    "title": "Số ngày trong tháng",
+    "difficulty": "Medium",
+    "description": "Trả về số ngày của month trong year theo lịch Gregory. Áp dụng quy tắc năm nhuận cho tháng 2.",
+    "constraints": [
+      "1 ≤ month ≤ 12; 1 ≤ year ≤ 9999.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "DaysInMonth",
+    "parameters": [
+      {
+        "name": "month",
+        "type": "int32"
+      },
+      {
+        "name": "year",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          2,
+          2024
+        ],
+        "expected": 29
+      },
+      {
+        "args": [
+          4,
+          2025
+        ],
+        "expected": 30
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int DaysInMonth(int month, int year)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} month\n * @param {number} year\n * @returns {number}\n */\nfunction DaysInMonth(month, year) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-07",
+    "chapter": 3,
+    "title": "Giá vé theo tuổi và ngày",
+    "difficulty": "Hard",
+    "description": "Vé cơ bản là 100. Trẻ dưới 6 tuổi miễn phí; tuổi 6–17 trả 50; tuổi 18–59 trả 100; từ 60 trả 70. Cuối tuần cộng 20 cho vé có trả tiền, vé miễn phí vẫn bằng 0.",
+    "constraints": [
+      "0 ≤ age ≤ 120.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Ticket",
+    "parameters": [
+      {
+        "name": "age",
+        "type": "int32"
+      },
+      {
+        "name": "weekend",
+        "type": "boolean"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          16,
+          true
+        ],
+        "expected": 70
+      },
+      {
+        "args": [
+          4,
+          true
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Ticket(int age, bool weekend)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} age\n * @param {boolean} weekend\n * @returns {number}\n */\nfunction Ticket(age, weekend) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-08",
+    "chapter": 3,
+    "title": "Ngày kế tiếp",
+    "difficulty": "Hard",
+    "description": "Cho một ngày hợp lệ trong lịch Gregory. Trả về [ngày, tháng, năm] của ngày tiếp theo; xử lý đổi tháng, năm và năm nhuận.",
+    "constraints": [
+      "Ngày đầu vào hợp lệ; 1 ≤ year ≤ 9998.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "NextDate",
+    "parameters": [
+      {
+        "name": "day",
+        "type": "int32"
+      },
+      {
+        "name": "month",
+        "type": "int32"
+      },
+      {
+        "name": "year",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[]",
+    "samples": [
+      {
+        "args": [
+          28,
+          2,
+          2024
+        ],
+        "expected": [
+          29,
+          2,
+          2024
+        ]
+      },
+      {
+        "args": [
+          31,
+          12,
+          2025
+        ],
+        "expected": [
+          1,
+          1,
+          2026
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[] NextDate(int day, int month, int year)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} day\n * @param {number} month\n * @param {number} year\n * @returns {number[]}\n */\nfunction NextDate(day, month, year) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch3-09",
+    "chapter": 3,
+    "title": "Cước sử dụng theo bậc",
+    "difficulty": "Hard",
+    "description": "50 đơn vị đầu có giá 2 mỗi đơn vị; 50 đơn vị tiếp theo giá 3; phần vượt 100 giá 5. Trả về tổng tiền theo từng bậc, không tính toàn bộ theo bậc cuối.",
+    "constraints": [
+      "0 ≤ units ≤ 100000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Bill",
+    "parameters": [
+      {
+        "name": "units",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          120
+        ],
+        "expected": 350
+      },
+      {
+        "args": [
+          30
+        ],
+        "expected": 60
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Bill(int units)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} units\n * @returns {number}\n */\nfunction Bill(units) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-01",
+    "chapter": 4,
+    "title": "Cộng từ một đến n",
+    "difficulty": "Easy",
+    "description": "Dùng vòng lặp cộng các số nguyên từ 1 đến n. Khi n bằng 0, tổng bằng 0.",
+    "constraints": [
+      "0 ≤ n ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "SumToN",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          6
+        ],
+        "expected": 21
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int SumToN(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction SumToN(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-02",
+    "chapter": 4,
+    "title": "Giai thừa",
+    "difficulty": "Easy",
+    "description": "Tính tích 1 × 2 × … × n bằng vòng lặp. Quy ước 0! = 1.",
+    "constraints": [
+      "0 ≤ n ≤ 12.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Factorial",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          6
+        ],
+        "expected": 720
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Factorial(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction Factorial(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-03",
+    "chapter": 4,
+    "title": "Đếm chữ số",
+    "difficulty": "Easy",
+    "description": "Trả về số chữ số thập phân của số nguyên không âm n. Số 0 có một chữ số.",
+    "constraints": [
+      "0 ≤ n ≤ 1000000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "DigitCount",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          4008
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int DigitCount(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction DigitCount(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-04",
+    "chapter": 4,
+    "title": "Đảo số không âm",
+    "difficulty": "Medium",
+    "description": "Dùng vòng lặp đảo thứ tự chữ số thập phân của n. Bỏ các số 0 ở đầu kết quả.",
+    "constraints": [
+      "0 ≤ n ≤ 100000000; kết quả nằm trong int32.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "ReverseNumber",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          4020
+        ],
+        "expected": 204
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int ReverseNumber(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction ReverseNumber(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-05",
+    "chapter": 4,
+    "title": "Ước chung lớn nhất",
+    "difficulty": "Medium",
+    "description": "Tìm số nguyên dương lớn nhất chia hết cả a và b bằng thuật toán lặp.",
+    "constraints": [
+      "1 ≤ a, b ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Gcd",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          42,
+          30
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          17,
+          5
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Gcd(int a, int b)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} a\n * @param {number} b\n * @returns {number}\n */\nfunction Gcd(a, b) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-06",
+    "chapter": 4,
+    "title": "Kiểm tra số nguyên tố",
+    "difficulty": "Medium",
+    "description": "Một số nguyên tố lớn hơn 1 và chỉ có hai ước dương. Trả về true khi n là số nguyên tố.",
+    "constraints": [
+      "0 ≤ n ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "IsPrime",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean",
+    "samples": [
+      {
+        "args": [
+          29
+        ],
+        "expected": true
+      },
+      {
+        "args": [
+          1
+        ],
+        "expected": false
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public bool IsPrime(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {boolean}\n */\nfunction IsPrime(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-07",
+    "chapter": 4,
+    "title": "Đếm số nguyên tố đến n",
+    "difficulty": "Hard",
+    "description": "Đếm các số nguyên tố trong đoạn đóng từ 2 đến n; có thể dùng kiểm tra ước hoặc sàng.",
+    "constraints": [
+      "0 ≤ n ≤ 100000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "PrimeCount",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          20
+        ],
+        "expected": 8
+      },
+      {
+        "args": [
+          1
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int PrimeCount(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction PrimeCount(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-08",
+    "chapter": 4,
+    "title": "Số hoàn hảo",
+    "difficulty": "Hard",
+    "description": "Trả về true nếu tổng các ước dương nhỏ hơn n bằng chính n. Số 1 không là số hoàn hảo.",
+    "constraints": [
+      "1 ≤ n ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "IsPerfect",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean",
+    "samples": [
+      {
+        "args": [
+          28
+        ],
+        "expected": true
+      },
+      {
+        "args": [
+          12
+        ],
+        "expected": false
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public bool IsPerfect(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {boolean}\n */\nfunction IsPerfect(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch4-09",
+    "chapter": 4,
+    "title": "Fibonacci bằng vòng lặp",
+    "difficulty": "Hard",
+    "description": "Với F(0)=0, F(1)=1 và F(n)=F(n-1)+F(n-2), trả về F(n). Duyệt lặp thay vì xây cây đệ quy.",
+    "constraints": [
+      "0 ≤ n ≤ 45.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Fibonacci",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          9
+        ],
+        "expected": 34
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Fibonacci(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction Fibonacci(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-01",
+    "chapter": 5,
+    "title": "Độ dài từ cuối",
+    "difficulty": "Easy",
+    "description": "Một dòng gồm các từ chữ thường ngăn bởi dấu cách. Trả về độ dài từ cuối cùng, bỏ qua dấu cách cuối dòng.",
+    "constraints": [
+      "1 ≤ s.length ≤ 1000; chỉ a–z và dấu cách; có ít nhất một từ.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "LastWordLength",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          "hoc code  "
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          "a"
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int LastWordLength(string s)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string} s\n * @returns {number}\n */\nfunction LastWordLength(s) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/length-of-last-word/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-02",
+    "chapter": 5,
+    "title": "Vị trí chuỗi con đầu tiên",
+    "difficulty": "Easy",
+    "description": "Trả về chỉ số bắt đầu nhỏ nhất của pattern trong text, tính từ 0. Nếu không xuất hiện, trả về -1.",
+    "constraints": [
+      "0 ≤ text.length ≤ 1000; 1 ≤ pattern.length ≤ 100; chỉ a–z.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "FindFirst",
+    "parameters": [
+      {
+        "name": "text",
+        "type": "string"
+      },
+      {
+        "name": "pattern",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          "bananaba",
+          "ana"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "abc",
+          "dd"
+        ],
+        "expected": -1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int FindFirst(string text, string pattern)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string} text\n * @param {string} pattern\n * @returns {number}\n */\nfunction FindFirst(text, pattern) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-03",
+    "chapter": 5,
+    "title": "Tiền tố chung",
+    "difficulty": "Easy",
+    "description": "Trả về chuỗi dài nhất nằm ở đầu mọi từ trong words. Không có tiền tố chung thì trả về chuỗi rỗng.",
+    "constraints": [
+      "1 ≤ words.length ≤ 100; mỗi từ dài 0–100, chỉ a–z.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "CommonPrefix",
+    "parameters": [
+      {
+        "name": "words",
+        "type": "string[]"
+      }
+    ],
+    "returnType": "string",
+    "samples": [
+      {
+        "args": [
+          [
+            "coding",
+            "code",
+            "cobalt"
+          ]
+        ],
+        "expected": "co"
+      },
+      {
+        "args": [
+          [
+            "a",
+            "b"
+          ]
+        ],
+        "expected": ""
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public string CommonPrefix(string[] words)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string[]} words\n * @returns {string}\n */\nfunction CommonPrefix(words) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/longest-common-prefix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-04",
+    "chapter": 5,
+    "title": "Đảo thứ tự các từ",
+    "difficulty": "Medium",
+    "description": "Đảo thứ tự các từ trong s; các từ ở kết quả ngăn bởi đúng một dấu cách và không có dấu cách ở hai đầu.",
+    "constraints": [
+      "1 ≤ s.length ≤ 1000; chỉ a–z và dấu cách; có ít nhất một từ.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "ReverseWords",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "returnType": "string",
+    "samples": [
+      {
+        "args": [
+          "  em hoc   code "
+        ],
+        "expected": "code hoc em"
+      },
+      {
+        "args": [
+          "mot"
+        ],
+        "expected": "mot"
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public string ReverseWords(string s)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string} s\n * @returns {string}\n */\nfunction ReverseWords(s) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/reverse-words-in-a-string/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-05",
+    "chapter": 5,
+    "title": "Đoạn không lặp ký tự",
+    "difficulty": "Medium",
+    "description": "Tìm độ dài lớn nhất của một đoạn liên tiếp trong s mà không có ký tự xuất hiện hai lần.",
+    "constraints": [
+      "0 ≤ s.length ≤ 10000; chỉ a–z.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "LongestUnique",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          "abccade"
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          ""
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int LongestUnique(string s)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string} s\n * @returns {number}\n */\nfunction LongestUnique(s) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-06",
+    "chapter": 5,
+    "title": "Hai từ hoán vị",
+    "difficulty": "Medium",
+    "description": "Kiểm tra hai chuỗi có cùng số lần xuất hiện của từng chữ cái hay không; thứ tự chữ cái có thể khác.",
+    "constraints": [
+      "0 ≤ s.length, t.length ≤ 10000; chỉ a–z.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Anagram",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "name": "t",
+        "type": "string"
+      }
+    ],
+    "returnType": "boolean",
+    "samples": [
+      {
+        "args": [
+          "aab",
+          "aba"
+        ],
+        "expected": true
+      },
+      {
+        "args": [
+          "ab",
+          "aa"
+        ],
+        "expected": false
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public bool Anagram(string s, string t)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string} s\n * @param {string} t\n * @returns {boolean}\n */\nfunction Anagram(s, t) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/valid-anagram/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-07",
+    "chapter": 5,
+    "title": "Cửa sổ phủ ký tự",
+    "difficulty": "Hard",
+    "description": "Tìm đoạn liên tiếp ngắn nhất của s chứa đủ số lần xuất hiện của mỗi ký tự trong t. Không có đoạn phù hợp thì trả về chuỗi rỗng.",
+    "constraints": [
+      "1 ≤ s.length, t.length ≤ 1000; chỉ a–z; nếu có đáp án thì đáp án ngắn nhất là duy nhất.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "MinWindow",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "name": "t",
+        "type": "string"
+      }
+    ],
+    "returnType": "string",
+    "samples": [
+      {
+        "args": [
+          "cabdab",
+          "bd"
+        ],
+        "expected": "bd"
+      },
+      {
+        "args": [
+          "a",
+          "aa"
+        ],
+        "expected": ""
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public string MinWindow(string s, string t)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string} s\n * @param {string} t\n * @returns {string}\n */\nfunction MinWindow(s, t) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/minimum-window-substring/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-08",
+    "chapter": 5,
+    "title": "Khoảng cách chỉnh sửa",
+    "difficulty": "Hard",
+    "description": "Mỗi thao tác thêm, xóa hoặc thay một ký tự có giá 1. Trả về số thao tác ít nhất để biến a thành b.",
+    "constraints": [
+      "0 ≤ a.length, b.length ≤ 100; chỉ a–z.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "EditDistance",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "string"
+      },
+      {
+        "name": "b",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          "meo",
+          "heo"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "",
+          "abc"
+        ],
+        "expected": 3
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int EditDistance(string a, string b)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string} a\n * @param {string} b\n * @returns {number}\n */\nfunction EditDistance(a, b) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/edit-distance/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch5-09",
+    "chapter": 5,
+    "title": "Đếm cách giữ lại dãy con",
+    "difficulty": "Hard",
+    "description": "Chọn một số vị trí trong s theo thứ tự tăng dần sao cho các ký tự được chọn ghép thành t. Đếm số cách chọn vị trí. Chuỗi t rỗng có đúng một cách.",
+    "constraints": [
+      "0 ≤ s.length ≤ 20; 0 ≤ t.length ≤ 20; chỉ a–z; số cách không vượt 2^20.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "SubsequenceCount",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "name": "t",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          "aaaa",
+          "aa"
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          "abc",
+          ""
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int SubsequenceCount(string s, string t)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {string} s\n * @param {string} t\n * @returns {number}\n */\nfunction SubsequenceCount(s, t) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/distinct-subsequences/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-01",
+    "chapter": 6,
+    "title": "Hàm giá trị tuyệt đối",
+    "difficulty": "Easy",
+    "description": "Viết hàm trả về khoảng cách từ n đến 0 trên trục số.",
+    "constraints": [
+      "|n| ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Absolute",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          -36
+        ],
+        "expected": 36
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Absolute(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction Absolute(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-02",
+    "chapter": 6,
+    "title": "Hàm lũy thừa nguyên",
+    "difficulty": "Easy",
+    "description": "Viết hàm tính baseValue mũ exponent; quy ước mọi số mũ 0, kể cả 0^0, bằng 1.",
+    "constraints": [
+      "-5 ≤ baseValue ≤ 5; 0 ≤ exponent ≤ 10.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Power",
+    "parameters": [
+      {
+        "name": "baseValue",
+        "type": "int32"
+      },
+      {
+        "name": "exponent",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          -3,
+          3
+        ],
+        "expected": -27
+      },
+      {
+        "args": [
+          0,
+          0
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Power(int baseValue, int exponent)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} baseValue\n * @param {number} exponent\n * @returns {number}\n */\nfunction Power(baseValue, exponent) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-03",
+    "chapter": 6,
+    "title": "Hàm nhỏ nhất",
+    "difficulty": "Easy",
+    "description": "Viết hàm nhận hai số nguyên và trả về giá trị nhỏ hơn; hai số bằng nhau thì trả về giá trị đó.",
+    "constraints": [
+      "|a|, |b| ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Minimum",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          -4,
+          7
+        ],
+        "expected": -4
+      },
+      {
+        "args": [
+          5,
+          5
+        ],
+        "expected": 5
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Minimum(int a, int b)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} a\n * @param {number} b\n * @returns {number}\n */\nfunction Minimum(a, b) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-04",
+    "chapter": 6,
+    "title": "Bội chung nhỏ nhất",
+    "difficulty": "Medium",
+    "description": "Tách hàm phụ tìm ước chung lớn nhất, rồi dùng nó để trả về bội dương nhỏ nhất chung của a và b.",
+    "constraints": [
+      "1 ≤ a, b ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Lcm",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          15,
+          20
+        ],
+        "expected": 60
+      },
+      {
+        "args": [
+          7,
+          7
+        ],
+        "expected": 7
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Lcm(int a, int b)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} a\n * @param {number} b\n * @returns {number}\n */\nfunction Lcm(a, b) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-05",
+    "chapter": 6,
+    "title": "Số đối xứng",
+    "difficulty": "Medium",
+    "description": "Viết hàm kiểm tra biểu diễn thập phân của số không âm n có đọc giống nhau từ hai phía hay không.",
+    "constraints": [
+      "0 ≤ n ≤ 1000000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "PalindromeNumber",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean",
+    "samples": [
+      {
+        "args": [
+          12321
+        ],
+        "expected": true
+      },
+      {
+        "args": [
+          120
+        ],
+        "expected": false
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public bool PalindromeNumber(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {boolean}\n */\nfunction PalindromeNumber(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-06",
+    "chapter": 6,
+    "title": "Danh sách ước số",
+    "difficulty": "Medium",
+    "description": "Viết hàm trả về tất cả ước dương của n theo thứ tự tăng dần, mỗi ước xuất hiện một lần.",
+    "constraints": [
+      "1 ≤ n ≤ 100000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Divisors",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[]",
+    "samples": [
+      {
+        "args": [
+          12
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          4,
+          6,
+          12
+        ]
+      },
+      {
+        "args": [
+          1
+        ],
+        "expected": [
+          1
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[] Divisors(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number[]}\n */\nfunction Divisors(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-07",
+    "chapter": 6,
+    "title": "Hệ số tổ hợp",
+    "difficulty": "Hard",
+    "description": "Trả về số cách chọn k phần tử từ n phần tử phân biệt. Tổ chức tính toán thành hàm; C(n,0)=C(n,n)=1.",
+    "constraints": [
+      "0 ≤ k ≤ n ≤ 20; mọi kết quả đều nằm trong int32.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Choose",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      },
+      {
+        "name": "k",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          8,
+          3
+        ],
+        "expected": 56
+      },
+      {
+        "args": [
+          0,
+          0
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Choose(int n, int k)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @param {number} k\n * @returns {number}\n */\nfunction Choose(n, k) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-08",
+    "chapter": 6,
+    "title": "Tổng chữ số lặp",
+    "difficulty": "Hard",
+    "description": "Viết hàm phụ tính tổng chữ số. Áp dụng nhiều lần cho n cho đến khi còn một chữ số, rồi trả về chữ số đó.",
+    "constraints": [
+      "0 ≤ n ≤ 1000000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "DigitalRoot",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          9876
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int DigitalRoot(int n)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} n\n * @returns {number}\n */\nfunction DigitalRoot(n) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch6-09",
+    "chapter": 6,
+    "title": "Đếm nguyên tố trong đoạn",
+    "difficulty": "Hard",
+    "description": "Tách hàm kiểm tra nguyên tố để đếm các số nguyên tố trong đoạn đóng [left, right].",
+    "constraints": [
+      "0 ≤ left ≤ right ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "PrimesInRange",
+    "parameters": [
+      {
+        "name": "left",
+        "type": "int32"
+      },
+      {
+        "name": "right",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          10,
+          23
+        ],
+        "expected": 5
+      },
+      {
+        "args": [
+          0,
+          1
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int PrimesInRange(int left, int right)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number} left\n * @param {number} right\n * @returns {number}\n */\nfunction PrimesInRange(left, right) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-01",
+    "chapter": 7,
+    "title": "Hai phần tử đủ tổng",
+    "difficulty": "Easy",
+    "description": "Tìm hai vị trí khác nhau có tổng giá trị bằng target. Trả về hai chỉ số từ 0 theo thứ tự tăng dần; dữ liệu đảm bảo đúng một cặp.",
+    "constraints": [
+      "2 ≤ nums.length ≤ 1000; |nums[i]|, |target| ≤ 10000; đúng một cặp hợp lệ.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "TwoSum",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      },
+      {
+        "name": "target",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[]",
+    "samples": [
+      {
+        "args": [
+          [
+            4,
+            1,
+            8,
+            3
+          ],
+          11
+        ],
+        "expected": [
+          2,
+          3
+        ]
+      },
+      {
+        "args": [
+          [
+            5,
+            5
+          ],
+          10
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[] TwoSum(int[] nums, int target)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} nums\n * @param {number} target\n * @returns {number[]}\n */\nfunction TwoSum(nums, target) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/two-sum/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-02",
+    "chapter": 7,
+    "title": "Lợi nhuận một lần mua bán",
+    "difficulty": "Easy",
+    "description": "Mỗi phần tử là giá một ngày. Được mua một lần rồi bán vào một ngày sau đó. Trả về lợi nhuận lớn nhất; không giao dịch thì lợi nhuận bằng 0.",
+    "constraints": [
+      "1 ≤ prices.length ≤ 10000; 0 ≤ prices[i] ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "MaxProfit",
+    "parameters": [
+      {
+        "name": "prices",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            9,
+            4,
+            7,
+            2,
+            8
+          ]
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          [
+            5,
+            3,
+            1
+          ]
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int MaxProfit(int[] prices)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} prices\n * @returns {number}\n */\nfunction MaxProfit(prices) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-03",
+    "chapter": 7,
+    "title": "Cộng một vào dãy chữ số",
+    "difficulty": "Easy",
+    "description": "Mảng digits ghi một số thập phân từ hàng cao xuống thấp. Trả về mảng chữ số của số đó cộng 1.",
+    "constraints": [
+      "1 ≤ digits.length ≤ 100; 0 ≤ digits[i] ≤ 9; không có số 0 đầu trừ số 0.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "PlusOne",
+    "parameters": [
+      {
+        "name": "digits",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32[]",
+    "samples": [
+      {
+        "args": [
+          [
+            2,
+            9,
+            9
+          ]
+        ],
+        "expected": [
+          3,
+          0,
+          0
+        ]
+      },
+      {
+        "args": [
+          [
+            9
+          ]
+        ],
+        "expected": [
+          1,
+          0
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[] PlusOne(int[] digits)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} digits\n * @returns {number[]}\n */\nfunction PlusOne(digits) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/plus-one/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-04",
+    "chapter": 7,
+    "title": "Tổng đoạn lớn nhất",
+    "difficulty": "Medium",
+    "description": "Chọn một đoạn liên tiếp không rỗng có tổng lớn nhất và trả về tổng của nó.",
+    "constraints": [
+      "1 ≤ nums.length ≤ 10000; |nums[i]| ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "MaxSubarray",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            -3,
+            5,
+            -1,
+            4,
+            -8
+          ]
+        ],
+        "expected": 8
+      },
+      {
+        "args": [
+          [
+            -5,
+            -2
+          ]
+        ],
+        "expected": -2
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int MaxSubarray(int[] nums)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} nums\n * @returns {number}\n */\nfunction MaxSubarray(nums) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/maximum-subarray/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-05",
+    "chapter": 7,
+    "title": "Tích ngoài vị trí",
+    "difficulty": "Medium",
+    "description": "Kết quả tại i bằng tích mọi phần tử trừ nums[i]. Không dùng phép chia; xử lý cả phần tử 0.",
+    "constraints": [
+      "2 ≤ nums.length ≤ 20; -2 ≤ nums[i] ≤ 2; mọi tích nằm trong int32.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "ProductExceptSelf",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32[]",
+    "samples": [
+      {
+        "args": [
+          [
+            2,
+            0,
+            4
+          ]
+        ],
+        "expected": [
+          0,
+          8,
+          0
+        ]
+      },
+      {
+        "args": [
+          [
+            2,
+            3,
+            4
+          ]
+        ],
+        "expected": [
+          12,
+          8,
+          6
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[] ProductExceptSelf(int[] nums)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} nums\n * @returns {number[]}\n */\nfunction ProductExceptSelf(nums) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/product-of-array-except-self/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-06",
+    "chapter": 7,
+    "title": "Tìm trong mảng xoay",
+    "difficulty": "Medium",
+    "description": "Mảng tăng nghiêm ngặt đã được xoay vòng tại một vị trí bất kỳ. Trả về chỉ số của target hoặc -1 nếu không có.",
+    "constraints": [
+      "0 ≤ nums.length ≤ 10000; phần tử phân biệt; |nums[i]|, |target| ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "SearchRotated",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      },
+      {
+        "name": "target",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            6,
+            9,
+            1,
+            3,
+            4
+          ],
+          3
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [],
+          8
+        ],
+        "expected": -1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int SearchRotated(int[] nums, int target)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} nums\n * @param {number} target\n * @returns {number}\n */\nfunction SearchRotated(nums, target) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/search-in-rotated-sorted-array/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-07",
+    "chapter": 7,
+    "title": "Số dương đầu tiên còn thiếu",
+    "difficulty": "Hard",
+    "description": "Trả về số nguyên dương nhỏ nhất không có trong nums. Hướng đến việc sử dụng chính mảng để đánh dấu.",
+    "constraints": [
+      "0 ≤ nums.length ≤ 10000; |nums[i]| ≤ 1000000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "FirstMissingPositive",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            2,
+            3,
+            -1,
+            1
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          []
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int FirstMissingPositive(int[] nums)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} nums\n * @returns {number}\n */\nfunction FirstMissingPositive(nums) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/first-missing-positive/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-08",
+    "chapter": 7,
+    "title": "Nước giữa các cột",
+    "difficulty": "Hard",
+    "description": "Các cột có bề rộng 1 và chiều cao cho trong heights. Sau mưa, tính tổng đơn vị nước giữ lại giữa các cột.",
+    "constraints": [
+      "0 ≤ heights.length ≤ 10000; 0 ≤ heights[i] ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "TrappedWater",
+    "parameters": [
+      {
+        "name": "heights",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            3,
+            0,
+            2,
+            0,
+            3
+          ]
+        ],
+        "expected": 7
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int TrappedWater(int[] heights)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} heights\n * @returns {number}\n */\nfunction TrappedWater(heights) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/trapping-rain-water/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch7-09",
+    "chapter": 7,
+    "title": "Chia kẹo theo điểm",
+    "difficulty": "Hard",
+    "description": "Học sinh đứng thành hàng, mỗi người nhận ít nhất một viên. Ai có điểm cao hơn hàng xóm liền kề phải nhận nhiều kẹo hơn người đó. Trả về tổng kẹo tối thiểu.",
+    "constraints": [
+      "1 ≤ ratings.length ≤ 10000; 0 ≤ ratings[i] ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Candy",
+    "parameters": [
+      {
+        "name": "ratings",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            2,
+            1,
+            3
+          ]
+        ],
+        "expected": 5
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            2
+          ]
+        ],
+        "expected": 4
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int Candy(int[] ratings)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[]} ratings\n * @returns {number}\n */\nfunction Candy(ratings) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/candy/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-01",
+    "chapter": 8,
+    "title": "Đổi hình dạng ma trận",
+    "difficulty": "Easy",
+    "description": "Đọc phần tử theo hàng rồi xếp lại thành rows hàng và cols cột. Nếu số ô không bằng ma trận gốc, trả về ma trận gốc.",
+    "constraints": [
+      "Ma trận chữ nhật 1–20 hàng/cột; 1 ≤ rows, cols ≤ 400; |matrix[i][j]| ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Reshape",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      },
+      {
+        "name": "rows",
+        "type": "int32"
+      },
+      {
+        "name": "cols",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[][]",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              2,
+              4
+            ],
+            [
+              6,
+              8
+            ]
+          ],
+          1,
+          4
+        ],
+        "expected": [
+          [
+            2,
+            4,
+            6,
+            8
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ]
+          ],
+          2,
+          2
+        ],
+        "expected": [
+          [
+            1,
+            2
+          ]
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[][] Reshape(int[][] matrix, int rows, int cols)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} matrix\n * @param {number} rows\n * @param {number} cols\n * @returns {number[][]}\n */\nfunction Reshape(matrix, rows, cols) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/reshape-the-matrix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-02",
+    "chapter": 8,
+    "title": "Chuyển vị",
+    "difficulty": "Easy",
+    "description": "Trả về ma trận có hàng và cột đổi vai trò: phần tử hàng i cột j của đầu vào nằm ở hàng j cột i của đầu ra.",
+    "constraints": [
+      "Ma trận chữ nhật 1–50 hàng/cột; |matrix[i][j]| ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Transpose",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32[][]",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              3,
+              5
+            ],
+            [
+              2,
+              4,
+              6
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            5,
+            6
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              7
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            7
+          ]
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[][] Transpose(int[][] matrix)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} matrix\n * @returns {number[][]}\n */\nfunction Transpose(matrix) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/transpose-matrix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-03",
+    "chapter": 8,
+    "title": "Tổng hai đường chéo",
+    "difficulty": "Easy",
+    "description": "Với ma trận vuông, cộng các phần tử trên đường chéo chính và phụ. Ô thuộc cả hai đường chỉ tính một lần.",
+    "constraints": [
+      "Ma trận vuông cạnh 1–50; |matrix[i][j]| ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "DiagonalSum",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": 10
+      },
+      {
+        "args": [
+          [
+            [
+              8
+            ]
+          ]
+        ],
+        "expected": 8
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int DiagonalSum(int[][] matrix)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} matrix\n * @returns {number}\n */\nfunction DiagonalSum(matrix) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/matrix-diagonal-sum/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-04",
+    "chapter": 8,
+    "title": "Duyệt xoắn ốc",
+    "difficulty": "Medium",
+    "description": "Trả về các phần tử theo đường xoắn ốc: bắt đầu ở góc trên trái, đi sang phải rồi xuống, sang trái, lên; thu hẹp vào trong cho đến hết ô.",
+    "constraints": [
+      "Ma trận chữ nhật 1–50 hàng/cột; |matrix[i][j]| ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Spiral",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32[]",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          6,
+          5,
+          4
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              9
+            ],
+            [
+              8
+            ]
+          ]
+        ],
+        "expected": [
+          9,
+          8
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[] Spiral(int[][] matrix)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} matrix\n * @returns {number[]}\n */\nfunction Spiral(matrix) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/spiral-matrix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-05",
+    "chapter": 8,
+    "title": "Xóa hàng cột có số không",
+    "difficulty": "Medium",
+    "description": "Nếu một ô ban đầu bằng 0, mọi ô cùng hàng hoặc cột của nó trong kết quả phải bằng 0. Các ô khác giữ giá trị cũ. Trả về ma trận kết quả.",
+    "constraints": [
+      "Ma trận chữ nhật 1–50 hàng/cột; |matrix[i][j]| ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "ZeroRowsCols",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32[][]",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            0
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              2
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            2
+          ]
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[][] ZeroRowsCols(int[][] matrix)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} matrix\n * @returns {number[][]}\n */\nfunction ZeroRowsCols(matrix) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/set-matrix-zeroes/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-06",
+    "chapter": 8,
+    "title": "Xoay ma trận vuông",
+    "difficulty": "Medium",
+    "description": "Trả về ma trận vuông sau khi xoay 90 độ theo chiều kim đồng hồ. Hãy xác định ánh xạ từ vị trí cũ sang vị trí mới.",
+    "constraints": [
+      "Ma trận vuông cạnh 1–50; |matrix[i][j]| ≤ 1000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "Rotate",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32[][]",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              6
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            6
+          ]
+        ]
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int[][] Rotate(int[][] matrix)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} matrix\n * @returns {number[][]}\n */\nfunction Rotate(matrix) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/rotate-image/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-07",
+    "chapter": 8,
+    "title": "Hình chữ nhật toàn số một",
+    "difficulty": "Hard",
+    "description": "Chọn một hình chữ nhật gồm các ô liên tiếp theo hàng và cột, chỉ chứa số 1. Trả về diện tích lớn nhất, hoặc 0 nếu không có ô 1.",
+    "constraints": [
+      "Ma trận chữ nhật 1–50 hàng/cột; mỗi ô là số nguyên 0 hoặc 1.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "MaxRectangle",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            [
+              0
+            ]
+          ]
+        ],
+        "expected": 0
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int MaxRectangle(int[][] matrix)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} matrix\n * @returns {number}\n */\nfunction MaxRectangle(matrix) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/maximal-rectangle/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-08",
+    "chapter": 8,
+    "title": "Đường tăng dài nhất",
+    "difficulty": "Hard",
+    "description": "Bắt đầu ở ô bất kỳ, mỗi bước sang một ô kề trên, dưới, trái hoặc phải có giá trị lớn hơn nghiêm ngặt. Trả về số ô nhiều nhất trên một đường đi.",
+    "constraints": [
+      "Ma trận chữ nhật 1–50 hàng/cột; |matrix[i][j]| ≤ 10000.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "LongestPath",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              4,
+              3
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            [
+              5,
+              5
+            ]
+          ]
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int LongestPath(int[][] matrix)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} matrix\n * @returns {number}\n */\nfunction LongestPath(matrix) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/longest-increasing-path-in-a-matrix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  {
+    "id": "ch8-09",
+    "chapter": 8,
+    "title": "Năng lượng đi qua mê cung",
+    "difficulty": "Hard",
+    "description": "Đi từ góc trên trái đến góc dưới phải, chỉ được sang phải hoặc xuống. Giá trị mỗi ô được cộng vào năng lượng ngay khi bước vào, kể cả ô đầu. Năng lượng luôn phải ít nhất 1. Trả về năng lượng ban đầu nhỏ nhất có thể.",
+    "constraints": [
+      "Ma trận chữ nhật 1–50 hàng/cột; -100 ≤ grid[i][j] ≤ 100.",
+      "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+    ],
+    "functionName": "MinimumHealth",
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32",
+    "samples": [
+      {
+        "args": [
+          [
+            [
+              -2,
+              -3
+            ],
+            [
+              1,
+              -5
+            ]
+          ]
+        ],
+        "expected": 7
+      },
+      {
+        "args": [
+          [
+            [
+              3
+            ]
+          ]
+        ],
+        "expected": 1
+      }
+    ],
+    "languages": {
+      "csharp": {
+        "monacoId": "csharp",
+        "starter": "public class Solution\n{\n    public int MinimumHealth(int[][] grid)\n    {\n        // Viết lời giải của bạn tại đây.\n        throw new System.NotImplementedException();\n    }\n}\n"
+      },
+      "javascript": {
+        "monacoId": "javascript",
+        "starter": "/**\n * @param {number[][]} grid\n * @returns {number}\n */\nfunction MinimumHealth(grid) {\n    // Viết lời giải của bạn tại đây.\n    throw new Error(\"Chưa triển khai\");\n}\n"
+      }
+    },
+    "source": {
+      "url": "https://leetcode.com/problems/dungeon-game/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  }
+]

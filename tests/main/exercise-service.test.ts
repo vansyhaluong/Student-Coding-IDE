@@ -13,6 +13,7 @@ import { DesktopApplication } from '../../src/main/app/desktop-application'
 import { ApplicationQuitCoordinator } from '../../src/main/app/application-quit-coordinator'
 import type { ExerciseRunRequest, ExerciseSessionReference } from '../../src/shared/contracts/exercise'
 import { validateExerciseSnapshot } from '../../src/shared/contracts/exercise-validation'
+import { sourceRegistry } from '../fixtures/learning/package-registry'
 
 class Owner extends EventEmitter { dead = false; constructor(readonly id: number) { super() } isDestroyed() { return this.dead } }
 const request: ExerciseRunRequest = { exerciseId: 'ch2-01', language: 'javascript', code: 'function source', sourceRevision: 4 }
@@ -158,7 +159,8 @@ it('production JavaScript factory binds immutable source/revision and Main sampl
   vi.spyOn(nativeModule, 'loadLearningNative').mockReturnValue(mocked.native)
   vi.stubEnv('PATH', nodeDirectory); vi.stubEnv('Path', nodeDirectory)
   const published: import('../../src/shared/contracts/exercise').ExerciseSnapshot[] = []
-  const service = createWindowsExerciseService(join(f.root, 'production'), { onSnapshot: (_owner, s) => published.push(s) })
+  const packages = await sourceRegistry()
+  const service = createWindowsExerciseService(join(f.root, 'production'), { packages, onSnapshot: (_owner, s) => published.push(s) })
   services.push(service); service.start(); await service.ready(); service.observe(f.owner)
   const input = { ...request, code: 'function Sum(a,b){return a+b;}' }, ref = admit(service, 1, input)
   input.code = 'changed'; input.sourceRevision = 100
@@ -169,6 +171,8 @@ it('production JavaScript factory binds immutable source/revision and Main sampl
   expect(published.some(s => s.javascript?.result.cases.length === 1)).toBe(true)
   expect([...mocked.states.values()].every(s => s.released && s.handlesClosed)).toBe(true)
   expect(mocked.native.start).toHaveBeenCalledTimes(4)
+  expect(packages.readiness('ch2-01').pinned).toBe(false)
+  await service.stop(); await packages.stop()
 })
 
 describe('Owner loss and stale work', () => {

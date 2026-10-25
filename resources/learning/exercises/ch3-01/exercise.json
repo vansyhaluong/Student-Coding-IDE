@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-01",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 3,
+    "order": 9,
+    "title": "Kiểm tra chẵn",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về true nếu n chia hết cho 2, ngược lại false.",
+  "constraints": [
+    "|n| ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "38999737792460eaacfaf4e101641dcdeb0e2b0b67aeb6dce991ef798cdc8170",
+    "functionName": "IsEven",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch3-01-official",
+    "version": 1,
+    "hash": "654d0b62db1fe4dc5dfcbe067723b256158da8bdb5c8eabb84de5f0f5172f187"
+  }
+}

@@ -7,7 +7,7 @@ import { RoslynCsharpCompiler } from '../../src/main/services/learning/runtime/c
 import { ExerciseWorkspace } from '../../src/main/services/learning/runtime/exercise-workspace'
 import type { CsharpPreparedExecution } from '../../src/main/services/learning/runtime/csharp-execution-contracts'
 import type { LearningJobSample, LearningNativeBinding } from '../../src/main/services/learning/runtime/windows-exercise-native'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import { EXERCISE_LIMITS } from '../../src/shared/contracts/exercise'
 import { validateCsharpCompileResult } from '../../src/shared/contracts/csharp-execution-validation'
 import { exerciseCoreError } from '../../src/main/services/learning/runtime/exercise-limits'

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-04",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 3,
+    "order": 12,
+    "title": "Năm nhuận",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Theo lịch Gregory, năm chia hết cho 400 hoặc chia hết cho 4 nhưng không chia hết cho 100 là năm nhuận. Trả về kết quả kiểm tra.",
+  "constraints": [
+    "1 ≤ year ≤ 9999.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "4eeeb5a41558ed55412954bf5f1dbd9e1e6b019f10d78c488d3aef4b471df65f",
+    "functionName": "LeapYear",
+    "parameters": [
+      {
+        "name": "year",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch3-04-official",
+    "version": 1,
+    "hash": "a551a379f25c057b357839f765491f75d666ffbf8784cdf5dd0bf00855b7cb57"
+  }
+}

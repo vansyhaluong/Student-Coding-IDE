@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { Play, RotateCcw } from 'lucide-react'
-import type { Exercise, ExerciseLanguage, ExerciseDraft } from '../../../../../shared/contracts/practice'
+import type { Exercise, ExerciseLanguage, ExerciseDraft, ExerciseSummary } from '../../../../../shared/contracts/practice'
 import { MySolutions } from './MySolutions'
 import { PracticeTestPanel, type TestPanelDock, type TestPanelSize } from './PracticeTestPanel'
 import type { ExerciseRunView } from './use-exercise-runtime'
@@ -8,11 +8,11 @@ import type { PracticeSourceReplacement } from './use-practice'
 const PracticeEditor = lazy(async () => ({ default: (await import('./PracticeEditor')).PracticeEditor }))
 
 interface Props {
-  exercises: Exercise[]; chapter: number; drafts: ExerciseDraft[]; exercise: Exercise | undefined
+  exercises: ExerciseSummary[]; chapter: number; drafts: ExerciseDraft[]; exercise: Exercise | undefined
   language: ExerciseLanguage; code: string; ready: boolean; locked: boolean
   execution: ExerciseRunView; onRun(): void
   sourceReplacement?: PracticeSourceReplacement
-  onOpen(exercise?: Exercise): void; onLanguage(language: ExerciseLanguage): void; onEdit(code: string): void; onReplace(code: string): void
+  onOpen(exercise?: ExerciseSummary): void; onLanguage(language: ExerciseLanguage): void; onEdit(code: string): void; onReplace(code: string): void
 }
 export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, execution, onRun, onOpen, onLanguage, onEdit, onReplace, sourceReplacement }: Props) {
   const [reset, setReset] = useState(false)
@@ -23,12 +23,13 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
   if (!ready) return <p role="status">Đang tải bài tập và Code Draft…</p>
   if (!exercise) return <section className="practice-list" aria-label={`Bài tập chương ${chapter}`}>
     <p className="learning-eyebrow">Luyện tập / Chương {chapter}</p><h1>Viết code. Giải bài.</h1>
-    <p>9 bài tập · 3 Easy · 3 Medium · 3 Hard</p>
+    {exercises.some(e => !e.available) && <p role="alert">Một số bài tập không khả dụng: {exercises.filter(e => !e.available).map(e => e.id).join(', ')}. Code Draft đã lưu được giữ nguyên.</p>}
+    <p>{exercises.filter(e => e.chapter === chapter).length} bài tập · {(['Easy', 'Medium', 'Hard'] as const).map(d => `${exercises.filter(e => e.chapter === chapter && e.difficulty === d).length} ${d}`).join(' · ')}</p>
     {(['Easy', 'Medium', 'Hard'] as const).map(difficulty => <section key={difficulty}>
       <h2><span className="practice-difficulty" data-level={difficulty}>{difficulty}</span></h2>
       {exercises.filter(e => e.chapter === chapter && e.difficulty === difficulty).map(e =>
         <button type="button" className="practice-row" disabled={locked} key={e.id} onClick={() => { setReset(false); setTab('tests'); setSelectedCase(0); onOpen(e) }}>
-          <span>{e.title}</span><span>{drafts.some(d => d.exerciseId === e.id) ? 'Có bản nháp' : 'Chưa có bản nháp'} →</span>
+          <span>{e.title}</span><span>{e.hasDraft || drafts.some(d => d.exerciseId === e.id) ? 'Có bản nháp' : 'Chưa có bản nháp'} →</span>
         </button>)}
     </section>)}
   </section>

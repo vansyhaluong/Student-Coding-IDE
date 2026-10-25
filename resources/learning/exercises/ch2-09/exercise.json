@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-09",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 2,
+    "order": 8,
+    "title": "Tổng cấp số cộng",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Dãy bắt đầu bằng first; mỗi số sau tăng thêm step. Trả về tổng count số đầu tiên bằng biểu thức số học.",
+  "constraints": [
+    "0 ≤ first, step ≤ 100; 1 ≤ count ≤ 1000; kết quả nằm trong int32.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "90201ce86a640ef38b3f7e3d02e5c7c76a080f6394d5e47d0a021e10e5b82420",
+    "functionName": "ProgressionSum",
+    "parameters": [
+      {
+        "name": "first",
+        "type": "int32"
+      },
+      {
+        "name": "step",
+        "type": "int32"
+      },
+      {
+        "name": "count",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch2-09-official",
+    "version": 1,
+    "hash": "1f25aaecb765e37703aa95ba11338ce2dfac670a9071600fdc639c31c8bd17f2"
+  }
+}

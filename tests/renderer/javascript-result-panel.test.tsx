@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PracticeTestPanel } from '../../src/renderer/src/features/learning/practice/PracticeTestPanel'
 import { javascriptFailureMessage } from '../../src/renderer/src/features/learning/practice/use-exercise-runtime'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import { javascriptObservation } from '../fixtures/learning/javascript-observation'
 import type { ExerciseSnapshot } from '../../src/shared/contracts/exercise'
 

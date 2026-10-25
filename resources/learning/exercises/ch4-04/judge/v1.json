@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-04",
+  "testSetId": "ch4-04-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "fc241e94f2ac0bdd4e7203eeb737ff7b2fa0ab1f2fb8f19082c0f9f16a93fb35",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "args": [
+        4020
+      ],
+      "expected": 204,
+      "visibility": "public",
+      "sampleId": "sample-1"
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        0
+      ],
+      "expected": 0,
+      "visibility": "public",
+      "sampleId": "sample-2"
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        100000000
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-002",
+      "visibility": "hidden",
+      "args": [
+        99999999
+      ],
+      "expected": 99999999
+    }
+  ]
+}

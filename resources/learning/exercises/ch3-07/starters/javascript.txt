@@ -1,0 +1,9 @@
+/**
+ * @param {number} age
+ * @param {boolean} weekend
+ * @returns {number}
+ */
+function Ticket(age, weekend) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

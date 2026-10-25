@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-08",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 34,
+    "title": "Khoảng cách chỉnh sửa",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/edit-distance/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Mỗi thao tác thêm, xóa hoặc thay một ký tự có giá 1. Trả về số thao tác ít nhất để biến a thành b.",
+  "constraints": [
+    "0 ≤ a.length, b.length ≤ 100; chỉ a–z.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "082d1600c5c5754b7e286c0d6957264b1b8706911eacd68d19fef7eee9266fa4",
+    "functionName": "EditDistance",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "string"
+      },
+      {
+        "name": "b",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-08-official",
+    "version": 1,
+    "hash": "ec15cf39238a27ef9d2c5046c36415fc4504162d87189467f6af0d3bb5b75a40"
+  }
+}

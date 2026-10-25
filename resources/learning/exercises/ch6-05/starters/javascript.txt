@@ -1,0 +1,8 @@
+/**
+ * @param {number} n
+ * @returns {boolean}
+ */
+function PalindromeNumber(n) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

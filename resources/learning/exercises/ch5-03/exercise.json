@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-03",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 29,
+    "title": "Tiền tố chung",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/longest-common-prefix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về chuỗi dài nhất nằm ở đầu mọi từ trong words. Không có tiền tố chung thì trả về chuỗi rỗng.",
+  "constraints": [
+    "1 ≤ words.length ≤ 100; mỗi từ dài 0–100, chỉ a–z.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "a5802b3cf8d366cba2c44ff468a1de2f33285c0d5ca80332c71d37143abe505e",
+    "functionName": "CommonPrefix",
+    "parameters": [
+      {
+        "name": "words",
+        "type": "string[]"
+      }
+    ],
+    "returnType": "string"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-03-official",
+    "version": 1,
+    "hash": "beabc0732f60cf9029d6d18f79fc3542dc556b93a8090ae77c6f0fb0505839f2"
+  }
+}

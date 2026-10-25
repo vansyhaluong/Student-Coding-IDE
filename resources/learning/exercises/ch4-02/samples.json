@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-02",
+  "signatureVersion": 1,
+  "signatureHash": "2e2ea8e186ae75984f15c55b095d8c02c71091619480317a9e421395dd5e3a3c",
+  "samples": [
+    {
+      "id": "sample-1",
+      "args": [
+        6
+      ],
+      "expected": 720
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        0
+      ],
+      "expected": 1
+    }
+  ]
+}

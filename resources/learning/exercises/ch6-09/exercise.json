@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-09",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 6,
+    "order": 44,
+    "title": "Đếm nguyên tố trong đoạn",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Tách hàm kiểm tra nguyên tố để đếm các số nguyên tố trong đoạn đóng [left, right].",
+  "constraints": [
+    "0 ≤ left ≤ right ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "06460f5772650abe104ac6bfb3f9cb11d67d4e559cf6f493b61a984b72f12313",
+    "functionName": "PrimesInRange",
+    "parameters": [
+      {
+        "name": "left",
+        "type": "int32"
+      },
+      {
+        "name": "right",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch6-09-official",
+    "version": 1,
+    "hash": "19b7f4e77da3a7c84bd631c10e626faf0e0b43c1c699d069dcd1e3de3cd7d470"
+  }
+}

@@ -1,0 +1,8 @@
+/**
+ * @param {number[]} ratings
+ * @returns {number}
+ */
+function Candy(ratings) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

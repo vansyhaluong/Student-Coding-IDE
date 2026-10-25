@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch7-01",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 7,
+    "order": 45,
+    "title": "Hai phần tử đủ tổng",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/two-sum/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Tìm hai vị trí khác nhau có tổng giá trị bằng target. Trả về hai chỉ số từ 0 theo thứ tự tăng dần; dữ liệu đảm bảo đúng một cặp.",
+  "constraints": [
+    "2 ≤ nums.length ≤ 1000; |nums[i]|, |target| ≤ 10000; đúng một cặp hợp lệ.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "e431a200161070b0c77bc16533506ec41c82cd10774de3ca9fa43104f0bfaa40",
+    "functionName": "TwoSum",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      },
+      {
+        "name": "target",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch7-01-official",
+    "version": 1,
+    "hash": "cfb60c5944e5c929b7fa8048be6703277792c9fb83f6621c23582e369448b443"
+  }
+}

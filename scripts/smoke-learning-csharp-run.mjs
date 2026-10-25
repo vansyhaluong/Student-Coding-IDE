@@ -169,6 +169,9 @@ async function main() {
     await click('[aria-label="Open Learning"]')
     await click(`#learning-chapters button:nth-child(${diagnostic ? 3 : 2})`)
     await click('.learning-section-nav [data-tabs-value="practice"]')
+    // Registry-backed public pages are asynchronous. Do not skip opening the
+    // exercise merely because the row has not arrived in this animation frame.
+    await wait(`!!document.querySelector('.practice-row') || !!document.querySelector('.practice-workspace .monaco-editor textarea')`)
     if (await evaluate(`!!document.querySelector('.practice-row')`)) await click('.practice-row')
     await wait(`!!document.querySelector('.practice-workspace .monaco-editor textarea')`)
   }

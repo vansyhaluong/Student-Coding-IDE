@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-02",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 2,
+    "order": 1,
+    "title": "Chu vi hình chữ nhật",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Một khung ảnh có chiều rộng width và chiều cao height. Trả về chu vi khung.",
+  "constraints": [
+    "1 ≤ width, height ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "48fcce127828a741a1b36ec86e089a143bc91565862335f428b37ae808f72ff1",
+    "functionName": "Perimeter",
+    "parameters": [
+      {
+        "name": "width",
+        "type": "int32"
+      },
+      {
+        "name": "height",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch2-02-official",
+    "version": 1,
+    "hash": "f93f1306848df570aea13d734cfa805f26678a541f389e2af458712714c03d4c"
+  }
+}

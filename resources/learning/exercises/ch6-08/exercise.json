@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-08",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 6,
+    "order": 43,
+    "title": "Tổng chữ số lặp",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Viết hàm phụ tính tổng chữ số. Áp dụng nhiều lần cho n cho đến khi còn một chữ số, rồi trả về chữ số đó.",
+  "constraints": [
+    "0 ≤ n ≤ 1000000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "7afea9948af28c7bc19f21e5ce5dfc1fb69b040781ebada0a09f7a75b83a4371",
+    "functionName": "DigitalRoot",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch6-08-official",
+    "version": 1,
+    "hash": "0bbb7bd559374a8156318ef526e9d2beec6d016d864df5ad1aeed6e43251645c"
+  }
+}

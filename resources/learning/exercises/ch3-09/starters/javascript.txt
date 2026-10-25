@@ -1,0 +1,8 @@
+/**
+ * @param {number} units
+ * @returns {number}
+ */
+function Bill(units) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

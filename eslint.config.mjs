@@ -21,6 +21,20 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
 
   {
+    // Fixed developer references execute through Node's CommonJS loader.
+    files: ['scripts/learning-official-tests/references/ch[234]-*/solution.js'],
+    ignores: [
+      'scripts/learning-official-tests/references/ch2-04/solution.js',
+      'scripts/learning-official-tests/references/ch3-04/solution.js',
+      'scripts/learning-official-tests/references/ch4-09/solution.js',
+    ],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { module: 'readonly' },
+    },
+  },
+
+  {
     files: [
       'src/renderer/**/*.{ts,tsx}',
     ],

@@ -66,7 +66,9 @@ async function main() {
     await window.webContents.debugger.sendCommand('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode, modifiers })
   }
   const enter = async () => {
+    await wait(`!!document.querySelector('[aria-label="Open Learning"]:not(:disabled)')`)
     await click('[aria-label="Open Learning"]')
+    await wait(`document.querySelector('.ide-shell')?.dataset.workspaceMode==='learning' && document.getElementById('learning-workspace')?.hidden===false`)
     await click('#learning-chapters button:nth-child(3)')
     await click('.learning-section-nav [data-tabs-value="practice"]')
     await click('.practice-row')
@@ -182,6 +184,20 @@ async function main() {
   await language('csharp')
   assert.equal(evidence.runCalls, 0)
   evidence.checks.push('reload restores persisted drafts; zero Learning Run calls; zero stale full-model writes')
+  if (process.argv.includes('--workspace')) {
+    await click('[aria-label="Back to Project"]')
+    await wait(`document.querySelector('.ide-shell')?.dataset.workspaceMode==='project' && document.getElementById('learning-workspace')?.hidden===true`)
+    assert.equal(await evaluate(`document.querySelector('.project-sidebar').getBoundingClientRect().width>0`), true)
+    await stored('ch3-01', 'csharp', selectedEdit)
+    await stored('ch3-01', 'javascript', jsDraft)
+    await click('[aria-label="Open Learning"]')
+    await wait(`document.querySelector('.ide-shell')?.dataset.workspaceMode==='learning' && document.getElementById('learning-workspace')?.hidden===false`)
+    await connect('/ch3-01/solution.cs')
+    assert.equal((await snapshot()).code, selectedEdit)
+    await language('javascript'); assert.equal((await snapshot()).code, jsDraft)
+    await language('csharp'); assert.equal(evidence.runCalls, 0)
+    evidence.checks.push('real Learning ↔ Project workspace round trip preserves both drafts and visible Project shell; zero Learning Run calls')
+  }
   evidence.final = await snapshot()
   await evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
   await pause(100) // Let the hidden acceptance window paint after reload/context changes.

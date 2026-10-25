@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-06",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 2,
+    "order": 5,
+    "title": "Đảo số ba chữ số",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Đảo thứ tự ba chữ số của n rồi trả về giá trị nguyên; các số 0 ở đầu kết quả không được giữ lại.",
+  "constraints": [
+    "100 ≤ n ≤ 999.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "01c8b1773b51a7b2346e37a2f337ca96fb4701719df60f80cfc93c093571d30f",
+    "functionName": "Reverse3",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch2-06-official",
+    "version": 1,
+    "hash": "fefd268e3c8f7641fdade4877d818fc8872c0d8900089d19ae2e3ac9011fc82d"
+  }
+}

@@ -1,0 +1,8 @@
+/**
+ * @param {number} n
+ * @returns {number}
+ */
+function SumToN(n) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

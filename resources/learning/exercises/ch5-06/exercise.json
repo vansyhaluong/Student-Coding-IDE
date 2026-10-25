@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-06",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 32,
+    "title": "Hai từ hoán vị",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://leetcode.com/problems/valid-anagram/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Kiểm tra hai chuỗi có cùng số lần xuất hiện của từng chữ cái hay không; thứ tự chữ cái có thể khác.",
+  "constraints": [
+    "0 ≤ s.length, t.length ≤ 10000; chỉ a–z.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "6df69c96efc35dc3fccae6aa0c305941cd7075cf6f168b5f1e1dba0b4bd7a94e",
+    "functionName": "Anagram",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "name": "t",
+        "type": "string"
+      }
+    ],
+    "returnType": "boolean"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-06-official",
+    "version": 1,
+    "hash": "18a1ce9a6209fd987ffae169ac976cc2942db65285826c5bc6f56898b6ef300c"
+  }
+}

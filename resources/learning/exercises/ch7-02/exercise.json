@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch7-02",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 7,
+    "order": 46,
+    "title": "Lợi nhuận một lần mua bán",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Mỗi phần tử là giá một ngày. Được mua một lần rồi bán vào một ngày sau đó. Trả về lợi nhuận lớn nhất; không giao dịch thì lợi nhuận bằng 0.",
+  "constraints": [
+    "1 ≤ prices.length ≤ 10000; 0 ≤ prices[i] ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "e37183b269fffbc7a90dcb62cb1f3648f9b89acfa018b048e8f3a11cd61fcc1a",
+    "functionName": "MaxProfit",
+    "parameters": [
+      {
+        "name": "prices",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch7-02-official",
+    "version": 1,
+    "hash": "da57800a233ce1ac99e6e750f7347983138e9d9fee16424a60f7e2a19b74ede2"
+  }
+}

@@ -1,0 +1,9 @@
+/**
+ * @param {number} seconds
+ * @param {number} elapsed
+ * @returns {number}
+ */
+function Clock(seconds, elapsed) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

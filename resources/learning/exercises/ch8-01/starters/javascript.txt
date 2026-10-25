@@ -1,0 +1,10 @@
+/**
+ * @param {number[][]} matrix
+ * @param {number} rows
+ * @param {number} cols
+ * @returns {number[][]}
+ */
+function Reshape(matrix, rows, cols) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

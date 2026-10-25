@@ -1,0 +1,9 @@
+/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @returns {number[]}
+ */
+function TwoSum(nums, target) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}
