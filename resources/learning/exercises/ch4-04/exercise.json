@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-04",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 4,
+    "order": 21,
+    "title": "Đảo số không âm",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Dùng vòng lặp đảo thứ tự chữ số thập phân của n. Bỏ các số 0 ở đầu kết quả.",
+  "constraints": [
+    "0 ≤ n ≤ 100000000; kết quả nằm trong int32.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "fc241e94f2ac0bdd4e7203eeb737ff7b2fa0ab1f2fb8f19082c0f9f16a93fb35",
+    "functionName": "ReverseNumber",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch4-04-official",
+    "version": 1,
+    "hash": "47b32a2e34818de03395be0c533837d3c99f0a45ae7ebb67eb6c0d22edb1d7fe"
+  }
+}

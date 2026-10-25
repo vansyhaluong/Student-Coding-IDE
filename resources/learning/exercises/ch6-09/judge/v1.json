@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-09",
+  "testSetId": "ch6-09-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "06460f5772650abe104ac6bfb3f9cb11d67d4e559cf6f493b61a984b72f12313",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "args": [
+        10,
+        23
+      ],
+      "expected": 5,
+      "visibility": "public",
+      "sampleId": "sample-1"
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        0,
+        1
+      ],
+      "expected": 0,
+      "visibility": "public",
+      "sampleId": "sample-2"
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        0,
+        0
+      ],
+      "expected": 0
+    },
+    {
+      "id": "hidden-002",
+      "visibility": "hidden",
+      "args": [
+        10000,
+        10000
+      ],
+      "expected": 0
+    },
+    {
+      "id": "hidden-003",
+      "visibility": "hidden",
+      "args": [
+        2,
+        2
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-004",
+      "visibility": "hidden",
+      "args": [
+        4,
+        4
+      ],
+      "expected": 0
+    },
+    {
+      "id": "hidden-005",
+      "visibility": "hidden",
+      "args": [
+        49,
+        49
+      ],
+      "expected": 0
+    },
+    {
+      "id": "hidden-006",
+      "visibility": "hidden",
+      "args": [
+        9973,
+        10000
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-007",
+      "visibility": "hidden",
+      "args": [
+        1,
+        2
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-008",
+      "visibility": "hidden",
+      "args": [
+        11,
+        13
+      ],
+      "expected": 2
+    }
+  ]
+}

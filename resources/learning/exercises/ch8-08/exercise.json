@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch8-08",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 8,
+    "order": 61,
+    "title": "Đường tăng dài nhất",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/longest-increasing-path-in-a-matrix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Bắt đầu ở ô bất kỳ, mỗi bước sang một ô kề trên, dưới, trái hoặc phải có giá trị lớn hơn nghiêm ngặt. Trả về số ô nhiều nhất trên một đường đi.",
+  "constraints": [
+    "Ma trận chữ nhật 1–50 hàng/cột; |matrix[i][j]| ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "ede01e65ac50065164f7bec4dd0d5fce390957c512a10d81bed3be2a1bac85ee",
+    "functionName": "LongestPath",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch8-08-official",
+    "version": 1,
+    "hash": "e706108e5e4c95644960b901f7e11de41d54b7969876aab4323c949afcb5f6b8"
+  }
+}

@@ -1,0 +1,8 @@
+public class Solution
+{
+    public int Boxes(int items, int capacity)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

@@ -5,7 +5,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { StudentIdeApi } from '../../src/shared/contracts'
 import type { PracticeState } from '../../src/shared/contracts/practice'
 import type { ExerciseSnapshot } from '../../src/shared/contracts/exercise'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
+import { pagedPracticeFixture } from '../fixtures/learning/practice-api'
 import { getBundledCourse } from '../../src/main/services/learning/content/course'
 import { LearningWorkspace } from '../../src/renderer/src/features/learning/LearningWorkspace'
 import { MySolutions, type SavedAcceptedView } from '../../src/renderer/src/features/learning/practice/MySolutions'
@@ -37,6 +38,7 @@ beforeEach(() => {
       onChanged: vi.fn(() => vi.fn()),
     },
     practice: {
+      ...pagedPracticeFixture(exercises, () => persisted),
       load: vi.fn(async () => ({ ok: true, value: { exercises, state: structuredClone(persisted), recovered: false } })),
       save: vi.fn(async draft => {
         persisted = { drafts: [...persisted.drafts.filter(d => d.exerciseId !== draft.exerciseId || d.language !== draft.language), draft],
@@ -59,6 +61,27 @@ async function openFirst() {
   fireEvent.click(list.getByRole('button', { name: /Tổng hai số/ }))
   return screen.findByRole('textbox', { name: 'Practice code' })
 }
+
+it('keeps the draft indicator when returning from the editor to the package summary list', async () => {
+  render(<Harness />)
+  const editor = await openFirst()
+  fireEvent.change(editor, { target: { value: '// retained draft' } })
+  fireEvent.click(screen.getByRole('button', { name: '← Danh sách' }))
+  await waitFor(() => expect(screen.getByRole('button', { name: /Tổng hai số/ }).textContent).toContain('Có bản nháp'))
+})
+
+it('reports unavailable package summaries truthfully and permits explicit retry', async () => {
+  vi.spyOn(window.studentIde.learning.practice, 'list').mockResolvedValueOnce({ ok: true, value: {
+    items: [{ id: 'unavailable-64', chapter: null, title: 'unavailable-64', difficulty: null, hasDraft: true, available: false }], nextCursor: null, recovered: false,
+  } })
+  render(<Harness />)
+  await screen.findByText('Một số bài tập không khả dụng. Hãy thử tải lại.')
+  fireEvent.click(screen.getByRole('button', { name: 'Thử lại lưu / tải' }))
+  const navigation = within(screen.getByRole('navigation', { name: 'Nội dung học tập' }))
+  fireEvent.click(navigation.getByRole('tab', { name: 'Luyện tập' }))
+  await screen.findByRole('button', { name: /Tổng hai số/ })
+  expect(screen.queryByText('Một số bài tập không khả dụng. Hãy thử tải lại.')).toBeNull()
+})
 // The real eight theory pages stay mounted. Query the active Practice surface,
 // rather than repeatedly computing accessibility across unrelated hidden content.
 function workspace(editor: HTMLElement) {

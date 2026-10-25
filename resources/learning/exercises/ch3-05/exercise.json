@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-05",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 3,
+    "order": 13,
+    "title": "Phân loại tam giác",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về \"invalid\" nếu ba cạnh không tạo thành tam giác; nếu hợp lệ trả về \"equilateral\" (đều), \"isosceles\" (cân) hoặc \"scalene\" (thường).",
+  "constraints": [
+    "1 ≤ a, b, c ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "b9b77d21d2c6d2a149b22833df7f7b885b6271c691a9a66f2c9c000c61de959d",
+    "functionName": "Triangle",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      },
+      {
+        "name": "c",
+        "type": "int32"
+      }
+    ],
+    "returnType": "string"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch3-05-official",
+    "version": 1,
+    "hash": "1f1865fd3eda66236cdbadc0a84fc6b19034c9f01d1e6e3bb499ad947d744712"
+  }
+}

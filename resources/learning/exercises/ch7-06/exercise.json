@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch7-06",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 7,
+    "order": 50,
+    "title": "Tìm trong mảng xoay",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://leetcode.com/problems/search-in-rotated-sorted-array/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Mảng tăng nghiêm ngặt đã được xoay vòng tại một vị trí bất kỳ. Trả về chỉ số của target hoặc -1 nếu không có.",
+  "constraints": [
+    "0 ≤ nums.length ≤ 10000; phần tử phân biệt; |nums[i]|, |target| ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "ac5db5f59c4a0ba2615d235e5b25c84b0ce20e557ebfc26a5c9631e93ce48071",
+    "functionName": "SearchRotated",
+    "parameters": [
+      {
+        "name": "nums",
+        "type": "int32[]"
+      },
+      {
+        "name": "target",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch7-06-official",
+    "version": 1,
+    "hash": "1fa5ef4dcc5ee11a08f29ad5a8bac1b4b78c65673cb0e368764cc9387944ce9d"
+  }
+}

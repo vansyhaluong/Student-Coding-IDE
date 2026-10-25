@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-01",
+  "testSetId": "ch5-01-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "cdfa0e46f0753ce05a39b01985f553dd265ee88813e780930385bedde05cb240",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "args": [
+        "hoc code  "
+      ],
+      "expected": 4,
+      "visibility": "public",
+      "sampleId": "sample-1"
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        "a"
+      ],
+      "expected": 1,
+      "visibility": "public",
+      "sampleId": "sample-2"
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        "abc z"
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-002",
+      "visibility": "hidden",
+      "args": [
+        "z abc"
+      ],
+      "expected": 3
+    },
+    {
+      "id": "hidden-003",
+      "visibility": "hidden",
+      "args": [
+        "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       a"
+      ],
+      "expected": 1
+    }
+  ]
+}

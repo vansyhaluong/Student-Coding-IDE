@@ -1,0 +1,8 @@
+public class Solution
+{
+    public bool Anagram(string s, string t)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

@@ -1,0 +1,8 @@
+public class Solution
+{
+    public bool IsEven(int n)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

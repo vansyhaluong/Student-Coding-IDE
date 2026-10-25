@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-09",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 3,
+    "order": 17,
+    "title": "Cước sử dụng theo bậc",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "50 đơn vị đầu có giá 2 mỗi đơn vị; 50 đơn vị tiếp theo giá 3; phần vượt 100 giá 5. Trả về tổng tiền theo từng bậc, không tính toàn bộ theo bậc cuối.",
+  "constraints": [
+    "0 ≤ units ≤ 100000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "868fa3b41f48b3380e6fe4816cb3a6db24666150cceccfdb27724033788bdf5a",
+    "functionName": "Bill",
+    "parameters": [
+      {
+        "name": "units",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch3-09-official",
+    "version": 1,
+    "hash": "1a9366dfeb829852125a903e6cb6d2a83ea6567c2d9757ad42d94e9faecb8db0"
+  }
+}

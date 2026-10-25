@@ -1,0 +1,8 @@
+public class Solution
+{
+    public int ProgressionSum(int first, int step, int count)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

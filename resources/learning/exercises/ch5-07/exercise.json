@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-07",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 33,
+    "title": "Cửa sổ phủ ký tự",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/minimum-window-substring/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Tìm đoạn liên tiếp ngắn nhất của s chứa đủ số lần xuất hiện của mỗi ký tự trong t. Không có đoạn phù hợp thì trả về chuỗi rỗng.",
+  "constraints": [
+    "1 ≤ s.length, t.length ≤ 1000; chỉ a–z; nếu có đáp án thì đáp án ngắn nhất là duy nhất.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "5aa68eec01132ad6a644999a6c0643b7b816183128da71b2ac060da58c994aff",
+    "functionName": "MinWindow",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "name": "t",
+        "type": "string"
+      }
+    ],
+    "returnType": "string"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-07-official",
+    "version": 1,
+    "hash": "52580d31d2d074d51046da460f68bafb99803a50a17978a4cfcc5bc74ab92dcf"
+  }
+}

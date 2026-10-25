@@ -18,7 +18,8 @@ import { WindowsCsharpExecutionAdapter } from './runtime/csharp-execution-adapte
 import { runCsharpSamples } from './runtime/csharp-orchestrator'
 import { WindowsJavascriptExecutionAdapter } from './runtime/javascript-execution-adapter'
 import { runJavascriptSamples } from './runtime/javascript-orchestrator'
-import { exercises } from './content/exercises'
+import type { ExercisePackageRegistry } from './content/exercise-package-registry'
+import { packageRunBinding } from './package-run-binding'
 
 type Navigation = (event: unknown, url: string, inPlace: boolean, mainFrame: boolean) => void
 export interface ExerciseOwner {
@@ -36,6 +37,7 @@ export interface ExerciseExecution {
   orchestrate?(session: ExerciseSession, progress: () => void): Promise<unknown>
   observation?(): ExerciseSnapshot['csharp']
   javascriptObservation?(): ExerciseSnapshot['javascript']
+  releaseContent?(): void
 }
 export interface ExerciseServiceOptions {
   root: string
@@ -236,6 +238,10 @@ export class ExerciseService {
     const snapshot = this.observation(op)
     this.publish(op)
     if (!op.session.ownsResources && op.executionDone && this.active === op) {
+      if (op.execution.releaseContent) {
+        if (!snapshot.cleanup.cleanupComplete || snapshot.cleanup.proof !== 'VERIFIED') throw serviceError('PACKAGE_CLEANUP_UNVERIFIED')
+        op.execution.releaseContent()
+      }
       if (this.isCurrent(op)) this.last = { owner: op.owner, ownerEntry: op.ownerEntry, snapshot: structuredClone(snapshot) }
       this.active = undefined
     }
@@ -312,6 +318,7 @@ export interface WindowsExerciseDriver {
   plan(phase: ExerciseExecutionPhase): LearningProcessSpec | null
 }
 export function createWindowsExerciseService(root: string, options: {
+  packages?: ExercisePackageRegistry
   driver?: (request: Readonly<ExerciseRunRequest>, workspace: ExerciseWorkspace) => WindowsExerciseDriver | undefined
   onCleanupError?: ExerciseServiceOptions['onCleanupError']
   onSnapshot?: ExerciseServiceOptions['onSnapshot']
@@ -321,36 +328,27 @@ export function createWindowsExerciseService(root: string, options: {
   return new ExerciseService({ root, onCleanupError: options.onCleanupError, onSnapshot: options.onSnapshot,
     leases: { acquire: id => new WindowsExerciseLeaseProvider(root, binding()).acquire(id) },
     createExecution: (request, workspace) => {
-      if (!options.driver && request.language === 'javascript') {
-        const exercise = exercises.find(e => e.id === request.exerciseId)
-        if (!exercise) throw serviceError('INVALID_EXERCISE', 'INVALID_INPUT')
-        const adapter = new WindowsJavascriptExecutionAdapter(request, workspace, binding(), undefined, exercises, 4096)
-        const schema = { parameterTypes: exercise.parameters.map(p => p.type), returnType: exercise.returnType, sampleCount: exercise.samples.length }
-        return { adapter, phases: ['compile', 'execute'], orchestrate: (session, progress) => runJavascriptSamples(session, adapter, progress),
-          javascriptObservation: () => {
-            try { return { schema, result: adapter.result() } }
-            catch (error) {
-              const reason = error instanceof DomainError ? error.details?.reason : undefined
-              if (reason === 'RESULT_PENDING' || reason === 'RESULT_INVALIDATED') return undefined
-              throw error
-            }
-          } }
-      }
-      if (!options.driver && request.language === 'csharp') {
-        const exercise = exercises.find(e => e.id === request.exerciseId)
-        if (!exercise) throw serviceError('INVALID_EXERCISE', 'INVALID_INPUT')
-        // Bound schema/identity/cleanup envelope separately from the unchanged
-        // Core raw-byte quota. Reject an oversized actual as OUTPUT_LIMIT.
-        const adapter = new WindowsCsharpExecutionAdapter(request, workspace, binding(), undefined, exercises, 4096)
-        const schema = { parameterTypes: exercise.parameters.map(p => p.type), returnType: exercise.returnType, sampleCount: exercise.samples.length }
-        return { adapter, phases: ['compile', 'execute'], orchestrate: (session, progress) => runCsharpSamples(session, adapter, progress),
+      if (!options.driver && options.packages) {
+        if (!options.packages.has(request.exerciseId)) throw serviceError('INVALID_EXERCISE', 'INVALID_INPUT')
+        if (request.language === 'javascript') {
+          const plan = packageRunBinding<import('./runtime/javascript-execution-contracts').JavascriptExecutionAdapter>(options.packages, request.exerciseId,
+            exercise => new WindowsJavascriptExecutionAdapter(request, workspace, binding(), undefined, [exercise], 4096))
+          return { adapter: plan.adapter, phases: ['compile', 'execute'], releaseContent: plan.releaseContent,
+            orchestrate: (session, progress) => runJavascriptSamples(session, plan.adapter, progress),
+            javascriptObservation: () => {
+              if (!plan.available()) return undefined
+              try { return { schema: plan.schema()!, result: plan.adapter.result() } }
+              catch (error) { if (error instanceof DomainError && ['RESULT_PENDING', 'RESULT_INVALIDATED'].includes(String(error.details?.reason))) return undefined; throw error }
+            } }
+        }
+        const plan = packageRunBinding<import('./runtime/csharp-execution-contracts').CsharpExecutionAdapter>(options.packages, request.exerciseId,
+          exercise => new WindowsCsharpExecutionAdapter(request, workspace, binding(), undefined, [exercise], 4096))
+        return { adapter: plan.adapter, phases: ['compile', 'execute'], releaseContent: plan.releaseContent,
+          orchestrate: (session, progress) => runCsharpSamples(session, plan.adapter, progress),
           observation: () => {
-            try { return { schema, result: adapter.result() } }
-            catch (error) {
-              const reason = error instanceof DomainError ? error.details?.reason : undefined
-              if (reason === 'RESULT_PENDING' || reason === 'RESULT_INVALIDATED') return undefined
-              throw error
-            }
+            if (!plan.available()) return undefined
+            try { return { schema: plan.schema()!, result: plan.adapter.result() } }
+            catch (error) { if (error instanceof DomainError && ['RESULT_PENDING', 'RESULT_INVALIDATED'].includes(String(error.details?.reason))) return undefined; throw error }
           } }
       }
       const driver = options.driver?.(request, workspace)

@@ -1,0 +1,8 @@
+/**
+ * @param {number[][]} matrix
+ * @returns {number[][]}
+ */
+function Rotate(matrix) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-09",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 35,
+    "title": "Đếm cách giữ lại dãy con",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/distinct-subsequences/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Chọn một số vị trí trong s theo thứ tự tăng dần sao cho các ký tự được chọn ghép thành t. Đếm số cách chọn vị trí. Chuỗi t rỗng có đúng một cách.",
+  "constraints": [
+    "0 ≤ s.length ≤ 20; 0 ≤ t.length ≤ 20; chỉ a–z; số cách không vượt 2^20.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "02551272cad691978ec6e9ef34998094e71ecbc6c6fbe8fa1baa944689e692d4",
+    "functionName": "SubsequenceCount",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "name": "t",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-09-official",
+    "version": 1,
+    "hash": "4ae9304a9753ca7ae7a231141d8f9745fd3714c92055b32d1232bc1dd7ca9d83"
+  }
+}

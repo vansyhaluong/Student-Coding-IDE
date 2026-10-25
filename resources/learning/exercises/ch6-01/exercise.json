@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-01",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 6,
+    "order": 36,
+    "title": "Hàm giá trị tuyệt đối",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Viết hàm trả về khoảng cách từ n đến 0 trên trục số.",
+  "constraints": [
+    "|n| ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "12e93a2a459ea9c49b6eeea95e5070ff3b805c88ce91ee1a0b17399d78e92c37",
+    "functionName": "Absolute",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch6-01-official",
+    "version": 1,
+    "hash": "2469c098bcd34cac19263527e587f1b6e4616dacdcd4d362eda46a4b59ab424a"
+  }
+}

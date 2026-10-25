@@ -1,0 +1,9 @@
+/**
+ * @param {number} items
+ * @param {number} capacity
+ * @returns {number}
+ */
+function Boxes(items, capacity) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

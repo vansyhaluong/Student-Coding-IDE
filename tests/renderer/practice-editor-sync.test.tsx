@@ -2,7 +2,7 @@
 import { useEffect } from 'react'
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import { PracticeEditor } from '../../src/renderer/src/features/learning/practice/PracticeEditor'
 
 const host = vi.hoisted(() => ({ props: undefined as unknown, ed: undefined as unknown }))

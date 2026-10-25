@@ -1,0 +1,8 @@
+public class Solution
+{
+    public int[] Divide(int a, int b)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

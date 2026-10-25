@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch8-01",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 8,
+    "order": 54,
+    "title": "Đổi hình dạng ma trận",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/reshape-the-matrix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Đọc phần tử theo hàng rồi xếp lại thành rows hàng và cols cột. Nếu số ô không bằng ma trận gốc, trả về ma trận gốc.",
+  "constraints": [
+    "Ma trận chữ nhật 1–20 hàng/cột; 1 ≤ rows, cols ≤ 400; |matrix[i][j]| ≤ 1000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "73d023a537fdfdd07121bd1dd76488c8f730d019f424615e7dd3fa975736a0c5",
+    "functionName": "Reshape",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      },
+      {
+        "name": "rows",
+        "type": "int32"
+      },
+      {
+        "name": "cols",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[][]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch8-01-official",
+    "version": 1,
+    "hash": "545cf072a7290b96a88dcc30391172f8e8383504a73464df6cd1159df427ed7e"
+  }
+}

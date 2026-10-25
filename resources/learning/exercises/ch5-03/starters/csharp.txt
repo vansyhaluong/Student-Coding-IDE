@@ -1,0 +1,8 @@
+public class Solution
+{
+    public string CommonPrefix(string[] words)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

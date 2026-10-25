@@ -5,7 +5,7 @@ import type { CsharpSdkResolver, CsharpSdkSelection } from '../../src/main/servi
 import type { LearningJobSample, LearningNativeBinding } from '../../src/main/services/learning/runtime/windows-exercise-native'
 import type { ExercisePhaseContext } from '../../src/main/services/learning/runtime/exercise-runtime-adapter'
 import { ExerciseWorkspace } from '../../src/main/services/learning/runtime/exercise-workspace'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import { exerciseCoreError, type ExerciseClock } from '../../src/main/services/learning/runtime/exercise-limits'
 import { ExerciseSession } from '../../src/main/services/learning/runtime/exercise-session'
 import { runCsharpSamples } from '../../src/main/services/learning/runtime/csharp-orchestrator'

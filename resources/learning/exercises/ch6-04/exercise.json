@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-04",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 6,
+    "order": 39,
+    "title": "Bội chung nhỏ nhất",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Tách hàm phụ tìm ước chung lớn nhất, rồi dùng nó để trả về bội dương nhỏ nhất chung của a và b.",
+  "constraints": [
+    "1 ≤ a, b ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "ef0ab4fd454f7d6b1653e7ddfa6246c034aa6c7fde65185877b2c831a7ab2fce",
+    "functionName": "Lcm",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch6-04-official",
+    "version": 1,
+    "hash": "7d23fca2415430f0b008995d5ae1907b879b6fe28e2ed1216889bb31a315e351"
+  }
+}

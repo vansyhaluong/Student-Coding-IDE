@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-01",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 4,
+    "order": 18,
+    "title": "Cộng từ một đến n",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Dùng vòng lặp cộng các số nguyên từ 1 đến n. Khi n bằng 0, tổng bằng 0.",
+  "constraints": [
+    "0 ≤ n ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "853bf219d20655b7916f7d3168b87e56438a447b243e96a906001976f8a004a0",
+    "functionName": "SumToN",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch4-01-official",
+    "version": 1,
+    "hash": "f625c31a0d457e256013b72f6ec21c7b503194f1b60950b9289072352b6053bb"
+  }
+}

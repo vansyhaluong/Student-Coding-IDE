@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-04",
+  "testSetId": "ch3-04-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "4eeeb5a41558ed55412954bf5f1dbd9e1e6b019f10d78c488d3aef4b471df65f",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "visibility": "public",
+      "sampleId": "sample-1",
+      "args": [
+        2400
+      ],
+      "expected": true
+    },
+    {
+      "id": "sample-2",
+      "visibility": "public",
+      "sampleId": "sample-2",
+      "args": [
+        2100
+      ],
+      "expected": false
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        1
+      ],
+      "expected": false
+    },
+    {
+      "id": "hidden-002",
+      "visibility": "hidden",
+      "args": [
+        9999
+      ],
+      "expected": false
+    },
+    {
+      "id": "hidden-003",
+      "visibility": "hidden",
+      "args": [
+        1999
+      ],
+      "expected": false
+    },
+    {
+      "id": "hidden-004",
+      "visibility": "hidden",
+      "args": [
+        2001
+      ],
+      "expected": false
+    },
+    {
+      "id": "hidden-005",
+      "visibility": "hidden",
+      "args": [
+        2
+      ],
+      "expected": false
+    },
+    {
+      "id": "hidden-006",
+      "visibility": "hidden",
+      "args": [
+        4
+      ],
+      "expected": true
+    }
+  ]
+}

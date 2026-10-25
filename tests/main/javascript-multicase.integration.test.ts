@@ -11,7 +11,7 @@ import { ExerciseSession } from '../../src/main/services/learning/runtime/exerci
 import { ExerciseWorkspace } from '../../src/main/services/learning/runtime/exercise-workspace'
 import { WindowsExerciseLeaseProvider } from '../../src/main/services/learning/runtime/windows-exercise-lease'
 import { FileExerciseCheckpointStore } from '../../src/main/services/learning/runtime/exercise-checkpoint'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import type { Exercise } from '../../src/shared/contracts/practice'
 
 const triple: Exercise = { ...exercises[0], samples: [

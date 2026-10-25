@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-06",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 4,
+    "order": 23,
+    "title": "Kiểm tra số nguyên tố",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Một số nguyên tố lớn hơn 1 và chỉ có hai ước dương. Trả về true khi n là số nguyên tố.",
+  "constraints": [
+    "0 ≤ n ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "0b29d41fe0e441521bef8f2a70b2319545f95bb1bb660a62528a759c9de2db80",
+    "functionName": "IsPrime",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "boolean"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch4-06-official",
+    "version": 1,
+    "hash": "4b215ff1a0a36bcd5c661d3ecb5f7517a6ae7b5ef33199db1ad953a800fe4b88"
+  }
+}

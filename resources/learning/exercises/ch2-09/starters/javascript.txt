@@ -1,0 +1,10 @@
+/**
+ * @param {number} first
+ * @param {number} step
+ * @param {number} count
+ * @returns {number}
+ */
+function ProgressionSum(first, step, count) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

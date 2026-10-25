@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-03",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 4,
+    "order": 20,
+    "title": "Đếm chữ số",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về số chữ số thập phân của số nguyên không âm n. Số 0 có một chữ số.",
+  "constraints": [
+    "0 ≤ n ≤ 1000000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "e4184efafa149dd27578804796f17415c37f2b14873218f94a2bdbaaa9e9747b",
+    "functionName": "DigitCount",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch4-03-official",
+    "version": 1,
+    "hash": "436bcd847f030619284a7bcd072a5d91b5e95817deab3063f5d3275601376fdc"
+  }
+}

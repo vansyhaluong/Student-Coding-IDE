@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-05",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 4,
+    "order": 22,
+    "title": "Ước chung lớn nhất",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Tìm số nguyên dương lớn nhất chia hết cả a và b bằng thuật toán lặp.",
+  "constraints": [
+    "1 ≤ a, b ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "61958d8284cc9abbdf9ea423036fecf7a4347d4e9e8a6f619140d73697cc5713",
+    "functionName": "Gcd",
+    "parameters": [
+      {
+        "name": "a",
+        "type": "int32"
+      },
+      {
+        "name": "b",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch4-05-official",
+    "version": 1,
+    "hash": "c25c2b839dd0bcdd6bfe5c7a2eb4ddf41df4a5ae3a2d23ca4cff4d90e188aa10"
+  }
+}

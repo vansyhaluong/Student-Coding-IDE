@@ -1,0 +1,8 @@
+/**
+ * @param {number[]} digits
+ * @returns {number[]}
+ */
+function PlusOne(digits) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-09",
+  "testSetId": "ch4-09-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "2b5a1d97908e47a30459b95ae5765e240e71de5e92315464f91f128233e4ff4c",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "visibility": "public",
+      "sampleId": "sample-1",
+      "args": [
+        9
+      ],
+      "expected": 34
+    },
+    {
+      "id": "sample-2",
+      "visibility": "public",
+      "sampleId": "sample-2",
+      "args": [
+        0
+      ],
+      "expected": 0
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        1
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-002",
+      "visibility": "hidden",
+      "args": [
+        2
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-003",
+      "visibility": "hidden",
+      "args": [
+        45
+      ],
+      "expected": 1134903170
+    },
+    {
+      "id": "hidden-004",
+      "visibility": "hidden",
+      "args": [
+        4
+      ],
+      "expected": 3
+    }
+  ]
+}

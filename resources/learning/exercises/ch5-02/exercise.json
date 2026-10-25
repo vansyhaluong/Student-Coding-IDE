@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-02",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 28,
+    "title": "Vị trí chuỗi con đầu tiên",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về chỉ số bắt đầu nhỏ nhất của pattern trong text, tính từ 0. Nếu không xuất hiện, trả về -1.",
+  "constraints": [
+    "0 ≤ text.length ≤ 1000; 1 ≤ pattern.length ≤ 100; chỉ a–z.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "aa49355396e32e3c232d2911b702e4adc28ee7f53f82c731e8a4344b6272eddc",
+    "functionName": "FindFirst",
+    "parameters": [
+      {
+        "name": "text",
+        "type": "string"
+      },
+      {
+        "name": "pattern",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-02-official",
+    "version": 1,
+    "hash": "78c32771ec6d77db73ce1d8feb603c87f246b2fb47aa2a954d864ec92ae8b3c5"
+  }
+}

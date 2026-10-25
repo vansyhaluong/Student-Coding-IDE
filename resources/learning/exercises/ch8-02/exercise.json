@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch8-02",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 8,
+    "order": 55,
+    "title": "Chuyển vị",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/transpose-matrix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về ma trận có hàng và cột đổi vai trò: phần tử hàng i cột j của đầu vào nằm ở hàng j cột i của đầu ra.",
+  "constraints": [
+    "Ma trận chữ nhật 1–50 hàng/cột; |matrix[i][j]| ≤ 1000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "e7d9c3a12dfcb6f842653be32c40d0498a20c930bbd953538cb3574a66000efe",
+    "functionName": "Transpose",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32[][]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch8-02-official",
+    "version": 1,
+    "hash": "0a8e3dddb177985a9303cb209b9347b1e0c4879fa7c6ba4833cee5bfa56d1e8b"
+  }
+}

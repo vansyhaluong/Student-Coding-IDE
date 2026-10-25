@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch2-07",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 2,
+    "order": 6,
+    "title": "Đồng hồ sau một khoảng thời gian",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/basic/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "seconds là số giây tính từ đầu ngày. Sau elapsed giây, trả về số giây tính từ đầu ngày mới, quay vòng mỗi 86400 giây.",
+  "constraints": [
+    "0 ≤ seconds < 86400; 0 ≤ elapsed ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "f43eb54c67f89d5e59936b5098a9dc48484a24f3bd1cbc27c329579cd814a5f1",
+    "functionName": "Clock",
+    "parameters": [
+      {
+        "name": "seconds",
+        "type": "int32"
+      },
+      {
+        "name": "elapsed",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch2-07-official",
+    "version": 1,
+    "hash": "88dc8553c01d2b9bf62da41fdd15dd5e6b2bedaa999e8278e9b193ac3408783d"
+  }
+}

@@ -585,15 +585,19 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
   code and compatible tests; generated harnesses replace standalone STDIN/STDOUT
   problems. No student-written Main()/Console program. Separate exercise models
   reuse Monaco foundation; per-exercise/language Code Drafts auto-save.
-- **Run/Submit:** Run is sample/custom testing only and never grants completion.
+- **Run/Submit (9E-0 approved clarification, 2026-10-23):** Phase 9E Run executes
+  and compares public samples only, never grants completion; custom Run is deferred
+  and requires separate authorization.
   Submit uses official public/hidden tests; only 100% pass is Accepted. Distinguish
-  student verdicts from internal Judge errors. Failed submissions have no saved
-  solution history. Re-submission is allowed; later failure cannot revoke saved
+  student verdicts from internal Judge errors. The later approved Submission
+  History amendment below supersedes the original Accepted-only history restriction.
+  Re-submission is allowed; later failure cannot revoke saved
   completion. Hidden offline tests are not absolutely secret.
 - **Practice controls clarified by user, 2026-10-19:** only Run and Submit are
   student-facing; no Stop/Cancel button. Run executes sample tests and displays
-  results; 9E Submit judges official tests and persists Accepted solutions for
-  My Solutions under the successful-write invariant. 9D stop/cancellation is
+  results; 9E Submit judges official tests and routes eligible graded records to
+  persisted Submission History under the amendment below. Only committed Accepted
+  creates completion. 9D stop/cancellation is
   internal only: timeout/resource limits, exercise/language switch, leaving
   Learning, IDE close and cleanup. An internal owner-validated stop() contract
   is allowed without corresponding UI. Exercise cancellation must not affect
@@ -602,8 +606,9 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
 - **Persistence:** Main-owned versioned JSON in a separate Learning directory
   under userData, safe writes/recovery, reuse PersistenceService where suitable.
   Accepted snapshots retain code-at-Submit, exercise/language/time/result/test-set
-  metadata; multiple versions, no overwriting. My Solutions shows saved Accepted
-  records only. Successful persistence is required before reporting saved/newly
+  metadata; multiple versions, no overwriting. Accepted completion authority remains
+  separate from the new approved graded-failure history. Successful Accepted
+  persistence is required before reporting newly
   completed progress; write failure remains visible separately from Judge Accepted.
 - **Runtime revision approved by user, 2026-10-19:** 9D uses compatible installed
   .NET SDK and Node.js only, with no runtime download, installation or bundling.
@@ -730,10 +735,259 @@ executable paths. Existing runtime/Git/C# authority remains unchanged.
 - **Traceability:** Requirement Section 21; Architecture Section 6; Codebase Map
   planned Learning modules; Language Support planned Exercise scope; Plan 13.6.
 
+### Phase 9E-0 — Approved Judge and Submit decisions (2026-10-23)
+
+**Status: APPROVED design; 9E-0 COMPLETE (documentation/design only).** The user
+approved all six architecture decisions and all ten decisions 9E0-A1–9E0-C3.
+At this historical9E-0 approval, Phase9E implementation/9E-1 were `NOT_STARTED`;
+design acceptance did not authorize coding. Current9E-1 closure is recorded in
+9E1-AC1 below. This subsection supersedes earlier open wording for these
+specific 9E decisions. Historical 9D evidence/status notes above remain historical.
+
+Approved architecture:
+
+1. Independent Exercise Packages, stable IDs and a data-driven Main registry;
+   adding a compatible exercise does not change Generic Judge Engine. Correct
+   ProductExceptSelf samples to its existing constraints during authorized migration.
+2. Main allowlisted `exact-typed@1` for all six types; private C# Submit protocol
+   evidence extension with existing Run compatibility. No arbitrary package checker code.
+3. Sample-only Run with comparison; official public-then-hidden Submit, 100% PASS
+   for Accepted; custom Run deferred. Reuse ExerciseService/Runtime lifecycle,
+   not a second Judge admission/process ownership system.
+4. Deterministic development-time generators, references, independent verification
+   and coverage analysis; compact frozen official sets, no fixed case count and
+   no generator/reference execution at Submit. Public samples appear exactly once
+   in the official public prefix.
+5. Main-owned hidden data; Submit exposes only aggregate counts, coarse stages
+   and safe verdict/status. No hidden inputs/expected/actual/console/diagnostics
+   or case-level metadata through any IPC/event/poll/error projection.
+6. Learning-only versioned snapshot `userData/learning/accepted.json`; immutable
+   multi-version Accepted records, transactions, idempotency and crash recovery;
+   the baseline excluded failed records from Accepted Storage. The amendment below
+   adds graded-failure history separately, leaving that store contract unchanged.
+   Only all-pass plus VERIFIED complete cleanup enables Accepted commit;
+   completion derives from verified committed records, not an IPC acknowledgement.
+
+| Decision ID | Approved policy |
+|---|---|
+| 9E0-A1 | Snapshot ≤64 MiB encoded; record ≤2 MiB; metadata ≤16 KiB/record. No fixed versions-per-exercise cap beyond byte capacity; never delete/truncate/overwrite prior Accepted versions automatically. |
+| 9E0-A2 | Warn at48 MiB/high56 MiB; free space ≥2×candidate bytes+16 MiB before commit. Preserve legacy over-capacity read-only/recovery; no automatic capacity increase/pruning. Logical cap differs from backup/staging physical footprint. |
+| 9E0-A3 | Summary pagination default32/max100; encoded response ≤256 KiB, summary row ≤1 KiB; cursor ≤512 bytes; source chunks ≤32 KiB raw UTF-8 with safe boundaries and encoded response check. No full history/source snapshot IPC. |
+| 9E0-A4 | Storage release targets: normal commit p95≤5s, observed max≤10s; Main event-loop stall p95≤50ms/max≤100ms. Monitor snapshots >16 MiB; review RSS delta>256 MiB. Targets APPROVED, NOT MEASURED. |
+| 9E0-B1 | Final owner/generation/validity/expiry guard and same-turn primary replacement dispatch define commit admission. Pre-admission cancellation prevents replacement; after admission settle/reconcile, no rollback promise. |
+| 9E0-B2 | Caller and storage shutdown wait15s/attempt; slow notice after5s; retained transaction/I/O/lease. Safe transient retries max3 attempts total, backoffs250ms/1000ms; no blind retry on ambiguous outcome. |
+| 9E0-B3 | Serialized writer, store-wide OS lease using existing Learning native primitive; staging, sync/read-back, verified backup, atomic replacement and commit identity/lineage verification. submissionId idempotency; pending/saved/failed/unknown distinct; managed shutdown retains unresolved I/O/lease. |
+| 9E0-C1 | 100% declared semantic obligations have official witnesses;100% curated critical mutants detected; broader applicable non-equivalent mutation score target≥90%, every survivor analyzed. Reference plus independent verification; no fixed official count. |
+| 9E0-C2 | Initial release targets: warm Core operation p95≤45s, observed warm/fresh-app max≤50s; case p95≤1.2s/max≤1.5s; Prepare≤8s; compile/syntax≤24s; raw aggregate output and retained envelope each≤768 KiB; execute peak≤384 MiB/compile≤1.5 GiB with trusted measurement; normal VERIFIED cleanup≤10s. All APPROVED targets, NOT MEASURED. |
+| 9E0-C3 | Windows10 x64/2 physical cores/8 GiB/SSD and Windows11 x64/≥4 physical cores/16 GiB/SSD. Per exercise×language×machine×representative valid implementation:20warm+5 first-operation-after-app-restart; borderline50warm+10fresh-app. Missing machine/evidence=UNVERIFIED, not PASS. |
+
+All runtime quotas, Core/native/Policy B remain unchanged: operation60s,
+execute2s/case, Prepare10s, compile30s, cleanup caller wait12s, compile2 GiB,
+execute512 MiB, raw output1 MiB, one operation/no queue. Storage caller wait15s
+is separate post-runtime work, not a Core deadline change. Existing process
+containment is not a malicious-code OS sandbox or absolute offline test secrecy.
+
+Implementation modules/schemas remain **PROPOSED implementation**, not actual
+services. Performance targets are **NOT MEASURED**, acceptance remains
+**UNVERIFIED** until execution evidence exists. If any benchmark/gate fails,
+report evidence and proposed remedies, then obtain approval; do not silently
+change capacity, architecture, coverage, isolation or quotas. Package asset/parser
+ceilings were subsequently approved as L1–L12 below. Historical known-bad-test-set
+completion handling remains a separate unresolved policy if needed.
+
+Details and acceptance dependencies:
+[Judge/Submit design](PHASE-9E-JUDGE-SUBMIT-DESIGN.md),
+[approved A/B/C specification](PHASE-9E0-REMAINING-DECISIONS.md), and
+[Plan 9E](IMPLEMENTATION-PLAN.md#9e--local-judge--submit).
+
+### Phase 9E amendment — Submission History (Accepted + graded failures)
+
+Historical approval sequence: product scope approved first; then all H1–H5 details
+approved in the next subsection. Its later approval supersedes pending wording
+in this historical entry; it does not imply implementation acceptance.
+
+**APPROVED requirement amendment, 2026-10-23.** This changes the earlier product
+restriction against persisting failed graded submissions; it does not rewrite
+the approved9E-0 Accepted contract or mark Failed Storage design as approved.
+9E-0 remains COMPLETE for the accepted baseline; Phase9E implementation and9E-1
+remain NOT_STARTED. No code authorization is granted.
+
+Approved: persist immutable captured source/revision and trustworthy final verdict
+for Accepted, WA, Compilation/Syntax Error, Runtime Error, TLE, MLE, OLE. Deliberate
+Submit always creates a new version even for identical source; same-submissionId
+internal retries are idempotent. No automatic version deletion/overwrite. Run
+creates no history. Infrastructure/Protocol Failure, Cancelled/Invalidated or
+untrusted/incomplete verdict is not automatically a failed graded record.
+
+Only verified committed Accepted creates completion. Failed history never does;
+later failure cannot revoke prior completion. Judge verdict, storage outcome and
+completion remain separate. Submission History lists persisted records with
+All/Accepted/Failed, verdict/language/submitted time, source viewing and confirmed
+Restore; Renderer transient state is not history authority. Hidden payloads,
+console/stack/diagnostics and private Judge evidence do not enter history records.
+
+Accepted `accepted.json`, capacity64MiB/record2MiB/metadata16KiB, A/B/C policies and
+15s retained caller wait remain unchanged. `failed-submissions.json` is a preferred
+candidate, not an approved contract. Failed capacity/record/read bounds, wait/
+shutdown/lease/recovery, unified ordering and cleanup eligibility, plus final UI
+label/component migration remain **PROPOSED** in
+[subsequently approved H1–H5](PHASE-9E-JUDGE-SUBMIT-DESIGN.md#16-approved-h1h5--submission-history).
+Do not inherit64MiB/15s automatically or create a second Judge lifecycle. New
+gates must be approved before dependent contracts/persistence/UI implementation.
+
+### Phase 9E amendment — H1–H5 approved (2026-10-23)
+
+**APPROVED:** all five Submission History decisions H1–H5, including the previously
+recommended contract. This closes P9-HISTORY policy gates; implementation remains
+PROPOSED/NOT_STARTED and measurements NOT MEASURED/acceptance UNVERIFIED.
+The earlier amendment's pending wording is historical and superseded by this entry.
+
+| Decision | Approved contract |
+|---|---|
+| H1 | `userData/learning/failed-submissions.json`, encoded snapshot32MiB/record2MiB/metadata16KiB, warnings24/28MiB; no version-count cap beyond byte capacity, automatic prune/truncate/overwrite or Accepted-capacity borrowing. Safe full/legacy/recovery policy; disk reserve≥2×candidate+16MiB. Accepted64MiB/2MiB/16KiB/15s unchanged. |
+| H2 | Failed caller/shutdown wait10s/attempt, slow notice3s, retained task/I/O/lease; max3 safe transient attempts total,250ms/1000ms backoff within original precommit window; ambiguous outcome reconciles, never blindly retried. Caller timeout alone is not commit-failure proof. Proposed Failed performance targets from H2 are now approved release targets p95≤3s/max≤7s, NOT MEASURED. |
+| H3 | Main-trusted final WA/Compilation-Syntax/Runtime/TLE/MLE/OLE, immutable source, VERIFIED complete cleanup/current owner at commit admission. Trusted compile/syntax errors may have zero cases. Infrastructure/protocol/cancelled/untrusted outcomes excluded; unsafe cleanup defers/omits graded record without weakening Policy B. |
+| H4 | Shared Learning-store OS lease via existing primitive, same ExerciseService operation, one authoritative target per submission, immutable routing/IDs and idempotency. Main bounded merge with generation-vector cursor and explicit partial availability; Accepted completion independent of Failed errors. Default32/max100 summaries,response256KiB,row1KiB,cursor512bytes,source32KiB UTF-8 chunks with response bounds. No two-store transaction/second lifecycle. |
+| H5 | Generalize My Solutions to Submission History, All/Accepted/Failed, verdict/language/submitted time/version info, immutable source view and confirmed Restore. Main committed records only; no hidden evidence or renderer-simulated save/completion. |
+
+Full Failed storage does not itself disable Run/Submit. After known refusal and
+settled I/O/ownership, release operation normally and allow subsequent operations
+under existing guards; keep grade and storage failure distinct. Pending retained
+I/O/lease or unresolved runtime ownership still blocks replacement admission.
+Do not delete history to free capacity or call a save error Infrastructure verdict.
+
+Only pre-admission cancellation can promise no replacement. After admission settle/
+reconcile and suppress stale ACK, not rollback. Completion still requires verified
+committed Accepted. Windows/durability/performance evidence is still unverified.
+H1–H5 did not approve package asset/parser limits; subsequent L1–L12 approval below
+now resolves that gate. Full numeric policy and semantics:
+[9E-1 limits review](PHASE-9E1-PACKAGE-ASSET-PARSER-LIMITS-REVIEW.md).
+9E-0 remains COMPLETE baseline;9E implementation/9E-1 NOT_STARTED, no coding permission.
+
+### Phase 9E-1 — Package limits approved (2026-10-23)
+
+**APPROVED:** the user accepted all twelve RECOMMENDED options 9E1-L1–L12,
+including all detailed bounds, counting conventions and failure semantics in the
+[approved specification](PHASE-9E1-PACKAGE-ASSET-PARSER-LIMITS-REVIEW.md).
+This amendment supersedes earlier pending package-limit wording; it does not
+change six architecture decisions, A1–C3, H1–H5 or Runtime/Core/Policy B.
+
+| Decision | APPROVED design policy |
+|---|---|
+| 9E1-L1 | Manifest≤4MiB;≤4,096 active unique packages; stable exercise/case IDs≤64 ASCII characters, not paths; explicit exercise chapters2–8 within the existing eight-chapter course. |
+| 9E1-L2 | Raw metadata≤256KiB, samples≤512KiB, Judge set≤4MiB, C#/JavaScript starter≤64KiB each; package≤6MiB and exactly five referenced assets. Whitespace counts; independent maxima need not fit jointly. |
+| 9E1-L3 | Registry≤256MiB logical referenced raw assets including manifest; both count and byte caps apply. Not eager heap or compressed footprint; no truncation/subset admission. |
+| 9E1-L4 | Bounded actual reads before allocation/parse; strict UTF-8/no BOM, pre-scan decoded duplicate keys/structure before JSON.parse, exact schema and bounded traversal. Raw JSON≤4MiB subject to smaller asset caps; depth12/root0;32 properties/object;100,000 properties/asset;200,000 nodes/asset; key64 UTF-16 units; general string262,144 units; array65,536; numeric token64 ASCII chars. No hooks/eval/prototype keys/coercion; finite and schema-specific numeric validation. |
+| 9E1-L5 | Title256, statement131,072, constraints≤32×2,048, URL2,048, source-use8,192 UTF-16 units; existing URL policy retained. Signature≤16 ordered unique parameters with≤64 ASCII-character safe identifiers/reserved-name checks; metadata byte cap still wins. |
+| 9E1-L6 | Six existing types only. Exact int32/boolean; valid Unicode string≤32,768 UTF-16 units; int32[]≤65,536; string[]≤1,024 with per-string32,768 and total65,536 units; rectangular dense matrix≤1,024 rows/columns and65,536 cells; each serialized typed value≤256KiB. No normalization/coercion; generic well-shaped empty values remain valid subject to authoring constraints. |
+| 9E1-L7 | Public samples1–16; official cases1–128 with public prefix and hidden coverage; unique IDs, stable ordering, exact-once sample linkage, signature/type/arity/hash/version and exact-typed@1 allowlist validation. Schema/package/test-set versions positive safe integers≤int32max. Technical128 is not a default count or runtime feasibility claim. |
+| 9E1-L8 | Canonical per-case request and synthetic valid RETURNED expected response with empty console≤512KiB each; no execution of synthetic response. Summary32 default/100 max; page≤256KiB; final encoded public detail≤1MiB, including escaping. Preserve current63 compatibility and bounded draft access. |
+| 9E1-L9 | Manifest pins exact raw byte lengths and SHA-256 hashes; trusted application root digest/version; exact supported schemas, fail closed. No absolute local secrecy/anti-tamper guarantee. |
+| 9E1-L10 | Main-owned fixed external five-file assets, generic emitted manifest/build copy, bounded safe contained resource resolver; no per-ID imports, arbitrary code/archive/download. Reject path traversal/Windows ambiguity/reparse escape; installed packaging must be verified separately. |
+| 9E1-L11 | Lazy manifest/summary plus one active package; resident canonical parsed-data logical budget16MiB,1,000,000 nodes, raw buffers8MiB. Count retained/cloned/pinned plans; evict only unpinned data. Cache misses belong to owned Prepare10s/operation60s; no pre-admission deadline evasion. Startup is tracked Main readiness, not an unbounded Project startup block. Review incremental RSS>128MiB; loader stall targets p95≤50ms/max≤100ms are approved but NOT MEASURED. Logical budgets are not heap guarantees. |
+| 9E1-L12 | Global manifest/registry faults make registry unavailable; local child faults isolate the package with truthful availability. Safe diagnostics, no official→sample fallback for Accepted, preserve drafts/history/completion. Reviewed versioned policy upgrades; parity/security/memory/Windows packaging release gates. |
+
+Full field tables, byte definitions and path/read semantics in the linked
+specification are normative design detail for these decisions. Adding64/65 is
+package data plus regenerated manifest, without Generic Judge exercise-ID branches.
+Coverage remains first:100% declared obligations/critical mutants, independent
+expected verification and approved both-language performance gates. If coverage
+needs more than128 cases, report evidence for approval; never drop critical cases
+or split Submit to evade60s. Existing Runtime2s/case/60s and quotas are unchanged.
+
+**Status at design approval:** 9E-0 COMPLETE baseline;9E-1 and Phase9E implementation NOT_STARTED.
+Steps1/2 accepted COMPLETE — PASS WITH LIMITATIONS; S2-R1–R4 remain APPROVED.
+Step3 was initially blocked on precise registry contracts, not new ceilings:
+[pending gate report](PHASE-9E1-STEP3-LAZY-REGISTRY-READINESS-BUDGETS.md).
+Its S3-D1–D4 recommended contracts are now APPROVED in the amendment below.
+Phase9E/9E-1 IN_PROGRESS; Steps4–5 NOT_STARTED.
+Modules/schema/API implementation forms remain PROPOSED; explicit start approval
+is still required for subsequent steps. Performance/RSS/GC/startup/stall NOT MEASURED; loader/offline
+packaging/runtime acceptance UNVERIFIED. Gate failures require evidence and user
+approval of changes, not automatic ceiling increases or reduced coverage.
+
+### Phase9E-1 Step2 — S2-R1–R4 APPROVED (2026-10-23)
+
+The user approved all four recommended contracts in the
+[Step2 specification](PHASE-9E1-STEP2-RESOURCE-INTEGRITY-ASSETS.md#2-approved-contract-selections).
+R1: config-relative source `resources/learning/exercises`, Main output/dev
+`out/main/resources/learning/exercises`, packaged external
+`process.resourcesPath/learning/exercises`; select one trusted mode, no fallback.
+R2: canonical deployment base, reject linked asset roots/children and multi-link
+files; stable handle/path/parent identity checks before/after bounded reads.
+Node observations do not guarantee atomic namespace resolution against malicious
+swap-and-restore or all opaque Windows reparse tags. Fail closed when required
+conditions cannot be verified; stronger native containment needs separate scope.
+R3: build-established compiled Main manifest anchor (version/rawBytes/SHA-256),
+exact raw-byte asset hashing and deterministic signature encoding v1 as specified;
+never bootstrap runtime trust from a mutable adjacent manifest/hash. SHA-256 is
+not a digital signature or absolute anti-tamper mechanism.
+R4: explicit tracked empty bootstrap manifest; missing/corrupt declared assets
+fail build. Synthetic complete packages remain fixture-only, never production
+Official Tests or a runtime fallback. No changes to L1–L12 or Runtime9D.
+Step2 accepted COMPLETE — PASS WITH LIMITATIONS with its original evidence and
+named limitations intact. Step3 resumed under the approved precise contracts
+below; Steps4–5 remain NOT_STARTED. No S2 decision reopened.
+
+### Phase9E-1 Step3 — S3-D1–D4 APPROVED (2026-10-23)
+
+The user approved all recommended detailed contracts in the
+[Step3 specification](PHASE-9E1-STEP3-LAZY-REGISTRY-READINESS-BUDGETS.md#2-approved-precise-contracts).
+D1: exact canonical tree/copy bytes/nodes and raw-buffer ownership ledger,
+reservation before allocation/parse, aliases not duplicate trees, retained
+raw+parsed overlap, settlement before releasing failed/cancelled reservations.
+D2: one slot/flight; same admitted owner/generation/key joins one acquisition and
+lease; other owners or different keys BUSY while loading/pinned; evict only
+unpinned, immutable reuse, explicit verified retry, no queue/LRU/hot reload.
+D3: STARTING/AVAILABLE/UNAVAILABLE/STOPPING/STOPPED; package DECLARED/LOADING/
+VERIFIED_RESIDENT/UNAVAILABLE; resource evidence distinct from Public Run, Judge,
+Submit and release capability. Bootstrap and fixtures provide no Judge readiness.
+D4: one Main instance, tracked manifest-only startup without blocking Project;
+private owned Prepare context for cache misses, no new timers/budgets; shutdown
+seals admissions and retains tasks/leases/reservations until settlement/cleanup.
+Full detailed semantics in the linked report apply, not only this summary.
+No L1–L12, S2-R1–R4, Runtime/Core/Policy B/quota change. Step3 resumes; Steps4/5
+NOT_STARTED. Performance NOT MEASURED, inherited platform limitations UNVERIFIED.
+
+### Phase9E-1 Step4 — S4-D1/D2 APPROVED (2026-10-23)
+
+The user APPROVED both recommended detailed contracts in the
+[Step4 report](PHASE-9E1-STEP4-MIGRATION-BOUNDED-IPC.md#4-approved-step4-staging-decisions).
+S4-D1: explicit version2 public-only4-asset profile with official:null, alongside
+unchanged version1 full5-asset fail-closed admission. No fake official data or
+downgrade; numeric ceilings unchanged. S4-D2: capability-specific public ownership
+in the same Registry/reader/ledger; official acquisition only in owned Prepare.
+All detailed recommended semantics apply. Step4 is now COMPLETE — PASS WITH
+LIMITATIONS by formal user acceptance; Steps1–4 are accepted COMPLETE — PASS WITH
+LIMITATIONS.9E-1 remains IN_PROGRESS; Step5 remains NOT_STARTED. Closure changes
+documentation only, preserving703 PASS/1 SKIP and all prior evidence/limitations.
+The following gate evidence is historical and superseded by approval and closure.
+
+Step4 is authorized; read-only inspection found an unresolved staging contract:
+L2/L10 and actual full-profile validation require5 real assets including official
+public+hidden cases, while Step4 excludes9E-2 production Official Test authoring.
+The approved sequencing anticipates public staging without defining its admission
+profile. Current Registry acquisition also requires Runtime Prepare, not public
+browsing ownership. No accepted contract is silently changed.
+
+[Step4 evidence and alternatives](PHASE-9E1-STEP4-MIGRATION-BOUNDED-IPC.md)
+proposes S4-D1 (explicit versioned4-public-asset staging profile alongside unchanged
+full5-asset semantics) and S4-D2 (capability-specific public acquisition within the
+same Registry/reader/ledger/lifecycle, official access only in owned Prepare).
+Both were proposed at inspection and are now **APPROVED** above; no numeric ceiling or Runtime change.
+The earlier block is resolved; Steps1–3 remain accepted COMPLETE — PASS WITH
+LIMITATIONS;9E-0 COMPLETE. Step5 and9E-2 onward NOT_STARTED. Resume affected
+implementation only after user approval; no dummy Judge assets or implicit fallback.
+
 ### Phase 9 Open Decisions / Pending Verification
 
 Resolve and record these in authorized work before dependent implementation.
 Common approval above resolves its policy gates, not adapter/packaging acceptance.
+9E-0 approval resolves the listed Judge/comparison/storage design policies, not
+their implementation, benchmark or acceptance evidence. Historical9D descriptions
+in P9-HARNESS/P9-EXECUTION below do not reopen approved9E-0 policies: comparison
+`exact-typed@1`, private C# Submit protocol evidence and Run compatibility are
+APPROVED; executable contracts and runtime acceptance are still dependent work.
 
 | Gate | Open detail / required evidence | Before dependent work |
 |---|---|---|
@@ -742,10 +996,297 @@ Common approval above resolves its policy gates, not adapter/packaging acceptanc
 | P9-HARNESS | C# protocol unchanged. Steps 1–3 COMPLETE — PASS WITH LIMITATIONS. Step 3 fixed vm harness/syntax accepted; Step 4 Main-internal multi-case adapter/driver reuses it with fresh Jobs, VERIFIED barriers and exact fail-fast suffix. 160 targeted tests PASS / 57 real JavaScript Jobs VERIFIED. No new contracts, factory/IPC/UI or Judge/comparison | PHASE-9D2-JAVASCRIPT-ORCHESTRATOR.md; Step 4 COMPLETE — PASS WITH LIMITATIONS (accepted 2026-10-23); Step 5 COMPLETE — PASS WITH LIMITATIONS (accepted 2026-10-23); Step 6 IN_PROGRESS — PENDING USER ACCEPTANCE; comparison 9E |
 | P9-RUNTIME | Learning PATH-first stable Node24 resolver, safe junction/file identity validation and owned Prepare 512 MiB/10 s mapping implemented; no patch lock/download/install/major fallback or Project resolver. Windows 11 Node v24.16.0 observed in 10 real Jobs with VERIFIED cleanup; 169 tests PASS including one real C# Sum regression. Windows 10/actual UNC/packaging/concurrent Project-PTY smoke remain unverified. Sample execution was unverified at Step 2 closure; subsequent Step 3 evidence is recorded in P9-HARNESS | PHASE-9D2-NODE-RESOLVER-PROBE.md; Step 2 COMPLETE — PASS WITH LIMITATIONS by user acceptance 2026-10-22; Step 6/9G evidence still due |
 | P9-EXECUTION | Policy B/Common limits unchanged. Step 6 VERIFIED barriers retain Jobs/handles/checkpoints and pending work until final cleanup. Step 7 verifies C# production UI execution, resource failures, lifecycle/stale rejection and cleanup retry alongside real Project Run/PTY. Output envelope validation does not increase the raw quota. JavaScript/Judge/comparison remain later packages | PHASE-9D1-FINAL-REVIEW.md; Common IN_PROGRESS; C# 9D.1 COMPLETE — PASS WITH LIMITATIONS; Windows 10/packaging and remaining 9D.2/9E gates due |
-| P9-STORAGE | Versioned schema, immutable snapshot identity, consistent Accepted-record/completion commit, concurrent submissions, crash recovery, migrations/backups | 9E Accepted storage; extend in 9F |
+| P9-STORAGE | 9E Accepted snapshot/commit/capacity/read/lease/recovery policies APPROVED by 9E-0, decisions9E0-A1–A4/B1–B3 above; implementation schemas/modules still proposed, performance NOT MEASURED and acceptance UNVERIFIED. 9F extended progress/quiz remains separate. | 9E-0 COMPLETE design only;9E-5/9E-7 must implement/verify before storage acceptance |
 | P9-PROGRESS | Draft auto-save scheduling/failure/conflict handling, Chưa làm → Đang làm trigger, chapter aggregation, quiz scoring and last-position schema | 9F; preserve 9C drafts and 9E completion invariant |
 | P9-PACKAGE | Installer/portable delivery form, optional runtime-pack setup, supported Windows 10/11 clean-machine offline evidence without developer tools | 9G; does not replace Phase 7 acceptance |
+| P9-HISTORY | H1–H5 APPROVED in amendment above; Failed32MiB/10s, trusted VERIFIED eligibility, shared lease/one-target merge and Submission History UI. Implementation/schema forms remain PROPOSED, performance NOT MEASURED/acceptance UNVERIFIED. | Policy resolved; package/parser L1–L12 also approved; implement/verify only after explicit authorization |
 
 Failed gates do not authorize silent fallback, weaker completion rules, extra
 languages or Project Mode changes. Stop affected work and seek a decision if
 evidence requires changing accepted scope/architecture.
+
+### Phase9E-1 S5-P2 — A/B2/C APPROVED (2026-10-24)
+
+Người dùng nghiệm thu [S5-P2 design](PHASE-9E1-S5-P2-COOPERATIVE-DESIGN.md)
+và APPROVE A, B2, C; cho phép triển khai và kiểm chứng correction S5-F1.
+A: một resumable validation kernel, soft5ms, caps8,192 chars/512 nodes/2,048
+steps/32 manifest entries, checkpoint256 chars/64 steps, hash64KiB,
+`setImmediate` và cross-stage work budget. B2: additive private cooperative
+copy/representation/packet, retained pending work và owner pin/reservations,
+one derived job/owner, overlap BUSY; public IPC không đổi. C: native atomics
+giữ nguyên, đo riêng và dừng nếu vẫn fail acceptance; không tự thêm Worker.
+L1–L12/S2/S3/S4, Runtime9D/Core/native, Policy B/deadlines giữ nguyên.
+Approval không là performance PASS và không đóng Step5/9E-1 hoặc mở9E-2.
+Correction evidence phải giữ historical FAIL và phân biệt unverified hosts.
+
+### Phase9E-1 S5-O1 — Bounded Batching APPROVED (2026-10-24)
+
+Người dùng APPROVE S5-O1 theo
+[Step5 performance diagnostics](PHASE-9E1-STEP5-PERFORMANCE-DIAGNOSTICS.md):
+bounded batching trong shared scanner/generator kernel, freeze traversal nếu cần,
+giảm handoffs/checkpoint overhead với nguyên validation/error/statistics semantics.
+Toàn bộ S5-P2 A/B2/C,5ms/caps/cadence/mandatory barriers, ownership/reservations/
+leases/single-flight/cancellation/shutdown/deadlines giữ nguyên. Không O2/O3,
+S5-R1/S5-A1, Worker hoặc Runtime9D/SDK/Core/native/IPC contract changes.
+Cho phép implementation, targeted verification/build và đúng bốn unchanged
+Step5 workloads. Approval không là acceptance evidence hoặc Step5/9E-1 closure.
+
+### Phase9E-1 Step5 — Current-host acceptance scope amendment APPROVED (2026-10-24)
+
+**S5-AC1 — APPROVED by explicit user decision:**
+**Step 5: COMPLETE — PASS WITH LIMITATIONS (Current Host Only).**
+This adjusts the acceptance scope; it is not full PASS against the original
+target-machine matrix and changes no loader/Runtime/security policy.
+
+Reason: the user accepts current-host S5-F1/O1 evidence and the foundation gates
+that passed there, with the limitations retained. The two missing loader target
+measurements B1a/B1b in the final review are transferred to **mandatory9E-7/release
+certification gates**, not deleted, satisfied or replaced by this host:
+
+| Gate | Required target | Status | Must be completed before |
+|---|---|---|---|
+| B1a | Windows10 x64,2 physical cores,8GiB RAM,SSD | UNVERIFIED | Acceptance of9E-7 /release certification |
+| B1b | Windows11 x64,≥4 physical cores,16GiB RAM,SSD | UNVERIFIED | Acceptance of9E-7 /release certification |
+
+Use the existing4 loader scenarios with unchanged fixtures/workload/registered
+clone, stall p95≤50ms/max≤100ms and unchanged ceilings; record latency,RSS/GC,
+resident budgets and cleanup on each target. Current-host PASS is not either
+reference-host PASS. Missing/failing target evidence blocks9E-7/release approval.
+
+Accepted evidence remains244 PASS/1 package file-symlink SKIP, separate444
+regression PASS, scoped typecheck/targeted lint/build and named production smokes,
+plus the recorded S5-F1/O1 measurements. No tests/build/profiling rerun for closure.
+Historical FAILs are preserved. C# PREPARE_TIMEOUT cause/reliability remains
+UNVERIFIED; full-app stall/RSS attribution remains incomplete. Actual file-symlink,
+UNC, opaque reparse and installed/offline limitations and their release gates
+remain unchanged; installed/9G obligations are not discharged by this decision.
+S5-R1 remains COMPLETE — DIAGNOSTICS ONLY; its concurrency prototype remains
+NOT PASS and **must not enter production**. L1–L12, security checks, Runtime9D,
+Policy B/deadlines/quotas and S5-P2 A/B2/C are unchanged.
+
+[Acceptance report Section15](PHASE-9E1-STEP5-FOUNDATION-ACCEPTANCE.md#15-approved-step5-closure--current-host-only)
+records scope/evidence/conditions. At S5-AC1 approval, Phase9E-1 was retained
+IN_PROGRESS pending separate confirmation; subsequent9E1-AC1 below formally
+closes it. **9E-2 remains NOT_STARTED and requires separate authorization.**
+No automatic phase closure,
+production optimization, tests/build/profiling or Git publishing is authorized.
+
+### Phase9E-1 — Official acceptance COMPLETE (2026-10-24)
+
+**9E1-AC1 — User-approved acceptance record:**
+**Phase 9E-1: COMPLETE — PASS WITH LIMITATIONS.** The user formally accepts
+[final acceptance report](PHASE-9E1-FINAL-ACCEPTANCE.md#9-official-phase9e-1-closure)
+and S5-AC1. Steps1–4 remain COMPLETE — PASS WITH LIMITATIONS; Step5 remains
+COMPLETE — PASS WITH LIMITATIONS (Current Host Only). This closes the foundation,
+not the whole Phase9E, reference-host matrix, Official Tests or release.
+
+Reason/evidence: the reviewed approved contracts and accepted Steps1–5 have no
+remaining in-scope foundation blocker after S5-AC1. Existing counts, build/smoke
+and S5-F1/O1 measurements are accepted as recorded, without rerun or rewriting
+historical failures. Earlier NOT_STARTED/IN_PROGRESS/pending text in dated
+records is historical, not the current9E-1 status.
+
+**Mandatory deferred release conditions are unchanged:** B1a Windows10 x64/
+2 physical cores/8GiB/SSD and B1b Windows11 x64/≥4 physical cores/16GiB/SSD remain
+**UNVERIFIED**, must pass existing4 loader scenarios/workload/registered clone,
+p95≤50ms/max≤100ms and budget/cleanup observations **before9E-7 acceptance/release
+certification**. Current-host PASS is not either reference-host PASS.
+Historical PREPARE_TIMEOUT cause/reliability, full-app stall/RSS attribution,
+file-symlink/UNC/opaque reparse and installed/offline limitations remain with
+their recorded Runtime/platform/9E-7/9G gates. No UNVERIFIED becomes PASS.
+SDK concurrency prototype: **NOT PASS — excluded from production**, absolutely
+no promotion. S5-P2 A/B2/C, L1–L12/S2/S3/S4, security, Runtime9D/Core/native,
+Policy B/deadlines/ceilings/quotas and ownership/lifecycle are unchanged.
+
+The technical foundation and phase-acceptance prerequisites for9E-2 are now
+satisfied. **9E-2 remains NOT_STARTED; explicit user approval to start it is still
+required.** No Official Test authoring, Judge/Submit, optimization or other phase
+is authorized. Documentation/consistency/diff only; no tests/build/profiling,
+production changes or commit/push/merge. STOP for9E-2 authorization.
+
+### Phase 9E-2 — Design approved; E2-S1 authorized (2026-10-24)
+
+The user formally APPROVED [Official Test Sets design](PHASE-9E2-OFFICIAL-TEST-SETS-DESIGN.md),
+[seven-step plan](PHASE-9E2-IMPLEMENTATION-PLAN.md) and **E2-D1–D5**. This supersedes
+the previous current-status statement that 9E-2 awaited start authorization,
+without rewriting the dated 9E-1 closure or its evidence. **Phase 9E-2 IN_PROGRESS;
+only E2-S1 authorized. E2-S2–S7 remain NOT_STARTED.**
+
+| ID / status | Accepted decision | Execution boundary |
+|---|---|---|
+| E2-D1 — APPROVED | Hybrid curated witnesses, deterministic exploration, independent oracle and compact frozen selection; pilot exactly ch2-04, ch3-04, ch4-09, ch5-03, ch5-07, ch7-01, ch7-05, ch8-01, ch8-08 | No fixed/default Official Case count; coverage-first evidence; user pilot acceptance before expansion |
+| E2-D2 — APPROVED | Developer authoring/evidence outside released resources; planned narrow dev-server private deny/bundle-exclusion checks | No new public IPC; no tools/reference/guard code in S1; implement only in separately authorized S2 scope |
+| E2-D3 — APPROVED | Separate candidate correctness, engineering feasibility screen and actual private Runtime/release certification | No 60s/deadline/coverage waiver; actual official operation evidence belongs to 9E-3/7; pending critical performance obligations remain explicit |
+| E2-D4 — APPROVED | Staged pilot, user acceptance, separately authorized mixed-profile pilot promotion, then bounded remaining waves | No bulk generation/promotion or expansion under S1 authorization |
+| E2-D5 — APPROVED, PROCESS ONLY | Per-exercise semantics review; stop affected work on ambiguity/conflict and request user decision | **No ambiguous interpretation approved by this row**; no silent content/sample/contract change |
+
+E2-S1 produced [semantic specification and baseline](PHASE-9E2-S1-SEMANTIC-PILOT-SPECIFICATION.md):
+63/126 public inventory, 252 asset hash/length checks, 63 signature bindings,
+126 typed sample checks and 74 fixed predicate/classification assertions. These
+are narrowly scoped specification evidence, not an Official Set or Runtime PASS.
+
+**Historical M1 review — initially OPEN / NOT APPROVED:** MinWindow wording can mean a unique returned string
+or a unique minimum interval. Example `s="aa",t="a"` distinguishes domains;
+the returned text is unambiguous but there are two minimum positions. Recommendation
+is unique returned text; alternate unique-interval reading is presented without
+changing the statement. At that initial review neither reading had been approved. Current two samples
+fit both. Affected family/full-domain predicate acceptance is stopped; no new
+tie-breaker, implicit restriction, sample edit or coverage waiver.
+
+Status transition: E2-S1 NOT_STARTED -> IN_PROGRESS under user authorization ->
+**BLOCKED on M1** after delivering specification. At that initial delivery, eight unaffected worksheets were
+ready for review; full S1 exit gate was NOT PASS pending semantic decision and user
+acceptance. E2-S2 remains NOT_STARTED; no partial start without authorization.
+
+9E1-AC1/S5-AC1, L1–L12/S2/S3/S4/S5-P2 A/B2/C, Runtime 9D, Policy B, deadlines,
+identity/security/ownership and quotas are unchanged. Reference hosts B1a/B1b
+remain UNVERIFIED, mandatory before 9E-7/release certification. PREPARE_TIMEOUT,
+full-app stall/RSS attribution, filesystem/installed/offline gates remain with
+their recorded owners. SDK concurrency prototype **NOT PASS — excluded from
+production**. No Judge/Submit/Comparator/Accepted Storage or further phase starts.
+
+### Phase 9E-2 — M1=A approved; E2-S1 accepted COMPLETE — PASS (2026-10-24)
+
+**M1 — APPROVED: A, Unique Returned String.** The user explicitly resolves
+MinWindow uniqueness by the content of the returned string, not interval position.
+After the existing base domain checks, let U contain distinct texts of all minimum
+covering intervals. No covering interval is valid with Expected `""`; otherwise
+the input is valid exactly when |U|=1, Expected that sole text. Multiple minimum
+positions with identical text are permitted. No leftmost tie-breaker is added.
+
+Approved anchors: `("aa","a")` valid, Expected `"a"`;
+`("aba","ab")` invalid due to distinct shortest texts; no-solution inputs remain
+valid with Expected `""`. Existing public samples/constraints are unchanged.
+This is an explicit semantic decision following E2-D5's process, not an implicit
+interpretation approved by E2-D5 itself.
+
+Closure verification: 16 fixed in-memory MinWindow domain assertions PASS and
+approved text/no-answer anchors PASS; baseline 63 packages/126 samples, manifest
+and 252 raw asset hashes/lengths unchanged. Historical 74 assertions, prior
+BLOCKED/NOT PASS and all earlier evidence remain recorded, not rewritten as PASS.
+The [S1 worksheet](PHASE-9E2-S1-SEMANTIC-PILOT-SPECIFICATION.md) now specifies all
+nine pilot domains with no remaining semantic blocker.
+
+**E2-S1: COMPLETE — PASS**, under the user's conditional acceptance and successful
+verification. Transition BLOCKED -> IN_PROGRESS on M1 approval -> COMPLETE after
+closure checks. Phase 9E-2 remains IN_PROGRESS; E2-S2–S7 NOT_STARTED. No production,
+sample/constraint, schema/Runtime/security changes, generators/references or
+Official assets. All inherited limitations/9E1-AC1 remain; no Runtime performance
+or reference correctness certification is inferred. Stop for E2-S2 authorization.
+
+### Phase 9E-2 — E2-S2 implementation authorization/evidence (2026-10-24)
+
+The user explicitly authorizes E2-S2 after accepted E2-S1/M1=A. No new architecture
+or semantic decision is introduced: E2-D1–D5 and all inherited contracts remain.
+Actual developer-only tooling, nine C#/JS references, independent checkers and
+the narrow approved build-private-boundary enforcement are documented in
+[S2 report](PHASE-9E2-S2-TOOLING-REFERENCES.md). No frozen Official Set, production
+package, Runtime/Judge/Submit change or remaining54-exercise work is authorized.
+
+Scoped implementation disposition **PASS WITH LIMITATIONS**:116 PASS/1 SKIP,
+typecheck/targeted lint/build PASS, actual CLI9-ID replay,378 output files audited
+without authoring leakage; baseline63/126/252 unchanged.43 prepared models yield
+41 correctness/domain kills and2 PENDING_RUNTIME, not a performance waiver.
+Developer heap/I/O/scratch guards are not new Runtime quotas or OS RSS certification.
+E2-S2 IN_PROGRESS pending user acceptance; E2-S3–S7 NOT_STARTED. Do not infer
+official/runtime/release readiness or start S3 without explicit authorization.
+
+### Phase 9E-2 — S2 accepted / S3 staging authorized and delivered (2026-10-24)
+
+User formally accepts **E2-S2 COMPLETE — PASS WITH LIMITATIONS**:116 PASS/1 SKIP,
+nine C#/JS pairs, independent oracles/private-boundary evidence retained. Two
+performance models remain PENDING_RUNTIME, not converted to PASS. User explicitly
+authorizes **E2-S3 staging only**, not S4 execution or promotion.
+
+[S3 report](PHASE-9E2-S3-PILOT-CANDIDATE-EVIDENCE.md):9 frozen candidates/73 cases,
+49 groups/90 facets,44 critical correctness kills plus18 broader kills, two
+critical performance items pending under unchanged E2-D3. Two clean roots,
+274 deterministic files byte-identical;109 targeted PASS, typecheck/lint PASS.
+Shared reader/Registry budget, registered clone/representation/shutdown and
+public/production parity verified; actual Runtime60s remains UNVERIFIED for all.
+Private developer csproj explicitly allowlists driver+nine sources after observed
+default-glob Debug attribute collision; algorithms, SDK Resolver/Runtime, quotas
+and policies unchanged. This is an implementation correction, no new ADR/waiver.
+
+S3 disposition PASS WITH LIMITATIONS, implementation/evidence delivered pending
+user acceptance at S4; S4–S7 NOT_STARTED. No production assets/manifest/compiled
+anchor change, no Judge/Submit or remaining54 authoring. 9E1-AC1/S5-AC1, M1=A and
+all inherited release/host/security/reliability gates remain unchanged. Stop.
+
+
+## E2-S3 closure / E2-S4 review — 2026-10-24
+
+Historical S4 review-delivery state below; superseded by the later user acceptance/S5 entry.
+
+User authorized S3 closure subject to evidence verification and S4 review only.
+E2-S3 COMPLETE — PASS WITH LIMITATIONS; E2-S4 REVIEW COMPLETED — AWAITING USER ACCEPTANCE; E2-S5–S7 NOT_STARTED. Phase9E-2 remains IN_PROGRESS.
+[Independent pilot review](PHASE-9E2-PILOT-ACCEPTANCE.md) recommends **ACCEPT WITH LIMITATIONS** for the exact nine staging datasets/process only; this is not user acceptance. Fresh read-only audit confirms73 cases (18 public/55 hidden),274 deterministic files,49 groups/90 facets,44 correctness/domain and18 broader model kills, Registry clone/representation budgets and zero shutdown. Historical109 targeted PASS and accepted S2 116 PASS/1 SKIP remain unchanged. Two performance mutants PENDING_RUNTIME and all actual Official Runtime60s UNVERIFIED, especially Reshape13-case overhead. Twelve private URL probes returned403;378 existing bundle files scanned without a private marker leak. No new sets, candidate edits, production changes/promotion or application tests/build/profiling. No authorization for S5 or remaining54 exercises. All inherited Runtime/security/release limitations remain.
+
+
+## E2-S4 accepted / E2-S5 promotion delivered — 2026-10-24
+
+Historical S5 delivery state below; superseded by formal S5 acceptance/Wave A entry.
+
+The user formally accepts E2-S4 COMPLETE — ACCEPT WITH LIMITATIONS for the exact nine datasets/process, then separately authorizes E2-S5 promotion. S4 COMPLETE — ACCEPT WITH LIMITATIONS; S5 IN_PROGRESS — implementation/verification delivered, awaiting user acceptance; S6–S7 NOT_STARTED. Phase9E-2 remains IN_PROGRESS;9E-3 NOT_STARTED.
+
+[S5 delivery](PHASE-9E2-S5-PILOT-PACKAGE-PROMOTION.md): exact accepted73 cases (18 public/55 hidden) promoted as9 full +54 unchanged public-only packages; manifest release3, pilot packageVersion2. Normal build generated the matching compiled anchor. All63 public semantics and189 sample/starter files unchanged;262 emitted resource files verified. Unique targeted results376 PASS/1 SKIP; typecheck/targeted lint/build PASS; real promoted Divide C#/JS public Run and Monaco/draft smokes PASS. No new production TS/Runtime/IPC/schema/security policy changes. Historical44/44 correctness and18/18 broader kills retained; two performance models PENDING_RUNTIME and actual Official Runtime60s UNVERIFIED, especially Reshape. Inherited9E1-AC1/S5-AC1/host/filesystem/installed/reliability gates and SDK prototype NOT PASS remain unchanged. No S6/S7, remaining54 authoring, Judge/Submit or Phase closure; stop for S5 user acceptance.
+
+
+## E2-S5 accepted / E2-S6 Wave A delivered — 2026-10-25
+
+E2-S5 **COMPLETE — PASS WITH LIMITATIONS**, user formally accepted; release3/pilot73/376 unique PASS+1 SKIP and timeout/isolated6 PASS history preserved. User authorized **Wave A only**. [Wave A report](PHASE-9E2-S6-WAVE-A-ACCEPTANCE.md):24 sets/185 cases (48 public/137 hidden),280 obligations,72/72 critical correctness and48/48 broader models detected; new PrimeCount performance model PENDING_RUNTIME alongside two inherited pending models. Two final clean roots312 files byte-identical;33 full+30 public-only/63 exercises, manifest release4 SHA dab51425d8f0e3cdc8ced4cec32e6bba8048d376a9669203111a8629138d2482; normal build/actual compiled opener match. All public samples/starters/signatures and nine pilot packages unchanged. Final targeted515 unique PASS/1 SKIP after recorded fixture failures; typecheck/targeted lint/build, C#/JS Sum and Monaco/draft smokes PASS. Two developer reference method corrections were reverified on all185 frozen cases with new source lineage and no data change.
+
+E2-S6 Wave A **IN_PROGRESS — delivered PASS WITH LIMITATIONS, awaiting user acceptance**; Waves B–D NOT_STARTED; E2-S7/9E-3 NOT_STARTED. Phase9E-2 IN_PROGRESS. Official60s/release matrix UNVERIFIED, including high-count DigitCount21/NextDate17; original9E1-AC1/S5-AC1/platform/installed/reliability limitations retained; SDK prototype NOT PASS/excluded. No new contract/semantic decision, Runtime/security/deadline/ceiling change, Judge/Submit/Comparator/Accepted Storage or next-wave authorization. Stop.
+
+
+## E2-S6 Wave B delivery — 2026-10-25
+
+Wave A **COMPLETE — PASS WITH LIMITATIONS**, user accepted. Wave B **IN_PROGRESS —
+delivered PASS WITH LIMITATIONS, awaiting user acceptance**.
+[Wave B acceptance packet](PHASE-9E2-S6-WAVE-B-ACCEPTANCE.md):16 new sets/121 cases
+(32 public/89 hidden),166 static obligations,48/48 critical correctness and32/32
+broader kills;2 new DP performance models pending plus3 inherited pending.
+Two clean roots320 files byte-identical; manifest release5 SHA
+43c46cc6c361219f7dd2960e8575f4bf7ab6e0a1599f2839dace3809b89ea804, compiled opener
+and302 resources match.49 full/14 public-only/63 total;33 prior full packages,
+258 prior cases and189 public sample/starter files unchanged.562 unique targeted
+PASS/1 SKIP; initial transaction timeout and isolated4 PASS, initial build exit1
+and isolated build PASS, all invocation/audit/lint history retained. Typecheck/
+targeted lint/build/Power C#-JS/Monaco-drafts-workspace PASS. .gitattributes reviewed,
+unchanged; raw-byte integrity preserved. Official60s/release/platform/reliability
+limitations remain UNVERIFIED; SDK prototype NOT PASS/excluded. No new semantic/
+architecture decision or Runtime/security/deadline/ceiling change. Phase9E-2/E2-S6
+remain IN_PROGRESS; Waves C/D, S7 and9E-3 NOT_STARTED. Stop for user acceptance;
+no commit/push/merge or next-wave authorization.
+
+
+## Official Phase9E-2 closure /9E-3 planning authorization — 2026-10-25
+
+The user formally accepts **Phase9E-2 COMPLETE — PASS WITH LIMITATIONS**, including E2-S7 final review/handoff. Accepted evidence is preserved:63 full-profile/0 public-only,504 cases (126 public/378 hidden),789/789 static obligations,206/206 critical correctness and126/126 broader models, manifest release7 SHA75ddbf0447e4708882c1e8e1f96e7cbebf97bf5aa170a14713e96755a9d3e081 and matching compiled anchor. All12 performance models remain PENDING_RUNTIME; Official60s/release certification UNVERIFIED. Historical FAILs/SKIP, source/line-ending limitations and9E1-AC1/S5-AC1 deferred platform/loader/reliability/installed gates remain unchanged. This closure uses accepted evidence; no tests/Runtime/build/profiling or resource regeneration/revalidation executed in this documentation task.
+
+Only9E-3 source survey, design and implementation planning are now authorized. [Official Runtime design](PHASE-9E3-OFFICIAL-RUNTIME-DESIGN.md) and [implementation plan](PHASE-9E3-IMPLEMENTATION-PLAN.md) are **PROPOSED — NOT APPROVED**. **9E-3 NOT_STARTED — DESIGN PROPOSED**; E3-D1–D4 and every implementation step await user approval/explicit package authorization. No production code/resources, Judge/Submit/Comparator/Accepted Storage, deadlines/ceilings/ownership/security/Policy B or .gitattributes change, Git publication or automatic Step1 start. Later phase statuses unchanged. This dated record supersedes earlier pending9E-2 status statements; their evidence/history remains intact.
+
+### Phase9E-3 proposed implementation selections — NOT APPROVED
+
+| ID | Proposed selection / user decision required | Existing contracts retained |
+|---|---|---|
+| E3-D1 | Input-driven language adapters with Run wrappers; Main-only Official variant on the same ExerciseService | No public Official flag/IPC, second operation/service/Registry or lifecycle |
+| E3-D2 | Aliased leased plan/current-input serialization, bounded retained prefix; synchronous post-VERIFIED CONTINUE/STOP hook | Same phase/operation deadlines/accounting/Policy B; no comparator, async hook lifecycle or streaming redesign |
+| E3-D3 | Main-private protocol evidence and extraction/reuse of the existing bounded JSON kernel; preserve public C# mapping/v1 envelopes | No public private fields, new wire-version approval or guessed student blame |
+| E3-D4 | Six independently gated packages, eight-ID both-language pilot before separately authorized63×2 bridge screen |12 pending models and9E-7 repeat/target certification remain distinct; no automatic step transition |
+
+These are proposed implementation choices, not accepted ADR changes or implementation permission. Exact scope/stop gates are in the new design/plan; obtain user review before recording any approval.
+
+
+## User approval / E3-S1 delivery — 2026-10-25
+
+The user **APPROVES the Phase9E-3 design, six-step plan and E3-D1–D4**, and explicitly authorizes **E3-S1 only**. This dated record supersedes earlier proposal/authorization statements without deleting history. **Phase9E-2 COMPLETE — PASS WITH LIMITATIONS; Phase9E-3 IN_PROGRESS — E3-S1; E3-S2–S6 NOT_STARTED.** Architecture approval is not advance permission for later implementation.
+
+| Decision | Approved selection | Scope restriction |
+|---|---|---|
+| E3-D1 — APPROVED | A: input-driven adapter reuse; future Main-only admission on the existing ExerciseService | Public Run unchanged; no S1 admission or Official execution wiring |
+| E3-D2 — APPROVED | Leased plan and existing accounting; synchronous post-VERIFIED CONTINUE/STOP hook | S1 establishes contracts/controlled lifetime tests only; no production consumer hook |
+| E3-D3 — APPROVED | Existing strict JSON kernel extraction; private C# evidence; public mapping and wire v1 unchanged | Native/private response mapping and execution await S2/S3 |
+| E3-D4 — APPROVED | Six steps; eight-ID pilot in both languages, accepted before expansion to63 | Each later step needs its own authorization |
+
+[S1 acceptance](PHASE-9E3-S1-PRIVATE-CONTRACTS-ACCEPTANCE.md): implementation delivered **PASS WITH LIMITATIONS — awaiting user acceptance**. Main-private leased identity/input contracts, pure signature/harness seams and existing strict JSON kernel extraction only. No adapter execution, service admission, Core/Registry/native lifecycle or public IPC/DTO change. Preserve all12 PENDING_RUNTIME models, Official60s UNVERIFIED, historical failures/SKIP and deferred9E1 gates. STOP before E3-S2; no commit/push/merge.

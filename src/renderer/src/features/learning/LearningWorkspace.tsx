@@ -28,6 +28,8 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
   const [selectedExercises, setSelectedExercises] = useState<Record<number, string | undefined>>({})
   const practicing = selectedChapterId !== 1 && !!practiceChapters[selectedChapterId]
   const exercise = practice.exercises.find(e => e.id === selectedExercises[selectedChapterId])
+  const wantedExercise = selectedExercises[selectedChapterId]
+  useEffect(() => { if (wantedExercise && !exercise) void practice.open(wantedExercise) }, [wantedExercise, selectedChapterId]) // owner generation in usePractice suppresses stale loads
   const language = exercise ? practice.languageFor(exercise.id) : 'csharp'
   const runtime = useExerciseRuntime({ active: active && !practice.closing,
     exerciseId: practicing && practice.ready ? exercise?.id : undefined, language })
@@ -121,13 +123,13 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
       <div className="learning-practice-panel" hidden={!practicing} id={`${sectionId}-practice-panel`}
         role={selectedChapterId !== 1 ? 'tabpanel' : undefined}
         aria-labelledby={selectedChapterId !== 1 ? `${sectionId}-practice-tab` : undefined}>
-      {practicing && <PracticeWorkspace key={selectedChapterId} chapter={selectedChapterId} exercises={practice.exercises}
+      {practicing && <PracticeWorkspace key={selectedChapterId} chapter={selectedChapterId} exercises={practice.summaries}
         exercise={exercise} drafts={practice.state.drafts} language={language} code={exercise ? practice.codeFor(exercise, language) : ''}
         ready={practice.ready} locked={practice.closing} execution={runtime.view} sourceReplacement={practice.sourceReplacement}
         onRun={() => { if (exercise && active && !practice.closing) void runtime.run({ exerciseId: exercise.id, language,
           code: practice.codeFor(exercise, language), sourceRevision: practice.sourceRevision }) }} onOpen={e => navigate(() => {
           setSelectedExercises(s => ({ ...s, [selectedChapterId]: e?.id }))
-          if (e) { const l = practice.languageFor(e.id); practice.edit(e, l, practice.codeFor(e, l)) }
+          if (!e) void practice.open()
         })} onLanguage={l => { if (exercise) void practice.selectLanguage(exercise, l) }}
         onEdit={code => { if (exercise) practice.edit(exercise, language, code) }}
         onReplace={code => { if (exercise) practice.replaceSource(exercise, language, code) }} />}

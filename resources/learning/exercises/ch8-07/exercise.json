@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch8-07",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 8,
+    "order": 60,
+    "title": "Hình chữ nhật toàn số một",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/maximal-rectangle/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Chọn một hình chữ nhật gồm các ô liên tiếp theo hàng và cột, chỉ chứa số 1. Trả về diện tích lớn nhất, hoặc 0 nếu không có ô 1.",
+  "constraints": [
+    "Ma trận chữ nhật 1–50 hàng/cột; mỗi ô là số nguyên 0 hoặc 1.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "a1da3e3313b3fa77a0e3de731dedc6579be43223e3c84793e3e95cd518654b83",
+    "functionName": "MaxRectangle",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch8-07-official",
+    "version": 1,
+    "hash": "eec686cbd1fda7e09e887ef2ae8a80fae0da2f3f894450c580b6543cfa904b78"
+  }
+}

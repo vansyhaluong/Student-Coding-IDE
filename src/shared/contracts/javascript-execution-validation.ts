@@ -1,3 +1,4 @@
+import { parseExecutionJson } from './execution-json'
 import { EXERCISE_LIMITS } from './exercise'
 import { JAVASCRIPT_FAILURE_KINDS, JAVASCRIPT_HARNESS_VERSION, JAVASCRIPT_PROTOCOL_MAX_DEPTH,
   type JavascriptCaseResult, type JavascriptDiagnostic, type JavascriptExecutionFailure,
@@ -62,57 +63,6 @@ function validate<T>(v: unknown, guard: (v: unknown) => v is T): ValidationResul
   try { const copy = data(v); return guard(copy) ? { ok: true, value: copy } : invalid() } catch { return invalid() }
 }
 
-/** Scan before JSON.parse to bound nesting and reject duplicate decoded property names.
- * JSON.parse still checks the entire grammar; this scanner also requires one document. */
-function document(input: string | Uint8Array): unknown {
-  if (typeof input !== 'string' && !(input instanceof Uint8Array)) throw new Error('input')
-  if (input.length > EXERCISE_LIMITS.outputBytes) throw new Error('size')
-  const text = typeof input === 'string' ? input : new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(input)
-  if (!unicode(text) || bytes(text) > EXERCISE_LIMITS.outputBytes) throw new Error('unicode/bytes')
-  let pos = 0
-  const whitespace = (): void => { while (/[\t\n\r ]/.test(text[pos] ?? '') && pos < text.length) pos++ }
-  const string = (): string => {
-    const start = pos++
-    while (pos < text.length) {
-      const c = text[pos++]
-      if (c === '"') return JSON.parse(text.slice(start, pos)) as string
-      if (c === '\\') pos++
-    }
-    throw new Error('string')
-  }
-  const scan = (depth: number): void => {
-    if (depth > JAVASCRIPT_PROTOCOL_MAX_DEPTH) throw new Error('depth')
-    whitespace()
-    const token = text[pos]
-    if (token === '"') { string(); return }
-    if (token === '{' || token === '[') {
-      const object = token === '{', end = object ? '}' : ']'
-      const names = new Set<string>()
-      pos++; whitespace()
-      if (text[pos] === end) { pos++; return }
-      for (;;) {
-        whitespace()
-        if (object) {
-          if (text[pos] !== '"') throw new Error('key')
-          const key = string()
-          if (names.has(key)) throw new Error('duplicate')
-          names.add(key); whitespace()
-          if (text[pos++] !== ':') throw new Error('colon')
-        }
-        scan(depth + 1); whitespace()
-        if (text[pos] === end) { pos++; return }
-        if (text[pos++] !== ',') throw new Error('separator')
-      }
-    }
-    const primitive = /(?:true|false|null|-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?)/y
-    primitive.lastIndex = pos
-    if (!primitive.exec(text)) throw new Error('token')
-    pos = primitive.lastIndex
-  }
-  scan(0); whitespace()
-  if (pos !== text.length) throw new Error('trailing')
-  return JSON.parse(text) as unknown
-}
 
 function schema(v: unknown): v is JavascriptSampleSchema {
   return exact(v, ['parameterTypes', 'returnType', 'sampleCount']) && count(v.sampleCount)
@@ -221,8 +171,8 @@ export function validateJavascriptHarnessResponse(v: unknown, s: JavascriptSampl
   })
 }
 export function parseJavascriptHarnessRequest(input: string | Uint8Array, s: JavascriptSampleSchema, caseIndex: number): ValidationResult<JavascriptHarnessRequest> {
-  try { return validateJavascriptHarnessRequest(document(input), s, caseIndex) } catch { return invalid() }
+  try { return validateJavascriptHarnessRequest(parseExecutionJson(input), s, caseIndex) } catch { return invalid() }
 }
 export function parseJavascriptHarnessResponse(input: string | Uint8Array, s: JavascriptSampleSchema, caseIndex: number, exitCode: number | null): ValidationResult<JavascriptHarnessResponse> {
-  try { return validateJavascriptHarnessResponse(document(input), s, caseIndex, exitCode) } catch { return invalid() }
+  try { return validateJavascriptHarnessResponse(parseExecutionJson(input), s, caseIndex, exitCode) } catch { return invalid() }
 }

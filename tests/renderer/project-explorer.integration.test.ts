@@ -2247,6 +2247,9 @@ function installApi(overrides: {
         onChanged: () => () => undefined,
       },
       practice: {
+        list: async () => failure('Practice is not configured in this Project Explorer fixture'),
+        detail: async () => failure('Practice is not configured in this Project Explorer fixture'),
+        draft: async () => failure('Practice is not configured in this Project Explorer fixture'),
         load: async () => failure('Practice is not configured in this Project Explorer fixture'),
         save: async () => failure('Practice is not configured in this Project Explorer fixture'),
         onPrepareClose: () => () => undefined,

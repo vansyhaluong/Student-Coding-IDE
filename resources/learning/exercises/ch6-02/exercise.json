@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-02",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 6,
+    "order": 37,
+    "title": "Hàm lũy thừa nguyên",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Viết hàm tính baseValue mũ exponent; quy ước mọi số mũ 0, kể cả 0^0, bằng 1.",
+  "constraints": [
+    "-5 ≤ baseValue ≤ 5; 0 ≤ exponent ≤ 10.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "78ea9cd5def99c7de0f219009777eeb5099da054817148f5e3b03646968e4cc2",
+    "functionName": "Power",
+    "parameters": [
+      {
+        "name": "baseValue",
+        "type": "int32"
+      },
+      {
+        "name": "exponent",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch6-02-official",
+    "version": 1,
+    "hash": "71d3ee9e1a4b1606215d3d92de3084154c93d3d9549cffcb2dcc9d197e5d70ae"
+  }
+}

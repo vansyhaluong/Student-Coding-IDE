@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch6-07",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 6,
+    "order": 42,
+    "title": "Hệ số tổ hợp",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/function/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về số cách chọn k phần tử từ n phần tử phân biệt. Tổ chức tính toán thành hàm; C(n,0)=C(n,n)=1.",
+  "constraints": [
+    "0 ≤ k ≤ n ≤ 20; mọi kết quả đều nằm trong int32.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "03856b8e672d400990db0bd4f403ad395308eee9949ebf6f61ceec5f1297d476",
+    "functionName": "Choose",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      },
+      {
+        "name": "k",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch6-07-official",
+    "version": 1,
+    "hash": "3750a39b54ec50d0e0413a03f2034e32554cbd3ba07193e3db9de174449778a0"
+  }
+}

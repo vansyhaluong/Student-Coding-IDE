@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-08",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 3,
+    "order": 16,
+    "title": "Ngày kế tiếp",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Cho một ngày hợp lệ trong lịch Gregory. Trả về [ngày, tháng, năm] của ngày tiếp theo; xử lý đổi tháng, năm và năm nhuận.",
+  "constraints": [
+    "Ngày đầu vào hợp lệ; 1 ≤ year ≤ 9998.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "e500d719bc63cb7f4fdee09602d38e3ae195359d7106d120cc83df68792b0d73",
+    "functionName": "NextDate",
+    "parameters": [
+      {
+        "name": "day",
+        "type": "int32"
+      },
+      {
+        "name": "month",
+        "type": "int32"
+      },
+      {
+        "name": "year",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32[]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch3-08-official",
+    "version": 1,
+    "hash": "3193ca660b5c298ba6058348802d12af6aa13d92d1135053a7826afc9dd5ac8c"
+  }
+}

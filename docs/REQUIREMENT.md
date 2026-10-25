@@ -1617,17 +1617,19 @@ Bài tập tổ chức theo chương, không theo topic/tag như LeetCode; độ
 Medium, Hard**. Bài toán tham khảo LeetCode phải có quyền sử dụng phù hợp hoặc
 được biên soạn lại hợp lệ, có ghi nguồn. V1 chỉ có **C# và JavaScript**.
 Exercise Workspace gồm Description, Code Editor, Test Cases, Run Result,
-Submission Result và My Solutions (Lời giải của tôi). Sinh viên viết trong hàm
+Submission Result và Submission History (Accepted + failed graded submissions).
+Generalize My Solutions thành Submission History đã APPROVED theo H5. Sinh viên viết trong hàm
 mẫu, không tự viết Main() hoặc chương trình Console hoàn chỉnh. Mỗi bài định nghĩa
 hàm, tham số, kiểu trả về, starter code và test case phù hợp từng ngôn ngữ.
 Reuse Monaco foundation, nhưng Exercise Document/session độc lập Project Document;
 không tự ghi code vào project/Explorer. Code Draft tự lưu riêng theo bài/ngôn ngữ;
 C# → JavaScript → C# không mất bản nháp trước đó.
 
-Run chỉ thử sample/custom test bằng code hiện tại. Phạm vi triển khai 9D.1 được
+Phase 9E Run chỉ thử public samples và so sánh kết quả bằng code hiện tại;
+custom Run deferred, cần phê duyệt riêng. Phạm vi triển khai 9D.1 được
 duyệt ngày 2026-10-20 chỉ thực thi samples do Main catalogue chọn và trả actual
-output; chưa custom cases. Comparison, Submit và lưu kết quả thuộc 9E; custom
-cases cần phạm vi triển khai được duyệt riêng. Exercise Runtime tự chuẩn bị
+output; chưa comparison/custom cases. Comparison, Submit và lưu kết quả thuộc 9E.
+Exercise Runtime tự chuẩn bị
 function-signature test harness/driver, gọi hàm, biên dịch nếu cần và chạy ngầm;
 sinh viên không tạo project, mở Terminal hay chạy lệnh compiler. Hiển thị Input,
 Expected Output, Actual Output, Passed/Failed và lỗi phù hợp. Run không tạo
@@ -1636,7 +1638,8 @@ Accepted Solution và không đánh dấu hoàn thành bài tập.
 Làm rõ giao diện 9D/9E theo xác nhận người dùng ngày 2026-10-19: sinh viên chỉ
 thao tác Run và Submit; không có nút Stop hoặc Cancel trong Learning Practice.
 Run thực thi test mẫu và hiển thị kết quả; Submit chấm bộ test chính thức và lưu
-lời giải Accepted vào My Solutions theo quy tắc ghi thành công của 9E bên dưới.
+lịch sử graded submissions theo quy tắc persistence bên dưới; chỉ Accepted đã
+lưu thành công mới tạo completion.
 Stop/cancellation trong 9D chỉ là cơ chế nội bộ cho timeout, resource limit,
 chuyển bài/ngôn ngữ, rời Learning, đóng IDE và cleanup. Có thể giữ stop() trong
 contract lifecycle nội bộ nhưng không tạo điều khiển UI tương ứng. Việc ngắt
@@ -1649,8 +1652,11 @@ validators và tests; không tự triển khai UI, service hoặc các adapter.
 
 Submit chấm bộ test chính thức gồm công khai và ẩn. Kết quả: Accepted, Wrong
 Answer, Compilation Error, Runtime Error, Time Limit Exceeded; phân biệt riêng
-lỗi nội bộ Judge. Chỉ vượt **100% test case** mới Accepted. Submission không đạt
-chỉ hiển thị kết quả, không lưu lịch sử lời giải đã nộp. Được Submit lại; lần thất
+lỗi nội bộ Judge. Chỉ vượt **100% test case** mới Accepted. Amendment đã APPROVED:
+lưu immutable source-at-Submit cùng verdict hợp lệ: Accepted, Wrong Answer,
+Compilation/Syntax Error, Runtime Error, TLE, MLE và OLE. Infrastructure/Protocol
+Failure, Cancelled/Invalidated hoặc verdict chưa đáng tin không mặc định là failed
+graded history. Run không tạo lịch sử. Được Submit lại; lần thất
 bại sau không xóa trạng thái hoàn thành đã có. Không đưa toàn bộ hidden input/output
 vào UI/DTO, nhưng test ẩn offline không có bảo mật tuyệt đối.
 
@@ -1660,10 +1666,109 @@ migration/backup/recovery; tận dụng PersistenceService nếu phù hợp. Cod
 tự lưu để tiếp tục làm bài. Accepted Solution chỉ lưu khi Submit Accepted và ghi
 thành công: giữ bản sao code tại thời điểm Submit, mã bài, ngôn ngữ, thời gian,
 kết quả và thông tin bộ test cần thiết. Giữ nhiều phiên bản, không ghi đè bản cũ.
-My Solutions chỉ hiển thị Accepted Solution đã lưu. Chỉ xác nhận đã lưu/mới hoàn
+Submission History chỉ đọc Main-owned persisted records, có All/Accepted/Failed,
+verdict/ngôn ngữ/thời điểm Submit, xem code và Restore có xác nhận; không tự ghi đè
+draft đang sửa. Deliberate re-submit cùng code tạo version mới; internal retry
+cùng submissionId không duplicate. Không tự xóa/ghi đè versions cũ. Chỉ xác nhận mới hoàn
 thành sau khi ghi thành công; lỗi ghi phải báo riêng với kết quả Judge Accepted,
 không báo thành công giả. Hoàn thành từ bản đã lưu trước đó vẫn giữ nguyên.
-Tiến độ bài tập: Chưa làm, Đang làm, Hoàn thành; dự kiến lưu vị trí học gần nhất,
+Judge verdict, storage pending/saved/failed/unknown và completion là ba trạng thái
+riêng: chỉ Accepted đã verified commit tạo completion; failed history không bao giờ
+là bằng chứng hoàn thành. WA/save-failed vẫn là WA với history chưa lưu, không phải
+Infrastructure verdict giả. Hidden values/console/stack/private Judge evidence
+không được ghi vào bất kỳ submission record nào.
+
+H1–H5 đã APPROVED: Accepted Storage giữ nguyên9E-0, Failed dùng riêng
+`userData/learning/failed-submissions.json`32MiB/record2MiB/metadata16KiB,
+warnings24/28MiB, caller/shutdown wait10s và slow notice3s với retained I/O.
+Một Submit route đúng một target dưới shared store lease; eligible failed grade
+chỉ persist sau VERIFIED complete cleanup, kể cả trusted compile/syntax error
+chưa chạy case. History có bounded pagination/partial availability, version info
+và confirmed Restore; only committed Accepted tạo completion.
+Xem [Approved H1–H5](PHASE-9E-JUDGE-SUBMIT-DESIGN.md#16-approved-h1h5--submission-history).
+Failed store đầy không tự chặn Run/Submit khi I/O/ownership đã settle và existing
+guards cho phép; không bỏ qua unresolved retained I/O/lease để admit operation mới.
+Không nới Runtime/Core/Policy B hoặc tự xóa history. Package asset/parser decisions
+**9E1-L1–L12 APPROVED** theo toàn bộ giới hạn và semantics trong
+[specification đã duyệt](PHASE-9E1-PACKAGE-ASSET-PARSER-LIMITS-REVIEW.md) và
+[ADR-025 amendment](DECISIONS.md#phase-9e-1--package-limits-approved-2026-10-23).
+Manifest≤4MiB/4,096 packages; metadata256KiB, samples512KiB, Judge4MiB,
+starter64KiB/ngôn ngữ; package6MiB, full profile exactly5 assets; registry256MiB logical bytes.
+S4-D1/D2 APPROVED: version2 public-only staging profile có4 public assets và
+official:null; full version1/explicit full profile vẫn bắt buộc5 assets và fail-closed.
+Public ownership trong cùng Registry/reader/ledger; official acquisition chỉ ở owned
+Prepare. Không có Judge data giả hoặc tự downgrade full package khi lỗi.
+Main phải bounded-read/strict UTF-8/pre-scan trước JSON.parse, exact-schema/typed
+validation, verify raw lengths/SHA-256/trusted manifest digest, fail closed và
+không thực thi package code. Parser/field/value/envelope/cache ceilings chi tiết
+L4–L11 đều bắt buộc; không chỉ kiểm tra kích thước sau parse. Public projection
+tách hidden data; global registry faults và local package faults phân biệt,
+không xóa drafts/history/completion khi bài không khả dụng.
+Public samples≤16/official cases≤128 là technical ceilings, không phải default
+test count; coverage-first và Runtime60s/2s cùng mọi quota/barrier giữ nguyên.
+Thêm bài64/65 bằng package data và regenerated manifest, không sửa Generic Judge
+theo exercise ID. 9E-0 COMPLETE; Steps1/2 đã nghiệm thu COMPLETE — PASS WITH
+LIMITATIONS. Phase9E vẫn IN_PROGRESS; Step3 đã triển khai theo S3-D1–D4 APPROVED,
+COMPLETE — PASS WITH LIMITATIONS, đã được người dùng nghiệm thu. Step4 đã được phép
+và đã triển khai theo S4-D1/D2 APPROVED; Steps1–4 COMPLETE — PASS WITH LIMITATIONS,
+đã được người dùng nghiệm thu; **Phase9E-1 COMPLETE — PASS WITH LIMITATIONS**
+theo nghiệm thu tổng thể9E1-AC1 ngày2026-10-24,
+Step5 COMPLETE — PASS WITH LIMITATIONS (Current Host Only), người dùng nghiệm thu
+theo điều chỉnh phạm vi S5-AC1 ngày2026-10-24; không phải full target-matrix PASS.
+Hai loader target hosts Windows10 x64/2 physical cores/8GiB/SSD và Windows11
+x64/≥4 physical cores/16GiB/SSD giữ UNVERIFIED, bắt buộc hoàn thành trước nghiệm
+thu9E-7/release certification. Không hạ stall p95≤50ms/max≤100ms hoặc ceilings;
+không đổi security/Runtime/S5-P2 A/B2/C. Giữ historical Prepare reliability,
+full-app attribution và file-symlink/UNC/opaque reparse/installed-offline limits;
+R1 prototype **NOT PASS — excluded from production**, tuyệt đối không đưa vào
+production. Phase9E-1 đã COMPLETE — PASS WITH LIMITATIONS;
+Tại closure9E-1,9E-2 còn NOT_STARTED. Authorization tiếp theo đã duyệt design/
+E2-D1–D5 và chỉ mở E2-S1: 9E-2 IN_PROGRESS, S1 COMPLETE — PASS sau approval
+riêng M1=A và closure verification; S2 COMPLETE — PASS WITH LIMITATIONS đã được
+user nghiệm thu. S3 COMPLETE — PASS WITH LIMITATIONS; S4 COMPLETE — ACCEPT WITH LIMITATIONS; S5 COMPLETE — PASS WITH LIMITATIONS; S6 Wave A IN_PROGRESS (delivered/pending user acceptance); B–D/S7 NOT_STARTED. Không đổi requirements/Runtime; S5 chỉ promote9 pilot assets đã duyệt.
+Xem [Step5 closure](PHASE-9E1-STEP5-FOUNDATION-ACCEPTANCE.md#15-approved-step5-closure--current-host-only),
+[Step4 evidence](PHASE-9E1-STEP4-MIGRATION-BOUNDED-IPC.md) và
+[Step3 evidence](PHASE-9E1-STEP3-LAZY-REGISTRY-READINESS-BUDGETS.md).
+Runtime và dữ liệu drafts hiện có được giữ nguyên; Step4 chỉ migration public
+catalogue/IPC và binding sample plans theo các quyết định đã phê duyệt.
+S2-R1–R4 đã APPROVED: deterministic external resource roots, no fallback, canonical
+containment/link/identity checks with documented Node TOCTOU limitations, compiled
+Main manifest anchor/raw SHA-256/canonical signature v1 and explicit empty bootstrap.
+Missing/corrupt declared assets fail build; bootstrap is not Official Test readiness.
+See [Step2 contract](PHASE-9E1-STEP2-RESOURCE-INTEGRITY-ASSETS.md#2-approved-contract-selections).
+S3-D1–D4 APPROVED theo [contract Step3](PHASE-9E1-STEP3-LAZY-REGISTRY-READINESS-BUDGETS.md#2-approved-precise-contracts):
+reservation trước allocation/parse, accounting aliases/copies/raw overlap; owner
+single-flight/lease/BUSY/eviction/retry; capability readiness và startup/shutdown
+giữ unsettled I/O. Không suy diễn resource VALID thành Public Run/Judge/release READY.
+Approval ceilings không tự tạo acceptance PASS. Current-host loader latency/
+RSS/GC/startup/stall đã có scoped evidence được nghiệm thu trong Step5/S5-AC1;
+hai reference hosts vẫn UNVERIFIED, bắt buộc trước9E-7/release certification.
+Windows/installed/offline limitations giữ nguyên; không blanket-certify các
+target/release metrics từ measurements hiện tại.
+Chốt thiết kế 9E-0 ngày 2026-10-23: sáu quyết định kiến trúc và mười quyết định
+9E0-A1–9E0-C3 đã APPROVED trong [ADR-025](DECISIONS.md#phase-9e-0--approved-judge-and-submit-decisions-2026-10-23).
+Exercise Package độc lập/stable ID, registry mở rộng bằng dữ liệu; sửa samples
+ProductExceptSelf đúng constraints; `exact-typed@1` cho sáu kiểu và private C#
+Submit protocol evidence giữ Run compatibility. Official tests được biên soạn,
+independently verified và frozen ở development time, không fixed số case;
+public samples xuất hiện đúng một lần ở official public prefix. Main chỉ trả
+aggregate counts/coarse stages/safe verdict/status cho Submit; không hidden
+values, console, diagnostics hoặc case-level metadata qua IPC/UI.
+
+Accepted storage đã duyệt snapshot64 MiB/record2 MiB/metadata16 KiB, warning48/56 MiB,
+không cap versions/bài ngoài byte capacity và không tự xóa/truncate/ghi đè versions;
+disk reserve≥2×candidate bytes+16 MiB, safe legacy over-capacity recovery/read-only.
+Read API có pagination/chunk bounds; commit caller wait15s riêng với retained I/O,
+store-wide lease, idempotency và verified committed completion. Chi tiết giới hạn,
+cancellation/shutdown/recovery và coverage/performance targets trong
+[đặc tả A/B/C](PHASE-9E0-REMAINING-DECISIONS.md). Các performance targets đã duyệt
+nhưng **NOT MEASURED**, acceptance thiếu evidence là **UNVERIFIED**, không phải PASS.
+Nếu gate không đạt phải báo evidence/đề xuất và chờ duyệt; không tự đổi capacity,
+architecture hoặc runtime quota. Runtime/Core/native/Policy B giữ nguyên.
+
+9E-0 **COMPLETE** chỉ cho thiết kế/tài liệu; Phase 9E implementation và9E-1 vẫn
+**NOT_STARTED**, chưa được cấp quyền coding. Tiến độ bài tập: Chưa làm, Đang làm,
+Hoàn thành; dự kiến lưu vị trí học gần nhất,
 tiến độ chương và kết quả trắc nghiệm. Schema/lịch tự lưu/quy tắc tổng hợp còn mở.
 
 Quyết định runtime 9D được người dùng chốt ngày 2026-10-19: trước mắt Learning
@@ -1775,7 +1880,14 @@ Java ngoài Phase 9 V1. Giữ nguyên quyết định/nghiệm thu Phase 2–8, 
 Không yêu cầu account/backend/cloud hoặc AI. Local AI giữ scope/configuration
 Phase 8, có thể mở overlay tạm trong Learning mà không hiện lại Project Tools;
 đóng AI quay về Learning Workspace. AI Tutor, exercise-aware AI, automatic code
-context và Agent/tools ngoài foundation. Tất cả Phase 9 giữ `NOT_STARTED`.
+context và Agent/tools ngoài foundation. `NOT_STARTED` cho toàn Phase9 là trạng
+thái ở roadmap ban đầu; current status theo Implementation Plan Section13.6,
+gồm9E-1 COMPLETE — PASS WITH LIMITATIONS. Sau approval design/E2-D1–D5,
+9E-2 IN_PROGRESS chỉ trong scope E2-S1; E2-S1 COMPLETE — PASS sau approval riêng
+M1=A (Unique Returned String); E2-S2 COMPLETE — PASS WITH LIMITATIONS đã nghiệm thu;
+S3 COMPLETE — PASS WITH LIMITATIONS; S4 COMPLETE — ACCEPT WITH LIMITATIONS; S5 COMPLETE — PASS WITH LIMITATIONS; S6 Wave A IN_PROGRESS (delivered/pending user acceptance); B–D/S7 NOT_STARTED. Xem
+[S1 evidence](PHASE-9E2-S1-SEMANTIC-PILOT-SPECIFICATION.md). Đây là status update,
+không thay đổi requirements/contracts hoặc tự giải quyết semantics.
 
 ---
 
@@ -2105,3 +2217,35 @@ Phần đóng góp của đồ án phải được ghi nhận rõ thông qua:
 * Documentation và change log.
 * Feature behavior.
 * UX adaptations.
+
+
+## E2-S3 closure / E2-S4 review — 2026-10-24
+
+Historical S4 review-delivery state below; superseded by the later user acceptance/S5 entry.
+
+User authorized S3 closure subject to evidence verification and S4 review only.
+E2-S3 COMPLETE — PASS WITH LIMITATIONS; E2-S4 REVIEW COMPLETED — AWAITING USER ACCEPTANCE; E2-S5–S7 NOT_STARTED. Phase9E-2 remains IN_PROGRESS.
+[Independent pilot review](PHASE-9E2-PILOT-ACCEPTANCE.md) recommends **ACCEPT WITH LIMITATIONS** for the exact nine staging datasets/process only; this is not user acceptance. Fresh read-only audit confirms73 cases (18 public/55 hidden),274 deterministic files,49 groups/90 facets,44 correctness/domain and18 broader model kills, Registry clone/representation budgets and zero shutdown. Historical109 targeted PASS and accepted S2 116 PASS/1 SKIP remain unchanged. Two performance mutants PENDING_RUNTIME and all actual Official Runtime60s UNVERIFIED, especially Reshape13-case overhead. Twelve private URL probes returned403;378 existing bundle files scanned without a private marker leak. No new sets, candidate edits, production changes/promotion or application tests/build/profiling. No authorization for S5 or remaining54 exercises. All inherited Runtime/security/release limitations remain.
+
+
+## E2-S4 accepted / E2-S5 promotion delivered — 2026-10-24
+
+Historical S5 delivery state below; superseded by formal S5 acceptance/Wave A entry.
+
+The user formally accepts E2-S4 COMPLETE — ACCEPT WITH LIMITATIONS for the exact nine datasets/process, then separately authorizes E2-S5 promotion. S4 COMPLETE — ACCEPT WITH LIMITATIONS; S5 IN_PROGRESS — implementation/verification delivered, awaiting user acceptance; S6–S7 NOT_STARTED. Phase9E-2 remains IN_PROGRESS;9E-3 NOT_STARTED.
+
+[S5 delivery](PHASE-9E2-S5-PILOT-PACKAGE-PROMOTION.md): exact accepted73 cases (18 public/55 hidden) promoted as9 full +54 unchanged public-only packages; manifest release3, pilot packageVersion2. Normal build generated the matching compiled anchor. All63 public semantics and189 sample/starter files unchanged;262 emitted resource files verified. Unique targeted results376 PASS/1 SKIP; typecheck/targeted lint/build PASS; real promoted Divide C#/JS public Run and Monaco/draft smokes PASS. No new production TS/Runtime/IPC/schema/security policy changes. Historical44/44 correctness and18/18 broader kills retained; two performance models PENDING_RUNTIME and actual Official Runtime60s UNVERIFIED, especially Reshape. Inherited9E1-AC1/S5-AC1/host/filesystem/installed/reliability gates and SDK prototype NOT PASS remain unchanged. No S6/S7, remaining54 authoring, Judge/Submit or Phase closure; stop for S5 user acceptance.
+
+
+## E2-S5 accepted / E2-S6 Wave A delivered — 2026-10-25
+
+E2-S5 **COMPLETE — PASS WITH LIMITATIONS**, user formally accepted; release3/pilot73/376 unique PASS+1 SKIP and timeout/isolated6 PASS history preserved. User authorized **Wave A only**. [Wave A report](PHASE-9E2-S6-WAVE-A-ACCEPTANCE.md):24 sets/185 cases (48 public/137 hidden),280 obligations,72/72 critical correctness and48/48 broader models detected; new PrimeCount performance model PENDING_RUNTIME alongside two inherited pending models. Two final clean roots312 files byte-identical;33 full+30 public-only/63 exercises, manifest release4 SHA dab51425d8f0e3cdc8ced4cec32e6bba8048d376a9669203111a8629138d2482; normal build/actual compiled opener match. All public samples/starters/signatures and nine pilot packages unchanged. Final targeted515 unique PASS/1 SKIP after recorded fixture failures; typecheck/targeted lint/build, C#/JS Sum and Monaco/draft smokes PASS. Two developer reference method corrections were reverified on all185 frozen cases with new source lineage and no data change.
+
+E2-S6 Wave A **IN_PROGRESS — delivered PASS WITH LIMITATIONS, awaiting user acceptance**; Waves B–D NOT_STARTED; E2-S7/9E-3 NOT_STARTED. Phase9E-2 IN_PROGRESS. Official60s/release matrix UNVERIFIED, including high-count DigitCount21/NextDate17; original9E1-AC1/S5-AC1/platform/installed/reliability limitations retained; SDK prototype NOT PASS/excluded. No new contract/semantic decision, Runtime/security/deadline/ceiling change, Judge/Submit/Comparator/Accepted Storage or next-wave authorization. Stop.
+
+
+## Official Phase9E-2 closure /9E-3 planning authorization — 2026-10-25
+
+The user formally accepts **Phase9E-2 COMPLETE — PASS WITH LIMITATIONS**, including E2-S7 final review/handoff. Accepted evidence is preserved:63 full-profile/0 public-only,504 cases (126 public/378 hidden),789/789 static obligations,206/206 critical correctness and126/126 broader models, manifest release7 SHA75ddbf0447e4708882c1e8e1f96e7cbebf97bf5aa170a14713e96755a9d3e081 and matching compiled anchor. All12 performance models remain PENDING_RUNTIME; Official60s/release certification UNVERIFIED. Historical FAILs/SKIP, source/line-ending limitations and9E1-AC1/S5-AC1 deferred platform/loader/reliability/installed gates remain unchanged. This closure uses accepted evidence; no tests/Runtime/build/profiling or resource regeneration/revalidation executed in this documentation task.
+
+Only9E-3 source survey, design and implementation planning are now authorized. [Official Runtime design](PHASE-9E3-OFFICIAL-RUNTIME-DESIGN.md) and [implementation plan](PHASE-9E3-IMPLEMENTATION-PLAN.md) are **PROPOSED — NOT APPROVED**. **9E-3 NOT_STARTED — DESIGN PROPOSED**; E3-D1–D4 and every implementation step await user approval/explicit package authorization. No production code/resources, Judge/Submit/Comparator/Accepted Storage, deadlines/ceilings/ownership/security/Policy B or .gitattributes change, Git publication or automatic Step1 start. Later phase statuses unchanged. This dated record supersedes earlier pending9E-2 status statements; their evidence/history remains intact.

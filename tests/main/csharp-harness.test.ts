@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rename, rm, symlink, writeFile } from 'node:fs/promi
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { performance } from 'node:perf_hooks'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import type { ExerciseType } from '../../src/shared/contracts/practice'
 import { generateCsharpHarness } from '../../src/main/services/learning/runtime/csharp-harness'
 import { CsharpDiagnostics } from '../../src/main/services/learning/runtime/csharp-diagnostics'

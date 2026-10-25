@@ -1,0 +1,8 @@
+public class Solution
+{
+    public int Max3(int a, int b, int c)
+    {
+        // Viết lời giải của bạn tại đây.
+        throw new System.NotImplementedException();
+    }
+}

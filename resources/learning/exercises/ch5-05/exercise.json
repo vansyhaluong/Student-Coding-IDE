@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-05",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 31,
+    "title": "Đoạn không lặp ký tự",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Tìm độ dài lớn nhất của một đoạn liên tiếp trong s mà không có ký tự xuất hiện hai lần.",
+  "constraints": [
+    "0 ≤ s.length ≤ 10000; chỉ a–z.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "a7173b023074f26fb973746d10638253ac2f3753dfd39f12194466a4b5ee9c9a",
+    "functionName": "LongestUnique",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-05-official",
+    "version": 1,
+    "hash": "1d967ecdfaeaf71cfba3a148c04482fc53b72d2287e91e6e50d67e14930c49f1"
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-08",
+  "testSetId": "ch5-08-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "082d1600c5c5754b7e286c0d6957264b1b8706911eacd68d19fef7eee9266fa4",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "args": [
+        "meo",
+        "heo"
+      ],
+      "expected": 1,
+      "visibility": "public",
+      "sampleId": "sample-1"
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        "",
+        "abc"
+      ],
+      "expected": 3,
+      "visibility": "public",
+      "sampleId": "sample-2"
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        "",
+        ""
+      ],
+      "expected": 0
+    },
+    {
+      "id": "hidden-002",
+      "visibility": "hidden",
+      "args": [
+        "abc",
+        ""
+      ],
+      "expected": 3
+    },
+    {
+      "id": "hidden-003",
+      "visibility": "hidden",
+      "args": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "expected": 100
+    },
+    {
+      "id": "hidden-004",
+      "visibility": "hidden",
+      "args": [
+        "same",
+        "same"
+      ],
+      "expected": 0
+    },
+    {
+      "id": "hidden-005",
+      "visibility": "hidden",
+      "args": [
+        "ab",
+        "ba"
+      ],
+      "expected": 2
+    },
+    {
+      "id": "hidden-006",
+      "visibility": "hidden",
+      "args": [
+        "abc",
+        "axbc"
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-007",
+      "visibility": "hidden",
+      "args": [
+        "axbc",
+        "abc"
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-008",
+      "visibility": "hidden",
+      "args": [
+        "kitten",
+        "sitting"
+      ],
+      "expected": 3
+    },
+    {
+      "id": "hidden-009",
+      "visibility": "hidden",
+      "args": [
+        "ab",
+        "c"
+      ],
+      "expected": 2
+    }
+  ]
+}

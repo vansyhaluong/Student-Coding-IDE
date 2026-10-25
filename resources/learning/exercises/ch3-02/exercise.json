@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch3-02",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 3,
+    "order": 10,
+    "title": "Dấu của một số",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/conditional-statement/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về -1 khi n âm, 0 khi n bằng 0 và 1 khi n dương.",
+  "constraints": [
+    "|n| ≤ 1000000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "3ddbc0a7b27fc18f57f339cc3c14d12ec755acae386e2ec15ccea076f19c750a",
+    "functionName": "Sign",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch3-02-official",
+    "version": 1,
+    "hash": "dd19064648f33daa6424b95cc7d1c68571586dab291bf889d47a78e17c3d6d40"
+  }
+}

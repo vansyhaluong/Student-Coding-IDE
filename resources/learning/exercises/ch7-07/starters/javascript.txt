@@ -1,0 +1,8 @@
+/**
+ * @param {number[]} nums
+ * @returns {number}
+ */
+function FirstMissingPositive(nums) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

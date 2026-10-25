@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch8-05",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 8,
+    "order": 58,
+    "title": "Xóa hàng cột có số không",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://leetcode.com/problems/set-matrix-zeroes/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Nếu một ô ban đầu bằng 0, mọi ô cùng hàng hoặc cột của nó trong kết quả phải bằng 0. Các ô khác giữ giá trị cũ. Trả về ma trận kết quả.",
+  "constraints": [
+    "Ma trận chữ nhật 1–50 hàng/cột; |matrix[i][j]| ≤ 1000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "063c86696cd4a42990b8f9b69192d98507bac740b2ef250b06fee4cfb8719033",
+    "functionName": "ZeroRowsCols",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32[][]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch8-05-official",
+    "version": 1,
+    "hash": "093ff3061c0641a8439a955d24f3882a16dccf03f203cc0cc1c7a03ee16e48db"
+  }
+}

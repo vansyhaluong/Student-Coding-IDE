@@ -1,0 +1,9 @@
+/**
+ * @param {number} baseValue
+ * @param {number} exponent
+ * @returns {number}
+ */
+function Power(baseValue, exponent) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-02",
+  "testSetId": "ch4-02-official",
+  "version": 1,
+  "signatureVersion": 1,
+  "signatureHash": "2e2ea8e186ae75984f15c55b095d8c02c71091619480317a9e421395dd5e3a3c",
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "cases": [
+    {
+      "id": "sample-1",
+      "args": [
+        6
+      ],
+      "expected": 720,
+      "visibility": "public",
+      "sampleId": "sample-1"
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        0
+      ],
+      "expected": 1,
+      "visibility": "public",
+      "sampleId": "sample-2"
+    },
+    {
+      "id": "hidden-001",
+      "visibility": "hidden",
+      "args": [
+        1
+      ],
+      "expected": 1
+    },
+    {
+      "id": "hidden-002",
+      "visibility": "hidden",
+      "args": [
+        2
+      ],
+      "expected": 2
+    },
+    {
+      "id": "hidden-003",
+      "visibility": "hidden",
+      "args": [
+        3
+      ],
+      "expected": 6
+    },
+    {
+      "id": "hidden-004",
+      "visibility": "hidden",
+      "args": [
+        10
+      ],
+      "expected": 3628800
+    },
+    {
+      "id": "hidden-005",
+      "visibility": "hidden",
+      "args": [
+        11
+      ],
+      "expected": 39916800
+    },
+    {
+      "id": "hidden-006",
+      "visibility": "hidden",
+      "args": [
+        12
+      ],
+      "expected": 479001600
+    },
+    {
+      "id": "hidden-007",
+      "visibility": "hidden",
+      "args": [
+        4
+      ],
+      "expected": 24
+    },
+    {
+      "id": "hidden-008",
+      "visibility": "hidden",
+      "args": [
+        5
+      ],
+      "expected": 120
+    },
+    {
+      "id": "hidden-009",
+      "visibility": "hidden",
+      "args": [
+        7
+      ],
+      "expected": 5040
+    },
+    {
+      "id": "hidden-010",
+      "visibility": "hidden",
+      "args": [
+        8
+      ],
+      "expected": 40320
+    },
+    {
+      "id": "hidden-011",
+      "visibility": "hidden",
+      "args": [
+        9
+      ],
+      "expected": 362880
+    }
+  ]
+}

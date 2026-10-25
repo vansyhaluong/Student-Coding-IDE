@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch4-09",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 4,
+    "order": 26,
+    "title": "Fibonacci bằng vòng lặp",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://www.w3resource.com/csharp-exercises/for-loop/index.php",
+      "publisher": "w3resource",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Với F(0)=0, F(1)=1 và F(n)=F(n-1)+F(n-2), trả về F(n). Duyệt lặp thay vì xây cây đệ quy.",
+  "constraints": [
+    "0 ≤ n ≤ 45.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "2b5a1d97908e47a30459b95ae5765e240e71de5e92315464f91f128233e4ff4c",
+    "functionName": "Fibonacci",
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int32"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch4-09-official",
+    "version": 1,
+    "hash": "d38742ae3e64d4aefbfdd9313123f4ab21509fe61cb70deea88f4bc8b4e2ccf2"
+  }
+}

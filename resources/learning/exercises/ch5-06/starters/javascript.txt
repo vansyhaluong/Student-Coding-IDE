@@ -1,0 +1,9 @@
+/**
+ * @param {string} s
+ * @param {string} t
+ * @returns {boolean}
+ */
+function Anagram(s, t) {
+    // Viết lời giải của bạn tại đây.
+    throw new Error("Chưa triển khai");
+}

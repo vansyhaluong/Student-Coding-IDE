@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch8-04",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 8,
+    "order": 57,
+    "title": "Duyệt xoắn ốc",
+    "difficulty": "Medium",
+    "source": {
+      "url": "https://leetcode.com/problems/spiral-matrix/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Trả về các phần tử theo đường xoắn ốc: bắt đầu ở góc trên trái, đi sang phải rồi xuống, sang trái, lên; thu hẹp vào trong cho đến hết ô.",
+  "constraints": [
+    "Ma trận chữ nhật 1–50 hàng/cột; |matrix[i][j]| ≤ 1000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "f12586a0a6cab266a72e0c5492184d6a806cf2f2d15f327e5cf60c580f6cfa21",
+    "functionName": "Spiral",
+    "parameters": [
+      {
+        "name": "matrix",
+        "type": "int32[][]"
+      }
+    ],
+    "returnType": "int32[]"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch8-04-official",
+    "version": 1,
+    "hash": "57281e3896321af4e04daabbc30c59674e9b57f47ddff7416323580313922dad"
+  }
+}

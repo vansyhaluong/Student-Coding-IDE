@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-04",
+  "signatureVersion": 1,
+  "signatureHash": "baa2aafb24e4faebe2ee5593d8f9ba39d05bcbf66c264f1736b23412c5e1cd9c",
+  "samples": [
+    {
+      "id": "sample-1",
+      "args": [
+        "  em hoc   code "
+      ],
+      "expected": "code hoc em"
+    },
+    {
+      "id": "sample-2",
+      "args": [
+        "mot"
+      ],
+      "expected": "mot"
+    }
+  ]
+}

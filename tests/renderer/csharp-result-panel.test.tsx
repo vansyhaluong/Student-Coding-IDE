@@ -5,7 +5,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { PracticeTestPanel } from '../../src/renderer/src/features/learning/practice/PracticeTestPanel'
 import { csharpFailureMessage } from '../../src/renderer/src/features/learning/practice/use-exercise-runtime'
 import type { ExerciseSnapshot } from '../../src/shared/contracts/exercise'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import type { Exercise, ExerciseType, ExerciseValue } from '../../src/shared/contracts/practice'
 
 afterEach(cleanup)

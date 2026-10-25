@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch5-01",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 5,
+    "order": 27,
+    "title": "Độ dài từ cuối",
+    "difficulty": "Easy",
+    "source": {
+      "url": "https://leetcode.com/problems/length-of-last-word/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Một dòng gồm các từ chữ thường ngăn bởi dấu cách. Trả về độ dài từ cuối cùng, bỏ qua dấu cách cuối dòng.",
+  "constraints": [
+    "1 ≤ s.length ≤ 1000; chỉ a–z và dấu cách; có ít nhất một từ.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "cdfa0e46f0753ce05a39b01985f553dd265ee88813e780930385bedde05cb240",
+    "functionName": "LastWordLength",
+    "parameters": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch5-01-official",
+    "version": 1,
+    "hash": "656e95ba0157cb4ffd6f7e7516a4a491af8f6ec9ab549a409f757028247220e8"
+  }
+}

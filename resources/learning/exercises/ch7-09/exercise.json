@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "ch7-09",
+  "packageVersion": 2,
+  "metadata": {
+    "chapter": 7,
+    "order": 53,
+    "title": "Chia kẹo theo điểm",
+    "difficulty": "Hard",
+    "source": {
+      "url": "https://leetcode.com/problems/candy/",
+      "publisher": "LeetCode",
+      "usage": "Tham khảo ý tưởng thuật toán; mô tả tiếng Việt, ví dụ, giới hạn và hàm mẫu được biên soạn độc lập. Không sao chép đề hoặc lời giải nguồn. Độ khó theo chương của khóa học; không phải xếp hạng nguồn. Bài trả về ma trận dùng mảng số nguyên chữ nhật và trả về giá trị, không chấm thay đổi tại chỗ."
+    }
+  },
+  "statement": "Học sinh đứng thành hàng, mỗi người nhận ít nhất một viên. Ai có điểm cao hơn hàng xóm liền kề phải nhận nhiều kẹo hơn người đó. Trả về tổng kẹo tối thiểu.",
+  "constraints": [
+    "1 ≤ ratings.length ≤ 10000; 0 ≤ ratings[i] ≤ 10000.",
+    "Chỉ trả về kết quả; không đọc/ghi Console hoặc STDIN/STDOUT. Chỉ số mảng/chuỗi tính từ 0."
+  ],
+  "signature": {
+    "version": 1,
+    "hash": "06cac2bbba5051399fe919b02ec0266d763b3ca2cd2c5ca8bbf59901f45e68a6",
+    "functionName": "Candy",
+    "parameters": [
+      {
+        "name": "ratings",
+        "type": "int32[]"
+      }
+    ],
+    "returnType": "int32"
+  },
+  "comparator": {
+    "id": "exact-typed",
+    "version": 1
+  },
+  "official": {
+    "testSetId": "ch7-09-official",
+    "version": 1,
+    "hash": "64f0df00801beff2660c158e89674fdcd146d5c68f0a16f7ba0f3e97758a7702"
+  }
+}

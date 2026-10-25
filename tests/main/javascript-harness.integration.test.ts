@@ -12,7 +12,7 @@ import { WindowsExerciseLeaseProvider } from '../../src/main/services/learning/r
 import { FileExerciseCheckpointStore } from '../../src/main/services/learning/runtime/exercise-checkpoint'
 import { validateJavascriptExecutionResult } from '../../src/shared/contracts/javascript-execution-validation'
 import { EXERCISE_LIMITS } from '../../src/shared/contracts/exercise'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import type { Exercise, ExerciseType, ExerciseValue } from '../../src/shared/contracts/practice'
 
 const supported = process.platform === 'win32' && process.arch === 'x64'

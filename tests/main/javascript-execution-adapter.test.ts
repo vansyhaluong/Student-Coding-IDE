@@ -10,7 +10,7 @@ import { captureJavascriptNode } from '../../src/main/services/learning/runtime/
 import { ExerciseWorkspace } from '../../src/main/services/learning/runtime/exercise-workspace'
 import { ExerciseSession } from '../../src/main/services/learning/runtime/exercise-session'
 import { exerciseCoreError, type ExerciseClock } from '../../src/main/services/learning/runtime/exercise-limits'
-import { exercises } from '../../src/main/services/learning/content/exercises'
+import { exercises } from '../fixtures/learning/legacy-exercises'
 import type { Exercise } from '../../src/shared/contracts/practice'
 import { fakeNode, probeContext, probeNative, probeReport } from '../fixtures/learning/javascript-node-files'
 
