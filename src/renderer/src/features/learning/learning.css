@@ -125,8 +125,41 @@
 .practice-workspace { display: flex; flex-direction: column; min-height: 0; flex: 1; }
 .practice-heading, .practice-editor-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--learning-line); font-size: 13px; }
 .practice-heading > span:nth-child(2) { flex: 1; min-width: 120px; }
+.practice-workspace .practice-submit { color: var(--learning-ink); background: var(--learning-selected); font-weight: 500; }
+.practice-submit:not(:disabled):hover { border-color: var(--learning-muted); }
+.practice-submit-availability { margin: 0; padding: 6px 16px; color: var(--learning-muted); font-size: 12px; }
+.practice-submission-result { flex-shrink: 0; max-height: 190px; overflow-y: auto; padding: 10px 16px; border-bottom: 1px solid var(--learning-line); background: var(--learning-surface); font-size: 12px; color: var(--learning-body); }
+.practice-submission-summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.practice-submission-summary [data-completed="true"] { color: #22674d; }
+.practice-submission-result p { margin: 5px 0; }
+.practice-submission-result button { padding: 4px 8px; margin: 4px 8px 0 0; font-size: 12px; }
 .practice-split { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.2fr); min-height: 0; flex: 1; }
 .practice-description { overflow-y: auto; padding: 28px; line-height: 1.7; overflow-wrap: anywhere; }
+.practice-description-pane, .practice-description-tabs { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.practice-description-pane[hidden], .practice-description-content[hidden] { display: none; }
+.practice-description-tabs { flex: 1; --foreground: var(--learning-ink); --muted-foreground: var(--learning-muted); --border: var(--learning-line); }
+.practice-description-tabs [role="tablist"] { padding: 0 12px; }
+.practice-description-tabs [role="tab"] { border: 0; border-radius: 0; background: transparent; padding: 12px; font-size: 13px; }
+.practice-description-content { flex: 1; min-height: 0; overflow: auto; margin-top: 0; }
+.practice-history { padding: 20px; font-size: 13px; color: var(--learning-body); overflow-wrap: anywhere; }
+.practice-history-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.practice-history-heading h2 { margin: 0; font-size: 15px; }
+.practice-history p { margin: 12px 0; }
+.practice-history-availability { color: var(--learning-muted); font-size: 12px; }
+.practice-history-warning { color: #8b570e; }
+.practice-history-table { overflow-x: auto; }
+.practice-history table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+.practice-history th, .practice-history td { padding: 10px 8px; border-bottom: 1px solid var(--learning-line); vertical-align: top; }
+.practice-history th { font-weight: 500; color: var(--learning-muted); }
+.practice-history [data-accepted="true"] { color: #22674d; }
+.practice-submission-details { padding: 20px; font-size: 13px; color: var(--learning-body); overflow-wrap: anywhere; }
+.practice-submission-details h2 { font-size: 15px; margin: 16px 0; }
+.practice-submission-details dl > div { display: flex; gap: 12px; margin: 8px 0; }
+.practice-submission-details dt { min-width: 100px; color: var(--learning-muted); }
+.practice-submission-details dd { margin: 0; }
+.practice-source-viewer { border: 1px solid var(--learning-line); margin: 16px 0; min-height: 180px; }
+.practice-submission-details [role="alertdialog"] { border: 1px solid var(--learning-line); background: var(--learning-surface); padding: 12px; margin: 12px 0; }
+.practice-submission-details [role="alertdialog"] button { margin-right: 8px; }
 .practice-description h1 { font-size: 26px; line-height: 1.3; font-weight: 400; margin-bottom: 24px; }
 .practice-description h2 { font-size: 16px; font-weight: 500; margin-top: 28px; }
 .practice-description p, .practice-description li { font-size: 14px; color: var(--learning-body); }

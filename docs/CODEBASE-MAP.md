@@ -1,5 +1,71 @@
 # Student Coding IDE Codebase Map
 
+## Phase9E-6 formally accepted actual UI — 2026-10-26
+
+**E6-S1–S3 and Phase 9E-6 COMPLETE — PASS WITH LIMITATIONS; Phase 9E-7 NOT_STARTED.**
+User formally accepts [E6](PHASE-9E6-FINAL-ACCEPTANCE.md): S1 42 new/47 regression
+PASS, S2 41/18 PASS (38 filtered not PASS), S3 48/58 PASS and scoped checks within
+each recorded scope. No phase-wide count aggregation or verification rerun. This
+supersedes earlier review-pending/future statuses; original evidence/corrections remain.
+
+| Actual path | Renderer owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/use-submission-source.ts` | Existing E5 Source API, contiguous bounded UTF-8 chunks/identity checks, complete-only code publication, manual retry and retired read suppression |
+| `src/renderer/src/features/learning/practice/SubmissionSourceViewer.tsx` | Read-only C#/JavaScript Monaco view with isolated disposable model; no editable practice model reuse |
+| `src/renderer/src/features/learning/practice/SubmissionDetails.tsx` | In-pane metadata/back/source/availability, explicit Restore consent and duplicate/draft-context guards |
+| Existing `use-submission-history.ts`, `SubmissionHistoryPanel.tsx`, `PracticeDescription.tsx` | Retain opaque source binding privately, select/back Details, retire on exercise/language/tab/leave changes |
+| Existing `LearningWorkspace.tsx`, `PracticeWorkspace.tsx`, `use-practice.ts`, `learning.css` | Guarded private Restore plumbing to existing atomic draft/language edit and explicit replacement intent; return boolean success, no new queue/lifecycle |
+| `tests/renderer/submission-details.test.tsx`, `submission-history.test.tsx` |48 new tests PASS;58 direct History/Practice/editor replacement regression PASS; initial2 textarea CRLF assertions corrected with exact payload checks |
+| `docs/PHASE-9E6-S3-DETAILS-RESTORE-ACCEPTANCE.md`, `PHASE-9E6-FINAL-ACCEPTANCE.md` | S3/phase formally accepted; original step-local evidence/limits, documentation-only closure and E7 handoff |
+
+No Main/Preload/Judge/Storage/API/Official/Runtime/Project or dependency changes.
+S1/S2 evidence and two legacy fixture cast exclusions remain; real Monaco/Electron/
+native-host-release/durability/performance conditions remain unverified as recorded.
+E4 current-artifact NOT PASS,12 models PENDING_RUNTIME and deferred gates unchanged.
+**STOP after E6 acceptance; E7 requires separate explicit authorization. No Git publication.**
+
+## Phase9E-6 E6-S1 accepted / E6-S2 actual History tabs — 2026-10-26
+
+**E6-S1 COMPLETE — PASS WITH LIMITATIONS; E6-S2 REVIEW COMPLETED — AWAITING USER
+ACCEPTANCE (tracking IN_PROGRESS); Phase9E-6 IN_PROGRESS; E6-S3/E7 NOT_STARTED.**
+This supersedes earlier S1-pending/S2-unauthorized notes; original evidence remains.
+
+| Actual path | Renderer owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/PracticeDescription.tsx` | Exercise-keyed default Description/Submission tabs; original description content, editor remains outside tabs |
+| `src/renderer/src/features/learning/practice/use-submission-history.ts` | Committed per-exercise ALL/32-row reads, stale cursor restart/identity checks, coalesced saved refresh and retired-read suppression |
+| `src/renderer/src/features/learning/practice/SubmissionHistoryPanel.tsx` | Safe summary table, committed saved states, availability/unknown totals/recovery warnings, completion from existing observer; no details/source access |
+| `PracticeWorkspace.tsx`, `LearningWorkspace.tsx`, `learning.css` in existing Learning feature | Pane/active wiring and Learning token styling; no Run/Submit lifecycle reset |
+| `tests/renderer/submission-history.test.tsx` |41 new UI PASS;14 existing Practice/4 focused S1 integration PASS,38 S1 cases filtered, not PASS |
+| `docs/PHASE-9E6-S2-SUBMISSION-HISTORY-ACCEPTANCE.md` | S1 acceptance, S2 evidence/typecheck correction and inherited limitations/STOP |
+
+Main/Preload/Judge/Storage/API/Runtime/Project and S1 submission observer are unchanged.
+S1 retains42 new/47 regression PASS, two legacy fixture cast exclusions and unverified
+Electron/native smoke; per-file regression split corrected to14/10/23 without
+changing47. Inherited E4 current-artifact NOT PASS, native/host/release UNVERIFIED,
+storage durability/performance uncertified,12 PENDING_RUNTIME models and deferred
+gates unchanged. **STOP before E6-S3 details/source Restore.**
+
+## Phase9E-6 E6-S1 actual Submit UI — 2026-10-26
+
+**E6-S1 REVIEW COMPLETED — AWAITING USER ACCEPTANCE (tracking IN_PROGRESS);
+Phase9E-6 IN_PROGRESS; E6-S2/E7 NOT_STARTED.** Phase9E-5 remains accepted COMPLETE —
+PASS WITH LIMITATIONS. This section supersedes earlier notes that all Submit UI
+is absent or E6 is wholly unauthorized; only S1 is authorized/delivered.
+
+| Actual path | Renderer owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/use-submission.ts` | Existing E5 public API observation, immutable capture, Main ref/sequence binding, status-only ACK recovery, context retirement and committed completion |
+| `src/renderer/src/features/learning/practice/SubmissionResult.tsx` | Safe verdict vs storage, prior-source notice, committed completion/UNKNOWN/recovery warning; no hidden evidence |
+| `src/renderer/src/features/learning/practice/PracticeWorkspace.tsx`, `LearningWorkspace.tsx`, `learning.css` | Submit button/result and busy wiring; existing Learning layout and Run API retained |
+| `tests/renderer/submission-ui.test.tsx` |42 targeted UI PASS;47 existing direct renderer regression PASS, controlled APIs/editor only |
+| `docs/PHASE-9E6-S1-SUBMIT-UI-ACCEPTANCE.md` | Scope, verification history, scoped typecheck boundary/legacy fixture errors, inherited limitations and STOP |
+
+No Main/Preload/Judge/Runtime/Storage/contracts or Project changes. History UI and
+Restore are deferred. E4 current-artifact NOT PASS, native/host/release UNVERIFIED,
+storage durability/performance uncertified,12 models PENDING_RUNTIME and deferred
+gates unchanged. **STOP before E6-S2; explicit acceptance/authorization required.**
+
 ## Phase9E-5 accepted actual safe transport — 2026-10-26
 
 **Phase 9E-5 and E5-S1–S6 COMPLETE — PASS WITH LIMITATIONS; E6/E7 NOT_STARTED.**

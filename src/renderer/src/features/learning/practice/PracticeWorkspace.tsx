@@ -1,20 +1,26 @@
 import { lazy, Suspense, useState } from 'react'
 import { Play, RotateCcw } from 'lucide-react'
 import type { Exercise, ExerciseLanguage, ExerciseDraft, ExerciseSummary } from '../../../../../shared/contracts/practice'
-import { MySolutions } from './MySolutions'
+import { PracticeDescription } from './PracticeDescription'
 import { PracticeTestPanel, type TestPanelDock, type TestPanelSize } from './PracticeTestPanel'
 import type { ExerciseRunView } from './use-exercise-runtime'
 import type { PracticeSourceReplacement } from './use-practice'
+import type { useSubmission } from './use-submission'
+import { SubmissionResult } from './SubmissionResult'
+import type { RestoreSubmissionSource } from './SubmissionDetails'
 const PracticeEditor = lazy(async () => ({ default: (await import('./PracticeEditor')).PracticeEditor }))
 
 interface Props {
   exercises: ExerciseSummary[]; chapter: number; drafts: ExerciseDraft[]; exercise: Exercise | undefined
   language: ExerciseLanguage; code: string; ready: boolean; locked: boolean
   execution: ExerciseRunView; onRun(): void
+  submission: ReturnType<typeof useSubmission>
+  active?: boolean
+  sourceRevision: number; onRestore(request: RestoreSubmissionSource): boolean
   sourceReplacement?: PracticeSourceReplacement
   onOpen(exercise?: ExerciseSummary): void; onLanguage(language: ExerciseLanguage): void; onEdit(code: string): void; onReplace(code: string): void
 }
-export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, execution, onRun, onOpen, onLanguage, onEdit, onReplace, sourceReplacement }: Props) {
+export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, execution, submission, active = true, sourceRevision, onRestore, onRun, onOpen, onLanguage, onEdit, onReplace, sourceReplacement }: Props) {
   const [reset, setReset] = useState(false)
   const [tab, setTab] = useState<'tests' | 'result'>('tests')
   const [selectedCase, setSelectedCase] = useState(0)
@@ -38,20 +44,18 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
   return <div className="practice-workspace">
     <header className="practice-heading"><button type="button" disabled={locked} onClick={() => { setReset(false); onOpen() }}>← Danh sách</button>
       <span>Chương {chapter} / {exercise.title}</span><span className="practice-difficulty" data-level={exercise.difficulty}>{exercise.difficulty}</span>
-      <button type="button" className="practice-icon-button practice-run" disabled={locked || execution.busy} aria-label="Run" title="Run"
+      <button type="button" className="practice-icon-button practice-run" disabled={locked || execution.busy || submission.view.busy} aria-label="Run" title="Run"
         onClick={() => { setTab('result'); if (panelSize === 'collapsed') setPanelSize('open'); onRun() }}><Play aria-hidden="true" fill="currentColor" /></button>
-      <button type="button" disabled title="Submit — chưa khả dụng">Submit</button>
+      <button type="button" className="practice-submit" disabled={locked || !!submission.disabledReason}
+        title={submission.disabledReason ?? 'Submit'} aria-describedby="practice-submit-availability"
+        onClick={() => { void submission.submit() }}>Submit</button>
     </header>
+    {submission.disabledReason && <p id="practice-submit-availability" className="practice-submit-availability">{submission.disabledReason}</p>}
+    <SubmissionResult view={submission.view} staleSource={submission.staleSource} onCheck={submission.checkStatus} onCompletion={submission.refreshCompletion} />
     <div className="practice-split" data-panel-dock={panelDock} data-panel-size={panelSize}>
-      <article className="practice-description" aria-label="Description" hidden={panelDock === 'bottom' && panelSize === 'expanded'}><p className="learning-eyebrow">Description</p><h1>{exercise.title}</h1>
-        <p>{exercise.description}</p><h2>Input</h2>
-        <ul>{exercise.parameters.map(p => <li key={p.name}><code>{p.name}: {p.type}</code></li>)}</ul>
-        <h2>Output</h2><p>Trả về <code>{exercise.returnType}</code>.</p>
-        <h2>Ví dụ Input / Output</h2>{exercise.samples.map((sample, i) => <pre key={i}>Input: {JSON.stringify(sample.args)}{'\n'}Output: {JSON.stringify(sample.expected)}</pre>)}
-        <h2>Constraints</h2><ul>{exercise.constraints.map(c => <li key={c}>{c}</li>)}</ul>
-        <details><summary>Nguồn tham khảo · {exercise.source.publisher}</summary><p className="practice-source">{exercise.source.url}</p><p>{exercise.source.usage}</p></details>
-        <MySolutions key={`${exercise.id}/${language}`} solutions={[]} disabled={locked} onRestore={onReplace} />
-      </article>
+      <PracticeDescription key={exercise.id} exercise={exercise} language={language} locked={locked} active={active && !locked}
+        hidden={panelDock === 'bottom' && panelSize === 'expanded'} submission={submission} sourceRevision={sourceRevision} draftCode={code}
+        restoreBlocked={locked || execution.busy || submission.view.busy} onReplace={onReplace} onRestore={onRestore} />
       <div className="practice-code-column" hidden={panelDock === 'bottom' && panelSize === 'expanded'}>
         <div className="practice-editor-heading" hidden={panelDock === 'editor' && panelSize === 'expanded'}><span>Code Editor</span>
           <label>Ngôn ngữ <select aria-label="Ngôn ngữ bài tập" value={language} disabled={locked} onChange={e => { setReset(false); onLanguage(e.target.value as ExerciseLanguage) }}>

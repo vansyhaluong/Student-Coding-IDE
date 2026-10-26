@@ -117,7 +117,9 @@ export function usePractice(active: boolean) {
     return true
   }
   const replaceSource = (exercise: Exercise, language: ExerciseLanguage, code: string) => {
-    if (edit(exercise, language, code)) setSourceReplacement({ exerciseId: exercise.id, language, code })
+    const replaced = edit(exercise, language, code)
+    if (replaced) setSourceReplacement({ exerciseId: exercise.id, language, code })
+    return replaced
   }
   const selectLanguage = async (exercise: Exercise, language: ExerciseLanguage) => {
     if (locked.current || !await queue.flush() || !mounted.current) return false

@@ -7,6 +7,7 @@ import { useLearningCourse } from './use-learning-course'
 import { usePractice } from './practice/use-practice'
 import { PracticeWorkspace } from './practice/PracticeWorkspace'
 import { useExerciseRuntime } from './practice/use-exercise-runtime'
+import { useSubmission } from './practice/use-submission'
 
 interface Props {
   selectedChapterId: ChapterId
@@ -33,6 +34,10 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
   const language = exercise ? practice.languageFor(exercise.id) : 'csharp'
   const runtime = useExerciseRuntime({ active: active && !practice.closing,
     exerciseId: practicing && practice.ready ? exercise?.id : undefined, language })
+  const submission = useSubmission({ active: active && !practice.closing,
+    exerciseId: practicing && practice.ready ? exercise?.id : undefined, language,
+    code: exercise ? practice.codeFor(exercise, language) : '', sourceRevision: practice.sourceRevision,
+    blocked: runtime.view.busy || practice.closing })
   const navigate = (action: () => void) => {
     if (practice.closing) return
     if (!practice.hasPending()) action()
@@ -125,8 +130,15 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
         aria-labelledby={selectedChapterId !== 1 ? `${sectionId}-practice-tab` : undefined}>
       {practicing && <PracticeWorkspace key={selectedChapterId} chapter={selectedChapterId} exercises={practice.summaries}
         exercise={exercise} drafts={practice.state.drafts} language={language} code={exercise ? practice.codeFor(exercise, language) : ''}
-        ready={practice.ready} locked={practice.closing} execution={runtime.view} sourceReplacement={practice.sourceReplacement}
-        onRun={() => { if (exercise && active && !practice.closing) void runtime.run({ exerciseId: exercise.id, language,
+        ready={practice.ready} locked={practice.closing} active={active} sourceRevision={practice.sourceRevision}
+        execution={runtime.view} submission={submission} sourceReplacement={practice.sourceReplacement}
+        onRestore={request => {
+          if (!exercise || exercise.id !== request.exerciseId || !active || practice.closing || !practice.ready
+            || runtime.view.busy || submission.view.busy || language !== request.expectedLanguage
+            || practice.sourceRevision !== request.expectedDraftRevision || practice.codeFor(exercise, language) !== request.expectedDraftCode) return false
+          return practice.replaceSource(exercise, request.language, request.code)
+        }}
+        onRun={() => { if (exercise && active && !practice.closing && !submission.view.busy) void runtime.run({ exerciseId: exercise.id, language,
           code: practice.codeFor(exercise, language), sourceRevision: practice.sourceRevision }) }} onOpen={e => navigate(() => {
           setSelectedExercises(s => ({ ...s, [selectedChapterId]: e?.id }))
           if (!e) void practice.open()
