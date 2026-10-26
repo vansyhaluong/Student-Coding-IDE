@@ -3,7 +3,7 @@ import { EXERCISE_LIMITS } from '../../../../shared/contracts/exercise'
 import type { JavascriptExecutionFailure, JavascriptSyntaxResult } from '../../../../shared/contracts/javascript-execution'
 import { validateJavascriptSyntaxResult } from '../../../../shared/contracts/javascript-execution-validation'
 import { DomainError } from '../../../errors/app-error'
-import type { JavascriptHarnessFiles, JavascriptNodeResolver, JavascriptPreparedExecution, JavascriptSyntaxChecker } from './javascript-execution-contracts'
+import type { JavascriptHarnessFiles, JavascriptNodeResolver, JavascriptHarnessPreparation, JavascriptSyntaxChecker } from './javascript-execution-contracts'
 import type { ExercisePhaseContext, LearningProcessResult, LearningProcessResultPort } from './exercise-runtime-adapter'
 import type { LearningProcessSpec } from './windows-exercise-adapter'
 import { FixedJavascriptHarness } from './javascript-harness'
@@ -42,7 +42,7 @@ export class NodeJavascriptSyntaxChecker implements JavascriptSyntaxChecker {
   private active = false
   constructor(private readonly harness: FixedJavascriptHarness, private readonly resolver: JavascriptNodeResolver) {}
   processSpec(): LearningProcessSpec | null { return this.plan }
-  async check(input: JavascriptPreparedExecution, files: JavascriptHarnessFiles, context: ExercisePhaseContext,
+  async check(input: JavascriptHarnessPreparation, files: JavascriptHarnessFiles, context: ExercisePhaseContext,
     process: LearningProcessResultPort): Promise<JavascriptSyntaxResult> {
     if (this.active) throw exerciseCoreError('ADMISSION_CLOSED')
     this.active = true

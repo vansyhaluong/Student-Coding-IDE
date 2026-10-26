@@ -47,7 +47,7 @@ describe('E3-S1 input-only signature seams and legacy compatibility', () => {
     expect(() => javascriptInputRequest([1, 2], { parameterTypes: ['int32'], returnType: 'int32', sampleCount: 1 }, 0)).toThrow()
     expect(() => javascriptSignaturePreparation(signature, 21, '', { parameterTypes: ['boolean'], returnType: 'int32', sampleCount: 21 })).toThrow()
   })
-  it('defines synchronous private observations without adding public exports or wiring', () => {
+  it('defines synchronous private observations without adding public exports or IPC wiring', () => {
     const observations: OfficialCaseObservation[] = [
       { language: 'csharp', caseIndex: 0, process: null, kind: 'RETURNED', actual: 3, stdout: '', stderr: '' },
       { language: 'javascript', caseIndex: 0, process: null, kind: 'USER_EXCEPTION', stdout: '', stderr: '' },
@@ -58,6 +58,6 @@ describe('E3-S1 input-only signature seams and legacy compatibility', () => {
     const consumer: OfficialSettledCaseConsumer = () => 'STOP'
     expect(observations.map(consumer)).toEqual(Array(5).fill('STOP'))
     expect(readFileSync('src/shared/contracts/index.ts', 'utf8')).not.toMatch(/official-case-plan|official-execution|execution-plan|execution-json/)
-    expect(readFileSync('src/main/services/learning/exercise-service.ts', 'utf8')).not.toMatch(/acquireOfficialCasePlan|OfficialSettledCaseConsumer/)
+    expect(readFileSync('src/main/ipc/exercise-ipc-service.ts', 'utf8')).not.toMatch(/runOfficial|OfficialSettledCaseConsumer|official-case-plan/)
   })
 })

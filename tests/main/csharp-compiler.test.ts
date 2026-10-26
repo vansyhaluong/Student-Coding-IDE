@@ -50,6 +50,13 @@ async function fixture(exitCode = 1, output = 'Solution.cs(1,2): error CS1002: C
 }
 
 describe('Roslyn compile orchestration (controlled ports, not real compilation)', () => {
+  it('charges physical invalid UTF8 bytes before diagnostic decoding/redaction', async () => {
+    const f = await fixture(), control = vi.mocked(f.native.control).getMockImplementation()!
+    vi.mocked(f.native.control).mockImplementation((h, op) => { control(h, op); if (op === 'resume') f.sample.stdout = Buffer.from([255]) })
+    await f.compiler.compile(f.input, f.context)
+    expect(f.context.output).toHaveBeenCalledWith('stdout', '', 1)
+    expect(f.context.output).not.toHaveBeenCalledWith('stdout', '', 3)
+  })
   it('requires nonzero plus known source diagnostic, streams raw accounting without raw presentation', async () => {
     const f = await fixture(), result = await f.compiler.compile(f.input, f.context)
     expect(result.result).toMatchObject({ status: 'FAILED', exitCode: 1, failure: { kind: 'COMPILE_ERROR' } })

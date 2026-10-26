@@ -7,6 +7,10 @@ import { exerciseCoreError } from './runtime/exercise-limits'
 import type { ExerciseCleanupSnapshot } from '../../../shared/contracts/exercise'
 import type { OfficialPackageCase } from './content/exercise-package-contracts'
 import type { ExecutionValue } from './runtime/execution-plan'
+import type { ExerciseRunRequest } from '../../../shared/contracts/exercise'
+import type { ExerciseWorkspace } from './runtime/exercise-workspace'
+import type { OfficialAdapterFactory, OfficialLanguageAdapter, OfficialLanguageEvidence } from './runtime/official-execution-contracts'
+import type { ExerciseRuntimeAdapter } from './runtime/exercise-runtime-adapter'
 
 export interface OfficialPlanIdentity {
   readonly exerciseId: string
@@ -18,6 +22,52 @@ export interface OfficialPlanIdentity {
   readonly officialHash: string
   readonly comparatorId: 'exact-typed'
   readonly comparatorVersion: 1
+}
+
+/** Same Core binding identity throughout acquisition, language execution and
+ * cleanup. Construction is synchronous; acquisition/factory run only in Prepare. */
+export function bindOfficialCasePlan(registry: ExercisePackageRegistry, expected: OfficialPlanIdentity,
+  owner: Omit<OfficialPlanOwner, 'currentPhase' | 'retainContent'>, request: Readonly<ExerciseRunRequest>, workspace: ExerciseWorkspace,
+  create: OfficialAdapterFactory) {
+  let phase: ExerciseExecutionPhase, context: ExercisePhaseContext
+  let delegate: OfficialLanguageAdapter | undefined, plan: OfficialCasePlan | undefined, release: (() => void) | undefined
+  let settled: OfficialLanguageEvidence | undefined
+  let acquired = false, identity = expected
+  const get = () => { if (!delegate) throw exerciseCoreError('RESULT_PENDING'); return delegate }
+  const adapter: ExerciseRuntimeAdapter & { hasNextCase(): boolean } = {
+    async runPhase(p, c) {
+      phase = p; context = c
+      if (!owner.packageOwner.isCurrent()) throw exerciseCoreError('RESULT_INVALIDATED')
+      if (p === 'prepare') {
+        if (delegate) throw exerciseCoreError('ADMISSION_CLOSED')
+        delegate = create(request, workspace, async () => {
+          plan = await acquireOfficialCasePlan(registry, expected, { ...owner,
+            currentPhase: () => ({ phase, context }), retainContent: r => { release = r } })
+          acquired = true; identity = plan.identity
+          return { execution: plan.execution, representInput: plan.representInput }
+        })
+      }
+      await get().runPhase(p, c)
+    },
+    hasNextCase: () => get().hasNextCase(),
+    verifyBetweenCases: c => get().verifyBetweenCases!(c),
+    async terminate(reason) { await delegate?.terminate(reason) },
+    async settleObservers() { await delegate?.settleObservers() },
+    async evidence() { return delegate ? delegate.evidence() : { members: [], retained: [], activeProcesses: 0, totalProcesses: 0,
+      observerSettled: true, coverageComplete: true, unresolvedErrors: false } },
+    async release() { await delegate?.release() },
+    async closeHandles() { await delegate?.closeHandles() },
+  }
+  const evidence = (): OfficialLanguageEvidence => settled ?? delegate?.officialEvidence() ?? {
+    cases: [], notRunCaseIndices: [], failure: { kind: 'INFRASTRUCTURE_FAILURE', phase: 'prepare', caseIndex: null } }
+  return { adapter, evidence, identity: () => identity, planAcquired: () => acquired,
+    releaseContent() {
+      // Capture aliases of bounded Runtime data, not another payload clone; the
+      // language delegate/plan are then forgotten after final VERIFIED cleanup.
+      settled ??= evidence()
+      release?.(); release = undefined; delegate = undefined; plan = undefined
+    },
+  }
 }
 /** Trusted Main caller only: supplied by the already admitted operation/Core.
  * Not a request validator or an alternative admission/cleanup lifecycle. */

@@ -1,7 +1,7 @@
 # Phase 9E-3 — Official Runtime Design
 
-2026-10-25. **DESIGN APPROVED — E3-D1–D4 APPROVED. Phase9E-3 IN_PROGRESS — E3-S1.**
-Only E3-S1 is implementation-authorized. Original survey/proposal statements below record the planning task; the dated approval/delivery record at the end supersedes their authorization status. Future-step descriptions remain planned scope.
+2026-10-25. **DESIGN APPROVED — E3-D1–D4 APPROVED. Phase9E-3 IN_PROGRESS — AWAITING FINAL ACCEPTANCE.**
+The user accepts **E3-S1–S5 COMPLETE — PASS WITH LIMITATIONS** and authorizes S6 only. [S6 final review](PHASE-9E3-FINAL-ACCEPTANCE.md) is **PASS WITH LIMITATIONS — REVIEW COMPLETED, AWAITING USER ACCEPTANCE**, tracking IN_PROGRESS. Original records below remain historical evidence.9E-4 remains NOT_STARTED; no later implementation or performance mutation campaign is authorized.
 Original planning-task evidence: source survey/design/implementation planning
 only, without production code, Runtime execution, tests, build, profiling or
 resource changes. S1 delivery is recorded separately at the end and in its report.
@@ -500,3 +500,134 @@ The user **APPROVES the Phase9E-3 design, six-step plan and E3-D1–D4**, and ex
 | E3-D4 — APPROVED | Six steps; eight-ID pilot in both languages, accepted before expansion to63 | Each later step needs its own authorization |
 
 [S1 acceptance](PHASE-9E3-S1-PRIVATE-CONTRACTS-ACCEPTANCE.md): implementation delivered **PASS WITH LIMITATIONS — awaiting user acceptance**. Main-private leased identity/input contracts, pure signature/harness seams and existing strict JSON kernel extraction only. No adapter execution, service admission, Core/Registry/native lifecycle or public IPC/DTO change. Preserve all12 PENDING_RUNTIME models, Official60s UNVERIFIED, historical failures/SKIP and deferred9E1 gates. STOP before E3-S2; no commit/push/merge.
+
+## E3-S1 acceptance / E3-S2 review — 2026-10-25
+
+User accepts **E3-S1 COMPLETE — PASS WITH LIMITATIONS** (333 historical PASS,
+0 SKIP; unchanged report/failures/limitations), then authorizes **E3-S2 only**.
+[S2 review](PHASE-9E3-S2-CSHARP-OFFICIAL-RUNTIME-ACCEPTANCE.md): **PASS WITH
+LIMITATIONS**,182 unique targeted PASS (173 unit/contract +9 real native), scoped
+typecheck/lint/emission build/whitespace PASS. The existing C# implementation now
+consumes the input-only leased source, compiles once, uses fresh per-case processes
+and produces private strict-v1 evidence. Public Run mapping/constructor, Core,
+quotas, SDK/native policy and frozen data stay unchanged. Input borrow persists
+until VERIFIED barrier or Core release; full lease waits for final cleanup.
+No new design decision or architecture deviation. **S2 REVIEW COMPLETED — AWAITING
+USER ACCEPTANCE**, tracking IN_PROGRESS. S3–S6 NOT_STARTED; no production Official
+admission/consumer, JavaScript work or automatic next step. All inherited pending
+performance/release/host limitations remain.
+
+## E3-S2 acceptance / E3-S3 review — 2026-10-25
+
+User accepts **S2 COMPLETE — PASS WITH LIMITATIONS**:182 historical unique PASS,
+0 FAIL/0 SKIP, C# input/evidence/compatibility and VERIFIED cleanup/ledger proof
+retained without rerunning S2 tests. Only **S3** is subsequently authorized.
+[S3 review](PHASE-9E3-S3-JAVASCRIPT-OFFICIAL-RUNTIME-ACCEPTANCE.md): **PASS WITH
+LIMITATIONS**,279 unique executed PASS (264 controlled unit/contract +15 native).
+Fourteen native scenarios were deliberately deselected, after passing, in the
+final one-test public-parity invocation. JS uses the same input-only architecture,
+probe/syntax/execute lifecycle and strict v1 kernel, with valid FAILED exit1.
+Legacy Run wrapper, public contracts, fixed child, Core/native/Node policy and
+frozen data are unchanged. No new design decision or architecture deviation.
+**S3 REVIEW COMPLETED — AWAITING USER ACCEPTANCE**, tracking IN_PROGRESS.
+S4–S6 remain NOT_STARTED; no production admission/consumer wiring or automatic
+next step. Native coverage,12 pending performance models and general Official60s/
+host/release certification remain limited/unverified as recorded.
+
+## E3-S3 formal acceptance — 2026-10-25
+
+User accepts **E3-S3 COMPLETE — PASS WITH LIMITATIONS**, preserving the unchanged
+[S3 evidence](PHASE-9E3-S3-JAVASCRIPT-OFFICIAL-RUNTIME-ACCEPTANCE.md):279 unique
+PASS (264 unit/contract +15 native),14 final filtered SKIPs previously PASS,
+historical failures, scoped quality gates PASS, public Run compatibility,
+VERIFIED barriers/final cleanup, zero Registry ledger and private-data boundaries.
+All12 performance models remain PENDING_RUNTIME; Official Runtime60s UNVERIFIED;
+native coverage/release certification remain incomplete. This is documentation
+closure only, without new Runtime or verification evidence. **Phase9E-3 IN_PROGRESS;
+E3-S4–S6 NOT_STARTED. STOP; no further implementation authorization.**
+
+## E3-S4 authorization / review delivery — 2026-10-25
+
+User explicitly authorizes **S4 only**. [S4 review](PHASE-9E3-S4-DRIVER-HOOK-PRIVATE-ADMISSION-ACCEPTANCE.md)
+is **PASS WITH LIMITATIONS — REVIEW COMPLETED, AWAITING USER ACCEPTANCE**,
+tracking IN_PROGRESS. Existing service admission/active slot now has a Main-only
+Official capability and exact Core binding; the shared Run/Official driver keeps
+C#/JS barriers and synchronous post-RETURNED/VERIFIED CONTINUE/STOP semantics.
+Private failure/completion and cleanup facts never enter public result/event/
+last/IPC routes. Input and package tasks remain owned through cancellation and
+cleanup; the original caller12s wait is retained for explicit managed retry.
+No new decision/architecture deviation, Comparator/Verdict, public contract or
+Core/native/frozen resource policy change.221 unique PASS/0 SKIP (219 controlled
++2 native), scoped typecheck/lint/composition build/whitespace PASS. Native proof
+is current-host, small STOP-based service execution plus public Run parity only.
+All12 pending performance models and general Official60s/host/release obligations
+remain unverified. **STOP; S5/S6 NOT_STARTED.**
+
+## E3-S4 accepted closure / E3-S5 pilot review — 2026-10-25
+
+The user formally accepts **E3-S4 COMPLETE — PASS WITH LIMITATIONS**. Its
+[unchanged report](PHASE-9E3-S4-DRIVER-HOOK-PRIVATE-ADMISSION-ACCEPTANCE.md)
+matches approved plan Section6:221 unique historical PASS/0 FAIL/0 SKIP
+(219 controlled +2 native). No S4 test rerun or historical evidence rewrite.
+All historical failures/native coverage limitations remain.
+
+Only the exact eight-ID S5 pilot is now authorized. [S5 report](PHASE-9E3-S5-OFFICIAL-RUNTIME-PILOT-ACCEPTANCE.md)
+delivers **PASS WITH LIMITATIONS — REVIEW COMPLETED, AWAITING USER ACCEPTANCE**,
+tracking IN_PROGRESS:40 unique PASS/0 FAIL/0 SKIP (4 contracts +36 actual native
+tests),16/16 full exercise/language pairs,162 returned Official cases,238 Jobs
+including controlled failures and public Run regressions. Barriers/final cleanup
+VERIFIED, final Registry ledgers zero; input-only/private publication boundaries
+and public Run compatibility preserved. No production code correction, new
+decision, architecture/policy/public-contract/frozen-resource change or Git
+publication. Scoped typecheck/lint/test-fixture emission/receipt audit/diff checks
+PASS. Prior reports and dirty work are preserved.
+
+All12 performance models remain **PENDING_RUNTIME**; general Official Runtime60s,
+other target hosts, installed/reliability/release certification and full63×2
+remain **UNVERIFIED**. Pilot success does not discharge these obligations.
+**Phase9E-3 IN_PROGRESS; E3-S1–S4 COMPLETE — PASS WITH LIMITATIONS;
+E3-S5 REVIEW COMPLETED — AWAITING USER ACCEPTANCE (IN_PROGRESS);
+E3-S6 NOT_STARTED. STOP; no S6 authorization.**
+
+## E3-S5 formal user acceptance / closure — 2026-10-25
+
+The user formally accepts **E3-S5 COMPLETE — PASS WITH LIMITATIONS** based on
+[the unchanged S5 report](PHASE-9E3-S5-OFFICIAL-RUNTIME-PILOT-ACCEPTANCE.md).
+Preserved historical evidence:40 tests PASS/0 FAIL/0 SKIP (4 contract +36 native),
+16/16 exercise/language pairs,162 Official cases,238 native Jobs, VERIFIED barriers
+and final cleanup, Registry ledger zero, scoped public Run/Main-private isolation
+and typecheck/lint/fixture-build/diff checks PASS; no production code change.
+
+Historical failures and limitations remain unchanged. All12 performance models
+remain **PENDING_RUNTIME**; general Official Runtime60s remains **UNVERIFIED**;
+release certification and target-host verification remain incomplete. This is a
+documentation-only acceptance closure: no tests/native integration/build/lint/
+benchmarks rerun, no production/resources/fixtures/old acceptance evidence edited,
+and no commit/push/merge. Earlier review records remain historical.
+
+**E3-S5 COMPLETE — PASS WITH LIMITATIONS; E3-S6 NOT_STARTED;
+Phase9E-3 IN_PROGRESS. STOP; no S6 or Phase9E-4 implementation authorized.**
+
+## E3-S6 full catalogue review / Phase9E-3 final handoff — 2026-10-25
+
+Only S6 is authorized after user-accepted S1–S5. [Final packet](PHASE-9E3-FINAL-ACCEPTANCE.md)
+delivers **PASS WITH LIMITATIONS — E3-S6 REVIEW COMPLETED, AWAITING USER ACCEPTANCE**,
+tracking IN_PROGRESS.126/126 complete exercise/language pairs PASS:110 new native
+operations/846 cases +16 unchanged S5 operations/162 cases,1008 returned cases and
+1197 full-set native Jobs. No pilot rerun, partial-prefix PASS, coverage reduction,
+batching, policy waiver or production change. Barriers/final cleanup VERIFIED,
+Registry ledgers zero, private input/public isolation and accepted Run parity kept.
+
+New S6 verification:115 unique tests PASS after corrections (5 contract/audits
++110 native); preserve initial1 filesystem-test FAIL and3 final name-filtered
+SKIPs already PASS earlier. No native failure/skip. Scoped typecheck/lint,
+test-report build,126-row receipt audit,758-file boundary integrity, document and
+diff checks PASS. New test tooling/type corrections and all older S1–S5 histories
+remain documented; old acceptance reports/S5 receipts/frozen assets are unchanged.
+
+All12 performance models remain **PENDING_RUNTIME**. Current-host63×2 correct-source
+screen passes original budgets; general Official Runtime60s, target-host/release/
+installed/reliability certification remain **UNVERIFIED**. No slow fixtures,
+mutation campaign,20-warm+5-fresh matrix or9E-4/Submit/storage implementation.
+No commit/push/merge. **Phase9E-3 IN_PROGRESS — AWAITING FINAL ACCEPTANCE;
+E3-S6 REVIEW COMPLETED — AWAITING USER ACCEPTANCE;9E-4 NOT_STARTED. STOP.**
