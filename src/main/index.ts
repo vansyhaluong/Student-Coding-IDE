@@ -6,6 +6,11 @@ import { createPracticeStore } from './services/learning/practice-store'
 import { ExercisePackageRegistry } from './services/learning/content/exercise-package-registry'
 import { openBundledExerciseResources } from './services/learning/content/exercise-package-resources-runtime'
 import { createWindowsExerciseService } from './services/learning/exercise-service'
+import { LearningStore } from './services/learning/learning-store'
+import { SubmissionStoreFiles } from './services/learning/storage/store-files'
+import { SharedSubmissionStoreLease } from './services/learning/storage/store-lease'
+import { loadLearningNative, type LearningNativeBinding } from './services/learning/runtime/windows-exercise-native'
+import { SUBMISSION_CHANNELS } from '../shared/contracts/submission'
 import { ExerciseIpcService } from './ipc/exercise-ipc-service'
 import { EXERCISE_CHANNELS } from '../shared/contracts/exercise'
 import { AI_CHANNELS } from '../shared/contracts/ai'
@@ -140,8 +145,37 @@ void app.whenReady().then(async () => {
     packaged: app.isPackaged, resourcesPath: process.resourcesPath,
   }, scope, control))
   const exerciseIpcReference: { current?: ExerciseIpcService } = {}
+  let submissionFiles: SubmissionStoreFiles | undefined, submissionLease: SharedSubmissionStoreLease | undefined
+  let submissionStore: LearningStore | undefined, submissionNative: LearningNativeBinding | undefined
+  const submissionBinding = () => submissionNative ??= loadLearningNative()
+  // Managed dependency only, not a second operation/lifecycle coordinator.
+  const submissionStorage = {
+    name: 'LearningSubmissionStorage',
+    async start() {
+      try {
+        submissionFiles = await SubmissionStoreFiles.open(join(app.getPath('userData'), 'learning'))
+        submissionLease = new SharedSubmissionStoreLease(submissionFiles, { capability: 'student-ide-learning-job-v1',
+          acquireLease: path => submissionBinding().acquireLease(path), observation: (handle, operation) => submissionBinding().observation(handle, operation) })
+        submissionStore = new LearningStore({ files: submissionFiles, lease: submissionLease })
+      } catch {
+        // Storage unavailability must not silently fabricate save or disable sample Run.
+        console.error('Learning submission storage is unavailable; eligible submissions cannot be saved.')
+      }
+    },
+    async stop() {
+      await submissionStore?.settleReads()
+      await submissionFiles?.retryClose()
+      await submissionLease?.retryRelease()
+    },
+  }
+  const getSubmissionStore = () => {
+    if (!submissionStore) throw new DomainError({ code: 'PROCESS_FAILED', operation: 'learning:submission-storage',
+      message: 'Learning submission storage is unavailable.', retryable: true })
+    return submissionStore
+  }
   const exerciseService = createWindowsExerciseService(join(app.getPath('userData'), 'learning', 'exercise-runtime'), {
     packages: exercisePackages,
+    submissions: { store: getSubmissionStore, ownsLease: () => submissionLease?.ownsLease === true },
     onCleanupError: () => console.error('Learning cleanup/recovery failed; ownership remains tracked for retry.'),
     onSnapshot: (owner, snapshot) => exerciseIpcReference.current?.publish(owner, snapshot),
   })
@@ -149,7 +183,10 @@ void app.whenReady().then(async () => {
     (context, snapshot) => {
       authorizePreferencesFrame(context)
       webContents.fromId(context.senderId)?.mainFrame.send(EXERCISE_CHANNELS.changed, snapshot)
-    })
+    }, { store: getSubmissionStore, send: (context, status) => {
+      authorizePreferencesFrame(context)
+      webContents.fromId(context.senderId)?.mainFrame.send(SUBMISSION_CHANNELS.changed, status)
+    } })
   exerciseIpcReference.current = exerciseIpc
   const practiceIpc = new PracticeIpcService(ipcRegistry, practiceStore, authorizePreferencesFrame,
     (owner, channel, payload) => {
@@ -406,6 +443,7 @@ void app.whenReady().then(async () => {
     searchIpc,
     terminalIpc,
     // Additive Learning barrier; relative order of every existing service stays intact.
+    submissionStorage,
     exerciseService,
     exerciseIpc,
     windowManager,

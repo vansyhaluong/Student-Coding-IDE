@@ -4,6 +4,7 @@ import type { AppResult } from '../../shared/contracts/app-error'
 import type { IpcRendererLike } from './lifecycle'
 import { invokeSafely } from './invoke'
 import { parseAppResult } from './result'
+import type { LearningOrder } from './learning-order'
 
 interface UnloadPort {
   addEventListener(event: 'unload', listener: () => void): void
@@ -14,7 +15,7 @@ const invalid = (operation: string): AppResult<ExerciseSnapshot> => ({ ok: false
 
 /** Narrow semantic capability. State below only filters transport ordering, never grants ownership. */
 export function createExerciseBridge(ipc: IpcRendererLike,
-  lifetime: UnloadPort | undefined = typeof window === 'undefined' ? undefined : window): ExerciseApi {
+  lifetime: UnloadPort | undefined = typeof window === 'undefined' ? undefined : window, order?: LearningOrder): ExerciseApi {
   const listeners = new Set<(snapshot: ExerciseSnapshot) => void>()
   let current: ExerciseSnapshot | undefined, buffered: ExerciseSnapshot | undefined
   let highestGeneration = 0, runsPending = 0, subscribed = false, disposed = false
@@ -26,6 +27,7 @@ export function createExerciseBridge(ipc: IpcRendererLike,
     if (snapshot.generation < highestGeneration) return false
     if (snapshot.generation === highestGeneration && (!current || current.sessionId !== snapshot.sessionId
       || !sameContext(snapshot, current) || snapshot.sequence < current.sequence)) return false
+    if (order && !order.accept('RUN', snapshot.sessionId, snapshot.generation)) return false
     highestGeneration = snapshot.generation; current = structuredClone(snapshot); return true
   }
   const wrapped = (_event: unknown, value: unknown) => {
@@ -39,6 +41,7 @@ export function createExerciseBridge(ipc: IpcRendererLike,
       return
     }
     if (!current) return
+    if (order && !order.current('RUN', s.sessionId, s.generation)) return
     if (s.sessionId !== current.sessionId || s.generation !== current.generation || !sameContext(s, current) || s.sequence <= current.sequence) return
     current = structuredClone(s)
     for (const listener of [...listeners]) if (listeners.has(listener)) {
@@ -56,9 +59,10 @@ export function createExerciseBridge(ipc: IpcRendererLike,
       const r = validateExerciseRunRequest(request)
       if (disposed || !r.ok) return invalid(EXERCISE_CHANNELS.run)
       runsPending++
+      const epoch = order?.epoch
       const result = response(await invokeSafely(ipc, EXERCISE_CHANNELS.run, r.value), EXERCISE_CHANNELS.run)
       runsPending--
-      if (result.ok && (disposed || result.value.exerciseId !== r.value.exerciseId || result.value.language !== r.value.language
+      if (result.ok && (disposed || epoch !== order?.epoch || result.value.exerciseId !== r.value.exerciseId || result.value.language !== r.value.language
         || result.value.sourceRevision !== r.value.sourceRevision || !accept(result.value))) return invalid(EXERCISE_CHANNELS.run)
       const pending = buffered
       if (!runsPending) buffered = undefined
@@ -69,17 +73,20 @@ export function createExerciseBridge(ipc: IpcRendererLike,
     async snapshot(request) {
       const r = validateExerciseSessionReference(request)
       if (disposed || !r.ok) return invalid(EXERCISE_CHANNELS.snapshot)
+      const epoch = order?.epoch
       const result = response(await invokeSafely(ipc, EXERCISE_CHANNELS.snapshot, r.value), EXERCISE_CHANNELS.snapshot)
       if (result.ok && (result.value.sessionId !== r.value.sessionId || result.value.generation !== r.value.generation
-        || disposed || !accept(result.value))) return invalid(EXERCISE_CHANNELS.snapshot)
+        || disposed || epoch !== order?.epoch || !accept(result.value))) return invalid(EXERCISE_CHANNELS.snapshot)
       return result
     },
     async stop(request) {
       const r = validateExerciseStopRequest(request)
       if (disposed || !r.ok) return invalid(EXERCISE_CHANNELS.stop)
+      const epoch = order?.epoch
       if (current?.sessionId === r.value.sessionId && current.generation === r.value.generation) current = undefined
       const result = response(await invokeSafely(ipc, EXERCISE_CHANNELS.stop, r.value), EXERCISE_CHANNELS.stop)
-      if (result.ok && (disposed || highestGeneration > r.value.generation || result.value.sessionId !== r.value.sessionId || result.value.generation !== r.value.generation)) return invalid(EXERCISE_CHANNELS.stop)
+      if (result.ok && (disposed || epoch !== order?.epoch || order && !order.current('RUN', r.value.sessionId, r.value.generation)
+        || highestGeneration > r.value.generation || result.value.sessionId !== r.value.sessionId || result.value.generation !== r.value.generation)) return invalid(EXERCISE_CHANNELS.stop)
       return result
     },
     onChanged(listener) {
