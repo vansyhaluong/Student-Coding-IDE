@@ -1,0 +1,607 @@
+{
+  "ch2-01": {
+    "reference": {
+      "csharp": "176a10a7892945d6b7aea5deba42fdc2c90dc1717c094ba09f0707070fc2bddb",
+      "javascript": "2a87df9510d4a1797ec0788032603a8f11552c38ff8f7546ea4f09d6a77661d9"
+    },
+    "source": {
+      "csharp": "e20c1630023fde911163d5b7263bbc2ced696b260114aa066887a538cfd5cd07",
+      "javascript": "579c226342b1a09156caae40b64cc79b8e4068cb8303ad3813462e1fd4c5d49a"
+    },
+    "functionName": "Sum"
+  },
+  "ch2-02": {
+    "reference": {
+      "csharp": "d98f2c93d9e8b81aea92542a919b406e3ccd0f5adbb5f9dd36e74be7a25be5e1",
+      "javascript": "b61bad4ba6d79483e12b7b6e8da5841e6ecc5ce6d99a309310b1fe8ea54b0745"
+    },
+    "source": {
+      "csharp": "1481e1cfa56f21076542850cf408a3415f2548778a86813e716297a25c99abd5",
+      "javascript": "dca3ae1e49821e12ea9391f6b5551428083ff64f64900d6915fa2f4eb0741bf7"
+    },
+    "functionName": "Perimeter"
+  },
+  "ch2-03": {
+    "reference": {
+      "csharp": "adbacf8afa0f40fa3fce6fcbcbe165776f2c59e5c994d10e1d7d700353091338",
+      "javascript": "5f03c4407aa743b2357587d1c0b860ee21be1f5cde9154ce1c21f85b91efea97"
+    },
+    "source": {
+      "csharp": "ae3e67fd139ab518dfd9dbc210754ae1c571a79656f48279ab680f2c4b46d533",
+      "javascript": "f3534909459928b1b4174e3d32956b4ca791fa0190dc8fbf548f3fa994066710"
+    },
+    "functionName": "Seconds"
+  },
+  "ch2-05": {
+    "reference": {
+      "csharp": "f5458e6a38850d435080f71fa9e0d9042003bbadc414f8a4919d083b039b5a70",
+      "javascript": "f69423055f74bc0fa7e5eb710ba337a95b888119ee08e6a7ded4b542b511019f"
+    },
+    "source": {
+      "csharp": "df78e7d34ee53df30aac0e4f2b0a5a2705d28f1904f586f1de3578eea78269c0",
+      "javascript": "909d1a68709d5751b5cca960c7c7ba4ae85f90256947234ce6dce3ecf4b696c7"
+    },
+    "functionName": "DigitSum3"
+  },
+  "ch2-06": {
+    "reference": {
+      "csharp": "c334f3d8e47cb903d77c7171078121c95a46869071ecd00f625f0a587c90ebac",
+      "javascript": "cce7b8417e7130f2dc1199b20473a317cde3f156fcce2e59f9aa438791343c2c"
+    },
+    "source": {
+      "csharp": "3471a41558e96459f0fd466290fc9190fa438f6fa046509519b8fddbe64877d8",
+      "javascript": "a0baa0073b6c81abfadf043764f9f73f5d2ddc304d357583216b5ee071fe0a14"
+    },
+    "functionName": "Reverse3"
+  },
+  "ch2-07": {
+    "reference": {
+      "csharp": "9b57823e51a0196467fca87eccaeda28a0ee7d37889789ca73f59ebeec6c53cd",
+      "javascript": "19702603a0bc8e7a53dc6129fb74fc8ed9818bea9d38008caff3967b3b4511b8"
+    },
+    "source": {
+      "csharp": "e891921fa7b84cd271367881ea64dd5eb7641e85781233da84d96dbab5e276c3",
+      "javascript": "1b1be7ced941f13e835694061f91d6962c592550e612fb46318d6aca6eb17d05"
+    },
+    "functionName": "Clock"
+  },
+  "ch2-08": {
+    "reference": {
+      "csharp": "19f5f91e187363b1304206ca58153d0c7226ca99043d5f5648edc8de800601f2",
+      "javascript": "19c6cb30cef6c87d020a0009e65b5c1e0c1525b11d6e6295134a109d08e67782"
+    },
+    "source": {
+      "csharp": "60b631877a1ed76c5cddc078d75c0a0738120b33cd49d7c66ee6083d815f374b",
+      "javascript": "02ae2058202dfef9e0c2a03f325642288f00470fb9d3cdf1a5005267c7bfe8dc"
+    },
+    "functionName": "Boxes"
+  },
+  "ch2-09": {
+    "reference": {
+      "csharp": "1d63ae80c053d19d479be678a6dc41c239fe581a895ae87ecdd64df27fc8b066",
+      "javascript": "bf4b120623659865d419c325aba8e4b22451b119ff8182489aa75d2d3dec5c59"
+    },
+    "source": {
+      "csharp": "c205854aca84664d22412bce53750f94e3eb801e76175ab07dd5bb2b3e361e9a",
+      "javascript": "c0a697b32ab7017fdced8af62c9227e56d6c9d9f933632b631adb79968d9dd82"
+    },
+    "functionName": "ProgressionSum"
+  },
+  "ch3-01": {
+    "reference": {
+      "csharp": "3b03cbd0f884f41f850a40e4d5d41c7deedd189770c338d012b4719bbb135cc3",
+      "javascript": "d33ccbea319cc62628e0b702e9ccd53ed611d41900ce1de5bc9fccec8012bd10"
+    },
+    "source": {
+      "csharp": "ebd633b5f47b1496fe946a5c13bf74e6465796b8e0f0feb39f1f387e56338c0f",
+      "javascript": "4ec330e506e3317db07d59ff44e2fa08eabb09e0f3c84d0267c33e2f4c94e9ec"
+    },
+    "functionName": "IsEven"
+  },
+  "ch3-02": {
+    "reference": {
+      "csharp": "92f0c8c5bdc36674d7a2e9897995a624ed188b5452fca4fb45f38784a1fb9579",
+      "javascript": "f4c75da985231ab6296268d19b679f3de4dcb7b406a519c3a069e9f2bf1ecdf7"
+    },
+    "source": {
+      "csharp": "cf321a8576624c4dc3fa295b3d695bb230b73492ff57844f7d10341476ea9d72",
+      "javascript": "4dddc3082b932e5b47fc5bb181193d4132ede7fe8c85699448fea71b06c5fb4f"
+    },
+    "functionName": "Sign"
+  },
+  "ch3-03": {
+    "reference": {
+      "csharp": "29646344a1984fe27fe55028e998c1479cd0297ddfa19d4b9610f53d8ef3bff8",
+      "javascript": "ea65138338c9a16164f4d4525fda80f948cdb281dcf34a724250eea1783f4546"
+    },
+    "source": {
+      "csharp": "3e9e7bc8c4901ebdbf9e552f53ebe4e9f9497b2018e006beecfdbedf4656fb20",
+      "javascript": "a7d95b4ef04fe348f307949a2779f4557cee7d8dcf4435b1deedfe2207499e9b"
+    },
+    "functionName": "Max3"
+  },
+  "ch3-05": {
+    "reference": {
+      "csharp": "eb27d663eaa57ea5ed5cffaf4ccb9dbbb95387969d63f73f15e4a8c5c34c7698",
+      "javascript": "52f2f805257c8f7a96c2365890eaf556b563905efe424f763e556cd3fbd720c3"
+    },
+    "source": {
+      "csharp": "d2ba7021ed0209398a3e466050e15a2234dc7836ddb33c0ecbbb46e4792c0d2f",
+      "javascript": "fa9aac0576a6c1baf9e86e087a3036e3ceadf933145ec1f5711302d9ec9dc3a1"
+    },
+    "functionName": "Triangle"
+  },
+  "ch3-06": {
+    "reference": {
+      "csharp": "779ae69243112c5089a200b53a094b38199c8a398190ccb8af3c79ded26e1880",
+      "javascript": "327f9b091ed918cda2748d0618aa90d9c6409029d4770fd39765b6b103487c8d"
+    },
+    "source": {
+      "csharp": "9ed048265294a7cad1398dcd98ccd0763896b84033eba69f2c52601856cad7bc",
+      "javascript": "a4f677321dba56099db1c3c162660ef85c7410b9a1a319f5abbfa1a1e484a1b1"
+    },
+    "functionName": "DaysInMonth"
+  },
+  "ch3-08": {
+    "reference": {
+      "csharp": "bb5d69700e2cf27a3c1c446aba0941ccd01e470ea5ddd67d45343f1c00cb6001",
+      "javascript": "340d58f6a53c9e23f4621f49ccb0feb7607a325253955e9a3261c8b52a0b2b62"
+    },
+    "source": {
+      "csharp": "ef484085de7bbf8b734f27f11ea0fe91f2499684186eb529d8ef4a2120ed8f71",
+      "javascript": "1d76c0649b8e31ecab3b89c0a48ddfabaa22bfdc6483959f844090520bff0bff"
+    },
+    "functionName": "NextDate"
+  },
+  "ch3-09": {
+    "reference": {
+      "csharp": "c41d37887c3594e1b13c877a2a4e39432101e720b38290dbcf30d7f633011228",
+      "javascript": "6a2f17065cbfbd829c4cc858b6ce7d612305c8eeea0711bf09de8f069d49dd4d"
+    },
+    "source": {
+      "csharp": "0bcdcce86a1b24316f144098ae73df9b3a826eecfb74b3d19a33210434a4ac88",
+      "javascript": "17f68ced01bd53772d12463f0b303e6e68fbf897a958144f43c84a90cd63b37e"
+    },
+    "functionName": "Bill"
+  },
+  "ch4-01": {
+    "reference": {
+      "csharp": "0ef25952ac37cb3cf457d50e1899ce8316caf3548c64186b01f65901503b9322",
+      "javascript": "80b33ab11d2c6014d5fbf1294bb120d16cea7ebd9cd621c2341ad39b68ece2ee"
+    },
+    "source": {
+      "csharp": "9993986f37280d44fdfe6c7e60e48688df97beb0b8d5ad710de386c50e909e18",
+      "javascript": "583f1f46f13521eb4f9d4b2f9b26a94be2a9e619c1fa89bc33b4015203b862d4"
+    },
+    "functionName": "SumToN"
+  },
+  "ch4-02": {
+    "reference": {
+      "csharp": "257b0ffdf1cd5240200bcf7c4032f98ea03695e33721aaa0f41afa8270fa3eef",
+      "javascript": "1c22a0ca4db39b36a0f69d70ccf00b37b97b7f21f319fe7668d41a6f33127daf"
+    },
+    "source": {
+      "csharp": "6da76aec7ea1f50c6b117809b8610109036ed1b95c5c2e2c017006e9c203f867",
+      "javascript": "b498ffb1d018227567afc53c224378cd7a95fea01db5fa2004ed255b26aaa216"
+    },
+    "functionName": "Factorial"
+  },
+  "ch4-04": {
+    "reference": {
+      "csharp": "9892d31b30d7eefc0efa61bd08332f2a708ba355d6e82315644d93c57bad0c59",
+      "javascript": "3f78a1fc0ca07b4740a24000bd9a874df277cc915ee3c022ccbe34c2d930412f"
+    },
+    "source": {
+      "csharp": "12d6eb6aa001ccbd96be73411b5fb1a9c631db9ef519808499d92de48418a888",
+      "javascript": "318d98f46d2af35ace21d7fee109898da50426b7882d2e6eb5bf77926e7eb9a1"
+    },
+    "functionName": "ReverseNumber"
+  },
+  "ch4-05": {
+    "reference": {
+      "csharp": "d9e1ccb54080495d98d4b572097b0eb7261843982c1a237ac1b22fec9e689f5d",
+      "javascript": "7f7f7efa71da2edc3a62145b4b2438d018aec7be694211f025223c645d666e6b"
+    },
+    "source": {
+      "csharp": "e90bc706997486617060ce37e4b63695c439495136bd83c08382c0aca92bd52d",
+      "javascript": "835b645db66bb17922e4e8b67daf34fecefc4304f42a80125abed8a970e17d44"
+    },
+    "functionName": "Gcd"
+  },
+  "ch4-06": {
+    "reference": {
+      "csharp": "1a95b345c14177a64515ea06765ea00b4d54087b34716ebf906de128cf38eed0",
+      "javascript": "1f78b1de990036c0970f49c68a4d93ea3325b959e282dea99917bb77e3dc554b"
+    },
+    "source": {
+      "csharp": "88b66b14ab08f1197e2883366c616db89052fa010313bb94ff96ec6fb003e415",
+      "javascript": "cd76dc0f780feb759b3ca207f9ab953aef8d14266f619d1cbdd78ebe3a8b3423"
+    },
+    "functionName": "IsPrime"
+  },
+  "ch4-07": {
+    "reference": {
+      "csharp": "98da11c0c15475447650384daebdb71c98ae5e1e01d626ba5a3b9a31d435a391",
+      "javascript": "72137d9c760a84de0b696aeaa486774e401ae025f335421936775535a388ff59"
+    },
+    "source": {
+      "csharp": "c1eb04e4e928deef4b216fc19b3f2ff708bce212eeec17cca23b158201d9c554",
+      "javascript": "564f2d8740253ef36f4c7ee4817cb54b56423e538c27c4b6d4cae1ebd8b8a922"
+    },
+    "functionName": "PrimeCount"
+  },
+  "ch4-08": {
+    "reference": {
+      "csharp": "0b8e42d4b59597cdcf64d6ae6e9139f8f11c473f132072de0d6a877532f5557d",
+      "javascript": "80e2b00f9643d5a24710afa4f12a3569c34f72a9fc0a91b08a44529817621168"
+    },
+    "source": {
+      "csharp": "274fdbee43a92087ee3f5054a2bf7853a72e06045ce6d6a5aba5867c36430a84",
+      "javascript": "b883b5a46a9a638e1ff898d1b403283db21576039cb017556d634d7afa93935c"
+    },
+    "functionName": "IsPerfect"
+  },
+  "ch4-09": {
+    "reference": {
+      "csharp": "fb4b03aaf5152c0e148594c63b68075bffd83603a9d993db94ff0fa7147db65d",
+      "javascript": "8038e69b7587704d0bbe756453426ce2c407eb0948fd716880024b840c2ad82b"
+    },
+    "source": {
+      "csharp": "ea82f2e30323dbb0e110b21004c69bd75080b639ea4423f66ecdb962bc6af06b",
+      "javascript": "f1606a050252aa7153c03ad59836d93b73d4d6fcabd57bf7c3ffaf667da33c90"
+    },
+    "functionName": "Fibonacci"
+  },
+  "ch5-01": {
+    "reference": {
+      "csharp": "4e8cf8e0b39e44436c018174e486827d08c0876278256ef40d29a2dbe37542b1",
+      "javascript": "a65f4992e7fe1cd39396a85e516a3db2d48cfb4282e52fe753f68b2348e62546"
+    },
+    "source": {
+      "csharp": "dcca23b7c5607953046bddde62054ad8cbd8937189668fe1f371492c730ab594",
+      "javascript": "0bd41683c29a8c33f9b011c344bf324cea2118ff01a719c508a6d6f9fc8af66c"
+    },
+    "functionName": "LastWordLength"
+  },
+  "ch5-02": {
+    "reference": {
+      "csharp": "96ad2e7f822f17bfaaf08243392398d4e2cf9a88c0fd7f1764f9087e9a29919d",
+      "javascript": "324008fdcb82cf5c6db82998dbc8040fd5497a9015c3a4c5fcb1a698ac09e6f0"
+    },
+    "source": {
+      "csharp": "e5c8a6838bfc62046e2f03594854fc6cb24193ba2669987c8f08a4999e824c1d",
+      "javascript": "525992537beb2be10fc204ba04b68e6c0a5a7ccdd463b1d77c4d64e413e65352"
+    },
+    "functionName": "FindFirst"
+  },
+  "ch5-04": {
+    "reference": {
+      "csharp": "a691531df266fc38973e27ebf812f01a013769288eafe3db7783580485a9d4e9",
+      "javascript": "bab2fba2d233b587b43837b27ca26370c19bc74e763fc68a652c3943b8a3aaec"
+    },
+    "source": {
+      "csharp": "1b604f61ea561bfb78e2178cd970cd8ab15f8602fa4b515b374f30d4ec265439",
+      "javascript": "1a39307e86ff927725ed8185ebd4b59942bba420f1eebfa33dfd7eb2d8119d98"
+    },
+    "functionName": "ReverseWords"
+  },
+  "ch5-05": {
+    "reference": {
+      "csharp": "84bcd555d2f9c98321ceaed821f254c32e0d657fa0698f24eb7bd28b86cc9863",
+      "javascript": "7b27b39ecc4f014837310d02dc42524d1bc3b97530df5e83baa6877d0e817e56"
+    },
+    "source": {
+      "csharp": "8fa91322720e4e43dd70d4376879dbcbfb92417d58bd53fcf1e3eff9e36c413a",
+      "javascript": "5a91bc55133db23eaeb1c65546b9eef3d270d05f7805c163056024f144f33a25"
+    },
+    "functionName": "LongestUnique"
+  },
+  "ch5-06": {
+    "reference": {
+      "csharp": "2f047fd65c4cf1672fee9723b4968e7cf79616079e3f064cd43148a2ebead717",
+      "javascript": "fa0945d1c272e33795b1562c1c21d70c0c44fa2ee4c130a47e1ce6511960b480"
+    },
+    "source": {
+      "csharp": "680643a3787c6d6b25e92ed4b97dd747fc13a74f1d836e7f2e9374c99c859d28",
+      "javascript": "71bffb7c3009d1d2d7d5bc45ed5ef682205685d8407b16cf732cb2a30a5b3dc8"
+    },
+    "functionName": "Anagram"
+  },
+  "ch5-08": {
+    "reference": {
+      "csharp": "e7e05e7db4eb367f2286898a63296600d364259e2180b6deaae10465fb357360",
+      "javascript": "2eb36fcd6c0bb651ccd72a611ad1768809a93e78dceae9cbc8414b7234d7d7ec"
+    },
+    "source": {
+      "csharp": "245bdfe6c042b65cf47d133fa1c08644d160b940426bff59c2748f81ebf9b8b5",
+      "javascript": "f264316bfaa739233989918b761c49511fec8172d27ae2b7efb933d69d4301f4"
+    },
+    "functionName": "EditDistance"
+  },
+  "ch5-09": {
+    "reference": {
+      "csharp": "40dcbcfbabc37857edeee84b2e18175d904c445e46364a1e38ad75c8436f74f9",
+      "javascript": "a129a168f863418174c46283367a36aed171334143451200e68300f925f0a509"
+    },
+    "source": {
+      "csharp": "04462f534c8b8c12ef2ded1348829f11cec5dd4b80dbaadcd06dc29e1a29fade",
+      "javascript": "0961bb3b52908794b018fec196baa6fee252831e29ff0f58b050bddb682061de"
+    },
+    "functionName": "SubsequenceCount"
+  },
+  "ch6-01": {
+    "reference": {
+      "csharp": "ab2907c2fdd9270ebaee378d30de4f7219758d464a83213cb0531531f98787e8",
+      "javascript": "6277023e1b2f4448202467267b91e42f44edbfe2ad5b92b96bf556b4594b2978"
+    },
+    "source": {
+      "csharp": "0faf24ed5bf00f1bafc218389147ff89bab9e39254085fc2023e7712dc138f87",
+      "javascript": "09f8187174571106473e678a439c6f2a51d20491910dea07c11c04e19f4f0f24"
+    },
+    "functionName": "Absolute"
+  },
+  "ch6-02": {
+    "reference": {
+      "csharp": "340fb8f40d383d4f69dd57cbe6b8423eaed94ac2f286b7bf5fb86454fe8ead43",
+      "javascript": "474f9b6e8b995bccb7ddee355abc8e9d9d0fdc30832d015223cfe6dc07eb4f81"
+    },
+    "source": {
+      "csharp": "a71700e98b1a788b2977ea498ee5960f8589dce3b63d6d2598d931bb840abe81",
+      "javascript": "95b825dde2be4da3029d624797671b2b360a3b4f05804ea5ca1d0c9b868e2303"
+    },
+    "functionName": "Power"
+  },
+  "ch6-03": {
+    "reference": {
+      "csharp": "b9f44bfcade662c65014b98f0f498e9877f2b6bc9149e661cbbd4faa6898e888",
+      "javascript": "af391f30819d668bf140e509f37484c779a578551bd056177d1680caa1e7848b"
+    },
+    "source": {
+      "csharp": "c415c03616d33ef81266a5d83c097ac7e20dc861c9777d64053b1ed5a5a36ee7",
+      "javascript": "ac27f142f6bf8e82b81486fd0f447145bef6a4c50deaf0f3590a6e10408b9ede"
+    },
+    "functionName": "Minimum"
+  },
+  "ch6-04": {
+    "reference": {
+      "csharp": "b9eb69e9c7195d4db744e879906285166f4038e9ebadb2ea39f4cc05d10f0e0c",
+      "javascript": "15a559afdf0fac90b03ab7df57332257cea7b6783855eba62a73fc876435e942"
+    },
+    "source": {
+      "csharp": "5fec2266679899f1f6db236b2cd381e24104aff358da36f9f01258143fc97730",
+      "javascript": "4532c20110833d1a4d6fb993c03628221a551595a81a4ab814dc9b6754b4d06d"
+    },
+    "functionName": "Lcm"
+  },
+  "ch6-05": {
+    "reference": {
+      "csharp": "9472e6b3dde9642c9b1cbe520be027b2370de0676a38a86b3ba6081932bdeaa7",
+      "javascript": "477de78cfabcf4fcbca941341f685dcf340d2333adc6a62d16aae163ddfc5814"
+    },
+    "source": {
+      "csharp": "c5a23d64cd257c24fed7dfa7491acf6496b52dde236bb8a513662056ac9542b9",
+      "javascript": "f540ef3d614bcdb47f3e574ba6a6cab6fbe070b68f23bb7cd4414ff97d92e65e"
+    },
+    "functionName": "PalindromeNumber"
+  },
+  "ch6-06": {
+    "reference": {
+      "csharp": "32ca78f6075e0d210fcc8be6d68713f9fa3244516bd46bf3b0c2a38aad4005a8",
+      "javascript": "67b757403804f1ad294c4f1fe07272919f523f8ef98890e735303e950156a428"
+    },
+    "source": {
+      "csharp": "45161f6bcebf31eb51bbaf49849682856298b615142511a7f8768f393db1d690",
+      "javascript": "fb729d7db7602832706d220462994d6140587a3a42cb95ebc78a1eb2485ae919"
+    },
+    "functionName": "Divisors"
+  },
+  "ch6-07": {
+    "reference": {
+      "csharp": "cef3605c88ad7e9c29093b30569963bf7befa5143f232c0cac9c479cb85a40fd",
+      "javascript": "3c73abc8d53688250060f014050f11e3d12a4c43961d3a65f010507429814567"
+    },
+    "source": {
+      "csharp": "45f717e7d9be54a4221a4f88abcf3607120611530f8f1aac0bd2496a222b6679",
+      "javascript": "7d3eed9cc987aa9b69eb879247c33f43a3c6f9cc34bb20699b9c42fb027cd06a"
+    },
+    "functionName": "Choose"
+  },
+  "ch6-08": {
+    "reference": {
+      "csharp": "2105787e826f3a36002d61f6656118ed8190534c872f42a7228b17f201bf0f96",
+      "javascript": "07a3cac8f1403931bbcfd073317ee287d22f5433d46a4465e613c9b4215da3d2"
+    },
+    "source": {
+      "csharp": "ae7b5c346e18f9af32c2ad0b22f7673ccdc4daf3395b5587e6532bb63b7de24e",
+      "javascript": "8b7cb3bc7673d92a887013f2329ac4086f6711f486e835d1959b3ee7391f315e"
+    },
+    "functionName": "DigitalRoot"
+  },
+  "ch6-09": {
+    "reference": {
+      "csharp": "efb338f5bf9d2bd4996d9f18e46a691a1dfbb0883b7b54895dd28bfd0a62ae6a",
+      "javascript": "ee869b41f16c1c1b5d4523d500041839c479002974c46dca5741bf4d61dd2539"
+    },
+    "source": {
+      "csharp": "a2d4dec1f989e0dd4caf28ed395e3728af03530bc27c1df852fa2a7e7d8e2314",
+      "javascript": "93d52db3784dbff3f1d2373ec898891c368115bdcb95b69c869c59aeb0bf12dd"
+    },
+    "functionName": "PrimesInRange"
+  },
+  "ch7-02": {
+    "reference": {
+      "csharp": "d92811e421d52bafc8028a18efc8a25f07fcf06dae7cb2454eed5a8990b0a365",
+      "javascript": "6b805cb1a3e8e42fc58d3212113f9131679e5521055c9767260f2f647beed5ad"
+    },
+    "source": {
+      "csharp": "e569165fca07ffdaa48edc2767b7ca79e8a77e20a0f9b05c0c429f01f89e7e8e",
+      "javascript": "2f0bb373e6973dbdd695b2bf9601b3332977979458eab4f3ff076036158b76a6"
+    },
+    "functionName": "MaxProfit"
+  },
+  "ch7-03": {
+    "reference": {
+      "csharp": "a7d2bf177625f48d7a72f136ff896d02090029293e6eed41dd914b55239afe54",
+      "javascript": "4354098faa0b3b3aaa18a99b55515b944cc4cc567c490931321e6f0fe02f2cf7"
+    },
+    "source": {
+      "csharp": "c9ad5fe6e18b279cc973085e305fe1b62455c0e3cad4783b97fe590add120387",
+      "javascript": "8507baac7a56a06c33a18972a7ae1216efe2bfbd5c8d43096400a35bd9d8610f"
+    },
+    "functionName": "PlusOne"
+  },
+  "ch7-04": {
+    "reference": {
+      "csharp": "4f945b9ed010d8aec267188811a697d5895d894ad6261c984dbbd911b3e8e638",
+      "javascript": "157b5dedf6fa219fc5abc68c50bee02eb117d10d6a96961d12f172e824cf0df1"
+    },
+    "source": {
+      "csharp": "4caa9417e54d9f0b0c06539064366af47637b87964d84da54cb5be3f13dc0f8d",
+      "javascript": "695bf70b93992b7717a7cf19d3155c78128e45402f16610ba41e673806df06de"
+    },
+    "functionName": "MaxSubarray"
+  },
+  "ch7-05": {
+    "reference": {
+      "csharp": "65897ae6cef6c56b8367666b67c4c14e47d584da2ea7849ca04d6373a3ab4d3c",
+      "javascript": "6ec4bd23024510f9178e92ef90e6841a273dea1a8f362185439829ffbb3e2c61"
+    },
+    "source": {
+      "csharp": "70acaf5a828b6c58a25e511c405fe51b48ca4f3fc9dc99078b7a1649e28a9da4",
+      "javascript": "42d2c8539319aabf88ce8e9c196df116c18dba2293630498da47ede48858677d"
+    },
+    "functionName": "ProductExceptSelf"
+  },
+  "ch7-06": {
+    "reference": {
+      "csharp": "1c3f4678b8d0801b1019a0bf0343ef35bc75f5bbca56d0eaed505b986f93241c",
+      "javascript": "9a90199d16dc6effc87987ae7d4ce0898bd27327c1476f5b9f3f6f7b2c8f0c7f"
+    },
+    "source": {
+      "csharp": "e3df82d15fff6cada39fd1e26c5f3edbce7a513e9007d80accdfe5eeca702c73",
+      "javascript": "facefc5596ea44755549e7bcb12308cc43ec21009f9ed3b4784bba86af4ee1b5"
+    },
+    "functionName": "SearchRotated"
+  },
+  "ch7-07": {
+    "reference": {
+      "csharp": "7282b18e04e55dab842794d5d9fbe6a2a796b5f29fbccccae93d4a1fde397b86",
+      "javascript": "03c62f9a4ac714cb79a01ba5a35c4b918094d8f09fbd85deda535aef635c3e55"
+    },
+    "source": {
+      "csharp": "c8529593758cafe75444de500ac61664cbb6ee1e4e5786312728cb91d4e3e033",
+      "javascript": "942e4244885c811564ea5b95d113cc37317303460e08166fc1025f5bed8ddda8"
+    },
+    "functionName": "FirstMissingPositive"
+  },
+  "ch7-08": {
+    "reference": {
+      "csharp": "59f6daf9064f2ed447bc2f6487db6ddb94904743d983d90c62caf1c4bacaa3ed",
+      "javascript": "34568aff20ac70bbd072a9ba1fac3a668fc4d1e6fb6c4dc2603408287f7a3e62"
+    },
+    "source": {
+      "csharp": "7ffaa0f6402c00e70b4a419d919e181b3dd4278581dfc5bd9950e7f2b30a2d99",
+      "javascript": "c306e8faa487b15746095de2071dfd31d38257c9746619dea50ed89e68b5ed4a"
+    },
+    "functionName": "TrappedWater"
+  },
+  "ch7-09": {
+    "reference": {
+      "csharp": "22ac26ae192aca84394784809f99dabd48eac83459ef570b9b6b648d3b95eb38",
+      "javascript": "d44937c8e487e1cb20d8676ffed16c83903519e7090673cf27b5f5c898d478d6"
+    },
+    "source": {
+      "csharp": "18745d160a0ec64a14b02d73b006f036085602d2bdbbf5b2905a2ed8d34e673f",
+      "javascript": "8d02e8fa6d2c01eb0d8dce568dac8c090baa8804805de5ae838190dc151262b7"
+    },
+    "functionName": "Candy"
+  },
+  "ch8-02": {
+    "reference": {
+      "csharp": "f30ace1fdf188abfd031c953d5284b7130248328a4e17f5b42d7859a382af997",
+      "javascript": "141db2a09a952394810c7177930dc90f73736c66feef7a188552745c34b16983"
+    },
+    "source": {
+      "csharp": "b99473c403ee83e8034e9ac86e085f378f5ea5d8c60cc28cece42804143c5e0f",
+      "javascript": "9ff393250b2f97d838480f81e4590c54a116161b98fd80a64a8179f4db546611"
+    },
+    "functionName": "Transpose"
+  },
+  "ch8-03": {
+    "reference": {
+      "csharp": "815cbd8aafd962d5807e0024bb96ddbaf6fb97c0b8ae2acb9e14e2803467b8ec",
+      "javascript": "8c56f2e91cdfcdb4bd2d2f08cf670f3afa54641fb2f36cc914e3deaeeda74000"
+    },
+    "source": {
+      "csharp": "9061ed64583d5a61442d57a1353df99404ee3dfaffccc3046a05af6ac90f93aa",
+      "javascript": "0f188d72671a74976d55914a9e08173567b542ef05d64fa9042ae93115af603d"
+    },
+    "functionName": "DiagonalSum"
+  },
+  "ch8-04": {
+    "reference": {
+      "csharp": "83d73f0f73f43f5bf91e4b920f11c08f26c66c0c9aa1eb3bd7a7eba3ad655700",
+      "javascript": "f1fc53ff4e222614d65ed79868f1c68b079d1422ce2a60b57a227491dcc15cb0"
+    },
+    "source": {
+      "csharp": "a1fddc5cf901fe17f9abd1c07dd75de84ee58590c2babf3b85d213e0ee5437c3",
+      "javascript": "b6c4c4ef8290be5fec39e32baa0d8d06f22cab05f9ee183c9fd748bdb5bb9816"
+    },
+    "functionName": "Spiral"
+  },
+  "ch8-05": {
+    "reference": {
+      "csharp": "0b7db440457488dcdcaa315939a3de8e0872bde63b4b3485a12f035c44d3f34e",
+      "javascript": "a4b133c890e6748acf8dea81a517fb68b7b2c72b7c822b7356a33c48f67063e3"
+    },
+    "source": {
+      "csharp": "ebba663d786459d846266faa27a211ef2df284288643a02ec7cb8d6f64a2fdab",
+      "javascript": "20004811819b82fc5c8bbfbbb8479cf8f67639f82fd17e779ebcd7351d042aa3"
+    },
+    "functionName": "ZeroRowsCols"
+  },
+  "ch8-06": {
+    "reference": {
+      "csharp": "1819bf4d1513e1e6392fbb2d63e63cff15292ff1605fb31a5c37802c560eb86d",
+      "javascript": "85351c410d1482ba1de4c862f01a2e2ca85631cbc466b451e2d6df0647022c31"
+    },
+    "source": {
+      "csharp": "82e5dd0bce5227518f16a41367a6af06df18084e61011da6030fce7ef34a438f",
+      "javascript": "73e48a20343a6c6cd6eade526407b22c683d0e20cd8cedc81b72f513f8850766"
+    },
+    "functionName": "Rotate"
+  },
+  "ch8-07": {
+    "reference": {
+      "csharp": "0dd8156d4e29fe2c8a8f2c53db8a5d6902c2c0205b7a8c1e967aae051824cbc0",
+      "javascript": "67acbf84fe58480fda96c29e3207b65acc9283a19d90d966de8d11ee3470eb58"
+    },
+    "source": {
+      "csharp": "8d9e9785bec6ca268ad82b8ce86448c3553b8239229dd5fd69afe4a6070ce224",
+      "javascript": "fae32457ae8807fb1504e787ece2cbed4e10ce00733bfd6f08a08ff100a1014e"
+    },
+    "functionName": "MaxRectangle"
+  },
+  "ch8-08": {
+    "reference": {
+      "csharp": "0be3382a64362f3de16872cbc223ddc139aa5e1e299f2090dd17d056a212ee5e",
+      "javascript": "47e2ca5267f847af42c39e6893373e2721b8b142eccb0fe7ef6fc0d3321334b3"
+    },
+    "source": {
+      "csharp": "874fa19d71017817c1633aea04f4198ef56581f32a19d502fae045362ba5bf4a",
+      "javascript": "c063c1c01271ba36a6d44b96ba04dcd915ebc72a40ec768c15f4d630ca820683"
+    },
+    "functionName": "LongestPath"
+  },
+  "ch8-09": {
+    "reference": {
+      "csharp": "243015b315eff6b472912d46150a99451614cde075b9786362ea8c80d7a4d2d7",
+      "javascript": "591ff4ff759039b8884c361dcf7580e1bc0b8468effc9e2d369d5f116b056f12"
+    },
+    "source": {
+      "csharp": "e38c4dbadf79da32a5b8ce1d3461233cad0f62ef3bd6b7e9d7c3edc69e99500c",
+      "javascript": "6081c2b228d6818969add76161a76e836b4a07363932a5f2520b0770ca8c19a2"
+    },
+    "functionName": "MinimumHealth"
+  }
+}

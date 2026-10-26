@@ -45,6 +45,18 @@ describe.skipIf(process.platform !== 'win32')('Fixed JavaScript harness workspac
     expect(JAVASCRIPT_HARNESS_SOURCE).toContain('const MAX = 1024 * 1024, VERSION = 1, DEPTH = 12')
     expect(JAVASCRIPT_HARNESS_SOURCE).toContain('function bootstrap()')
   })
+  it('prepares an Official signature/count128 without an Exercise or input/Expected data in Source.json', async () => {
+    const f = await fixture('throw Error("parse-only preparation");')
+    const { exercise, ...common } = f.input
+    const input = { ...common, exerciseId: exercise.id,
+      signature: { functionName: exercise.functionName, parameters: exercise.parameters, returnType: exercise.returnType },
+      schema: { ...common.schema, sampleCount: 128 } }
+    const files = await f.harness.prepare(input, f.context), source = JSON.parse(await readFile(files.sourcePath, 'utf8'))
+    expect(source).toEqual({ code: input.code, functionName: input.signature.functionName, schema: input.schema })
+    expect(JSON.stringify(source)).not.toMatch(/expected|visibility|hidden|testSetId|"args"/)
+    expect(await readFile(files.harnessPath, 'utf8')).toBe(JAVASCRIPT_HARNESS_SOURCE)
+    await f.harness.revalidate(input, files, f.context); await f.workspace.releaseLease()
+  })
   it.each(['source', 'harness'] as const)('rejects %s replacement or edits before launch', async name => {
     const f = await fixture(), files = await f.harness.prepare(f.input, f.context)
     const file = name === 'source' ? files.sourcePath : files.harnessPath

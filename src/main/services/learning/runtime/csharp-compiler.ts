@@ -9,7 +9,7 @@ import { WindowsExerciseRuntimeAdapter, type LearningProcessSpec } from './windo
 import type { LearningNativeBinding } from './windows-exercise-native'
 import type { ExerciseWorkspace } from './exercise-workspace'
 import { CsharpCompileWorkspace, checkCsharpWork } from './csharp-compile-workspace'
-import { generateCsharpHarness, CSHARP_ENTRY_POINT } from './csharp-harness'
+import { generateCsharpHarness, generateCsharpSignatureHarness, CSHARP_ENTRY_POINT } from './csharp-harness'
 import { CsharpDiagnostics } from './csharp-diagnostics'
 import { revalidateCsharpSdk } from './csharp-sdk-resolver'
 import { exerciseCoreError } from './exercise-limits'
@@ -70,7 +70,8 @@ export class RoslynCsharpCompiler implements CsharpCompiler {
       checkCsharpWork(phaseContext)
       if (input.workspace !== this.workspace || context.jobMemoryBytes !== EXERCISE_LIMITS.compileJobMemoryBytes
         || typeof input.code !== 'string' || input.code.length > 256 * 1024) throw exerciseCoreError('COMPILER_CONFIGURATION')
-      const harness = generateCsharpHarness(input.exercise, input.schema)
+      const harness = input.signature ? generateCsharpSignatureHarness(input.signature, input.schema)
+        : input.exercise ? generateCsharpHarness(input.exercise, input.schema) : (() => { throw exerciseCoreError('HARNESS_SCHEMA') })()
       if (!await revalidateCsharpSdk(input.sdk, phaseContext)) throw exerciseCoreError('COMPILER_DEPENDENCY')
       await files.create()
       await files.write(files.solution, input.code); await files.write(files.harness, harness)
@@ -78,20 +79,20 @@ export class RoslynCsharpCompiler implements CsharpCompiler {
       await files.write(files.response, csharpResponseFile(input.sdk, files))
       await files.verifyFiles(); checkCsharpWork(phaseContext)
       this.plan = { executable: input.sdk.dotnetPath, cwd: files.directory,
-        args: ['exec', '--fx-version', input.sdk.runtimeVersion, '--roll-forward', 'Disable', input.sdk.compilerPath, '/noconfig', `@${files.response}`] }
-      const process = await this.runtime.runProcessPhase('compile', { ...phaseContext,
-        output: (stream, text) => {
+        args: ['exec', '--fx-version', input.sdk.runtimeVersion, '--roll-forward', 'Disable', input.sdk.compilerPath, '/noconfig', `@${files.response}`],
+        observeBytes: (stream, chunk) => {
           // Core discards post-cancellation output; do not let our parser/limit
           // throw again while Policy B is draining retained native pipes.
           if (!observing || phaseContext.signal.aborted) return
-          const bytes = Buffer.byteLength(text, 'utf8'); rawBytes += bytes
+          const bytes = chunk.length; rawBytes += bytes
           // Account BEFORE normalization. Raw Roslyn paths never enter an Exercise snapshot.
           context.output(stream, '', bytes)
           if (phaseContext.signal.aborted) return
           if (rawBytes > EXERCISE_LIMITS.outputBytes) { observing = false; throw exerciseCoreError('OUTPUT_LIMIT') }
-          diagnostics.write(stream, text)
         },
-      })
+      }
+      const process = await this.runtime.runProcessPhase('compile', { ...phaseContext,
+        output: (stream, text) => { if (observing && !phaseContext.signal.aborted) diagnostics.write(stream, text) } })
       diagnostics.finish(); checkCsharpWork(phaseContext)
       if (!process || !process.processExited || !process.observerSettled || !process.stdoutSettled || !process.stderrSettled) return failed('INFRASTRUCTURE_FAILURE')
       if (process.jobMemoryLimitObserved) return failed('JOB_MEMORY_LIMIT')

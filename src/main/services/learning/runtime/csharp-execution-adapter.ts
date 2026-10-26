@@ -9,7 +9,11 @@ import { parseCsharpHarnessResponse, validateCsharpCaseResult, validateCsharpExe
 import type { Exercise } from '../../../../shared/contracts/practice'
 import { DomainError } from '../../../errors/app-error'
 import { exercises } from '../content/exercises'
-import type { CsharpCompilation, CsharpExecutionAdapter, CsharpPreparedExecution, CsharpPreparationContext, CsharpSdkResolver } from './csharp-execution-contracts'
+import type { CsharpCompilation, CsharpExecutionAdapter, CsharpPreparedExecution, CsharpPreparationContext, CsharpSdkResolver,
+  CsharpOfficialInputLoader, CsharpOfficialInputs, CsharpOfficialExecutionEvidence } from './csharp-execution-contracts'
+import { checkExecutionInput, checkExecutionSignature, type ExecutionPlan } from './execution-plan'
+import { csharpOfficialResponse } from './csharp-official-evidence'
+import type { OfficialCaseObservation } from './official-execution-contracts'
 import { classifyExerciseTermination } from './exercise-session'
 import { RoslynCsharpCompiler, csharpEnvironment } from './csharp-compiler'
 import { FilesystemCsharpSdkResolver } from './csharp-sdk-resolver'
@@ -22,12 +26,17 @@ import { WindowsExerciseRuntimeAdapter, type LearningProcessSpec } from './windo
 import type { LearningNativeBinding } from './windows-exercise-native'
 
 /** One operation; Core orchestrates one admitted execute phase per Main catalogue sample. */
-export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
+class CsharpInputExecutionAdapter implements CsharpExecutionAdapter {
   private readonly compiler: RoslynCsharpCompiler
   private readonly execution: WindowsExerciseRuntimeAdapter
   private readonly request: ExerciseRunRequest
-  private readonly exercise: Exercise
-  private readonly schema: CsharpSampleSchema
+  private source?: ExecutionPlan
+  private officialInputs?: CsharpOfficialInputs
+  private schema: CsharpSampleSchema
+  private readonly privateCases: OfficialCaseObservation[] = []
+  /** At most the current input borrow, retained through unresolved native IO.
+   * Successful cases release at VERIFIED barrier; failure cleanup releases it. */
+  private retainedInput?: Awaited<ReturnType<CsharpOfficialInputs['representInput']>>
   private prepared?: CsharpPreparedExecution
   private compilation?: CsharpCompilation
   private observation: CsharpExecutionResult = { compile: null, cases: [], notRunCaseIndices: [], failure: null }
@@ -41,17 +50,25 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
   private operationSignal?: AbortSignal
   private readonly runtimeFiles = new CsharpRuntimeFiles()
   constructor(request: Readonly<ExerciseRunRequest>, private readonly workspace: ExerciseWorkspace, native: LearningNativeBinding,
-    private readonly resolver: CsharpSdkResolver = new FilesystemCsharpSdkResolver(), catalogue: readonly Exercise[] = exercises,
+    private readonly resolver: CsharpSdkResolver, source: ExecutionPlan | CsharpOfficialInputLoader,
     private readonly resultEnvelopeBytes = 0) {
-    const checked = validateExerciseRunRequest(request), exercise = catalogue.find(e => e.id === request.exerciseId)
-    if (!checked.ok || checked.value.language !== 'csharp' || !exercise) throw exerciseCoreError('INTERNAL_ERROR')
-    this.request = checked.value; this.exercise = structuredClone(exercise)
-    this.schema = { parameterTypes: this.exercise.parameters.map(p => p.type), returnType: this.exercise.returnType, sampleCount: this.exercise.samples.length }
+    const checked = validateExerciseRunRequest(request)
+    if (!checked.ok || checked.value.language !== 'csharp') throw exerciseCoreError('INTERNAL_ERROR')
+    this.request = checked.value
+    if (typeof source === 'function') this.loadOfficial = source
+    else this.source = source
+    this.schema = { parameterTypes: source && typeof source !== 'function' ? source.signature.parameters.map(p => p.type) : [],
+      returnType: typeof source !== 'function' ? source.signature.returnType : 'int32', sampleCount: typeof source !== 'function' ? source.caseCount : 0 }
     this.observation.notRunCaseIndices = this.remaining(0)
     this.compiler = new RoslynCsharpCompiler(native, workspace)
     this.execution = new WindowsExerciseRuntimeAdapter(native, phase => phase === 'execute' ? this.plan : null, csharpEnvironment(workspace))
   }
+  private readonly loadOfficial?: CsharpOfficialInputLoader
   result(): CsharpExecutionResult {
+    if (this.loadOfficial) throw exerciseCoreError('RESULT_INVALIDATED') // Never route Official data through public Run.
+    return this.checkedResult()
+  }
+  private checkedResult(): CsharpExecutionResult {
     if (this.discarded || this.ownerInvalidated()) throw exerciseCoreError('RESULT_INVALIDATED')
     if (this.active && this.stage === 3) throw exerciseCoreError('RESULT_PENDING')
     const failure = !this.observation.failure && this.abortReason() === 'OPERATION_TIMEOUT'
@@ -59,6 +76,18 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
     const checked = validateCsharpExecutionResult({ ...this.observation, failure }, this.schema)
     if (!checked.ok) throw exerciseCoreError('INTERNAL_ERROR')
     return checked.value
+  }
+  officialResult(): CsharpOfficialExecutionEvidence {
+    if (!this.loadOfficial || !this.source) throw exerciseCoreError('RESULT_PENDING')
+    const result = this.checkedResult()
+    return structuredClone({ compile: result.compile, cases: this.privateCases, notRunCaseIndices: result.notRunCaseIndices, failure: result.failure })
+  }
+  /** Main-private borrowed evidence for the owned service/driver, including
+   * invalidated failures. Caller must not publish it or outlive this operation. */
+  officialEvidence(): CsharpOfficialExecutionEvidence {
+    if (!this.loadOfficial || this.active || this.verifying) throw exerciseCoreError('RESULT_PENDING')
+    return { compile: this.observation.compile, cases: this.privateCases, notRunCaseIndices: this.remaining(this.privateCases.length),
+      failure: !this.observation.failure && this.abortReason() === 'OPERATION_TIMEOUT' ? this.failure('TIMEOUT', 'operation') : this.observation.failure }
   }
   private remaining(from: number): number[] { return Array.from({ length: this.schema.sampleCount - from }, (_, i) => from + i) }
   private abortReason(): unknown {
@@ -80,6 +109,7 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
       const evidence = await this.evidence()
       checkCsharpWork(context)
       if (classifyExerciseTermination(evidence) !== 'VERIFIED') throw exerciseCoreError('PROCESS_UNRESOLVED')
+      this.retainedInput?.release(); this.retainedInput = undefined
       this.barrierVerified = true
     } catch (error) {
       if (!context.signal.aborted) this.observation.failure = this.failure('INFRASTRUCTURE_FAILURE', 'cleanup')
@@ -102,16 +132,26 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
     try {
       checkCsharpWork(context)
       if (phase === 'prepare') {
+        if (this.loadOfficial) {
+          this.officialInputs = await this.loadOfficial(context); checkCsharpWork(context)
+          this.source = this.officialInputs.execution
+          checkExecutionSignature(this.source.signature, this.source.caseCount)
+          this.schema = { parameterTypes: this.source.signature.parameters.map(p => p.type), returnType: this.source.signature.returnType, sampleCount: this.source.caseCount }
+          this.observation.notRunCaseIndices = this.remaining(0)
+        }
+        if (!this.source) throw exerciseCoreError('INTERNAL_ERROR')
         const sdk = await this.resolver.resolve(context); checkCsharpWork(context)
         if (sdk.state !== 'AVAILABLE') this.reject(this.failure(sdk.state === 'MISSING' ? 'SDK_MISSING' : 'SDK_INCOMPATIBLE', 'prepare'))
-        for (let i = 0; i < this.schema.sampleCount; i++) {
+        // Full Official data is already validated by the trusted reader. Do not
+        // clone/serialize those inputs in Prepare; use the current execute budget.
+        for (let i = 0; !this.loadOfficial && i < this.schema.sampleCount; i++) {
           checkCsharpWork(context)
           const request = validateCsharpHarnessRequest({ protocolVersion: CSHARP_HARNESS_VERSION, caseIndex: i,
-            args: this.exercise.samples[i]?.args }, this.schema, i)
+            args: checkExecutionInput(this.source, i) }, this.schema, i)
           if (!request.ok) this.reject(this.failure('INFRASTRUCTURE_FAILURE', 'prepare'))
         }
         await this.runtimeFiles.capture(sdk.selection, context)
-        this.prepared = { workspace: this.workspace, sdk: sdk.selection, exercise: this.exercise, code: this.request.code, schema: this.schema }
+        this.prepared = { workspace: this.workspace, sdk: sdk.selection, signature: this.source.signature, code: this.request.code, schema: this.schema }
       } else if (phase === 'compile') {
         if (!this.prepared) throw exerciseCoreError('INTERNAL_ERROR')
         this.compilation = await this.compiler.compile(this.prepared, context)
@@ -143,7 +183,9 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
   private async execute(context: ExercisePhaseContext): Promise<void> {
     const caseIndex = this.observation.cases.length
     const phase = { ...context, deadline: Math.min(context.deadline, performance.now() + EXERCISE_LIMITS.executeCaseMs) }
-    let bytes = 0, observing = true, overflow = false, processAttempted = false
+    let bytes = 0, stderrBytes = 0, observing = true, overflow = false, processAttempted = false
+    let privateCase: OfficialCaseObservation | undefined
+    let borrow: Awaited<ReturnType<CsharpOfficialInputs['representInput']>> | undefined
     const stdout: Buffer[] = []
     const failed = (kind: CsharpFailureKind, operation = false): CsharpCaseResult => ({ caseIndex, outcome: 'FAILED', actual: null,
       stdout: '', stderr: '', exitCode: processAttempted ? this.execution.processResult()?.exitCode ?? null : null,
@@ -156,15 +198,27 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
       const artifact = this.compilation.artifact
       await this.compiler.revalidateArtifact(artifact, phase)
       await this.runtimeFiles.validate(phase)
-      const input = validateCsharpHarnessRequest({ protocolVersion: CSHARP_HARNESS_VERSION, caseIndex,
-        args: this.exercise.samples[caseIndex].args }, this.schema, caseIndex)
-      if (!input.ok) throw exerciseCoreError('INTERNAL_ERROR')
+      if (!this.source) throw exerciseCoreError('INTERNAL_ERROR')
+      const args = checkExecutionInput(this.source, caseIndex)
+      let stdin: string
+      if (this.officialInputs) {
+        borrow = await this.officialInputs.representInput(caseIndex)
+        checkCsharpWork(phase)
+        stdin = JSON.stringify(borrow.data)
+      } else {
+        const input = validateCsharpHarnessRequest({ protocolVersion: CSHARP_HARNESS_VERSION, caseIndex, args }, this.schema, caseIndex)
+        if (!input.ok) throw exerciseCoreError('INTERNAL_ERROR')
+        stdin = JSON.stringify(input.value)
+      }
+      checkExecutionInput(this.source, caseIndex) // Current owner/phase guard immediately before launch.
+      checkCsharpWork(phase)
       this.plan = { executable: this.prepared.sdk.dotnetPath, cwd: dirname(artifact.assemblyPath),
         args: ['exec', '--fx-version', this.prepared.sdk.runtimeVersion, '--roll-forward', 'Disable',
-          '--runtimeconfig', artifact.runtimeConfigPath, artifact.assemblyPath], stdin: JSON.stringify(input.value),
+          '--runtimeconfig', artifact.runtimeConfigPath, artifact.assemblyPath], stdin,
         observeBytes: (stream, chunk) => {
           if (!observing || phase.signal.aborted) return
           bytes += chunk.length
+          if (stream === 'stderr') stderrBytes += chunk.length
           context.output(stream, '', chunk.length) // Physical bytes, before decoding/parsing or redaction.
           if (bytes > EXERCISE_LIMITS.outputBytes) { overflow = true; throw exerciseCoreError('OUTPUT_LIMIT') }
           if (!phase.signal.aborted && stream === 'stdout') stdout.push(Buffer.from(chunk))
@@ -173,7 +227,13 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
       const process = await this.execution.runProcessPhase('execute', { ...phase, output: () => {} })
       checkCsharpWork(phase)
       if (!process || !process.observerSettled || !process.processExited || process.failure && process.failure !== 'NONZERO_EXIT') throw exerciseCoreError('INTERNAL_ERROR')
-      if (process.exitCode !== 0) result = failed('RUNTIME_ERROR')
+      if (this.loadOfficial) {
+        privateCase = csharpOfficialResponse(Buffer.concat(stdout), stderrBytes, this.schema, caseIndex, process)
+        result = privateCase.kind === 'RETURNED' ? { caseIndex, outcome: 'RETURNED', actual: privateCase.actual as CsharpCaseResult['actual'],
+          stdout: privateCase.stdout, stderr: privateCase.stderr, exitCode: 0, failure: null }
+          : privateCase.kind === 'USER_EXCEPTION' || privateCase.kind === 'INVALID_RESULT'
+            ? { ...failed('RUNTIME_ERROR'), stdout: privateCase.stdout, stderr: privateCase.stderr } : failed('RUNTIME_ERROR')
+      } else if (process.exitCode !== 0) result = failed('RUNTIME_ERROR')
       else {
         let decoded: string | undefined
         try { decoded = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(Buffer.concat(stdout)) } catch { /* Untrusted malformed response, not host metadata. */ }
@@ -191,15 +251,40 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
       else if (reason === 'OUTPUT_LIMIT' || overflow || why === 'OUTPUT_LIMIT') result = failed('OUTPUT_LIMIT')
       else if (reason === 'EXECUTE_TIMEOUT' || why === 'PHASE_DEADLINE' || performance.now() >= phase.deadline) result = failed('TIMEOUT')
       else if (this.execution.processResult()?.jobMemoryLimitObserved) result = failed('JOB_MEMORY_LIMIT')
-      else if (phase.signal.aborted || this.sealed) { this.discarded = true; throw error }
+      else if (phase.signal.aborted || this.sealed) {
+        if (this.loadOfficial) this.privateCases.push({ caseIndex, language: 'csharp', kind: 'INTERRUPTED', reason: 'CANCELLED',
+          process: processAttempted ? this.execution.processResult() : null })
+        this.discarded = true; throw error
+      }
       else result = failed('INFRASTRUCTURE_FAILURE')
-    } finally { observing = false; this.plan = null }
-    if (!this.fits(result)) result = failed('OUTPUT_LIMIT')
+    } finally {
+      observing = false; this.plan = null
+      if (borrow) {
+        if (processAttempted) this.retainedInput = borrow
+        else borrow.release()
+      }
+    }
+    if (!this.fits(result)) { result = failed('OUTPUT_LIMIT'); privateCase = undefined }
     if (!validateCsharpCaseResult(result, this.schema).ok) result = failed('INFRASTRUCTURE_FAILURE')
     // A synchronous result guard cannot turn a late successful response into success.
     if (!result.failure && (performance.now() >= phase.deadline || phase.signal.aborted)) {
       if (phase.signal.aborted) { this.discarded = true; throw phase.signal.reason }
       result = failed('TIMEOUT')
+    }
+    if (this.loadOfficial) {
+      if (!result.failure) {
+        try { checkExecutionInput(this.source!, caseIndex) } // No late success after lease/owner revocation.
+        catch (error) { this.discarded = true; throw error }
+      }
+      if (!privateCase || result.failure && !['RUNTIME_ERROR'].includes(result.failure.kind)) {
+        const kind = result.failure?.kind
+        privateCase = { caseIndex, language: 'csharp', process: processAttempted ? this.execution.processResult() : null,
+          ...(kind === 'TIMEOUT' || kind === 'OUTPUT_LIMIT' || kind === 'JOB_MEMORY_LIMIT'
+            ? { kind: 'INTERRUPTED' as const, reason: kind } : { kind: 'INFRASTRUCTURE_FAILURE' as const, reason: 'UNKNOWN' as const }) }
+      }
+      // Share retained actual/console payloads with the bounded runtime prefix.
+      if (privateCase.kind === 'RETURNED' && result.outcome === 'RETURNED') privateCase = { ...privateCase, actual: result.actual! }
+      this.privateCases.push(privateCase)
     }
     this.observation.cases.push(result); this.observation.notRunCaseIndices = this.remaining(caseIndex + 1)
     this.observation.failure = result.failure
@@ -234,7 +319,30 @@ export class WindowsCsharpExecutionAdapter implements CsharpExecutionAdapter {
       coverageComplete: samples.every(s => s.coverageComplete), observerSettled: samples.every(s => s.observerSettled),
       unresolvedErrors: samples.some(s => s.unresolvedErrors) }
   }
-  async release(): Promise<void> { await this.all(r => r.release()) }
+  async release(): Promise<void> {
+    await this.all(r => r.release())
+    this.retainedInput?.release(); this.retainedInput = undefined
+  }
   async closeHandles(): Promise<void> { await this.all(r => r.closeHandles()) }
   diagnostics() { return { compile: this.compiler.runtime.diagnostics(), execute: this.execution.diagnostics() } }
+}
+
+/** Existing public Run constructor and mapping retained. */
+export class WindowsCsharpExecutionAdapter extends CsharpInputExecutionAdapter {
+  constructor(request: Readonly<ExerciseRunRequest>, workspace: ExerciseWorkspace, native: LearningNativeBinding,
+    resolver: CsharpSdkResolver = new FilesystemCsharpSdkResolver(), catalogue: readonly Exercise[] = exercises, resultEnvelopeBytes = 0) {
+    const exercise = catalogue.find(e => e.id === request.exerciseId)
+    if (!exercise) throw exerciseCoreError('INTERNAL_ERROR')
+    const copy = structuredClone(exercise)
+    super(request, workspace, native, resolver, { signature: { functionName: copy.functionName, parameters: copy.parameters, returnType: copy.returnType },
+      caseCount: copy.samples.length, inputAt: index => copy.samples[index].args }, resultEnvelopeBytes)
+  }
+}
+
+/** Main-private port only; caller owns acquisition, retained work and final lease
+ * release through the SAME admitted Core operation. No service/IPC wiring. */
+export function createOfficialCsharpExecutionAdapter(request: Readonly<ExerciseRunRequest>, workspace: ExerciseWorkspace,
+  native: LearningNativeBinding, load: CsharpOfficialInputLoader, resolver: CsharpSdkResolver = new FilesystemCsharpSdkResolver()) {
+  // Reserve bounded private case headers/native facts in the existing result budget.
+  return new CsharpInputExecutionAdapter(request, workspace, native, resolver, load, 128 * 1024)
 }

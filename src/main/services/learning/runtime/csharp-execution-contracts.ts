@@ -4,6 +4,9 @@ import type { ExerciseRunRequest } from '../../../../shared/contracts/exercise'
 import type { Exercise } from '../../../../shared/contracts/practice'
 import type { ExercisePhaseContext, ExerciseRuntimeAdapter } from './exercise-runtime-adapter'
 import type { ExerciseWorkspace } from './exercise-workspace'
+import type { ExecutionPlan, ExecutionSignature } from './execution-plan'
+import type { OfficialCaseObservation } from './official-execution-contracts'
+import type { OfficialCasePlan } from '../official-case-plan'
 
 /** Every asynchronous operation stays under Core's admitted monotonic phase deadline. */
 export type CsharpPreparationContext = Pick<ExercisePhaseContext, 'signal' | 'deadline'>
@@ -29,9 +32,23 @@ export interface CsharpPreparedExecution {
   readonly workspace: ExerciseWorkspace
   readonly sdk: CsharpSdkSelection
   /** Main catalogue record; never Renderer-provided signature, samples or expected output. */
-  readonly exercise: Readonly<Exercise>
+  readonly exercise?: Readonly<Exercise>
+  readonly signature?: ExecutionSignature
   readonly code: string
   readonly schema: CsharpSampleSchema
+}
+/** Acquired by the trusted caller INSIDE this adapter's admitted Prepare. Only
+ * the input view and its accounted representation capability cross this port. */
+export interface CsharpOfficialInputs {
+  readonly execution: ExecutionPlan
+  readonly representInput: OfficialCasePlan['representInput']
+}
+export type CsharpOfficialInputLoader = (context: ExercisePhaseContext) => Promise<CsharpOfficialInputs>
+export interface CsharpOfficialExecutionEvidence {
+  readonly compile: CsharpCompileResult | null
+  readonly cases: readonly OfficialCaseObservation[]
+  readonly notRunCaseIndices: readonly number[]
+  readonly failure: CsharpExecutionResult['failure']
 }
 export interface CsharpCompiledArtifact {
   readonly assemblyPath: string

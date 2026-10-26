@@ -5,6 +5,9 @@ import type { ExerciseRunRequest } from '../../../../shared/contracts/exercise'
 import type { Exercise } from '../../../../shared/contracts/practice'
 import type { ExercisePhaseContext, ExerciseRuntimeAdapter, LearningProcessResultPort } from './exercise-runtime-adapter'
 import type { ExerciseWorkspace } from './exercise-workspace'
+import type { ExecutionPlan, ExecutionSignature } from './execution-plan'
+import type { OfficialCasePlan } from '../official-case-plan'
+import type { OfficialCaseObservation } from './official-execution-contracts'
 
 export type JavascriptPreparationContext = Pick<ExercisePhaseContext, 'signal' | 'deadline'>
 /** Identity metadata is private to Main; selection is frozen/revalidated per operation. */
@@ -37,18 +40,36 @@ export interface JavascriptPreparedExecution {
   readonly sourceRevision: number
   readonly schema: JavascriptSampleSchema
 }
+/** Input-only preparation. The public legacy Exercise preparation remains valid. */
+export interface JavascriptInputPreparedExecution extends Omit<JavascriptPreparedExecution, 'exercise'> {
+  readonly exerciseId: string
+  readonly signature: ExecutionSignature
+}
+export type JavascriptHarnessPreparation = JavascriptPreparedExecution | JavascriptInputPreparedExecution
+/** Trusted loader invoked only in this adapter's already admitted Prepare. */
+export interface JavascriptOfficialInputs {
+  readonly execution: ExecutionPlan
+  readonly representInput: OfficialCasePlan['representInput']
+}
+export type JavascriptOfficialInputLoader = (context: ExercisePhaseContext) => Promise<JavascriptOfficialInputs>
+export interface JavascriptOfficialExecutionEvidence {
+  readonly syntax: JavascriptSyntaxResult | null
+  readonly cases: readonly OfficialCaseObservation[]
+  readonly notRunCaseIndices: readonly number[]
+  readonly failure: JavascriptExecutionResult['failure']
+}
 export interface JavascriptHarnessFiles {
   readonly sourcePath: string
   readonly harnessPath: string
 }
 export interface JavascriptHarness {
   /** Write fixed trusted assets and source as separate data; never evaluate source here. */
-  prepare(input: JavascriptPreparedExecution, context: JavascriptPreparationContext): Promise<JavascriptHarnessFiles>
+  prepare(input: JavascriptHarnessPreparation, context: JavascriptPreparationContext): Promise<JavascriptHarnessFiles>
   request(input: JavascriptPreparedExecution, caseIndex: number): JavascriptHarnessRequest
 }
 export interface JavascriptSyntaxChecker {
   /** Parse only in owned child, compile phase 30s/2GiB; never evaluate top-level source. */
-  check(input: JavascriptPreparedExecution, files: JavascriptHarnessFiles,
+  check(input: JavascriptHarnessPreparation, files: JavascriptHarnessFiles,
     context: ExercisePhaseContext, process: LearningProcessResultPort): Promise<JavascriptSyntaxResult>
 }
 export interface JavascriptExecutionAdapter extends ExerciseRuntimeAdapter {

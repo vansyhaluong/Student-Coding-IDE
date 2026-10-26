@@ -1,6 +1,7 @@
 import { performance } from 'node:perf_hooks'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { WindowsCsharpExecutionAdapter } from '../../src/main/services/learning/runtime/csharp-execution-adapter'
+import { WindowsCsharpExecutionAdapter, createOfficialCsharpExecutionAdapter } from '../../src/main/services/learning/runtime/csharp-execution-adapter'
+import type { CsharpOfficialInputLoader } from '../../src/main/services/learning/runtime/csharp-execution-contracts'
 import type { CsharpSdkResolver, CsharpSdkSelection } from '../../src/main/services/learning/runtime/csharp-execution-contracts'
 import type { LearningJobSample, LearningNativeBinding } from '../../src/main/services/learning/runtime/windows-exercise-native'
 import type { ExercisePhaseContext } from '../../src/main/services/learning/runtime/exercise-runtime-adapter'
@@ -26,7 +27,7 @@ beforeEach(() => {
   mocks.artifact.mockResolvedValue(undefined); mocks.capture.mockResolvedValue(undefined); mocks.validate.mockResolvedValue(undefined)
 })
 const response = (actual: unknown = 8) => JSON.stringify({ protocolVersion: 1, caseIndex: 0, outcome: 'RETURNED', actual, stdout: '', stderr: '' })
-function fixture(wire: Buffer | ((request: { caseIndex: number; args: unknown[] }) => Buffer) = Buffer.from(response()), exitCode = 0, exercise: Exercise = exercises[0], envelope = 0) {
+function fixture(wire: Buffer | ((request: { caseIndex: number; args: unknown[] }) => Buffer) = Buffer.from(response()), exitCode = 0, exercise: Exercise = exercises[0], envelope = 0, official?: CsharpOfficialInputLoader) {
   const sample: LearningJobSample = { rootPid: 123, members: [123], activeProcesses: 1, totalProcesses: 1,
     retained: [{ pid: 123, created: 'identity', signaled: false }], quotaBytes: 512 * 1024 ** 2, peakJobCommitBytes: 0,
     reportedJobCommitBytes: 0, coverageComplete: true, observerSettled: false, exitCode: 259, events: [],
@@ -52,7 +53,8 @@ function fixture(wire: Buffer | ((request: { caseIndex: number; args: unknown[] 
   const resolver = { resolve: vi.fn<CsharpSdkResolver['resolve']>().mockResolvedValue({ state: 'AVAILABLE', selection: sdk }) }
   const workspace = new ExerciseWorkspace('C:\\workspace', 'exercise_12345678-1234-4234-8234-123456789abc', { acquire: async () => ({ release: async () => {} }) })
   const request = { exerciseId: exercise.id, language: 'csharp' as const, code: '', sourceRevision: 1 }
-  const adapter = new WindowsCsharpExecutionAdapter(request, workspace, native, resolver, [exercise], envelope)
+  const adapter = official ? createOfficialCsharpExecutionAdapter(request, workspace, native, official, resolver)
+    : new WindowsCsharpExecutionAdapter(request, workspace, native, resolver, [exercise], envelope)
   const abort = new AbortController()
   const context: ExercisePhaseContext = { signal: abort.signal, deadline: performance.now() + 20_000, jobMemoryBytes: null, output: vi.fn() }
   const prepare = async () => { await adapter.runPhase('prepare', context); await adapter.runPhase('compile', { ...context, jobMemoryBytes: 2 * 1024 ** 3 }); await adapter.verifyBetweenCases(context) }
@@ -185,6 +187,96 @@ describe('C# single-sample execution (mock compiler/runtime dependencies; fake n
     vi.mocked(f.native.control).mockImplementation((h, op) => { control(h, op); if (op === 'resume') f.abort.abort(exerciseCoreError('OWNER_LOST')) })
     await expect(f.execute()).rejects.toThrow(); expect(() => f.adapter.result()).toThrow()
     await f.cleanup()
+  })
+})
+
+describe('E3-S2 Official inputs on the existing C# adapter/Core (controlled processes)', () => {
+  function inputs(count = 21) {
+    let current = true
+    const release = vi.fn(), read = vi.fn((i: number) => { if (!current) throw exerciseCoreError('ADMISSION_CLOSED'); return [i, -i] })
+    const execution = { signature: { functionName: 'Sum', parameters: [{ name: 'a', type: 'int32' as const }, { name: 'b', type: 'int32' as const }], returnType: 'int32' as const }, caseCount: count, inputAt: read }
+    const represent = vi.fn(async (caseIndex: number) => ({ data: { protocolVersion: 1, caseIndex, args: read(caseIndex) }, release }))
+    const load = vi.fn(async () => ({ execution, representInput: represent }))
+    return { load, release, read, represent, revoke: () => { current = false } }
+  }
+  it.each([21, 128])('prepares/compiles once and executes %i ordered cases without Expected', async count => {
+    const source = inputs(count), f = fixture(typedWire, 0, exercises[0], 0, source.load)
+    await f.prepare()
+    expect(mocks.compile.mock.calls[0][0]).not.toHaveProperty('exercise')
+    expect(mocks.compile.mock.calls[0][0]).toMatchObject({ signature: { functionName: 'Sum' }, schema: { sampleCount: count } })
+    for (let i = 0; i < count; i++) {
+      await f.execute(); await f.adapter.verifyBetweenCases(f.context)
+    }
+    const result = f.adapter.officialResult()
+    expect(result.cases.map(c => [c.caseIndex, c.kind, c.kind === 'RETURNED' ? c.actual : null])).toEqual(Array.from({ length: count }, (_, i) => [i, 'RETURNED', 0]))
+    expect(result.notRunCaseIndices).toEqual([]); expect(source.load).toHaveBeenCalledOnce(); expect(mocks.compile).toHaveBeenCalledOnce()
+    expect(f.resolver.resolve).toHaveBeenCalledOnce(); expect(source.release).toHaveBeenCalledTimes(count)
+    expect(f.native.start).toHaveBeenCalledTimes(count); expect(mocks.artifact).toHaveBeenCalledTimes(count)
+    expect(mocks.validate).toHaveBeenCalledTimes(count)
+    expect(() => f.adapter.result()).toThrow()
+    for (const [, raw] of vi.mocked(f.native.submitInput).mock.calls) expect(Object.keys(JSON.parse(raw.toString()))).toEqual(['protocolVersion', 'caseIndex', 'args'])
+    await f.cleanup()
+  })
+  it.each(['USER_EXCEPTION', 'INVALID_RESULT', 'malformed'] as const)('preserves %s evidence and exact attempted prefix/suffix', async error => {
+    const source = inputs(3), f = fixture(request => request.caseIndex !== 1 ? typedWire(request) : Buffer.from(error === 'malformed' ? '{bad' :
+      JSON.stringify({ protocolVersion: 1, caseIndex: 1, outcome: 'FAILED', error, stdout: '', stderr: '' })), 0, exercises[0], 0, source.load)
+    await f.prepare(); await f.execute(); await f.adapter.verifyBetweenCases(f.context)
+    await expect(f.execute()).rejects.toThrow()
+    expect(f.adapter.officialResult()).toMatchObject({ cases: [{ kind: 'RETURNED' }, { kind: error === 'malformed' ? 'PROTOCOL_FAILURE' : error }], notRunCaseIndices: [2] })
+    expect(source.release).toHaveBeenCalledTimes(1); expect(f.adapter.hasNextCase()).toBe(false); await f.cleanup()
+    expect(source.release).toHaveBeenCalledTimes(2)
+  })
+  it('blocks revoked owner input before launch and never releases content itself', async () => {
+    const source = inputs(), f = fixture(typedWire, 0, exercises[0], 0, source.load)
+    await f.prepare(); source.revoke()
+    await expect(f.execute()).rejects.toThrow(); expect(f.native.start).not.toHaveBeenCalled()
+    expect(f.adapter.officialResult()).toMatchObject({ cases: [{ kind: 'INFRASTRUCTURE_FAILURE', process: null }], notRunCaseIndices: Array.from({ length: 20 }, (_, i) => i + 1) })
+    await f.cleanup()
+  })
+  it.each(['OPERATION_TIMEOUT', 'OUTPUT_LIMIT', 'EXECUTE_TIMEOUT'] as const)('keeps trusted %s ahead of late returned output', async reason => {
+    const source = inputs(3), f = fixture(typedWire, 0, exercises[0], 0, source.load)
+    await f.prepare()
+    const control = vi.mocked(f.native.control).getMockImplementation()!
+    vi.mocked(f.native.control).mockImplementation((h, op) => { control(h, op); if (op === 'resume') f.abort.abort(exerciseCoreError(reason)) })
+    await expect(f.execute()).rejects.toThrow()
+    expect(f.adapter.officialResult()).toMatchObject({ cases: [{ kind: 'INTERRUPTED', reason: reason === 'OUTPUT_LIMIT' ? 'OUTPUT_LIMIT' : 'TIMEOUT' }], notRunCaseIndices: [1, 2] })
+    expect(source.release).not.toHaveBeenCalled(); await f.cleanup(); expect(source.release).toHaveBeenCalledOnce()
+  })
+  it('suppresses private publication after owner cancellation', async () => {
+    const source = inputs(), f = fixture(typedWire, 0, exercises[0], 0, source.load)
+    await f.prepare(); f.abort.abort(exerciseCoreError('OWNER_LOST'))
+    await expect(f.execute()).rejects.toThrow(); expect(() => f.adapter.officialResult()).toThrow()
+    expect(f.native.start).not.toHaveBeenCalled(); await f.cleanup()
+  })
+  it('discards a returned response when the current owner guard is revoked during output', async () => {
+    const source = inputs(), f = fixture(typedWire, 0, exercises[0], 0, source.load)
+    await f.prepare(); vi.mocked(f.context.output).mockImplementation(() => source.revoke())
+    await expect(f.execute()).rejects.toThrow(); expect(() => f.adapter.officialResult()).toThrow()
+    expect(f.native.start).toHaveBeenCalledOnce(); await expect(f.execute()).rejects.toThrow()
+    expect(f.native.start).toHaveBeenCalledOnce(); await f.cleanup()
+  })
+  it('retains a pending input borrow until cancellation settles, releases it and never launches', async () => {
+    const source = inputs(), f = fixture(typedWire, 0, exercises[0], 0, source.load)
+    let finish!: () => void, entered!: () => void
+    const ready = new Promise<void>(r => { entered = r }), wait = new Promise<void>(r => { finish = r })
+    source.represent.mockImplementationOnce(async caseIndex => { entered(); await wait; return { data: { protocolVersion: 1, caseIndex, args: [0, 0] }, release: source.release } })
+    await f.prepare(); const work = f.execute(); void work.catch(() => {})
+    await ready; f.abort.abort(exerciseCoreError('OWNER_LOST'))
+    expect(source.release).not.toHaveBeenCalled(); expect(f.native.start).not.toHaveBeenCalled()
+    finish(); await expect(work).rejects.toThrow()
+    expect(source.release).toHaveBeenCalledOnce(); expect(f.native.start).not.toHaveBeenCalled()
+    expect(() => f.adapter.officialResult()).toThrow(); await f.cleanup()
+    expect(f.adapter.officialEvidence().cases).toMatchObject([{ kind: 'INTERRUPTED', reason: 'CANCELLED', process: null }])
+    expect(f.adapter.officialEvidence().notRunCaseIndices).toEqual(Array.from({ length: 20 }, (_, i) => i + 1))
+  })
+  it('retains the current input on a failed native barrier until cleanup releases the same resources', async () => {
+    const source = inputs(), f = fixture(typedWire, 0, exercises[0], 0, source.load)
+    await f.prepare(); await f.execute(); expect(source.release).not.toHaveBeenCalled()
+    const evidence = f.adapter.evidence.bind(f.adapter)
+    vi.spyOn(f.adapter, 'evidence').mockImplementationOnce(async () => ({ ...await evidence(), observerSettled: false }))
+    await expect(f.adapter.verifyBetweenCases(f.context)).rejects.toThrow()
+    expect(source.release).not.toHaveBeenCalled(); expect(f.adapter.hasNextCase()).toBe(false)
+    await f.cleanup(); expect(source.release).toHaveBeenCalledOnce(); expect(f.native.start).toHaveBeenCalledOnce()
   })
 })
 

@@ -4,6 +4,33 @@ import type { ExerciseCleanupSnapshot, ExerciseEndReason } from '../../../../sha
 import type { CsharpCompileResult, CsharpExecutionFailure } from '../../../../shared/contracts/csharp-execution'
 import type { JavascriptSyntaxResult, JavascriptExecutionFailure } from '../../../../shared/contracts/javascript-execution'
 import type { OfficialPlanIdentity } from '../official-case-plan'
+import type { ExerciseRuntimeAdapter } from './exercise-runtime-adapter'
+import type { ExerciseRunRequest, ExerciseSessionReference } from '../../../../shared/contracts/exercise'
+import type { ExerciseWorkspace } from './exercise-workspace'
+import type { ExecutionPlan } from './execution-plan'
+import type { OfficialCasePlan } from '../official-case-plan'
+
+/** Aliased settled language evidence; never a public result/publication port. */
+export interface OfficialLanguageEvidence {
+  readonly compile?: CsharpCompileResult | null
+  readonly syntax?: JavascriptSyntaxResult | null
+  readonly cases: readonly OfficialCaseObservation[]
+  readonly notRunCaseIndices: readonly number[]
+  readonly failure: CsharpExecutionFailure | JavascriptExecutionFailure | null
+}
+export interface OfficialLanguageAdapter extends ExerciseRuntimeAdapter {
+  hasNextCase(): boolean
+  officialEvidence(): OfficialLanguageEvidence
+}
+export type OfficialAdapterFactory = (request: Readonly<ExerciseRunRequest>, workspace: ExerciseWorkspace,
+  load: (context: import('./exercise-runtime-adapter').ExercisePhaseContext) => Promise<{
+    execution: ExecutionPlan; representInput: OfficialCasePlan['representInput']
+  }>) => OfficialLanguageAdapter
+/** Capability bound to ONE Main operation; public reference routes reject it. */
+export interface OfficialOperationHandle {
+  readonly reference: Readonly<ExerciseSessionReference>
+  completion(): Promise<OfficialExecutionCompletion>
+}
 
 /** Private observations are execution evidence, never comparator outcomes/verdicts. */
 export type OfficialCaseObservation = {
@@ -25,6 +52,8 @@ export type OfficialSettledCaseConsumer = (observation: Readonly<OfficialCaseObs
  * Runtime buffering/accounting and construction belong to later authorized steps. */
 export interface OfficialExecutionCompletion {
   readonly identity: Readonly<OfficialPlanIdentity>
+  /** False means failure before a trusted plan/count was acquired, not exhaustion. */
+  readonly planAcquired: boolean
   readonly disposition: 'EXHAUSTED' | 'CONSUMER_STOP' | 'EXECUTION_FAILURE' | 'INVALIDATED'
   readonly compile: Readonly<CsharpCompileResult | JavascriptSyntaxResult> | null
   readonly cases: readonly OfficialCaseObservation[]

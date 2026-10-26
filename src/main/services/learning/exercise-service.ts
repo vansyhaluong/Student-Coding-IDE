@@ -14,12 +14,15 @@ import type { ExerciseExecutionPhase, ExerciseLeaseProvider, ExerciseRuntimeAdap
 import { WindowsExerciseRuntimeAdapter, type LearningProcessSpec } from './runtime/windows-exercise-adapter'
 import { WindowsExerciseLeaseProvider } from './runtime/windows-exercise-lease'
 import { loadLearningNative, type LearningNativeBinding } from './runtime/windows-exercise-native'
-import { WindowsCsharpExecutionAdapter } from './runtime/csharp-execution-adapter'
+import { WindowsCsharpExecutionAdapter, createOfficialCsharpExecutionAdapter } from './runtime/csharp-execution-adapter'
 import { runCsharpSamples } from './runtime/csharp-orchestrator'
-import { WindowsJavascriptExecutionAdapter } from './runtime/javascript-execution-adapter'
+import { WindowsJavascriptExecutionAdapter, createOfficialJavascriptExecutionAdapter } from './runtime/javascript-execution-adapter'
 import { runJavascriptSamples } from './runtime/javascript-orchestrator'
 import type { ExercisePackageRegistry } from './content/exercise-package-registry'
 import { packageRunBinding } from './package-run-binding'
+import { bindOfficialCasePlan, type OfficialPlanIdentity } from './official-case-plan'
+import { executionDriverState, runExecutionDriver, type ExecutionDriverState } from './runtime/execution-driver'
+import type { OfficialAdapterFactory, OfficialExecutionCompletion, OfficialOperationHandle, OfficialSettledCaseConsumer } from './runtime/official-execution-contracts'
 
 type Navigation = (event: unknown, url: string, inPlace: boolean, mainFrame: boolean) => void
 export interface ExerciseOwner {
@@ -48,9 +51,12 @@ export interface ExerciseServiceOptions {
   clock?: ExerciseClock
   onSnapshot?: (owner: number, snapshot: ExerciseSnapshot) => void
   onCleanupError?: (error: AppError) => void
+  /** Main-only configuration. The adapter factory is invoked in admitted Prepare. */
+  official?: { registry: ExercisePackageRegistry; createAdapter: OfficialAdapterFactory }
 }
 interface OwnerEntry { owner: ExerciseOwner; accepts: boolean; remove(): void }
 interface Operation {
+  kind: 'RUN' | 'OFFICIAL'
   owner: number
   ownerEntry: OwnerEntry
   generation: number
@@ -60,6 +66,8 @@ interface Operation {
   lastPublished: number
   completion: Promise<ExerciseSnapshot>
   execution: ExerciseExecution
+  official?: { binding: ReturnType<typeof bindOfficialCasePlan>; driver: ExecutionDriverState;
+    consumer: OfficialSettledCaseConsumer; tasks: Set<Promise<unknown>>; cleanupFailure: boolean }
 }
 interface RecoveryEntry {
   workspace: ExerciseWorkspace
@@ -166,30 +174,59 @@ export class ExerciseService {
     owner.on('render-process-gone', lost); owner.on('destroyed', destroyed)
   }
   run(owner: number, value: ExerciseRunRequest): ExerciseSnapshot {
+    const op = this.admit(owner, value)
+    this.publish(op)
+    return this.observation(op)
+  }
+  /** Trusted Main capability only. No public flag, IPC, renderer DTO or queue. */
+  runOfficial(owner: number, value: ExerciseRunRequest, identity: Readonly<OfficialPlanIdentity>, consumer: OfficialSettledCaseConsumer): OfficialOperationHandle {
+    if (!value || !identity || identity.exerciseId !== value.exerciseId || typeof consumer !== 'function') throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
+    const op = this.admit(owner, value, { identity: Object.freeze({ ...identity }), consumer })
+    return Object.freeze({ reference: Object.freeze({ sessionId: op.session.snapshot().sessionId, generation: op.generation }),
+      completion: async () => {
+        try { await op.completion }
+        catch { op.official!.cleanupFailure = !op.session.snapshot().cleanup.cleanupComplete }
+        // A retry observes this SAME retained operation. Pending language work
+        // rejects rather than fabricating a completed prefix/unattempted suffix.
+        return this.officialCompletion(op)
+      } })
+  }
+  private admit(owner: number, value: ExerciseRunRequest, official?: { identity: Readonly<OfficialPlanIdentity>; consumer: OfficialSettledCaseConsumer }): Operation {
     const request = validateExerciseRunRequest(value)
     if (!request.ok) throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
     const entry = this.owners.get(owner)
     if (!entry || !entry.accepts || entry.owner.isDestroyed()) throw serviceError('OWNER_LOST', 'PERMISSION_DENIED')
     if (!this.started || this.sealed || this.recoveryPending || this.recoveryFailed) throw serviceError('ADMISSION_CLOSED')
     if (this.active) throw serviceError('OPERATION_BUSY') // No queue and no implicit replacement.
-    if (!this.options.createExecution) throw serviceError('LANGUAGE_ADAPTER_UNAVAILABLE', 'UNSUPPORTED')
+    if (official ? !this.options.official : !this.options.createExecution) throw serviceError('LANGUAGE_ADAPTER_UNAVAILABLE', 'UNSUPPORTED')
     const workspace = new ExerciseWorkspace(this.root, `exercise_${randomUUID()}`, this.options.leases)
-    const execution = this.options.createExecution(Object.freeze(request.value), workspace)
+    const generation = this.generation + 1
+    const tasks = new Set<Promise<unknown>>()
+    const binding = official ? bindOfficialCasePlan(this.options.official!.registry, official.identity, {
+      packageOwner: { owner: entry, generation, phase: 'prepare',
+        isCurrent: () => this.active === operation && this.isCurrent(operation),
+        check() {}, retain: task => { tasks.add(task); void task.finally(() => tasks.delete(task)).catch(() => {}) },
+        canRelease: () => operation.executionDone && !operation.session.ownsResources && tasks.size === 0 },
+      cleanup: () => operation.session.snapshot().cleanup,
+    }, Object.freeze(request.value), workspace, this.options.official!.createAdapter) : undefined
+    const execution: ExerciseExecution = binding ? { adapter: binding.adapter, phases: ['compile', 'execute'], releaseContent: binding.releaseContent }
+      : this.options.createExecution!(Object.freeze(request.value), workspace)
     if (!execution.phases.length || execution.phases.some(p => p !== 'compile' && p !== 'execute')
       || !execution.phases.includes('execute')) throw serviceError('INVALID_DRIVER_PLAN', 'INVALID_INPUT')
-    const generation = ++this.generation
+    this.generation = generation
     const session = new ExerciseSession({ request: request.value, ownerId: `webcontents:${owner}`, generation,
       hostEpoch: this.hostEpoch, workspace, adapter: execution.adapter, checkpoints: this.store(workspace), clock: this.clock })
-    const operation: Operation = { owner, ownerEntry: entry, generation, session, invalidated: false,
+    const operation: Operation = { kind: official ? 'OFFICIAL' : 'RUN', owner, ownerEntry: entry, generation, session, invalidated: false,
       executionDone: false, lastPublished: -1, execution, completion: undefined as unknown as Promise<ExerciseSnapshot> }
+    if (binding && official) operation.official = { binding, tasks, consumer: official.consumer, driver: executionDriverState(), cleanupFailure: false }
     this.last = undefined; this.active = operation
     // Begin Core prepare immediately, before returning admission to the caller.
     operation.completion = this.execute(operation, [...execution.phases])
     void operation.completion.catch(error => { if (operation.session.ownsResources) this.report(error) })
-    this.publish(operation)
-    return this.observation(operation)
+    return operation
   }
   private observation(op: Operation): ExerciseSnapshot {
+    if (op.kind !== 'RUN') throw serviceError('STALE_SESSION', 'PERMISSION_DENIED')
     const snapshot = op.session.snapshot()
     if (this.isCurrent(op) && op.execution.observation) {
       const csharp = op.execution.observation()
@@ -208,7 +245,7 @@ export class ExerciseService {
       && this.owners.get(op.owner) === op.ownerEntry && op.ownerEntry.accepts && !op.ownerEntry.owner.isDestroyed()
   }
   private publish(op: Operation): void {
-    if (!this.isCurrent(op)) return
+    if (op.kind !== 'RUN' || !this.isCurrent(op)) return
     try {
       const snapshot = this.observation(op)
       if (snapshot.sequence <= op.lastPublished) return
@@ -217,8 +254,13 @@ export class ExerciseService {
     } catch (error) { this.report(error) }
   }
   private async execute(op: Operation, phases: readonly ('compile' | 'execute')[]): Promise<ExerciseSnapshot> {
+    let retainedCleanupFailure: unknown
     try {
-      if (op.execution.orchestrate) await op.execution.orchestrate(op.session, () => this.publish(op))
+      if (op.official) await runExecutionDriver(op.session, op.execution.adapter as ReturnType<typeof bindOfficialCasePlan>['adapter'], {
+        language: op.session.snapshot().language, current: () => this.isCurrent(op), consumer: op.official.consumer,
+        currentCase: () => op.official!.binding.evidence().cases.at(-1),
+      }, op.official.driver)
+      else if (op.execution.orchestrate) await op.execution.orchestrate(op.session, () => this.publish(op))
       else {
         await op.session.runPhase('prepare'); this.publish(op)
         for (const phase of phases) {
@@ -226,31 +268,52 @@ export class ExerciseService {
           await op.session.runPhase(phase); this.publish(op)
         }
       }
-    } catch { /* Core retains execution reason/error and starts Policy B cleanup. */ }
+    } catch (error) {
+      if (op.official) {
+        op.official.cleanupFailure = true
+        if (op.session.ownsResources && op.session.snapshot().phase === 'cleanup') retainedCleanupFailure = error
+      }
+      // Core retains the same execution/cleanup tasks, including 12s caller waits.
+    }
     finally { op.executionDone = true }
+    // Official completion must not start a second12s caller wait after the
+    // driver's close failed. Keep this same task/slot for explicit managed retry.
+    if (retainedCleanupFailure) throw retainedCleanupFailure
     const snapshot = await this.cleanup(op)
-    if (!this.isCurrent(op)) throw serviceError('STALE_SESSION', 'PERMISSION_DENIED')
+    if (op.kind === 'RUN' && !this.isCurrent(op)) throw serviceError('STALE_SESSION', 'PERMISSION_DENIED')
     return snapshot
   }
   private async cleanup(op: Operation, reason: ExerciseEndReason = 'COMPLETED'): Promise<ExerciseSnapshot> {
     try { await op.session.close(reason) }
     catch (error) { this.report(error); throw error }
-    const snapshot = this.observation(op)
+    const snapshot = op.kind === 'RUN' ? this.observation(op) : op.session.snapshot()
     this.publish(op)
     if (!op.session.ownsResources && op.executionDone && this.active === op) {
       if (op.execution.releaseContent) {
         if (!snapshot.cleanup.cleanupComplete || snapshot.cleanup.proof !== 'VERIFIED') throw serviceError('PACKAGE_CLEANUP_UNVERIFIED')
         op.execution.releaseContent()
       }
-      if (this.isCurrent(op)) this.last = { owner: op.owner, ownerEntry: op.ownerEntry, snapshot: structuredClone(snapshot) }
+      if (op.official) op.official.cleanupFailure = false
+      if (op.kind === 'RUN' && this.isCurrent(op)) this.last = { owner: op.owner, ownerEntry: op.ownerEntry, snapshot: structuredClone(snapshot) }
       this.active = undefined
     }
     return snapshot
   }
+  private officialCompletion(op: Operation): OfficialExecutionCompletion {
+    const state = op.official!
+    const evidence = state.binding.evidence(), snapshot = op.session.snapshot()
+    const invalidated = !this.isCurrent(op)
+    const failed = state.driver.failure || state.cleanupFailure || evidence.failure
+    return structuredClone({ identity: state.binding.identity(), planAcquired: state.binding.planAcquired(),
+      disposition: invalidated ? 'INVALIDATED' : failed ? 'EXECUTION_FAILURE' : state.driver.disposition,
+      compile: evidence.compile ?? evidence.syntax ?? null, cases: evidence.cases, notRunCaseIndices: evidence.notRunCaseIndices,
+      failure: evidence.failure ?? (!invalidated && failed ? { kind: 'INFRASTRUCTURE_FAILURE', phase: state.binding.planAcquired() ? 'cleanup' : 'prepare', caseIndex: null } : null),
+      endReason: snapshot.reason ?? 'INTERNAL_ERROR', cleanup: snapshot.cleanup })
+  }
   snapshot(owner: number, reference: ExerciseSessionReference): ExerciseSnapshot {
     if (!validateExerciseSessionReference(reference).ok) throw serviceError('INVALID_REFERENCE', 'INVALID_INPUT')
     const op = this.active
-    if (op && op.owner === owner && this.isCurrent(op)) {
+    if (op?.kind === 'RUN' && op.owner === owner && this.isCurrent(op)) {
       const s = this.observation(op)
       if (s.sessionId === reference.sessionId && s.generation === reference.generation) return s
     }
@@ -278,6 +341,7 @@ export class ExerciseService {
     const op = this.active
     if (!op || op.owner !== owner || op.invalidated) return
     op.invalidated = true; this.generation++
+    if (op.kind === 'OFFICIAL') this.options.official?.registry.invalidate(op.ownerEntry, op.generation)
     void this.cleanup(op, reason).catch(() => {}) // Retained op is retried by managed stop/retryCleanup.
   }
   retryCleanup(): Promise<void> {
@@ -289,6 +353,7 @@ export class ExerciseService {
     this.sealed = true; this.generation++; this.last = undefined
     if (this.active) {
       this.active.invalidated = true
+      if (this.active.kind === 'OFFICIAL') this.options.official?.registry.invalidate(this.active.ownerEntry, this.active.generation)
       void this.cleanup(this.active, 'SHUTDOWN').catch(() => {})
     }
   }
@@ -327,6 +392,9 @@ export function createWindowsExerciseService(root: string, options: {
   const binding = () => native ??= loadLearningNative()
   return new ExerciseService({ root, onCleanupError: options.onCleanupError, onSnapshot: options.onSnapshot,
     leases: { acquire: id => new WindowsExerciseLeaseProvider(root, binding()).acquire(id) },
+    official: options.packages ? { registry: options.packages, createAdapter: (request, workspace, load) => request.language === 'csharp'
+      ? createOfficialCsharpExecutionAdapter(request, workspace, binding(), load)
+      : createOfficialJavascriptExecutionAdapter(request, workspace, binding(), load) } : undefined,
     createExecution: (request, workspace) => {
       if (!options.driver && options.packages) {
         if (!options.packages.has(request.exerciseId)) throw serviceError('INVALID_EXERCISE', 'INVALID_INPUT')

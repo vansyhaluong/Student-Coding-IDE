@@ -1,0 +1,222 @@
+{
+  "ch2-01": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Sum(int a,int b) { return checked(a+b); } }",
+    "javascript": "function Sum(a,b) { const reference = function solve(a,b) { return a+b; }; return reference(a,b); }"
+  },
+  "ch2-02": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Perimeter(int width,int height) { return checked(2*(width+height)); } }",
+    "javascript": "function Perimeter(width,height) { const reference = function solve(width,height) { return width+width+height+height; }; return reference(width,height); }"
+  },
+  "ch2-03": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Seconds(int minutes) { return checked(minutes*60); } }",
+    "javascript": "function Seconds(minutes) { const reference = function solve(minutes) { return minutes*6*10; }; return reference(minutes); }"
+  },
+  "ch2-05": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int DigitSum3(int n) { return n/100+n/10%10+n%10; } }",
+    "javascript": "function DigitSum3(n) { const reference = function solve(n) { return [...String(n)].reduce((s,c)=>s+Number(c),0); }; return reference(n); }"
+  },
+  "ch2-06": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Reverse3(int n) { return n%10*100+n/10%10*10+n/100; } }",
+    "javascript": "function Reverse3(n) { const reference = function solve(n) { return Number([...String(n)].reverse().join(\"\")); }; return reference(n); }"
+  },
+  "ch2-07": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Clock(int seconds,int elapsed) { return (seconds+elapsed)%86400; } }",
+    "javascript": "function Clock(seconds,elapsed) { const reference = function solve(seconds,elapsed) { const total=seconds+elapsed;return total-Math.floor(total/86400)*86400; }; return reference(seconds,elapsed); }"
+  },
+  "ch2-08": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Boxes(int items,int capacity) { return (items+capacity-1)/capacity; } }",
+    "javascript": "function Boxes(items,capacity) { const reference = function solve(items,capacity) { return Math.ceil(items/capacity); }; return reference(items,capacity); }"
+  },
+  "ch2-09": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int ProgressionSum(int first,int step,int count) { return count*(2*first+(count-1)*step)/2; } }",
+    "javascript": "function ProgressionSum(first,step,count) { const reference = function solve(first,step,count) { return first*count+step*(count*(count-1)/2); }; return reference(first,step,count); }"
+  },
+  "ch3-01": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public bool IsEven(int n) { return n%2==0; } }",
+    "javascript": "function IsEven(n) { const reference = function solve(n) { return (n&1)===0; }; return reference(n); }"
+  },
+  "ch3-02": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Sign(int n) { return n.CompareTo(0); } }",
+    "javascript": "function Sign(n) { const reference = function solve(n) { return n<0?-1:n>0?1:0; }; return reference(n); }"
+  },
+  "ch3-03": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Max3(int a,int b,int c) { if(a>=b && a>=c)return a;if(b>=a && b>=c)return b;return c; } }",
+    "javascript": "function Max3(a,b,c) { const reference = function solve(a,b,c) { return [a,b,c].reduce((m,v)=>v>m?v:m); }; return reference(a,b,c); }"
+  },
+  "ch3-05": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public string Triangle(int a,int b,int c) { var x=new int[]{a,b,c};Array.Sort(x);if(x[0]+x[1]<=x[2])return \"invalid\";return a==b&&b==c?\"equilateral\":a==b||a==c||b==c?\"isosceles\":\"scalene\"; } }",
+    "javascript": "function Triangle(a,b,c) { const reference = function solve(a,b,c) { if(a+b<=c||a+c<=b||b+c<=a)return \"invalid\";const equal=Number(a===b)+Number(a===c)+Number(b===c);return equal===3?\"equilateral\":equal?\"isosceles\":\"scalene\"; }; return reference(a,b,c); }"
+  },
+  "ch3-06": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int DaysInMonth(int month,int year) { return DateTime.DaysInMonth(year,month); } }",
+    "javascript": "function DaysInMonth(month,year) { const reference = function solve(month,year) { if(month===2)return year%400===0||(year%4===0&&year%100!==0)?29:28;return [4,6,9,11].includes(month)?30:31; }; return reference(month,year); }"
+  },
+  "ch3-08": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int[] NextDate(int day,int month,int year) { var next=new DateTime(year,month,day).AddDays(1);return new int[]{next.Day,next.Month,next.Year}; } }",
+    "javascript": "function NextDate(day,month,year) { const reference = function solve(day,month,year) { const leap=year%400===0||(year%4===0&&year%100!==0);const lens=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];if(day<lens[month-1])return [day+1,month,year];return month===12?[1,1,year+1]:[1,month+1,year]; }; return reference(day,month,year); }"
+  },
+  "ch3-09": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Bill(int units) { return Math.Min(units,50)*2+Math.Min(Math.Max(units-50,0),50)*3+Math.Max(units-100,0)*5; } }",
+    "javascript": "function Bill(units) { const reference = function solve(units) { let sum=0;for(let i=1;i<=units;i++)sum+=i<=50?2:i<=100?3:5;return sum; }; return reference(units); }"
+  },
+  "ch4-01": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int SumToN(int n) { int sum=0;for(int i=1;i<=n;i++)sum+=i;return sum; } }",
+    "javascript": "function SumToN(n) { const reference = function solve(n) { let sum=0,lo=1,hi=n;while(lo<=hi){sum+=lo===hi?lo:lo+hi;lo++;hi--;}return sum; }; return reference(n); }"
+  },
+  "ch4-02": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Factorial(int n) { int result=1;for(int i=2;i<=n;i++)result*=i;return result; } }",
+    "javascript": "function Factorial(n) { const reference = function solve(n) { let product=1;for(let k=n;k>1;k--)product*=k;return product; }; return reference(n); }"
+  },
+  "ch4-04": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int ReverseNumber(int n) { int result=0;while(n>0){result=result*10+n%10;n/=10;}return result; } }",
+    "javascript": "function ReverseNumber(n) { const reference = function solve(n) { const digits=String(n);let text='';for(let i=digits.length-1;i>=0;i--)text+=digits[i];return Number(text); }; return reference(n); }"
+  },
+  "ch4-05": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int Gcd(int a,int b) { while(b!=0){int r=a%b;a=b;b=r;}return a; } }",
+    "javascript": "function Gcd(a,b) { const reference = function solve(a,b) { let shift=0;while(((a|b)&1)===0){a>>=1;b>>=1;shift++;}while((a&1)===0)a>>=1;do{while((b&1)===0)b>>=1;if(a>b)[a,b]=[b,a];b-=a;}while(b!==0);return a*2**shift; }; return reference(a,b); }"
+  },
+  "ch4-06": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public bool IsPrime(int n) { if(n<2)return false;for(int d=2;d*d<=n;d++)if(n%d==0)return false;return true; } }",
+    "javascript": "function IsPrime(n) { const reference = function solve(n) { if(n<2)return false;const composite=new Uint8Array(n+1);for(let p=2;p*p<=n;p++)if(!composite[p])for(let j=p*p;j<=n;j+=p)composite[j]=1;return composite[n]===0; }; return reference(n); }"
+  },
+  "ch4-07": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public int PrimeCount(int n) { var composite=new bool[n+1];for(int p=2;p*p<=n;p++)if(!composite[p])for(int j=p*p;j<=n;j+=p)composite[j]=true;int count=0;for(int v=2;v<=n;v++)if(!composite[v])count++;return count; } }",
+    "javascript": "function PrimeCount(n) { const reference = function solve(n) { const primes=[];for(let v=2;v<=n;v++){let ok=true;for(const p of primes){if(p*p>v)break;if(v%p===0){ok=false;break;}}if(ok)primes.push(v);}return primes.length; }; return reference(n); }"
+  },
+  "ch4-08": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution { public bool IsPerfect(int n) { if(n==1)return false;long sum=1;for(int d=2;d*d<=n;d++)if(n%d==0){sum+=d;if(d!=n/d)sum+=n/d;}return sum==n; } }",
+    "javascript": "function IsPerfect(n) { const reference = function solve(n) { let sum=0;for(let d=1;d<=Math.floor(n/2);d++)if(n%d===0)sum+=d;return sum===n; }; return reference(n); }"
+  },
+  "ch4-09": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution {\n    public int Fibonacci(int n) {\n        if (n < 2) return n;\n        int previous = 0, current = 1;\n        for (int i = 2; i <= n; i++) { int next = checked(previous + current); previous = current; current = next; }\n        return current;\n    }\n}",
+    "javascript": "function Fibonacci(n) { let a = 0, b = 1; for (let i = 0; i < n; i++) [a, b] = [b, a + b]; return a }"
+  },
+  "ch5-01": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int LastWordLength(string s){int i=s.Length-1;while(s[i]==' ')i--;int end=i;while(i>=0&&s[i]!=' ')i--;return end-i;}}",
+    "javascript": "function LastWordLength(s) { const reference = s=>s.split(' ').filter(Boolean).at(-1).length; return reference(s); }"
+  },
+  "ch5-02": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int FindFirst(string text,string pattern)=>text.IndexOf(pattern,StringComparison.Ordinal);}",
+    "javascript": "function FindFirst(text,pattern) { const reference = (text,pattern)=>{const pi=Array(pattern.length).fill(0);for(let i=1,j=0;i<pattern.length;i++){while(j&&pattern[i]!==pattern[j])j=pi[j-1];if(pattern[i]===pattern[j])j++;pi[i]=j}for(let i=0,j=0;i<text.length;i++){while(j&&text[i]!==pattern[j])j=pi[j-1];if(text[i]===pattern[j])j++;if(j===pattern.length)return i-j+1}return -1}; return reference(text,pattern); }"
+  },
+  "ch5-04": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public string ReverseWords(string s)=>string.Join(\" \",s.Split(' ',StringSplitOptions.RemoveEmptyEntries).Reverse());}",
+    "javascript": "function ReverseWords(s) { const reference = s=>{const words=[];let i=s.length-1;while(i>=0){while(i>=0&&s[i]===' ')i--;let end=i;while(i>=0&&s[i]!==' ')i--;if(end>i)words.push(s.slice(i+1,end+1))}return words.join(' ')}; return reference(s); }"
+  },
+  "ch5-05": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int LongestUnique(string s){var last=new int[26];Array.Fill(last,-1);int left=0,best=0;for(int i=0;i<s.Length;i++){int c=s[i]-'a';left=Math.Max(left,last[c]+1);last[c]=i;best=Math.Max(best,i-left+1);}return best;}}",
+    "javascript": "function LongestUnique(s) { const reference = s=>{const set=new Set();let l=0,best=0;for(let r=0;r<s.length;r++){while(set.has(s[r]))set.delete(s[l++]);set.add(s[r]);best=Math.max(best,r-l+1)}return best}; return reference(s); }"
+  },
+  "ch5-06": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public bool Anagram(string s,string t){var counts=new int[26];foreach(char c in s)counts[c-'a']++;foreach(char c in t)counts[c-'a']--;return counts.All(v=>v==0);}}",
+    "javascript": "function Anagram(s,t) { const reference = (s,t)=>{if(s.length!==t.length)return false;const m=new Map();for(const c of s)m.set(c,(m.get(c)||0)+1);for(const c of t){if(!m.get(c))return false;m.set(c,m.get(c)-1)}return true}; return reference(s,t); }"
+  },
+  "ch5-08": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int EditDistance(string a,string b){var dp=new int[a.Length+1,b.Length+1];for(int i=0;i<=a.Length;i++)dp[i,0]=i;for(int j=0;j<=b.Length;j++)dp[0,j]=j;for(int i=1;i<=a.Length;i++)for(int j=1;j<=b.Length;j++)dp[i,j]=Math.Min(dp[i-1,j]+1,Math.Min(dp[i,j-1]+1,dp[i-1,j-1]+(a[i-1]==b[j-1]?0:1)));return dp[a.Length,b.Length];}}",
+    "javascript": "function EditDistance(a,b) { const reference = (a,b)=>{const memo=new Map();function f(i,j){if(i===a.length)return b.length-j;if(j===b.length)return a.length-i;const k=i+','+j;if(memo.has(k))return memo.get(k);const v=a[i]===b[j]?f(i+1,j+1):1+Math.min(f(i+1,j),f(i,j+1),f(i+1,j+1));memo.set(k,v);return v}return f(0,0)}; return reference(a,b); }"
+  },
+  "ch5-09": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int SubsequenceCount(string s,string t){var dp=new int[t.Length+1];dp[0]=1;foreach(char c in s)for(int j=t.Length;j>=1;j--)if(c==t[j-1])dp[j]+=dp[j-1];return dp[t.Length];}}",
+    "javascript": "function SubsequenceCount(s,t) { const reference = (s,t)=>{const memo=new Map();function f(i,j){if(j===t.length)return 1;if(i===s.length)return 0;const k=i+','+j;if(memo.has(k))return memo.get(k);const v=f(i+1,j)+(s[i]===t[j]?f(i+1,j+1):0);memo.set(k,v);return v}return f(0,0)}; return reference(s,t); }"
+  },
+  "ch6-01": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int Absolute(int n)=>n<0?-n:n;}",
+    "javascript": "function Absolute(n) { const reference = n=>Math.abs(n); return reference(n); }"
+  },
+  "ch6-02": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int Power(int baseValue,int exponent){int p=1;for(int i=0;i<exponent;i++)p=checked(p*baseValue);return p;}}",
+    "javascript": "function Power(baseValue,exponent) { const reference = (b,e)=>{let p=1;while(e){if(e%2)p*=b;e=Math.floor(e/2);if(e)b*=b}return p}; return reference(baseValue,exponent); }"
+  },
+  "ch6-03": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int Minimum(int a,int b)=>a<b?a:b;}",
+    "javascript": "function Minimum(a,b) { const reference = (a,b)=>Math.min(a,b); return reference(a,b); }"
+  },
+  "ch6-04": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{private static int Gcd(int a,int b){while(b!=0){int t=a%b;a=b;b=t;}return a;}public int Lcm(int a,int b)=>checked((a/Gcd(a,b))*b);}",
+    "javascript": "function Lcm(a,b) { const reference = (a,b)=>{function gcd(x,y){let shift=0;while(x%2===0&&y%2===0){x/=2;y/=2;shift++}while(x%2===0)x/=2;while(y){while(y%2===0)y/=2;if(x>y)[x,y]=[y,x];y-=x}return x*2**shift}return a/gcd(a,b)*b}; return reference(a,b); }"
+  },
+  "ch6-05": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public bool PalindromeNumber(int n){string s=n.ToString(System.Globalization.CultureInfo.InvariantCulture);for(int i=0;i<s.Length/2;i++)if(s[i]!=s[s.Length-1-i])return false;return true;}}",
+    "javascript": "function PalindromeNumber(n) { const reference = n=>{let k=n,r=0;do{r=r*10+k%10;k=Math.floor(k/10)}while(k);return r===n}; return reference(n); }"
+  },
+  "ch6-06": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int[] Divisors(int n){var result=new List<int>();for(int d=1;d<=n;d++)if(n%d==0)result.Add(d);return result.ToArray();}}",
+    "javascript": "function Divisors(n) { const reference = n=>{const lo=[],hi=[];for(let d=1;d*d<=n;d++)if(n%d===0){lo.push(d);if(d*d!==n)hi.push(n/d)}return lo.concat(hi.reverse())}; return reference(n); }"
+  },
+  "ch6-07": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int Choose(int n,int k){var row=new int[n+1];row[0]=1;for(int i=1;i<=n;i++)for(int j=i;j>=1;j--)row[j]=checked(row[j]+row[j-1]);return row[k];}}",
+    "javascript": "function Choose(n,k) { const reference = (n,k)=>{k=Math.min(k,n-k);let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return r}; return reference(n,k); }"
+  },
+  "ch6-08": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{private static int SumDigits(int n){int sum=0;do{sum+=n%10;n/=10;}while(n>0);return sum;}public int DigitalRoot(int n){while(n>=10)n=SumDigits(n);return n;}}",
+    "javascript": "function DigitalRoot(n) { const reference = n=>{function digitSum(v){return [...String(v)].reduce((s,c)=>s+Number(c),0)}while(n>9)n=digitSum(n);return n}; return reference(n); }"
+  },
+  "ch6-09": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{private static bool IsPrime(int n){if(n<2)return false;for(int d=2;d*d<=n;d++)if(n%d==0)return false;return true;}public int PrimesInRange(int left,int right){int count=0;for(int n=left;n<=right;n++)if(IsPrime(n))count++;return count;}}",
+    "javascript": "function PrimesInRange(left,right) { const reference = (left,right)=>{function prime(v){if(v<2)return false;if(v===2)return true;if(v%2===0)return false;for(let d=3;d<=Math.floor(Math.sqrt(v));d+=2)if(v%d===0)return false;return true}let count=0;for(let v=left;v<=right;v++)if(prime(v))count++;return count}; return reference(left,right); }"
+  },
+  "ch7-02": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int MaxProfit(int[] prices){int low=prices[0],best=0;foreach(int p in prices){best=Math.Max(best,p-low);low=Math.Min(low,p);}return best;}}",
+    "javascript": "function MaxProfit(prices) { const reference = prices=>{let high=prices.at(-1),best=0;for(let i=prices.length-2;i>=0;i--){best=Math.max(best,high-prices[i]);high=Math.max(high,prices[i])}return best}; return reference(prices); }"
+  },
+  "ch7-03": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int[] PlusOne(int[] digits){var a=(int[])digits.Clone();for(int i=a.Length-1;i>=0;i--){if(a[i]<9){a[i]++;return a;}a[i]=0;}var result=new int[a.Length+1];result[0]=1;return result;}}",
+    "javascript": "function PlusOne(digits) { const reference = digits=>{const a=[...digits];let last=-1;for(let i=0;i<a.length;i++)if(a[i]!==9)last=i;if(last<0)return [1,...Array(a.length).fill(0)];a[last]++;for(let i=last+1;i<a.length;i++)a[i]=0;return a}; return reference(digits); }"
+  },
+  "ch7-04": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int MaxSubarray(int[] nums){int current=nums[0],best=current;for(int i=1;i<nums.Length;i++){current=Math.Max(nums[i],checked(current+nums[i]));best=Math.Max(best,current);}return best;}}",
+    "javascript": "function MaxSubarray(nums) { const reference = nums=>{let prefix=0,least=0,best=-Infinity;for(const x of nums){prefix+=x;best=Math.max(best,prefix-least);least=Math.min(least,prefix)}return best}; return reference(nums); }"
+  },
+  "ch7-05": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution {\n    public int[] ProductExceptSelf(int[] nums) {\n        int[] result = new int[nums.Length]; int product = 1;\n        for (int i = 0; i < nums.Length; i++) { result[i] = product; product = checked(product * nums[i]); }\n        product = 1;\n        for (int i = nums.Length - 1; i >= 0; i--) { result[i] = checked(result[i] * product); product = checked(product * nums[i]); }\n        return result;\n    }\n}",
+    "javascript": "function ProductExceptSelf(nums) {\n  const left = [1], right = Array(nums.length + 1).fill(1)\n  for (let i = 0; i < nums.length; i++) left.push(left[i] * nums[i])\n  for (let i = nums.length - 1; i >= 0; i--) right[i] = right[i + 1] * nums[i]\n  return nums.map((_, i) => left[i] * right[i + 1])\n}"
+  },
+  "ch7-06": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int SearchRotated(int[] nums,int target){int lo=0,hi=nums.Length-1;while(lo<=hi){int mid=lo+(hi-lo)/2;if(nums[mid]==target)return mid;if(nums[lo]<=nums[mid]){if(nums[lo]<=target&&target<nums[mid])hi=mid-1;else lo=mid+1;}else{if(nums[mid]<target&&target<=nums[hi])lo=mid+1;else hi=mid-1;}}return -1;}}",
+    "javascript": "function SearchRotated(nums,target) { const reference = (nums,target)=>{if(!nums.length)return -1;let lo=0,hi=nums.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(nums[mid]>nums[hi])lo=mid+1;else hi=mid}const pivot=lo;lo=0;hi=nums.length-1;while(lo<=hi){const mid=(lo+hi)>>1,i=(mid+pivot)%nums.length;if(nums[i]===target)return i;if(nums[i]<target)lo=mid+1;else hi=mid-1}return -1}; return reference(nums,target); }"
+  },
+  "ch7-07": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int FirstMissingPositive(int[] nums){var a=(int[])nums.Clone();for(int i=0;i<a.Length;i++)while(a[i]>0&&a[i]<=a.Length&&a[a[i]-1]!=a[i]){int destination=a[i]-1;int swap=a[destination];a[destination]=a[i];a[i]=swap;}for(int i=0;i<a.Length;i++)if(a[i]!=i+1)return i+1;return a.Length+1;}}",
+    "javascript": "function FirstMissingPositive(nums) { const reference = nums=>{const a=[...nums],n=a.length;for(let i=0;i<n;i++)if(a[i]<=0||a[i]>n)a[i]=n+1;for(let i=0;i<n;i++){const x=Math.abs(a[i]);if(x<=n)a[x-1]=-Math.abs(a[x-1])}for(let i=0;i<n;i++)if(a[i]>0)return i+1;return n+1}; return reference(nums); }"
+  },
+  "ch7-08": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int TrappedWater(int[] heights){int left=0,right=heights.Length-1,leftHigh=0,rightHigh=0,total=0;while(left<=right){if(leftHigh<=rightHigh){leftHigh=Math.Max(leftHigh,heights[left]);total=checked(total+leftHigh-heights[left++]);}else{rightHigh=Math.Max(rightHigh,heights[right]);total=checked(total+rightHigh-heights[right--]);}}return total;}}",
+    "javascript": "function TrappedWater(heights) { const reference = heights=>{const stack=[];let total=0;for(let i=0;i<heights.length;i++){while(stack.length&&heights[i]>heights[stack.at(-1)]){const bottom=stack.pop();if(!stack.length)break;const left=stack.at(-1);total+=(Math.min(heights[left],heights[i])-heights[bottom])*(i-left-1)}stack.push(i)}return total}; return reference(heights); }"
+  },
+  "ch7-09": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int Candy(int[] ratings){var c=new int[ratings.Length];Array.Fill(c,1);for(int i=1;i<c.Length;i++)if(ratings[i]>ratings[i-1])c[i]=c[i-1]+1;for(int i=c.Length-2;i>=0;i--)if(ratings[i]>ratings[i+1])c[i]=Math.Max(c[i],c[i+1]+1);int sum=0;foreach(int x in c)sum=checked(sum+x);return sum;}}",
+    "javascript": "function Candy(ratings) { const reference = ratings=>{let total=1,up=0,down=0,peak=0;for(let i=1;i<ratings.length;i++){if(ratings[i]>ratings[i-1]){up++;peak=up;down=0;total+=up+1}else if(ratings[i]===ratings[i-1]){up=down=peak=0;total++}else{up=0;down++;total+=down+1;if(peak>=down)total--}}return total}; return reference(ratings); }"
+  },
+  "ch8-02": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int[][] Transpose(int[][] matrix){int r=matrix.Length,c=matrix[0].Length;var result=new int[c][];for(int j=0;j<c;j++){result[j]=new int[r];for(int i=0;i<r;i++)result[j][i]=matrix[i][j];}return result;}}",
+    "javascript": "function Transpose(matrix) { const reference = matrix=>{const out=Array.from({length:matrix[0].length},()=>[]);for(const row of matrix)row.forEach((x,j)=>out[j].push(x));return out}; return reference(matrix); }"
+  },
+  "ch8-03": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int DiagonalSum(int[][] matrix){int total=0,n=matrix.Length;for(int i=0;i<n;i++){total+=matrix[i][i];if(i!=n-1-i)total+=matrix[i][n-1-i];}return total;}}",
+    "javascript": "function DiagonalSum(matrix) { const reference = matrix=>matrix.flatMap((row,i)=>row.filter((_,j)=>i===j||i+j===matrix.length-1)).reduce((s,x)=>s+x,0); return reference(matrix); }"
+  },
+  "ch8-04": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int[] Spiral(int[][] matrix){var output=new List<int>();int top=0,bottom=matrix.Length-1,left=0,right=matrix[0].Length-1;while(top<=bottom&&left<=right){for(int j=left;j<=right;j++)output.Add(matrix[top][j]);top++;for(int i=top;i<=bottom;i++)output.Add(matrix[i][right]);right--;if(top<=bottom){for(int j=right;j>=left;j--)output.Add(matrix[bottom][j]);bottom--;}if(left<=right){for(int i=bottom;i>=top;i--)output.Add(matrix[i][left]);left++;}}return output.ToArray();}}",
+    "javascript": "function Spiral(matrix) { const reference = matrix=>{const r=matrix.length,c=matrix[0].length,seen=Array.from({length:r},()=>Array(c).fill(false)),directions=[[0,1],[1,0],[0,-1],[-1,0]],out=[];let i=0,j=0,d=0;for(let k=0;k<r*c;k++){out.push(matrix[i][j]);seen[i][j]=true;let x=i+directions[d][0],y=j+directions[d][1];if(x<0||x>=r||y<0||y>=c||seen[x][y]){d=(d+1)%4;x=i+directions[d][0];y=j+directions[d][1]}i=x;j=y}return out}; return reference(matrix); }"
+  },
+  "ch8-05": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int[][] ZeroRowsCols(int[][] matrix){int r=matrix.Length,c=matrix[0].Length;var rows=new bool[r];var cols=new bool[c];for(int i=0;i<r;i++)for(int j=0;j<c;j++)if(matrix[i][j]==0){rows[i]=true;cols[j]=true;}var result=new int[r][];for(int i=0;i<r;i++){result[i]=new int[c];for(int j=0;j<c;j++)result[i][j]=rows[i]||cols[j]?0:matrix[i][j];}return result;}}",
+    "javascript": "function ZeroRowsCols(matrix) { const reference = matrix=>{const a=matrix.map(row=>[...row]),r=a.length,c=a[0].length,firstRow=a[0].includes(0),firstCol=a.some(row=>row[0]===0);for(let i=1;i<r;i++)for(let j=1;j<c;j++)if(a[i][j]===0)a[i][0]=a[0][j]=0;for(let i=1;i<r;i++)for(let j=1;j<c;j++)if(a[i][0]===0||a[0][j]===0)a[i][j]=0;if(firstRow)a[0].fill(0);if(firstCol)for(const row of a)row[0]=0;return a}; return reference(matrix); }"
+  },
+  "ch8-06": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int[][] Rotate(int[][] matrix){var a=matrix.Select(row=>(int[])row.Clone()).ToArray();int n=a.Length;for(int layer=0;layer<n/2;layer++)for(int j=layer;j<n-1-layer;j++){int offset=j-layer,last=n-1-layer,top=a[layer][j];a[layer][j]=a[last-offset][layer];a[last-offset][layer]=a[last][last-offset];a[last][last-offset]=a[j][last];a[j][last]=top;}return a;}}",
+    "javascript": "function Rotate(matrix) { const reference = matrix=>{const a=matrix.map(row=>[...row]).reverse();for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){const x=a[i][j];a[i][j]=a[j][i];a[j][i]=x}return a}; return reference(matrix); }"
+  },
+  "ch8-07": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int MaxRectangle(int[][] matrix){int cols=matrix[0].Length,best=0;var h=new int[cols+1];foreach(var row in matrix){for(int j=0;j<cols;j++)h[j]=row[j]==0?0:h[j]+1;var stack=new Stack<int>();for(int j=0;j<=cols;j++){while(stack.Count>0&&h[stack.Peek()]>h[j]){int height=h[stack.Pop()],width=stack.Count==0?j:j-stack.Peek()-1;best=Math.Max(best,height*width);}stack.Push(j);}}return best;}}",
+    "javascript": "function MaxRectangle(matrix) { const reference = matrix=>{const width=matrix.map(row=>row.map(()=>0));let best=0;for(let i=0;i<matrix.length;i++)for(let j=0;j<matrix[0].length;j++){if(!matrix[i][j])continue;width[i][j]=1+(j?width[i][j-1]:0);let w=width[i][j];for(let top=i;top>=0;top--){w=Math.min(w,width[top][j]);if(!w)break;best=Math.max(best,w*(i-top+1))}}return best}; return reference(matrix); }"
+  },
+  "ch8-08": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution {\n    public int LongestPath(int[][] matrix) {\n        int rows = matrix.Length, cols = matrix[0].Length; var degree = new int[rows, cols];\n        var queue = new System.Collections.Generic.Queue<(int r, int c)>();\n        var directions = new[] { (-1, 0), (1, 0), (0, -1), (0, 1) };\n        bool Inside(int r, int c) => r >= 0 && c >= 0 && r < rows && c < cols;\n        for (int r = 0; r < rows; r++) for (int c = 0; c < cols; c++) {\n            foreach (var (dr, dc) in directions) if (Inside(r + dr, c + dc) && matrix[r + dr][c + dc] < matrix[r][c]) degree[r, c]++;\n            if (degree[r, c] == 0) queue.Enqueue((r, c));\n        }\n        int layers = 0;\n        while (queue.Count > 0) {\n            int count = queue.Count; layers++;\n            while (count-- > 0) {\n                var (r, c) = queue.Dequeue();\n                foreach (var (dr, dc) in directions) {\n                    int nr = r + dr, nc = c + dc;\n                    if (Inside(nr, nc) && matrix[nr][nc] > matrix[r][c] && --degree[nr, nc] == 0) queue.Enqueue((nr, nc));\n                }\n            }\n        }\n        return layers;\n    }\n}",
+    "javascript": "function LongestPath(m) {\n  const R = m.length, C = m[0].length, dp = Array(R * C).fill(0)\n  function larger(k) {\n    const r = Math.floor(k / C), c = k % C\n    return [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]\n      .filter(([i, j]) => i >= 0 && j >= 0 && i < R && j < C && m[i][j] > m[r][c]).map(([i, j]) => i * C + j)\n  }\n  for (let start = 0; start < dp.length; start++) {\n    const stack = [start]\n    while (stack.length) {\n      const mark = stack.pop(), k = mark < 0 ? -mark - 1 : mark\n      if (dp[k]) continue\n      const next = larger(k)\n      if (mark < 0) dp[k] = 1 + Math.max(0, ...next.map(i => dp[i]))\n      else { stack.push(-k - 1); for (const i of next) if (!dp[i]) stack.push(i) }\n    }\n  }\n  return Math.max(...dp)\n}"
+  },
+  "ch8-09": {
+    "csharp": "using System;\nusing System.Linq;\nusing System.Collections.Generic;\npublic class Solution{public int MinimumHealth(int[][] grid){int r=grid.Length,c=grid[0].Length;var need=new int[c+1];Array.Fill(need,int.MaxValue);need[c-1]=1;for(int i=r-1;i>=0;i--)for(int j=c-1;j>=0;j--)need[j]=Math.Max(1,Math.Min(need[j],need[j+1])-grid[i][j]);return need[0];}}",
+    "javascript": "function MinimumHealth(grid) { const reference = grid=>{const r=grid.length,c=grid[0].length;function feasible(initial){const remaining=Array(c).fill(-Infinity);for(let i=0;i<r;i++)for(let j=0;j<c;j++){const prior=i===0&&j===0?initial:Math.max(i?remaining[j]:-Infinity,j?remaining[j-1]:-Infinity),now=prior+grid[i][j];remaining[j]=now>=1?now:-Infinity}return remaining[c-1]>=1}let lo=1,hi=1+100*(r+c-1);while(lo<hi){const mid=(lo+hi)>>1;if(feasible(mid))hi=mid;else lo=mid+1}return lo}; return reference(grid); }"
+  }
+}
