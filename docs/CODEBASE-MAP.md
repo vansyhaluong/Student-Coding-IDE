@@ -1,5 +1,119 @@
 # Student Coding IDE Codebase Map
 
+## Phase9E-5 accepted actual safe transport — 2026-10-26
+
+**Phase 9E-5 and E5-S1–S6 COMPLETE — PASS WITH LIMITATIONS; E6/E7 NOT_STARTED.**
+User formally accepts S6's42 targeted PASS/29 focused regression PASS/30 filtered
+S5 tests (not PASS) and historical scoped checks. All step-local evidence/failures/
+corrections/limits are preserved without count aggregation or rerun. This section
+supersedes older future/pending notes; original module ownership remains unchanged.
+E4 current-artifact handoff remains NOT PASS; native/target-host/release UNVERIFIED;
+storage durability/performance uncertified;12 models PENDING_RUNTIME and deferred
+verification gates unchanged.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/shared/contracts/submission.ts`, `submission-validation.ts`; `index.ts`, `learning.ts` exports/composition | Safe semantic public Submit/status/ref/committed reads/context API, pure strict validation/bounds; separate LearningApi.submission preserves ExerciseApi's four Run methods |
+| `src/main/services/learning/submission-projection.ts` | Main explicit safe projections and process/context-scoped encrypted read bindings; internal hashes/plan/Judge data stay Main-private |
+| `src/main/ipc/exercise-ipc-service.ts` | Existing owner/frame/epoch coordinator extended with fixed Submit/read/context routes, current/ref retry, monotonic publication and safe boundaries |
+| `src/main/services/learning/exercise-service.ts`, `src/main/index.ts` | Read-only context stamp/coarse counts and managed store/event wiring; S5 guard/operation/storage semantics unchanged |
+| `src/preload/bridge/submission.ts`, `learning-order.ts`; `exercise.ts`, `learning.ts` composition | Typed validated Submit bridge, one pre-ACK buffer, lifetime cleanup and cross-mode transport generation/context ordering |
+| `tests/contracts/submission.test.ts`, `tests/main/submission-ipc.test.ts`, `tests/preload/submission-bridge.test.ts` |17/15/10 new targeted PASS; controlled real-service→Judge→temporary-store→transport lost-ACK flow, no native/student execution |
+| `tests/fixtures/learning/submission-transport.ts` | Synthetic transport DTOs only |
+| `docs/PHASE-9E5-FINAL-ACCEPTANCE.md` |42 new +29 directly affected regression PASS/0 FAIL/30 filtered, scoped checks, consolidated S1–S6 evidence/limits and E6 handoff |
+
+No Renderer/PracticeWorkspace/UI/History/Restore changes, schema/policy/native work,
+new lifecycle or release certification. **STOP pending separate explicit E6 authorization.**
+
+## Phase9E-5 E5-S5 actual same-operation integration / S4 accepted — 2026-10-26
+
+**S1–S4 COMPLETE — PASS WITH LIMITATIONS; S5 REVIEW COMPLETED — AWAITING USER
+ACCEPTANCE (tracking IN_PROGRESS); S6 NOT_STARTED; Phase9E-5 IN_PROGRESS.**
+User accepts S4's72 PASS/3 focused regression PASS/scoped checks; original evidence/
+limitations retained without rerun. This supersedes historical future/pending notes.
+
+| Actual path | Main owner / scope |
+|---|---|
+| `src/main/services/learning/exercise-service.ts` | Submit intent before same admission/execute, once-bound plan/capture, private safe status handle, VERIFIED runtime finalization, same-op retained transaction/live guard/retry and independent15s/10s storage shutdown joins |
+| `src/main/services/learning/official-case-plan.ts` | Main-only CURRENT selection in existing owned Prepare/Registry lease; expected-identity Official/Judge path stays exact |
+| `src/main/index.ts` | Managed storage dependency before ExerciseService; lazy existing native lease binding retained until service stops; no second operation coordinator |
+| `tests/main/submission-service.test.ts` |35 controlled source/route/eligibility/guard/cleanup/unknown/ACK/expiry/shutdown/privacy integration tests PASS; no native/student execution |
+| `docs/PHASE-9E5-S5-SERVICE-INTEGRATION-ACCEPTANCE.md` |35 new +96 directly affected regression PASS/0 FAIL/1 filtered; scoped checks, initial failures/corrections, limitations and stop gate |
+
+S1–S4 sources, Judge/Runtime/Core/Registry/Official/native/public Run remain unchanged.
+The integration uses S3 verified settlement and S4 committed completion; no new schema,
+queue/index, public DTO/IPC/preload/UI/History/Restore or durability certification.
+**STOP for user S5 acceptance; S6 remains unauthorized.**
+
+## Phase9E-5 E5-S4 actual committed reads / S3 accepted — 2026-10-26
+
+**S1/S2/S3 COMPLETE — PASS WITH LIMITATIONS; S4 REVIEW COMPLETED — AWAITING USER
+ACCEPTANCE (tracking IN_PROGRESS); S5/S6 NOT_STARTED; Phase9E-5 IN_PROGRESS.**
+User accepts S3's40 PASS/28 S2 regression PASS/1 native live SKIP and scoped checks;
+history/limits preserved. This supersedes historical pending/future statements below.
+
+| Actual path | Main owner / scope |
+|---|---|
+| `src/main/services/learning/storage/submission-read-model.ts` | Lease-authenticated committed snapshots, derived ordering/conflict indexes, safe bounded summaries, generation/availability/integrity cursors, immutable UTF-8 source chunks, Accepted-only completion; private DTOs only |
+| `src/main/services/learning/learning-store.ts` | S3 transaction façade extended with history/source/completion, matching read-task join and retained read-resource settlement/exclusion; no service wiring |
+| `tests/fixtures/learning/submission-read-fixture.ts` | Synthetic canonical records/snapshots and isolated temporary checked storage with simulated lease/fault ports; no actual native |
+| `tests/main/submission-read-model.test.ts` |50 targeted committed/partial/conflict/pagination/source/privacy/resource tests PASS |
+| `tests/main/submission-completion.test.ts` |22 targeted Accepted-only/missing/unavailable/recovered/candidate-exclusion tests PASS |
+| `docs/PHASE-9E5-S4-COMMITTED-READS-ACCEPTANCE.md` |72 new PASS/0 FAIL/0 SKIP,3 directly affected façade regression PASS (37 filtered), scoped checks and limitations |
+
+S1–S3 contracts/helpers/transaction sources unchanged. Completion does not read
+Failed; no persisted progress/index or optimistic grade. S3 backup warning/repair
+policy is preserved. No S5/S6 service/transport/UI/Restore, actual native execution,
+power-loss/performance/release certification. **STOP for user S4 acceptance.**
+
+## Phase9E-5 E5-S3 actual transaction/recovery — 2026-10-26
+
+**S1/S2 COMPLETE — PASS WITH LIMITATIONS; S3 REVIEW COMPLETED — AWAITING USER
+ACCEPTANCE (tracking IN_PROGRESS); S4–S6 NOT_STARTED; Phase9E-5 IN_PROGRESS.**
+This current section supersedes historical S3-future/status statements below.
+
+| Actual path | Main owner / scope |
+|---|---|
+| `src/main/services/learning/learning-store.ts` | One unsettled continuation, immutable retry/conflict façade; no service/IPC/committed read-model integration |
+| `src/main/services/learning/storage/snapshot-transaction.ts` | Atomic one-target staging/backup/guarded primary/verification, bounded safe retry and expiry, retained unknown settlement, authenticated-lease recovery/classified availability |
+| `src/main/services/learning/storage/store-files.ts` | S2 primitives extended with checked free-space/evidence scan and settled rename reconciliation |
+| `src/main/services/learning/storage/store-lease.ts` | Existing shared OS lease, extended FULL/CONFLICT error vocabulary; native lifecycle unchanged |
+| `tests/main/submission-store.test.ts` |40 synthetic temporary-directory transaction/recovery tests PASS; no native Judge/Runtime |
+| `docs/PHASE-9E5-S3-TRANSACTION-RECOVERY-ACCEPTANCE.md` | Commands,68 targeted PASS/0 FAIL/1 native live SKIP, scoped checks, historical corrections and limitations |
+
+Guard injection grants no owner/commit authority; S5 owns integration. Recovered
+backup view is explicitly older/read-only; no automatic repair or temp promotion.
+Controlled restart tests do not certify power-loss durability, performance or
+production commits. Historical S1/S2 acceptance and E4 limitations remain intact.
+**STOP after S3 pending user acceptance; S4–S6 remain unauthorized.**
+
+## Phase9E-5 E5-S2 actual checked files/shared lease — 2026-10-26
+
+S1/S2 formally accepted COMPLETE — PASS WITH LIMITATIONS (81/29 historical targeted PASS respectively, no rerun). Phase9E-5 IN_PROGRESS; S3–S6 NOT_STARTED and not authorized. Final S2 acceptance is documentation-only, preserving file/native/scoped evidence, corrections and all limitations; no transaction/recovery/release certification. This supersedes historical pending statuses below. STOP awaiting S3 authorization.
+
+| Actual path | Main owner / scope |
+|---|---|
+| `src/main/services/learning/storage/store-files.ts` | Trusted-root/ancestor/file identity checks; fixed primary/backup/lock paths; bounded checked bytes; exclusive owned staging/sync/close/read-back/discard; guarded schema-blind sibling replacement and retained unresolved resources |
+| `src/main/services/learning/storage/store-lease.ts` | Shared Accepted/Failed native acquireLease/close wrapper, typed redacted errors, authenticated ephemeral tokens, busy refusal/retained close retry, stale-token revocation; no fallback or process API |
+| `tests/main/submission-store-files.test.ts`, `submission-store-lease.test.ts` |29 targeted PASS/0 FAIL/0 SKIP; real temporary filesystem checks, controlled faults/lifecycle and actual Windows cross-process lease exclusion/reacquisition/fingerprint |
+| `tests/fixtures/learning/submission-lease-peer.mjs` | Dedicated child lease holder/contender only, no Jobs/Runtime calls |
+| `docs/PHASE-9E5-S2-FILES-LEASE-ACCEPTANCE.md` | Actual S2 evidence/command history/limitations/stop gate |
+
+Ignored scoped tools/receipt under `out/e5-s2/`; no production build/config/native artifact generated. Actual native lease evidence is restricted to unchanged SHA256 `97dd803603ba655ab58d1df24e5de4957ff226c8ea31e1491d58c4bcfe0cbcc3` and current Windows x64 host. No S1/E4 rerun, real user storage or submission commit/recovery/service integration. S3 transaction/recovery/S4 reads/completion/S5 service/S6 transport remain absent. Inherited current-artifact handoff NOT PASS/general native/target-host/release UNVERIFIED,12 models PENDING_RUNTIME, storage performance NOT MEASURED/durability UNVERIFIED remain.
+
+## Phase9E-5 E5-S1 actual pure submission contracts — 2026-10-26
+
+Design/six-step plan/E5-D1–D6 APPROVED; only S1 authorized. Phase9E-5 IN_PROGRESS — E5-S1; S1 REVIEW COMPLETED — AWAITING USER ACCEPTANCE; S2–S6 NOT_STARTED. This current status supersedes historical proposal/phase-not-started notes below.
+
+| Actual path | Main owner / verified scope |
+|---|---|
+| `src/main/services/learning/storage/submission-contracts.ts` | Immutable capture/Accepted/Failed/document/target/status/availability contracts and approved byte/wait/read policy configuration; no disk/timers/IDs minted |
+| `src/main/services/learning/storage/submission-validation.ts` | Strict data allowlists, well-formed Submit source/SHA256, detached frozen values, canonical record/document encoding/checksum, capacity, pure candidate routing/idempotency and supplied-predecessor lineage checks |
+| `tests/main/submission-records.test.ts` |81 synthetic tests PASS, including privacy/source/identity/lineage and real measured64MiB/32MiB exact/+1byte snapshots; no Official assets or I/O/native tests |
+| `docs/PHASE-9E5-S1-SUBMISSION-CONTRACTS-ACCEPTANCE.md` | Actual S1 results/encoding rules/bounds/limitations and user stop gate |
+
+`learning-store.ts`, file/lease/transaction/recovery/read-model/service/transport implementation remains future S2–S6. Pure validation/checksum/candidate projection is not trust, commit capability, saved state or completion. D6 now assigns safe transport to S6 before E6 UI; no public contract is added by S1. Scoped tsc/lint/diff PASS; ignored `out/e5-s1/tsconfig.json` selects new modules/test/imported closure without emission or production configuration change. No build/native/current-artifact certification. E4 recorded scope/NOT PASS current handoff, current native UNVERIFIED,12 models PENDING_RUNTIME and target-host/reliability/release UNVERIFIED remain; storage performance NOT MEASURED/durability UNVERIFIED.
+
 ## Phase 9E-4 E4-S4 actual targeted native acceptance — 2026-10-26
 
 S1–S3 COMPLETE — PASS WITH LIMITATIONS, user accepted. S4 COMPLETE — PASS WITH LIMITATIONS (recorded-hash scope only); Phase9E-4 COMPLETE — PASS WITH LIMITATIONS (amended acceptance scope), formally user accepted under Option A;9E-5 NOT_STARTED. This current status supersedes earlier step-local historical statuses below.
@@ -494,7 +608,7 @@ metadata; 9B acceptance limits are in `PHASE-9B-ACCEPTANCE.md`.
 | Learning process results (actual 9D.1 compiler unblock) | `src/main/services/learning/runtime/exercise-runtime-adapter.ts`, `windows-exercise-adapter.ts`; adapter/native integration tests; `docs/PHASE-9D1-PROCESS-RESULT-PORT.md` | Main-only nonzero OS exit observation, conservative process/stream settlement and typed failures/Job-limit evidence. Existing Common runPhase behavior and Policy B remain; no output buffer, native stdin, public API or compiler implementation |
 | C# compile pipeline (actual 9D.1 Step 3) | `src/main/services/learning/runtime/csharp-harness.ts`, `csharp-compiler.ts`, `csharp-diagnostics.ts`, `csharp-compile-workspace.ts`; exact-selection helper in csharp-sdk-resolver.ts; tests/main/csharp-{harness,compiler,compiler.integration}.test.ts | Fixed typed harness, direct local Roslyn in Learning Job, contained exclusive files, safe bounded diagnostics and Core raw-byte accounting before redaction. Real compile/error/cancellation evidence in docs/PHASE-9D1-CSHARP-COMPILER.md; no native stdin/sample execution or public wiring |
 | Local Judge | `src/main/services/learning/judge-service.ts` | Main, 9E; public/hidden tests, 100% Accepted, distinct internal error |
-| Future Learning records | `src/main/services/learning/learning-store.ts`; reuse existing `src/main/services/persistence/persistence-service.ts` where suitable | Main, 9E Accepted commit/recovery; 9F extended quiz/progress persistence; existing 9C drafts use practice-store.ts |
+| Learning submission storage/transport (actual S3–S6) | `src/main/services/learning/learning-store.ts`, `storage/snapshot-transaction.ts`, `storage/submission-read-model.ts`, `submission-projection.ts`, `exercise-service.ts`/`official-case-plan.ts`/`src/main/index.ts`; public contracts and preload bridge above | Main one-target retained commit/recovery/committed reads and same-operation Submit, safe transport accepted COMPLETE — PASS WITH LIMITATIONS; E6 UI/Restore and9F extended progress separate; existing 9C drafts use practice-store.ts |
 | Runtime resolution/distribution | Learning-only installed-runtime resolver planned under `src/main/services/learning/runtime/`; distribution asset paths deferred | User-approved 2026-10-19: 9D uses installed .NET SDK/Node only, no downloads/install/bundling or Project changes; installer integration decided separately at packaging; 9G clean-Windows evidence retained |
 
 No Python/Java adapters or new language providers. Learning uses installed stable

@@ -32,16 +32,18 @@ export interface OfficialPlanIdentity {
   readonly comparatorId: 'exact-typed'
   readonly comparatorVersion: 1
 }
+/** Main-only Submit selection. Identity is derived once from the owned Prepare lease. */
+export type OfficialPlanSelection = OfficialPlanIdentity | Readonly<{ selection: 'CURRENT'; exerciseId: string }>
 
 /** Same Core binding identity throughout acquisition, language execution and
  * cleanup. Construction is synchronous; acquisition/factory run only in Prepare. */
-export function bindOfficialCasePlan(registry: ExercisePackageRegistry, expected: OfficialPlanIdentity,
+export function bindOfficialCasePlan(registry: ExercisePackageRegistry, expected: OfficialPlanSelection,
   owner: Omit<OfficialPlanOwner, 'currentPhase' | 'retainContent'>, request: Readonly<ExerciseRunRequest>, workspace: ExerciseWorkspace,
   create: OfficialAdapterFactory, initializeJudge?: (view: OfficialJudgeView) => void) {
   let phase: ExerciseExecutionPhase, context: ExercisePhaseContext
   let delegate: OfficialLanguageAdapter | undefined, plan: OfficialCasePlan | undefined, release: (() => void) | undefined
   let settled: OfficialLanguageEvidence | undefined
-  let acquired = false, identity = expected, contentReleased = false
+  let acquired = false, identity: OfficialPlanIdentity | undefined = 'selection' in expected ? undefined : expected, contentReleased = false
   const get = () => { if (!delegate) throw exerciseCoreError('RESULT_PENDING'); return delegate }
   const adapter: ExerciseRuntimeAdapter & { hasNextCase(): boolean } = {
     async runPhase(p, c) {
@@ -80,7 +82,10 @@ export function bindOfficialCasePlan(registry: ExercisePackageRegistry, expected
   }
   const evidence = (): OfficialLanguageEvidence => settled ?? delegate?.officialEvidence() ?? {
     cases: [], notRunCaseIndices: [], failure: { kind: 'INFRASTRUCTURE_FAILURE', phase: 'prepare', caseIndex: null } }
-  return { adapter, evidence, identity: () => identity, planAcquired: () => acquired,
+  return { adapter, evidence, identity: (): OfficialPlanIdentity => {
+    if (!identity) throw exerciseCoreError('RESULT_PENDING')
+    return identity
+  }, planAcquired: () => acquired,
     representationBorrows: () => plan?.representationBorrows() ?? 0,
     contentReleased: () => contentReleased,
     releaseContent() {
@@ -115,7 +120,7 @@ export interface OfficialCasePlan {
 }
 
 /** No acquisition before admitted Prepare; no paths, raw packages or Renderer DTOs. */
-export async function acquireOfficialCasePlan(registry: ExercisePackageRegistry, expected: OfficialPlanIdentity,
+export async function acquireOfficialCasePlan(registry: ExercisePackageRegistry, expected: OfficialPlanSelection,
   owner: OfficialPlanOwner): Promise<OfficialCasePlan> {
   expected = Object.freeze({ ...expected })
   const original = owner.packageOwner
@@ -147,7 +152,8 @@ export async function acquireOfficialCasePlan(registry: ExercisePackageRegistry,
   const identity: OfficialPlanIdentity = { exerciseId: m.exerciseId, packageVersion: m.packageVersion,
     testSetId: j.testSetId, testSetVersion: j.version, signatureVersion: m.signature.version,
     signatureHash: m.signature.hash, officialHash: m.official.hash, comparatorId: m.comparator.id, comparatorVersion: m.comparator.version }
-  if ((Object.keys(identity) as (keyof OfficialPlanIdentity)[]).some(k => identity[k] !== expected[k])
+  if (identity.exerciseId !== expected.exerciseId || identity.comparatorId !== 'exact-typed' || identity.comparatorVersion !== 1
+    || !('selection' in expected) && (Object.keys(identity) as (keyof OfficialPlanIdentity)[]).some(k => identity[k] !== expected[k])
     || j.exerciseId !== m.exerciseId || j.testSetId !== m.official.testSetId || j.version !== m.official.version
     || j.signatureVersion !== m.signature.version || j.signatureHash !== m.signature.hash) throw exerciseCoreError('HARNESS_SCHEMA')
   const count = j.cases.length

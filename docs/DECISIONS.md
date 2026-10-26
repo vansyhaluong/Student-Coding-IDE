@@ -1,5 +1,54 @@
 # Architecture Decision Log
 
+## Phase 9E-5 formal final acceptance — 2026-10-26
+
+User formally accepts **Phase 9E-5 and E5-S1–S6: COMPLETE — PASS WITH LIMITATIONS**.
+[Final acceptance](PHASE-9E5-FINAL-ACCEPTANCE.md) retains42 S6 targeted PASS,
+29 focused regression PASS,30 filtered S5 tests (not PASS) and historical scoped
+typecheck/lint/diff PASS. No evidence rerun, cross-step count aggregation, ADR
+reopening or storage/security policy change; earlier execution statuses below are
+historical. All original evidence/failures/corrections/limitations remain intact.
+
+Documentation-only closure: consistency/document diff checks, no production/test
+changes or tests/build/typecheck/lint/native/benchmark/smoke runs. E4 current-artifact
+handoff remains NOT PASS; native/target-host/release certification UNVERIFIED;
+storage durability/performance uncertified;12 performance models PENDING_RUNTIME;
+all deferred verification gates unchanged. No end-to-end production/release
+certification. **E6/E7 NOT_STARTED; STOP pending separate explicit E6 authorization.**
+
+## E5-S2 formal acceptance — 2026-10-26
+
+User formally accepts **E5-S2 COMPLETE — PASS WITH LIMITATIONS**. S1 remains COMPLETE — PASS WITH LIMITATIONS; Phase9E-5 IN_PROGRESS; S3–S6 NOT_STARTED. [S2 accepted packet](PHASE-9E5-S2-FILES-LEASE-ACCEPTANCE.md) retains29 targeted PASS/0 FAIL/0 SKIP, checked filesystem/identity/bounded read/staging, shared lease/retained ownership/release retry, actual Windows cross-process contention/reacquisition, unchanged native SHA256 and scoped typecheck/lint/diff PASS. Historical lint failure, corrections, first27/final29 coverage and limitations remain intact; no evidence rerun/rewrite.
+
+Documentation-only acceptance: consistency/diff checks, no production/tests/typecheck/lint/build/native/smoke/user-data changes. E5-D1–D6 policies unchanged. Storage durability/crash recovery/performance/general native provenance/release remain NOT MEASURED or UNVERIFIED as recorded; E4 current-artifact handoff stays NOT PASS. This does not approve transaction/recovery or release certification. **STOP; await separate S3 authorization.** Earlier delivery/pending statements below are historical.
+
+## E5-S1 formal acceptance / E5-S2 checked files and lease delivery — 2026-10-26
+
+User formally accepts **S1 COMPLETE — PASS WITH LIMITATIONS (81 tests PASS)** and authorizes only **S2 checked filesystem/shared native lease**, including targeted temporary-file tests, Windows cross-process lease contention/release/reacquisition, native fingerprints, scoped typecheck/lint/diff. S1 sources/tests and E4 acceptance are unchanged/not rerun. E5-D1–D6 remain APPROVED with no new architecture/policy decision.
+
+[S2 report](PHASE-9E5-S2-FILES-LEASE-ACCEPTANCE.md): new Main-private `store-files.ts`/`store-lease.ts`, two targeted suites and dedicated child lease fixture;29 PASS/0 FAIL/0 SKIP, scoped tsc/lint/diff PASS. Initial lint no-this-alias failure corrected; first27-test run PASS, then stale-token lifecycle review fix and two focused regressions yielded29 PASS, not56 unique tests. Native binary SHA256 `97dd803603ba655ab58d1df24e5de4957ff226c8ea31e1491d58c4bcfe0cbcc3` unchanged from preflight through final audit; actual acquireLease/close contention both directions, reacquisition and fixture stage/discard only, no Jobs/Runtime/Judge. This is new limited S2 lease evidence, not certification of E4 current artifacts/general native behavior.
+
+**Phase9E-5 IN_PROGRESS — E5-S2; S2 REVIEW COMPLETED — AWAITING USER ACCEPTANCE (tracking IN_PROGRESS); S3–S6 NOT_STARTED.** Byte primitives do not implement a submission transaction, crash recovery, commit authority or completion. Native close failures retain handles; unresolved replacement/file identity stays retained for later managed reconciliation, not blind retry. Node TOCTOU/power-loss/UNC/target-matrix/performance limitations remain explicit. No native binary/Runtime/Core/ExerciseService/Official/public API/user-data changes or Git publication. STOP before S3; E4 recorded acceptance/current-artifact NOT PASS/current native broadly UNVERIFIED and deferred gates unchanged.
+
+## Phase 9E-5 — Design / six-step plan / E5-D1–D6 APPROVED — 2026-10-26
+
+User formally APPROVES [Storage Design](PHASE-9E5-SUBMISSION-STORAGE-DESIGN.md), [six-step plan](PHASE-9E5-IMPLEMENTATION-PLAN.md) and all six E5 decisions. **Only E5-S1 pure records/validation/storage contracts is authorized.** Phase9E-5 IN_PROGRESS — E5-S1; E5-S2–S6 NOT_STARTED. S1 delivery awaits independent user acceptance; approval does not permit advancing to S2.
+
+| Decision | APPROVED selection / implementation boundary |
+|---|---|
+| E5-D1 | Immutable Accepted/Failed schemas, strict allowlists, deterministic encoding/checksum, Main-issued IDs/timestamps, Submit-only well-formed Unicode preserving exact source/CRLF. Accepted `userData/learning/accepted.json`; Failed `userData/learning/failed-submissions.json`. Run/draft validation unchanged |
+| E5-D2 | Learning-only writer/shared store-family OS lease over existing native primitive, checked fail-closed filesystem; no generic PersistenceService/Runtime/native/Core change. Implementation S2, not S1 |
+| E5-D3 | Versioned separate envelopes, one-target guarded atomic replacement, idempotency/retry/unknown reconciliation and deterministic recovery without staging promotion. Precommit expiry starts at first storage continuation entry,15s Accepted/10s Failed, no retry reset. S1 vocabulary/schema/encoding only; execution S3 |
+| E5-D4 | Committed read model, Accepted-derived completion, partial availability/conflicts and bounded summaries/cursor/source chunks. Actual committed-read logic S4 |
+| E5-D5 | Immutable Submit capture, trusted identity in owned Prepare, same-operation hold-through-commit, service-owned commit guard, retained storage/shutdown/owner invalidation. Integration S5 |
+| E5-D6 | Public Submit/status and committed-read IPC/Preload allocated to S6 under E4-D4. Six independent stop gates; S6 safe transport only, UI/History/Restore E6 |
+
+**S1 scoped verification APPROVED:** targeted `submission-records.test.ts`, scoped TypeScript for two new source modules/test and imported closure, targeted ESLint and scoped diff checks only. No full suite/repository checks/build/native/filesystem/restart/Official Runtime/UI/smoke/performance operations. This explicit S1 amendment supersedes general quality-command requirements for S1 only; no production configuration change.
+
+S1 concrete schema1 uses UUIDv4 identities, ISO UTC millisecond timestamps, exact SHA256 UTF-8 source, fixed canonical JSON field order, checksum over the envelope without checksum, and a trailing LF in encoded snapshots. Genesis is sequence1/null predecessor/one record; subsequent envelope links immediately preceding sequence/ID/digest; supplied-predecessor validation also checks same-store append-only prefix plus one record. These are pure data/encoding rules within approved D1/D3, not proof of commit/ownership/trusted Judge origin. [S1 report](PHASE-9E5-S1-SUBMISSION-CONTRACTS-ACCEPTANCE.md) records81 synthetic tests PASS and scoped checks; **REVIEW COMPLETED — AWAITING USER ACCEPTANCE**, tracking IN_PROGRESS.
+
+Approved9E0-A/B/H1–H5 capacities/timeouts/eligibility/completion/security unchanged. E4 COMPLETE — PASS WITH LIMITATIONS (recorded-hash scope); current-artifact handoff NOT PASS/current native UNVERIFIED,12 models PENDING_RUNTIME, general Official60s/target-host/reliability/release UNVERIFIED; storage performance NOT MEASURED/durability UNVERIFIED. No S2–S6 or E6/7 implementation authorization, artifact rebuild/history restoration or Git publication.
+
 ## Phase 9E-4 — Option A recorded-hash acceptance APPROVED — 2026-10-26
 
 The user explicitly approves **Option A — Recorded-hash Acceptance** in the [final acceptance](PHASE-9E4-FINAL-ACCEPTANCE.md). S1/S2/S3 remain COMPLETE — PASS WITH LIMITATIONS; S4 COMPLETE — PASS WITH LIMITATIONS (recorded-hash scope only); Phase9E-4 COMPLETE — PASS WITH LIMITATIONS (amended acceptance scope);9E-5 NOT_STARTED. Existing4/4 native PASS/22 Jobs/VERIFIED cleanup/content release/zero Registry ledger and scoped checks are accepted for recorded native-run artifact hashes only. This supersedes prior pending acceptance statements without rewriting receipts, hashes or drift audit.

@@ -20,11 +20,15 @@ import { WindowsJavascriptExecutionAdapter, createOfficialJavascriptExecutionAda
 import { runJavascriptSamples } from './runtime/javascript-orchestrator'
 import type { ExercisePackageRegistry } from './content/exercise-package-registry'
 import { packageRunBinding } from './package-run-binding'
-import { bindOfficialCasePlan, type OfficialPlanIdentity } from './official-case-plan'
+import { bindOfficialCasePlan, type OfficialPlanIdentity, type OfficialPlanSelection } from './official-case-plan'
 import { executionDriverState, runExecutionDriver, type ExecutionDriverState } from './runtime/execution-driver'
 import type { OfficialAdapterFactory, OfficialExecutionCompletion, OfficialJudgeOperationHandle, OfficialOperationHandle, OfficialSettledCaseConsumer } from './runtime/official-execution-contracts'
 import { createOfficialJudge } from './judge-service'
 import type { JudgeOwnerBoundIdentity, JudgeResult } from './judge/judge-contracts'
+import type { LearningStore } from './learning-store'
+import type { SnapshotTransaction, CommitGuardContext } from './storage/snapshot-transaction'
+import { SUBMISSION_STORE_POLICY, type SubmissionCapture, type SubmissionRecord, type SubmissionStorageResult } from './storage/submission-contracts'
+import { bindSubmissionTarget, compareSubmissionIdentity, validateSubmissionCapture, validateSubmissionForCandidate, validateSubmissionSource, validateSubmissionLineage } from './storage/submission-validation'
 
 type Navigation = (event: unknown, url: string, inPlace: boolean, mainFrame: boolean) => void
 export interface ExerciseOwner {
@@ -55,6 +59,38 @@ export interface ExerciseServiceOptions {
   onCleanupError?: (error: AppError) => void
   /** Main-only configuration. The adapter factory is invoked in admitted Prepare. */
   official?: { registry: ExercisePackageRegistry; createAdapter: OfficialAdapterFactory }
+  /** Synchronous accessor to the managed Main storage dependency, never a caller authority. */
+  submissions?: { store(): Pick<LearningStore, 'begin'>; ownsLease(): boolean }
+}
+export interface SubmissionServiceStatus {
+  readonly submissionId: string
+  readonly reference: Readonly<ExerciseSessionReference>
+  readonly exerciseId: string
+  readonly language: ExerciseRunRequest['language']
+  readonly sourceRevision: number
+  readonly stage: 'RUNTIME' | 'STORAGE' | 'SETTLED'
+  readonly verdict: JudgeResult['verdict']
+  readonly counts?: { readonly total: number; readonly attempted: number; readonly passed: number }
+  readonly storage: { readonly state: SubmissionStorageResult['state']; readonly reason?: string;
+    readonly recoveryPending?: true; readonly recordKey?: { readonly storeKind: 'ACCEPTED' | 'FAILED'; readonly recordId: string } }
+}
+/** Private same-operation handle. No raw Judge/Official result or transport wiring. */
+export interface SubmissionOperationHandle {
+  readonly submissionId: string
+  readonly reference: Readonly<ExerciseSessionReference>
+  status(): SubmissionServiceStatus
+  completion(): Promise<SubmissionServiceStatus>
+  retry(): Promise<SubmissionServiceStatus>
+}
+interface SubmitState {
+  readonly intent: Readonly<Pick<SubmissionCapture, 'id' | 'submissionId' | 'exerciseId' | 'language' | 'code' | 'sourceRevision' | 'codeHash' | 'submittedAt'>>
+  capture?: SubmissionCapture
+  record?: SubmissionRecord
+  storage: SubmissionStorageResult
+  transaction?: SnapshotTransaction
+  task?: Promise<void>
+  admitted: boolean
+  finished: boolean
 }
 interface OwnerEntry { owner: ExerciseOwner; accepts: boolean; documentEpoch: number; remove(): void }
 interface Operation {
@@ -68,9 +104,12 @@ interface Operation {
   lastPublished: number
   completion: Promise<ExerciseSnapshot>
   execution: ExerciseExecution
+  runtimeSettled?: boolean
+  runtimeCleanup?: Promise<ExerciseSnapshot>
+  submit?: SubmitState
   official?: { binding: ReturnType<typeof bindOfficialCasePlan>; driver: ExecutionDriverState;
     consumer: OfficialSettledCaseConsumer; tasks: Set<Promise<unknown>>; cleanupFailure: boolean; releaseFailed: boolean;
-    judge?: { engine: ReturnType<typeof createOfficialJudge>; identity: Readonly<JudgeOwnerBoundIdentity>; documentEpoch: number;
+    judge?: { engine: ReturnType<typeof createOfficialJudge>; identity?: Readonly<JudgeOwnerBoundIdentity>; documentEpoch: number;
       finalizationFailed: boolean; result?: JudgeResult } }
 }
 interface RecoveryEntry {
@@ -184,7 +223,7 @@ export class ExerciseService {
   }
   /** Trusted Main capability only. No public flag, IPC, renderer DTO or queue. */
   runOfficial(owner: number, value: ExerciseRunRequest, identity: Readonly<OfficialPlanIdentity>, consumer: OfficialSettledCaseConsumer): OfficialOperationHandle {
-    if (!value || !identity || identity.exerciseId !== value.exerciseId || typeof consumer !== 'function') throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
+    if (!value || !identity || Object.hasOwn(identity, 'selection') || identity.exerciseId !== value.exerciseId || typeof consumer !== 'function') throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
     const op = this.admit(owner, value, { identity: Object.freeze({ ...identity }), consumer })
     return Object.freeze({ reference: Object.freeze({ sessionId: op.session.snapshot().sessionId, generation: op.generation }),
       completion: async () => {
@@ -197,7 +236,7 @@ export class ExerciseService {
   }
   /** Main-private entry on the SAME slot. Caller supplies source/plan identity only. */
   runJudge(owner: number, value: ExerciseRunRequest, identity: Readonly<OfficialPlanIdentity>): OfficialJudgeOperationHandle {
-    if (!value || !identity || identity.exerciseId !== value.exerciseId) throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
+    if (!value || !identity || Object.hasOwn(identity, 'selection') || identity.exerciseId !== value.exerciseId) throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
     const engine = createOfficialJudge()
     const op = this.admit(owner, value, { identity: Object.freeze({ ...identity }), consumer: engine.consume, judge: engine })
     return Object.freeze({ reference: Object.freeze({ sessionId: op.session.snapshot().sessionId, generation: op.generation }),
@@ -215,8 +254,36 @@ export class ExerciseService {
       },
     })
   }
-  private admit(owner: number, value: ExerciseRunRequest, official?: { identity: Readonly<OfficialPlanIdentity>; consumer: OfficialSettledCaseConsumer;
-    judge?: ReturnType<typeof createOfficialJudge> }): Operation {
+  /** Captures intent BEFORE execute starts. Main selects the trusted plan in Prepare. */
+  submit(owner: number, value: ExerciseRunRequest): SubmissionOperationHandle {
+    const request = validateExerciseRunRequest(value)
+    if (!request.ok || !validateSubmissionSource(request.value.code).ok) throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
+    if (!this.options.submissions) throw serviceError('SUBMISSION_STORAGE_UNAVAILABLE', 'UNSUPPORTED')
+    const engine = createOfficialJudge(), r = request.value
+    const submit: SubmitState = { intent: Object.freeze({ id: randomUUID(), submissionId: randomUUID(),
+      exerciseId: r.exerciseId, language: r.language, code: r.code, sourceRevision: r.sourceRevision,
+      codeHash: createHash('sha256').update(r.code, 'utf8').digest('hex'), submittedAt: new Date().toISOString() }),
+    storage: { state: 'not-requested' }, admitted: false, finished: false }
+    const op = this.admit(owner, r, { identity: Object.freeze({ selection: 'CURRENT', exerciseId: r.exerciseId }),
+      consumer: engine.consume, judge: engine, submit })
+    const reference = Object.freeze({ sessionId: op.session.snapshot().sessionId, generation: op.generation })
+    return Object.freeze({ submissionId: submit.intent.submissionId, reference,
+      status: () => this.submissionStatus(op),
+      completion: async () => {
+        try { await op.completion } catch { /* Original runtime/storage waits retain their tasks. */ }
+        return this.submissionStatus(op)
+      },
+      retry: async () => {
+        this.submissionStatus(op) // Revoke observation, never settlement, after owner loss.
+        if (this.active === op) {
+          try { await this.cleanup(op) } catch { /* Report actual retained state, never restart execution. */ }
+        }
+        return this.submissionStatus(op)
+      },
+    })
+  }
+  private admit(owner: number, value: ExerciseRunRequest, official?: { identity: Readonly<OfficialPlanSelection>; consumer: OfficialSettledCaseConsumer;
+    judge?: ReturnType<typeof createOfficialJudge>; submit?: SubmitState }): Operation {
     const request = validateExerciseRunRequest(value)
     if (!request.ok) throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
     const entry = this.owners.get(owner)
@@ -233,7 +300,10 @@ export class ExerciseService {
         check() {}, retain: task => { tasks.add(task); void task.finally(() => tasks.delete(task)).catch(() => {}) },
         canRelease: () => operation.executionDone && !operation.session.ownsResources && tasks.size === 0 },
       cleanup: () => operation.session.snapshot().cleanup,
-    }, Object.freeze(request.value), workspace, this.options.official!.createAdapter, official.judge?.initialize) : undefined
+    }, Object.freeze(request.value), workspace, this.options.official!.createAdapter, official.judge ? view => {
+      if (operation.submit) this.bindSubmitPlan(operation, view.identity)
+      official.judge!.initialize(view)
+    } : undefined) : undefined
     const execution: ExerciseExecution = binding ? { adapter: binding.adapter, phases: ['compile', 'execute'], releaseContent: binding.releaseContent }
       : this.options.createExecution!(Object.freeze(request.value), workspace)
     if (!execution.phases.length || execution.phases.some(p => p !== 'compile' && p !== 'execute')
@@ -242,12 +312,13 @@ export class ExerciseService {
     const session = new ExerciseSession({ request: request.value, ownerId: `webcontents:${owner}`, generation,
       hostEpoch: this.hostEpoch, workspace, adapter: execution.adapter, checkpoints: this.store(workspace), clock: this.clock })
     const operation: Operation = { kind: official ? 'OFFICIAL' : 'RUN', owner, ownerEntry: entry, generation, session, invalidated: false,
-      executionDone: false, lastPublished: -1, execution, completion: undefined as unknown as Promise<ExerciseSnapshot> }
+      executionDone: false, lastPublished: -1, execution, submit: official?.submit, completion: undefined as unknown as Promise<ExerciseSnapshot> }
     if (binding && official) {
       operation.official = { binding, tasks, consumer: official.consumer, driver: executionDriverState(), cleanupFailure: false, releaseFailed: false }
       if (official.judge) operation.official.judge = { engine: official.judge, documentEpoch: entry.documentEpoch, finalizationFailed: false,
-        identity: Object.freeze({ ownerId: owner, ownerEntry: entry, session: Object.freeze({ sessionId: workspace.sessionId, generation }),
-          plan: official.identity, language: request.value.language, sourceRevision: request.value.sourceRevision,
+        identity: 'selection' in official.identity ? undefined : Object.freeze({ ownerId: owner, ownerEntry: entry,
+          session: Object.freeze({ sessionId: workspace.sessionId, generation }), plan: official.identity,
+          language: request.value.language, sourceRevision: request.value.sourceRevision,
           sourceHash: createHash('sha256').update(request.value.code, 'utf8').digest('hex') }) }
     }
     this.last = undefined; this.active = operation
@@ -315,11 +386,33 @@ export class ExerciseService {
     return snapshot
   }
   private async cleanup(op: Operation, reason: ExerciseEndReason = 'COMPLETED'): Promise<ExerciseSnapshot> {
+    await this.settleRuntime(op, reason)
+    // A joined close can finish before execute's finally sets executionDone.
+    // Recheck the same live operation after that join, without a new Core task.
+    const snapshot = this.finalizeRuntime(op)
+    if (op.submit && op.runtimeSettled && this.active === op) await this.waitSubmission(op, this.continueSubmission(op))
+    return snapshot
+  }
+  private settleRuntime(op: Operation, reason: ExerciseEndReason): Promise<ExerciseSnapshot> {
+    // Preserve legacy Run/Official/Judge cancellation and retry ordering exactly.
+    if (!op.submit) return this.cleanupRuntime(op, reason)
+    if (op.runtimeSettled) return Promise.resolve(op.kind === 'RUN' ? this.observation(op) : op.session.snapshot())
+    if (op.runtimeCleanup) return op.runtimeCleanup
+    // Call close synchronously: cancellation must set Core's first reason now.
+    const task = this.cleanupRuntime(op, reason)
+    op.runtimeCleanup = task
+    void task.finally(() => { if (op.runtimeCleanup === task) op.runtimeCleanup = undefined }).catch(() => {})
+    return task
+  }
+  private async cleanupRuntime(op: Operation, reason: ExerciseEndReason): Promise<ExerciseSnapshot> {
     try { await op.session.close(reason) }
     catch (error) { this.report(error); throw error }
+    return this.finalizeRuntime(op)
+  }
+  private finalizeRuntime(op: Operation): ExerciseSnapshot {
     const snapshot = op.kind === 'RUN' ? this.observation(op) : op.session.snapshot()
     this.publish(op)
-    if (!op.session.ownsResources && op.executionDone && this.active === op) {
+    if (!op.runtimeSettled && !op.session.ownsResources && op.executionDone && this.active === op) {
       if (op.execution.releaseContent) {
         if (!snapshot.cleanup.cleanupComplete || snapshot.cleanup.proof !== 'VERIFIED') throw serviceError('PACKAGE_CLEANUP_UNVERIFIED')
         if (op.official?.judge && (snapshot.cleanup.state !== 'FINALIZED' || !snapshot.cleanup.processClean
@@ -331,7 +424,7 @@ export class ExerciseService {
         }
       }
       if (op.official) op.official.cleanupFailure = false
-      if (op.official?.judge && !op.official.judge.result) {
+      if (op.official?.judge && !op.official.judge.result && (!op.submit || op.official.judge.identity)) {
         // No await between owner/release checks, scalar reduction and slot release.
         // A throwing finalizer leaves the same slot available to managed retry.
         try { op.official.judge.result = this.reduceJudge(op); op.official.judge.finalizationFailed = false }
@@ -340,8 +433,9 @@ export class ExerciseService {
           const error = serviceError('OFFICIAL_JUDGE_FINALIZATION_FAILED'); this.report(error); throw error
         }
       }
+      op.runtimeSettled = true
       if (op.kind === 'RUN' && this.isCurrent(op)) this.last = { owner: op.owner, ownerEntry: op.ownerEntry, snapshot: structuredClone(snapshot) }
-      this.active = undefined
+      if (!op.submit) this.active = undefined
     }
     return snapshot
   }
@@ -359,24 +453,144 @@ export class ExerciseService {
   private currentJudge(op: Operation): boolean {
     return this.isCurrent(op) && op.official!.judge!.documentEpoch === op.ownerEntry.documentEpoch
   }
+  /** Main transport stamp only; never serialize the owner-entry alias. */
+  contextStamp(owner: number): Readonly<{ entry: object; epoch: number }> {
+    const entry = this.owners.get(owner)
+    if (this.sealed || !entry || !entry.accepts || entry.owner.isDestroyed()) throw serviceError('OWNER_LOST', 'PERMISSION_DENIED')
+    return { entry, epoch: entry.documentEpoch }
+  }
   private reduceJudge(op: Operation): JudgeResult {
     const state = op.official!, judge = state.judge!, snapshot = op.session.snapshot()
+    const identity = judge.identity
+    if (!identity) throw serviceError('OFFICIAL_PLAN_UNBOUND')
     let completion: OfficialExecutionCompletion | null
     try { completion = this.officialCompletion(op) }
     catch (error) {
       if (!(error instanceof DomainError) || error.details?.reason !== 'RESULT_PENDING') throw serviceError('OFFICIAL_RESULT_INVALID')
       completion = null // Runtime still owns unsettled phase evidence; no invented prefix.
     }
-    return judge.engine.reduce({ identity: judge.identity,
+    return judge.engine.reduce({ identity,
       operationIdentity: { ownerId: op.owner, ownerEntry: this.owners.get(op.owner) ?? op.ownerEntry,
         session: { sessionId: snapshot.sessionId, generation: snapshot.generation }, plan: state.binding.identity(),
-        language: snapshot.language, sourceRevision: snapshot.sourceRevision, sourceHash: judge.identity.sourceHash },
+        language: snapshot.language, sourceRevision: snapshot.sourceRevision, sourceHash: identity.sourceHash },
       completion, ownerCurrent: this.currentJudge(op),
       decisionSecuredBeforeClose: op.executionDone && !state.driver.consumerFailure && (!state.driver.failure || op.session.lastPhaseError !== undefined),
       cleanup: { snapshot: snapshot.cleanup, executionDone: op.executionDone, ownsResources: op.session.ownsResources,
         retainedPackageTasks: state.tasks.size, representationBorrows: state.binding.representationBorrows(),
         contentReleased: state.binding.contentReleased(), contentReleaseFailed: state.releaseFailed },
     })
+  }
+  private bindSubmitPlan(op: Operation, plan: Readonly<OfficialPlanIdentity>): void {
+    const s = op.submit!, snapshot = op.session.snapshot()
+    if (s.capture || this.active !== op || !this.currentJudge(op) || snapshot.phase !== 'prepare'
+      || plan.exerciseId !== s.intent.exerciseId) throw serviceError('SUBMISSION_PLAN_INVALID')
+    const capture = validateSubmissionCapture({ schemaVersion: 1, ...s.intent, packageVersion: plan.packageVersion,
+      signatureVersion: plan.signatureVersion, signatureHash: plan.signatureHash,
+      testSet: { id: plan.testSetId, version: plan.testSetVersion, hash: plan.officialHash },
+      comparator: { id: plan.comparatorId, version: plan.comparatorVersion } })
+    if (!capture.ok) throw serviceError('SUBMISSION_PLAN_INVALID')
+    s.capture = capture.value
+    op.official!.judge!.identity = Object.freeze({ ownerId: op.owner, ownerEntry: op.ownerEntry,
+      session: Object.freeze({ sessionId: snapshot.sessionId, generation: op.generation }), plan,
+      language: s.intent.language, sourceRevision: s.intent.sourceRevision, sourceHash: s.intent.codeHash })
+  }
+  private submissionStatus(op: Operation): SubmissionServiceStatus {
+    if (!op.submit || !this.currentJudge(op)) throw serviceError('STALE_SESSION', 'PERMISSION_DENIED')
+    const s = op.submit, result = s.transaction?.status ?? s.storage
+    const judge = op.official!.judge!.result
+    const recordKey = result.state === 'saved' ? { storeKind: result.target.storeKind, recordId: result.target.id } : undefined
+    return structuredClone({ submissionId: s.intent.submissionId,
+      reference: { sessionId: op.session.snapshot().sessionId, generation: op.generation },
+      exerciseId: s.intent.exerciseId, language: s.intent.language, sourceRevision: s.intent.sourceRevision,
+      stage: s.finished ? 'SETTLED' : op.runtimeSettled ? 'STORAGE' : 'RUNTIME',
+      verdict: judge?.verdict ?? null,
+      ...(judge?.state === 'FINAL' && judge.requiredCases !== null ? { counts: {
+        total: judge.requiredCases, attempted: judge.attemptedCases, passed: judge.passedCases } } : {}),
+      storage: { state: result.state, ...(result.state === 'failed' ? { reason: result.reason } : {}),
+        ...(result.state === 'not-requested' && s.finished ? { reason: s.capture ? 'INELIGIBLE' : 'PLAN_UNAVAILABLE' } : {}),
+        ...(result.state === 'unknown' ? { recoveryPending: true as const } : {}), ...(recordKey ? { recordKey } : {}) } })
+  }
+  private submissionGuard(op: Operation, context: CommitGuardContext): void {
+    const s = op.submit!, official = op.official!, judge = official.judge!, result = judge.result
+    const snapshot = op.session.snapshot(), identity = judge.identity, capture = s.capture, record = s.record
+    if (this.active !== op || !this.currentJudge(op) || s.admitted || !op.runtimeSettled || !op.executionDone
+      || !capture || !record || !identity || !result || result.state !== 'FINAL' || result.eligibility.kind === 'INELIGIBLE'
+      || !this.options.submissions?.ownsLease() || op.session.ownsResources
+      || snapshot.cleanup.state !== 'FINALIZED' || snapshot.cleanup.proof !== 'VERIFIED' || !snapshot.cleanup.cleanupComplete
+      || !snapshot.cleanup.processClean || snapshot.cleanup.pendingIo || snapshot.cleanup.workspace !== 'REMOVED'
+      || official.tasks.size || official.cleanupFailure || official.releaseFailed || official.judge!.finalizationFailed || official.binding.representationBorrows()
+      || !official.binding.planAcquired() || !official.binding.contentReleased()
+      || identity.ownerId !== op.owner || identity.ownerEntry !== op.ownerEntry
+      || identity.session.sessionId !== snapshot.sessionId || identity.session.generation !== op.generation
+      || snapshot.generation !== op.generation || snapshot.exerciseId !== capture.exerciseId || snapshot.language !== capture.language
+      || snapshot.sourceRevision !== capture.sourceRevision || identity.language !== capture.language
+      || identity.sourceRevision !== capture.sourceRevision || identity.sourceHash !== capture.codeHash
+      || capture.packageVersion !== identity.plan.packageVersion || capture.signatureVersion !== identity.plan.signatureVersion
+      || capture.signatureHash !== identity.plan.signatureHash || capture.testSet.id !== identity.plan.testSetId
+      || capture.testSet.version !== identity.plan.testSetVersion || capture.testSet.hash !== identity.plan.officialHash
+      || capture.comparator.id !== identity.plan.comparatorId || capture.comparator.version !== identity.plan.comparatorVersion
+      || result.identity.ownerId !== op.owner || result.identity.session.sessionId !== snapshot.sessionId
+      || result.identity.session.generation !== op.generation || result.identity.language !== capture.language
+      || result.identity.sourceRevision !== capture.sourceRevision || result.identity.sourceHash !== capture.codeHash
+      || capture.code !== s.intent.code || capture.codeHash !== createHash('sha256').update(s.intent.code, 'utf8').digest('hex')
+      || JSON.stringify(identity.plan) !== JSON.stringify(official.binding.identity())
+      || JSON.stringify(result.identity.plan) !== JSON.stringify(identity.plan)) throw serviceError('SUBMISSION_ADMISSION_REVOKED', 'PERMISSION_DENIED')
+    const checked = validateSubmissionForCandidate(record, { state: 'FINAL', verdict: result.verdict, eligibility: result.eligibility.kind }, capture)
+    const target = bindSubmissionTarget(record)
+    const last = context.next.records.at(-1), matching = last ? compareSubmissionIdentity(record, last) : undefined
+    if (!checked.ok || !target.ok || JSON.stringify(target.value) !== JSON.stringify(context.target)
+      || !matching?.ok || matching.value !== 'MATCHING_RETRY'
+      || context.next.storeKind !== target.value.storeKind
+      || (context.base ? !validateSubmissionLineage(context.next, context.base).ok
+        : context.next.commitSequence !== 1 || context.next.previousCommit !== null || context.next.records.length !== 1)) {
+      throw serviceError('SUBMISSION_BINDING_INVALID', 'PERMISSION_DENIED')
+    }
+    s.admitted = true // No await: S3 dispatches the primary rename in this same stack.
+  }
+  private continueSubmission(op: Operation): Promise<void> {
+    const s = op.submit!
+    if (s.task) return s.task
+    if (s.finished) return Promise.resolve()
+    const task = Promise.resolve().then(async () => {
+      if (!s.transaction) {
+        const result = op.official!.judge!.result, capture = s.capture
+        if (!this.currentJudge(op) || !capture || !result || result.state !== 'FINAL' || result.eligibility.kind === 'INELIGIBLE') {
+          s.finished = true; return // Ineligible is not a fabricated save failure.
+        }
+        const now = new Date().toISOString()
+        const proposed = result.verdict === 'Accepted' ? { ...capture, result: 'Accepted', acceptedAt: now, cleanupProof: 'VERIFIED',
+          testSet: { ...capture.testSet, total: result.requiredCases, passed: result.passedCases } }
+          : { ...capture, verdict: result.verdict, gradedAt: now, recordedAt: now }
+        const record = validateSubmissionForCandidate(proposed, { state: 'FINAL', verdict: result.verdict, eligibility: result.eligibility.kind }, capture)
+        const target = record.ok ? bindSubmissionTarget(record.value) : undefined
+        if (!record.ok || !target?.ok) throw serviceError('SUBMISSION_RECORD_INVALID')
+        s.record = record.value; s.storage = { state: 'pending', target: target.value }
+        try { s.transaction = this.options.submissions!.store().begin(record.value, context => this.submissionGuard(op, context)) }
+        catch {
+          s.storage = { state: 'failed', target: target.value, reason: 'UNAVAILABLE' }; s.finished = true
+          this.report(serviceError('SUBMISSION_STORAGE_UNAVAILABLE')); return
+        }
+      }
+      await s.transaction.task // Never op.completion: that task can be waiting for us.
+      s.storage = s.transaction.status
+      if (!s.transaction.settled) { await s.transaction.settle(); s.storage = s.transaction.status }
+      if (s.transaction.settled && s.storage.state !== 'unknown' && s.storage.state !== 'pending') s.finished = true
+    }).catch(error => { this.report(error); throw error })
+      .finally(() => { if (s.finished && this.active === op) this.active = undefined })
+    s.task = task // Attach before yielding; concurrent cleanup joins exactly this continuation.
+    void task.finally(() => { if (s.task === task) s.task = undefined }).catch(() => {})
+    return task
+  }
+  private async waitSubmission(op: Operation, task: Promise<void>, shutdown = false): Promise<void> {
+    const kind = op.official!.judge!.result?.verdict === 'Accepted' ? 'ACCEPTED' : 'FAILED'
+    const ms = shutdown ? SUBMISSION_STORE_POLICY[kind].shutdownWaitMs : SUBMISSION_STORE_POLICY[kind].callerWaitMs
+    const due = this.clock.now() + ms
+    let cancel = () => {}
+    const deadline = new Promise<never>((_, reject) => { cancel = this.clock.schedule(() => reject(serviceError('SUBMISSION_STORAGE_PENDING')), ms) })
+    try {
+      await Promise.race([task, deadline])
+      if (this.clock.now() >= due) throw serviceError('SUBMISSION_STORAGE_PENDING')
+    } finally { cancel() }
   }
   snapshot(owner: number, reference: ExerciseSessionReference): ExerciseSnapshot {
     if (!validateExerciseSessionReference(reference).ok) throw serviceError('INVALID_REFERENCE', 'INVALID_INPUT')
@@ -429,11 +643,14 @@ export class ExerciseService {
   }
   async stop(): Promise<void> {
     this.beginShutdown()
-    const work = (async () => {
-      if (this.started) await this.retryRecovery()
-      await this.retryCleanup()
-    })()
-    await waitForExerciseCleanup(work, this.clock)
+    if (this.started) await this.retryRecovery()
+    const op = this.active
+    if (op) {
+      // Runtime12s and target storage15s/10s are separate caller joins.
+      await waitForExerciseCleanup(this.settleRuntime(op, 'SHUTDOWN'), this.clock)
+      this.finalizeRuntime(op)
+      if (op.submit && op.runtimeSettled && this.active === op) await this.waitSubmission(op, this.continueSubmission(op), true)
+    }
     if (this.active || [...this.recoveryEntries.values()].some(e => e.workspace.ownsLease)) throw serviceError('CLEANUP_PENDING')
     for (const entry of [...this.owners.values()]) entry.remove()
     this.stopped = true
@@ -457,10 +674,11 @@ export function createWindowsExerciseService(root: string, options: {
   driver?: (request: Readonly<ExerciseRunRequest>, workspace: ExerciseWorkspace) => WindowsExerciseDriver | undefined
   onCleanupError?: ExerciseServiceOptions['onCleanupError']
   onSnapshot?: ExerciseServiceOptions['onSnapshot']
+  submissions?: ExerciseServiceOptions['submissions']
 } = {}): ExerciseService {
   let native: LearningNativeBinding | undefined
   const binding = () => native ??= loadLearningNative()
-  return new ExerciseService({ root, onCleanupError: options.onCleanupError, onSnapshot: options.onSnapshot,
+  return new ExerciseService({ root, onCleanupError: options.onCleanupError, onSnapshot: options.onSnapshot, submissions: options.submissions,
     leases: { acquire: id => new WindowsExerciseLeaseProvider(root, binding()).acquire(id) },
     official: options.packages ? { registry: options.packages, createAdapter: (request, workspace, load) => request.language === 'csharp'
       ? createOfficialCsharpExecutionAdapter(request, workspace, binding(), load)

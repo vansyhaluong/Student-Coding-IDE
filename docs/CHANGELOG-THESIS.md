@@ -2,6 +2,122 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## Phase9E-5 — S5 accepted / S6 safe transport and final review delivered — 2026-10-26
+
+- User formally accepts [S5 COMPLETE — PASS WITH LIMITATIONS](PHASE-9E5-S5-SERVICE-INTEGRATION-ACCEPTANCE.md):35 integration PASS,
+  96 focused regression PASS/1 filtered/scoped checks; original guard/hold/cleanup/
+  shutdown evidence, failures and limitations preserved without a full S5 rerun.
+- Pure shared Submit/read/status/ref/context contracts and validation; existing Main
+  ExerciseIpcService routes, explicit safe projections, opaque owner/context-bound
+  committed source/cursors and separate `learning.submission` preload capability.
+  Cross-mode generation ordering, bounded pre-ACK buffer and listener/unload cleanup;
+  Main/current-ref status retry and non-auto-retryable Submit errors avoid ACK replay.
+- [Final packet](PHASE-9E5-FINAL-ACCEPTANCE.md):42 new PASS (17 contracts/15 Main IPC/
+  10 preload),24 direct Run transport PASS and5 focused S5 projection PASS/30 filtered;
+  scoped tsc/targeted lint/diff. Initial38 PASS and2 fixture lint errors corrected;
+  review strengthened identity/correlation/coverage/lifetime checks; expanded41 PASS,
+  final42 PASS after explicit initialization-unavailable→UNKNOWN/partial coverage.
+  Repeated tests are not summed. Controlled real service/Judge/temporary commit/read
+  survives lost ACK with one Submit/record; no native/student process or UI.
+- No storage/Judge/Runtime/Core/Registry/Official/native/dependency/policy changes;
+  no generic fs/executor/new lifecycle. Read-only service stamp/count seams do not
+  change S5 authority. S1–S5 COMPLETE — PASS WITH LIMITATIONS; **S6 REVIEW COMPLETED —
+  AWAITING USER ACCEPTANCE; Phase9E-5 IN_PROGRESS — AWAITING FINAL ACCEPTANCE**;
+  E6/E7 NOT_STARTED.12 performance models PENDING_RUNTIME and all native/current-
+  artifact/storage durability/performance/target-host/release limits remain.
+  STOP for final acceptance; no E6/UI/Restore or Git publication.
+
+## Phase9E-5 — S4 accepted / E5-S5 service integration delivered — 2026-10-26
+
+- User formally accepts [S4 COMPLETE — PASS WITH LIMITATIONS](PHASE-9E5-S4-COMMITTED-READS-ACCEPTANCE.md):72 S4 PASS,
+  3 focused regression PASS/scoped checks; committed History/availability/pagination/
+  source/completion and original limitations preserved without S4 rerun.
+- Existing ExerciseService now admits immutable Submit intent on its active slot,
+  binds trusted current Official identity in owned Prepare, finalizes VERIFIED
+  cleanup/content release and holds the same op through S3 commit/reconciliation.
+  Live synchronous owner/epoch/source/plan/cleanup/lease/base guard; pending/failed/
+  unknown separate from Judge verdict; no retry rerun/recompare/duplicate append.
+- Managed storage dependency precedes ExerciseService; shutdown joins runtime12s
+  independently from Accepted15s/Failed10s and retains unsafe I/O/lease/slot through
+  retries. Existing evidence-only runJudge/sample-only Run/public boundary retained.
+- [S5 packet](PHASE-9E5-S5-SERVICE-INTEGRATION-ACCEPTANCE.md):35 new PASS plus96 directly
+  affected regression PASS/0 FAIL/1 factory/probe filtered, scoped tsc/lint/diff.
+  Initial26 PASS/5 fixture assertion FAIL/one unhandled assertion warning corrected;
+  31 PASS then regression failures4 Official/Judge +1 service exposed introduced
+  microtask cancellation/coalesced-close issues. Fixed in ExerciseService only;
+  existing tests/Runtime unchanged. Added delayed Prepare/owner/shutdown cases;
+  final35/74/22 distinct PASS, not a sum of repeated runs. Scoped declaration/spy
+  typecheck setup corrections and all limitations recorded.
+- No storage/Judge/Runtime/Core/Registry/Official/native/dependency/public transport
+  changes or build/native/student execution. S1–S4 COMPLETE — PASS WITH LIMITATIONS;
+  **S5 REVIEW COMPLETED — AWAITING USER ACCEPTANCE**, tracking IN_PROGRESS;
+  S6 NOT_STARTED; Phase9E-5 IN_PROGRESS. STOP for acceptance; no UI/History/Restore/
+  E6/E7, native/host/power-loss/release certification or Git publication.
+
+## Phase9E-5 — S3 accepted / E5-S4 committed reads delivered — 2026-10-26
+
+- User formally accepts [S3 COMPLETE — PASS WITH LIMITATIONS](PHASE-9E5-S3-TRANSACTION-RECOVERY-ACCEPTANCE.md):40 S3 PASS,
+  28 S2 regression PASS/1 native live SKIP, scoped checks; controlled atomicity/
+  idempotency/backup/recovery and all historical limitations preserved. No full S3
+  rerun, native execution or upgraded durability/production claim.
+- New Main-private read model and façade methods load verified committed snapshots
+  under the shared lease. Explicit partial availability/conflicts, deterministic
+  bounded history/cursors, source identity/hash/UTF-8 chunks and Accepted-only
+  completion. No Failed filesystem probe for completion; unreadable Accepted is
+  UNKNOWN, recovered backup retains POSSIBLE_DATA_LOSS and no repair is performed.
+- [S4 evidence](PHASE-9E5-S4-COMMITTED-READS-ACCEPTANCE.md):72 new PASS/0 FAIL/0 SKIP,
+  3 directly affected façade regression PASS (37 tests filtered), scoped tsc/lint/
+  diff checks. Initial one tsc narrowing error/one lint unused import corrected;
+  69/70/final72 are repeated coverage, not additive. Review fixed new read-acquisition
+  ownership cleanup and separated completion from Failed I/O before final checks.
+- No storage schema/policy/transaction/recovery, Judge/Runtime/Core/Official/native/
+  public Run/dependency changes; no persisted progress/index or S5/S6/UI/Restore.
+  S1/S2/S3 COMPLETE — PASS WITH LIMITATIONS; **S4 REVIEW COMPLETED — AWAITING USER
+  ACCEPTANCE**, tracking IN_PROGRESS; S5/S6 NOT_STARTED; Phase9E-5 IN_PROGRESS.
+  STOP for user acceptance; inherited durability/performance/host/release limits
+  remain, no commit/push/merge.
+
+## Phase9E-5 — E5-S3 transaction/recovery delivered — 2026-10-26
+
+- Main-private façade and retained one-target transaction reuse S1/S2: immutable
+  idempotency/conflicts, policy capacity/reserve/expiry/backoff, checked staging and
+  verified backup, synchronous injected primary guard, exact committed read-back,
+  unknown reconciliation without competing append and resource retention.
+- Lease-authenticated recovery classifies missing/unavailable/corrupt/unsupported/
+  oversized/conflicting snapshots. Verified primary remains authority; older backup
+  recovery warns of possible data loss and blocks mutation, preserving evidence.
+  No automatic repair/reset/prune or temp/checkpoint promotion.
+- [S3 acceptance](PHASE-9E5-S3-TRANSACTION-RECOVERY-ACCEPTANCE.md):40 new synthetic
+  temporary-directory PASS;28 affected S2 regression PASS/1 native live SKIP;0 FAIL.
+  Scoped tsc/targeted lint PASS; final whitespace checks recorded in packet.
+  Initial tsc literal-parameter error corrected;60/66/67/final68 repeated PASS counts
+  are not additive. Historical S1/S2 live results remain unchanged.
+- S1/S2 COMPLETE — PASS WITH LIMITATIONS; **S3 REVIEW COMPLETED — AWAITING USER
+  ACCEPTANCE**, tracking IN_PROGRESS; S4–S6 NOT_STARTED; Phase9E-5 IN_PROGRESS.
+  No production authority/service/transport/completion or native changes. Controlled
+  tests do not certify actual crash/power-loss durability, performance or release;
+  inherited E4/current-artifact limitations unchanged. STOP for user acceptance.
+
+## Phase9E-5 — S2 formally accepted — 2026-10-26
+
+- User accepts [S2 COMPLETE — PASS WITH LIMITATIONS](PHASE-9E5-S2-FILES-LEASE-ACCEPTANCE.md); S1 remains COMPLETE — PASS WITH LIMITATIONS. Phase9E-5 IN_PROGRESS; S3–S6 NOT_STARTED. This supersedes historical pending S2 status below.
+- Existing29 targeted PASS/0 FAIL/0 SKIP, filesystem/shared lease/Windows contention/reacquisition/unchanged fingerprint and scoped checks accepted without rerun. All lint failure/corrections/history/limitations retained; no receipt/hash/source change.
+- Documentation-only consistency/diff checks. No transaction/recovery/durability/performance/general native provenance/release claim upgraded; inherited E4/current-artifact NOT PASS and unverified gates unchanged. STOP awaiting separate S3 authorization; no production/execution/user-data change or Git publication.
+
+## Phase9E-5 — S1 accepted / S2 checked files and lease delivered — 2026-10-26
+
+- User accepts S1 COMPLETE — PASS WITH LIMITATIONS,81 historical PASS retained without rerun; only S2 authorized. New Main-private checked root/file identity, fixed paths, bounded byte reads, exclusive staging/sync/close/read-back, guarded sibling replacement and authenticated shared native lease/retained close retry. No submission transaction/recovery/service/IPC/completion.
+- [S2 evidence](PHASE-9E5-S2-FILES-LEASE-ACCEPTANCE.md):29 targeted tests PASS/0 FAIL/0 SKIP, scoped TypeScript/targeted ESLint/diff PASS. Initial one lint no-this-alias error corrected; first27 tests PASS, lifecycle review then revoked stale token release and added two regressions, final29 PASS. Do not sum repeated tests.
+- Real Windows x64 Node24.16.0/ABI137 parent-held→child-busy and child-held→parent-busy, release/reacquisition, fixture stage/discard; native hash before/after `97dd803603ba655ab58d1df24e5de4957ff226c8ea31e1491d58c4bcfe0cbcc3` unchanged.0 Jobs/Runtime/Judge; temporary roots only. Lease subset evidence does not certify E4 artifacts or release/native behavior generally.
+- S2 REVIEW COMPLETED — AWAITING USER ACCEPTANCE, Phase9E-5 IN_PROGRESS — E5-S2; S3–S6 NOT_STARTED. Retained unverified replacement/unsafe staging awaits future managed reconciliation, no blind retry/reset. Node TOCTOU/UNC/installed/target-host/reliability/power-loss/performance limitations remain. STOP before S3; no build/binary edit/Runtime/ExerciseService/Official/public API/user-data/history restore or commit/push/merge.
+
+## Phase9E-5 — Design approved / E5-S1 pure contracts delivered — 2026-10-26
+
+- User APPROVES Storage Design/six-step plan/E5-D1–D6; only S1 authorized. Main-private pure contracts/strict validation, exact Unicode source/hash, canonical JSON/checksum, document lineage/capacity, candidate routing and idempotency delivered. No I/O/lease/commit/recovery/service/IPC/completion behavior.
+- [S1 evidence](PHASE-9E5-S1-SUBMISSION-CONTRACTS-ACCEPTANCE.md):81 synthetic tests PASS/0 FAIL/0 SKIP, scoped typecheck/targeted lint/diff PASS. Real canonical snapshots tested at64MiB/32MiB and +1byte without building whole snapshot strings;2MiB record/16KiB metadata exact limits exercised through byte preflight because valid field/source limits are tighter. No tests/quality failures during S1 execution.
+- Phase9E-5 IN_PROGRESS — E5-S1; S1 REVIEW COMPLETED — AWAITING USER ACCEPTANCE, S2–S6 NOT_STARTED. Public Submit/status/read transport allocated to S6 by approved D6; UI/History/Restore remain E6. STOP before S2.
+- E4 recorded-hash acceptance/current-artifact handoff NOT PASS/current native UNVERIFIED,12 models PENDING_RUNTIME, general Official60s/target-host/reliability/release UNVERIFIED and deferred gates unchanged. Storage performance NOT MEASURED/durability UNVERIFIED. No build/native/Official/filesystem/restart/smoke/benchmark/user-data operations, history restoration or Git publication.
+
 ## Phase 9E-4 — Option A final acceptance — 2026-10-26
 
 - User formally approves recorded-hash acceptance: S1/S2/S3 COMPLETE — PASS WITH LIMITATIONS; S4 COMPLETE — PASS WITH LIMITATIONS (recorded-hash scope only); Phase9E-4 COMPLETE — PASS WITH LIMITATIONS (amended acceptance scope);9E-5 NOT_STARTED. This supersedes historical pending acceptance statements below.
