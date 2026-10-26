@@ -2,6 +2,103 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## Phase9E-6 — Formal final acceptance — 2026-10-26
+
+User formally accepts **E6-S1–S3 and Phase 9E-6 COMPLETE — PASS WITH LIMITATIONS**.
+[Final acceptance](PHASE-9E6-FINAL-ACCEPTANCE.md) retains step-local results:
+S1 42 new/47 regression PASS; S2 41/18 PASS,38 filtered not PASS; S3 48/58 PASS;
+scoped typecheck/lint/diff PASS within each step's scope. Submit/result UI, tabs,
+committed History/Completion, Details/read-only source and confirmed Restore are
+accepted. No repeated-test aggregation; initial S3 CRLF test failures/corrections
+and all historical evidence remain intact.
+
+Documentation-only closure updates the S3 packet, summary, implementation status
+and map/changelog; consistency/document diff checks only. No production/test edits,
+tests/build/typecheck/lint/native/smoke rerun, limitation repair or user-data access.
+Two legacy fixture cast exclusions remain; Monaco/Electron/native end-to-end and
+target-host/release UNVERIFIED; E4 current-artifact handoff NOT PASS; E5 storage
+durability/performance UNVERIFIED;12 performance models PENDING_RUNTIME and all
+deferred gates including loader B1a/B1b unchanged. No production/release certification.
+**Phase9E-7 NOT_STARTED. STOP pending separate explicit E7 authorization; no
+commit/push/merge.** Earlier pending statuses below describe their delivery dates.
+
+## Phase9E-6 — S2 accepted / S3 Details and Restore delivered — 2026-10-26
+
+User accepts S2 COMPLETE — PASS WITH LIMITATIONS (41 new/18 regression PASS,
+38 filtered not PASS and scoped checks), authorizing only E6-S3. Submission rows now
+open in-pane Details, existing E5 source reads assemble verified contiguous UTF-8
+chunks and a separate read-only Monaco model displays C#/JavaScript. Source readiness
+is distinct from historical saved status/availability; private Judge data, errors and
+opaque bindings remain absent from DOM. Confirmed Restore checks current exercise,
+language, draft text/revision, active/close/operation state and one-shot consent, then
+reuses the existing explicit replacement/draft queue. Cross-language Restore updates
+only its target draft; viewing/back/late reads never edit or auto-Submit. Source/
+selection/consent retire on context changes and pagehide. No Main/Preload/Judge/
+Storage/API/Official/Runtime/Project or dependency changes; prior uncommitted work kept.
+
+[S3 packet](PHASE-9E6-S3-DETAILS-RESTORE-ACCEPTANCE.md):48 new PASS/58 directly
+affected History/Practice/editor replacement regression PASS/0 FAIL/0 SKIP; scoped
+tsc/lint/diff PASS. First43-test run had41 PASS/2 FAIL from textarea mock CRLF
+normalization, corrected by checking normalized DOM and exact editor/draft payloads;
+five added safety cases give48, not an aggregation of campaigns. Actual Monaco
+EOL/undo/coloring/disposal/Electron/native smoke remain UNVERIFIED, as do prior
+target-host/release/storage durability/performance/deferred gates and12 performance
+models PENDING_RUNTIME; E4 current-artifact handoff NOT PASS, two legacy fixture cast
+exclusions unchanged. No full suite/build/native/Runtime/benchmark/user-data access.
+**E6-S1/S2 COMPLETE — PASS WITH LIMITATIONS; E6-S3 REVIEW COMPLETED — AWAITING USER
+ACCEPTANCE; Phase9E-6 IN_PROGRESS — AWAITING FINAL ACCEPTANCE; E7 NOT_STARTED.**
+STOP; no whole-phase closure, E7 or commit/push/merge.
+
+## Phase9E-6 — S1 accepted / S2 Submission History delivered — 2026-10-26
+
+User accepts **E6-S1 COMPLETE — PASS WITH LIMITATIONS** (42 new/47 regressions and
+scoped checks) and authorizes only S2, without a separate design/plan. Existing
+uncommitted S1 work is preserved. Description now shares an exercise-keyed tab pane
+with Submission, reusing existing tabs/Learning styling while keeping editor/draft,
+Run and Submit mounted. Committed ALL-store History shows timestamps, language,
+safe graded verdict and saved target; bounded pages, stale-cursor first-page reload,
+partial/unavailable/conflicting stores and recovered-data warnings remain explicit.
+New saved records refresh History; provisional results never become rows. Completion
+reuses the committed API observer, not Accepted rows or transient Judge verdicts.
+No Main/Preload/Judge/Storage/API/Runtime/Project changes, detail/source/Restore UI,
+new persistence index, operation lifecycle or dependencies.
+
+[S2 packet](PHASE-9E6-S2-SUBMISSION-HISTORY-ACCEPTANCE.md):41 new PASS/14 Practice
+regression PASS/4 directly affected S1 integration PASS,38 filtered not PASS; scoped
+tsc/lint/diff PASS. First36 new tests are an earlier coverage iteration, not extra
+unique tests. Initial tsc failed on unsupported `getByRole` `exact` in the new test,
+corrected before final PASS; no functional test failure. S1 legacy fixture cast
+exclusions remain. Its earlier per-file regression split15/9/23 was corrected to
+14/10/23, with47 unchanged and no unrelated suite rerun. No full suite/build/native/
+Runtime/benchmark/real Electron/UI smoke or learner-data access. All inherited E4
+current-artifact NOT PASS/native-host-release UNVERIFIED/storage durability and
+performance/12 PENDING_RUNTIME/deferred gate limitations remain unchanged.
+**E6-S2 REVIEW COMPLETED — AWAITING USER ACCEPTANCE (tracking IN_PROGRESS);
+Phase9E-6 IN_PROGRESS; E6-S3/E7 NOT_STARTED.** STOP; no commit/push/merge.
+
+## Phase9E-6 — E6-S1 Submit UI delivered for acceptance — 2026-10-26
+
+User authorizes E6-S1 only after accepting Phase9E-5 COMPLETE — PASS WITH
+LIMITATIONS, with direct implementation and scoped verification. Existing Learning
+Workspace now exposes Submit beside Run, immutable four-field capture, safe verdict
+and independent storage status, stale-source notice, committed completion/UNKNOWN
+and recovered-data warning. Main-issued refs/status-only recovery avoid automatic
+replay after missing ACK; local observation retires on context/leave with listener/
+timer cleanup. Existing E5/Main/Preload/Judge/Runtime/Storage and public Run semantics
+are unchanged; UI styling reuses Learning tokens/layout.
+
+[E6-S1 packet](PHASE-9E6-S1-SUBMIT-UI-ACCEPTANCE.md):42 new UI PASS/47 directly
+affected regression PASS/0 FAIL/0 SKIP; changed source/new-test scoped tsc, targeted
+lint and diff PASS. Initial expanded tsc exposed two untouched legacy fixture
+TS2352 casts, retained/documented and excluded from final tsc; those runtime suites
+PASS. Earlier35/41-test iterations are not extra unique results. No full suite,
+build/native/benchmark/real Electron/UI smoke or learner-data access. Inherited E4
+current-artifact NOT PASS, native/host/release UNVERIFIED, storage durability/
+performance uncertified,12 PENDING_RUNTIME models and deferred gates remain.
+**E6-S1 REVIEW COMPLETED — AWAITING USER ACCEPTANCE (tracking IN_PROGRESS);
+Phase9E-6 IN_PROGRESS; E6-S2/E7 NOT_STARTED.** History/Restore and Project changes
+are excluded. STOP for S1 acceptance/separate S2 authorization; no commit/push/merge.
+
 ## Phase9E-5 — S5 accepted / S6 safe transport and final review delivered — 2026-10-26
 
 - User formally accepts [S5 COMPLETE — PASS WITH LIMITATIONS](PHASE-9E5-S5-SERVICE-INTEGRATION-ACCEPTANCE.md):35 integration PASS,
