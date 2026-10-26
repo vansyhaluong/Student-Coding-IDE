@@ -2,6 +2,42 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## Phase 9E-4 — Option A final acceptance — 2026-10-26
+
+- User formally approves recorded-hash acceptance: S1/S2/S3 COMPLETE — PASS WITH LIMITATIONS; S4 COMPLETE — PASS WITH LIMITATIONS (recorded-hash scope only); Phase9E-4 COMPLETE — PASS WITH LIMITATIONS (amended acceptance scope);9E-5 NOT_STARTED. This supersedes historical pending acceptance statements below.
+- [Accepted evidence](PHASE-9E4-FINAL-ACCEPTANCE.md):4/4 native operations PASS; C#/JS correct Accepted candidate7/7 each, wrong WA at case0/STOP with6 unattempted cases each;22 Jobs, VERIFIED cleanup/content release/zero Registry ledger; historical targeted typecheck/lint/Main emission/diff PASS. Receipts/hashes/drift audit unchanged.
+- Current-artifact handoff remains NOT PASS; different current native binary UNVERIFIED; post-run `out/main/index.js` lacks full-app verification. No current-artifact/release certification. Finalized artifacts need release verification;12 models PENDING_RUNTIME, general Official60s/target-host/reliability/release UNVERIFIED and deferred loader/installed/offline/filesystem gates unchanged.
+- 9E-5 must design commit-time owner validation, same-operation hold-through-commit and storage/recovery. Public Submit transport remains unimplemented and needs explicit E4-D4 allocation. Documentation consistency review/scoped `git diff --check` only; no tests/native operations/build/restore/production changes, historical document restoration or Git publication. STOP; no9E-5 implementation.
+
+## Phase 9E-4 — E4-S3 accepted / E4-S4 native review — 2026-10-26
+
+- User accepts S3 COMPLETE — PASS WITH LIMITATIONS;37 controlled +60 regressions/97 unique PASS, historical fixture failures/filtered exclusions and limitations retained without rerun. Only S4 authorized.
+- [Final review](PHASE-9E4-FINAL-ACCEPTANCE.md): exactly4 native Divide Judge operations PASS, correct-source Accepted candidate7/7 per language and real first-case WA/STOP with untouched6-case suffix per language.16 comparisons,22 real Windows Jobs, VERIFIED cleanup/release and zero Registry ledger after each fixture teardown; no production change or native rerun.
+- Scoped tsc/lint, separate50-input Main emission/privacy graph and22-file unchanged-fingerprint checks PASS. Initial new-test Vitest typing and test-only raw-loader emission failures corrected before native execution, retained in report. No S1–S3/full/63×2/UI/smoke/benchmark/release campaign.
+- Later handoff audit finds native binary/Main index changed after the successful run;20/22 current fingerprints match. Native receipts remain PASS for recorded hashes, but current-artifact handoff **NOT PASS** and current artifacts UNVERIFIED. No artifact restore/rebuild/additional native operation; user must resolve baseline before closure.
+- S4 REVIEW COMPLETED — AWAITING USER ACCEPTANCE; Phase9E-4 IN_PROGRESS — AWAITING FINAL ACCEPTANCE;9E-5 NOT_STARTED.12 models PENDING_RUNTIME, general Official60s/target-host/reliability/release UNVERIFIED. STOP before phase closure/9E-5; no persistence/Submit/history/commit/push/merge.
+
+## Phase 9E-4 — E4-S2 accepted / E4-S3 integration review — 2026-10-26
+
+- User accepts S2 COMPLETE — PASS WITH LIMITATIONS; original110 reducer/93 comparator-contract tests, scoped checks and historical typing/lint failures retained without rerun. Only S3 authorized.
+- Integrated same-operation Main-private Judge via owned Prepare view, existing synchronous consumer and service-owned VERIFIED cleanup/release handoff. Explicit borrow/release facts, safe managed retry and document-epoch guard for stale Judge receipts/raw completion; no second lifecycle or public API.
+- [S3 evidence](PHASE-9E4-S3-JUDGE-INTEGRATION-ACCEPTANCE.md):37 controlled Judge +60 direct service/plan/ownership/privacy regressions PASS, scoped tsc/lint/diff PASS. Initial2 fixture failures (request-reference shape and clock crossing caller wait) recorded/corrected; no Core/reducer change. Final idle-context/leave guard regressions separately passed without broad reruns.
+- Phase9E-4 IN_PROGRESS; S3 REVIEW COMPLETED — AWAITING USER ACCEPTANCE; S4/9E-5 NOT_STARTED. Native Judge/full release UNVERIFIED;12 models PENDING_RUNTIME. No language Runtime/driver/Core/Registry/frozen resource/security/quota/deadline changes, build/native/smoke/benchmark/full checks or Git publication. STOP before S4/9E-5.
+
+## Phase 9E-4 — E4-S1 accepted / E4-S2 reducer delivered — 2026-10-26
+
+- S1 user accepted COMPLETE — PASS WITH LIMITATIONS; original93 PASS/0 FAIL/0 SKIP, scoped checks, intermediate lint failures and limitations retained. Only S2 newly authorized.
+- Added pure Main-private verdict/eligibility reducer and necessary private fact-contract extensions. Validates binding/plan/prefix/suffix/comparison/disposition/cleanup facts and preserves Core first cause without new quota ranking. No service attestation, execution, comparator semantics, Runtime/public API/data/storage change.
+- [S2 evidence](PHASE-9E4-S2-VERDICT-REDUCER-ACCEPTANCE.md):110 synthetic reducer PASS +93 affected contract regression PASS; scoped tsc/lint/diff PASS after recorded fixture/projection type failures and unused-import lint correction. No E3/full/native/build/smoke/benchmark reruns.
+- S2 REVIEW COMPLETED — AWAITING USER ACCEPTANCE; Phase9E-4 IN_PROGRESS; S3/S4 NOT_STARTED.12 models PENDING_RUNTIME; target-host/release UNVERIFIED. STOP before S3; no official persistence authority/commit/push/merge.
+
+## Phase 9E-4 — E4-S1 comparator/private contracts delivered — 2026-10-26
+
+- User approves design/four-step plan/E4-D1–D4 and authorizes S1 only. Implemented Main-private pure exact-typed@1 for six types, dense/rectangular arrays, Unicode, exact values/order and asymmetric Expected-L6/Actual-Runtime bounds; no stringify/reparse/clone/coercion.
+- Added type-only scalar verdict/state/owner/evidence/cleanup/eligibility vocabulary. No reducer/precedence execution/service/integration/public transport/persistence.
+- [S1 evidence](PHASE-9E4-S1-COMPARATOR-ACCEPTANCE.md):93 targeted PASS/0 FAIL/0 SKIP, scoped tsc/lint PASS. Intermediate added sparse literals caused2 test lint errors; corrected without production change, historical failure retained. No E3/full/native/build/benchmark/UI verification.
+- Phase9E-3 COMPLETE — PASS WITH LIMITATIONS; Phase9E-4 IN_PROGRESS — E4-S1 delivered PASS WITH LIMITATIONS/awaiting acceptance; S2–S4 NOT_STARTED.12 models PENDING_RUNTIME; target-host/release UNVERIFIED. STOP before S2; no Git publication.
+
 ## Phase 9E-2 — S2 accepted / S3 candidate evidence delivered — 2026-10-24
 
 - User accepted S2 COMPLETE — PASS WITH LIMITATIONS, retaining116 PASS/1 SKIP,

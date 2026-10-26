@@ -9,6 +9,7 @@ import type { ExerciseRunRequest, ExerciseSessionReference } from '../../../../s
 import type { ExerciseWorkspace } from './exercise-workspace'
 import type { ExecutionPlan } from './execution-plan'
 import type { OfficialCasePlan } from '../official-case-plan'
+import type { JudgeResult } from '../judge/judge-contracts'
 
 /** Aliased settled language evidence; never a public result/publication port. */
 export interface OfficialLanguageEvidence {
@@ -30,6 +31,10 @@ export type OfficialAdapterFactory = (request: Readonly<ExerciseRunRequest>, wor
 export interface OfficialOperationHandle {
   readonly reference: Readonly<ExerciseSessionReference>
   completion(): Promise<OfficialExecutionCompletion>
+}
+/** Main-only owned result access; no caller-supplied cleanup/owner/grade facts. */
+export interface OfficialJudgeOperationHandle extends OfficialOperationHandle {
+  judgeResult(): Promise<JudgeResult>
 }
 
 /** Private observations are execution evidence, never comparator outcomes/verdicts. */

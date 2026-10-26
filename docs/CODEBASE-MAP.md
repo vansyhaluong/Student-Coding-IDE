@@ -1,5 +1,55 @@
 # Student Coding IDE Codebase Map
 
+## Phase 9E-4 E4-S4 actual targeted native acceptance — 2026-10-26
+
+S1–S3 COMPLETE — PASS WITH LIMITATIONS, user accepted. S4 COMPLETE — PASS WITH LIMITATIONS (recorded-hash scope only); Phase9E-4 COMPLETE — PASS WITH LIMITATIONS (amended acceptance scope), formally user accepted under Option A;9E-5 NOT_STARTED. This current status supersedes earlier step-local historical statuses below.
+
+| Actual path | Owner / scope |
+|---|---|
+| `tests/main/generic-judge-service.integration.test.ts` | Four sequential current-host actual service/compiled-opener/native Judge operations: correct and real WA Divide in C#/JS; private scalar receipts, barrier/ownership/release/privacy proof and unchanged22-file fingerprints |
+| `out/e4-s4/` (ignored verification artifacts) | Scoped tsc config; separate50-input Main emission/dependency audit; four native receipts and one summary, no production artifact/anchor replacement |
+| `docs/PHASE-9E4-FINAL-ACCEPTANCE.md` | Actual four-operation result matrix, inherited evidence/failures/limits,9E-5 conditions and final user stop gate |
+
+4 tests PASS/0 FAIL/0 SKIP on recorded artifacts,16 comparisons/22 native Jobs, VERIFIED cleanup/zero fixture ledger. Native-run22 fingerprints match; final audit finds2 post-run ignored artifact changes (native binary/Main index), so **current-artifact handoff NOT PASS** remains unchanged despite Option A functional acceptance. The different current native binary remains UNVERIFIED; Main index lacks full-app verification. No current-artifact/release certification. No S4 production edit/restore/rerun; receipts/hashes/drift audit preserved. S1–S3 tests/native faults/63×2/performance/release matrices not rerun.12 models PENDING_RUNTIME; general Official60s/target-host/reliability/release UNVERIFIED; deferred loader/installed/offline/filesystem gates unchanged. Release verification must verify finalized artifacts;9E-5 must design commit-time owner validation, same-operation hold-through-commit and storage/recovery. Public Submit transport remains unimplemented pending explicit E4-D4 allocation. No Submit/storage/history implementation or9E-5 authorization.
+
+## Phase 9E-4 E4-S3 actual Main-private integration — 2026-10-26
+
+S1/S2 COMPLETE — PASS WITH LIMITATIONS, user accepted. Phase9E-4 IN_PROGRESS; S3 REVIEW COMPLETED — AWAITING USER ACCEPTANCE (tracking IN_PROGRESS); S4 NOT_STARTED.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/main/services/learning/judge-service.ts` | Operation-local synchronous comparator accumulator/reducer composition; no independent service/admission/lifecycle |
+| `src/main/services/learning/exercise-service.ts` | Existing service `runJudge`, actual owner/source/session facts, VERIFIED cleanup/release sealing before slot release, retained retry and guarded private result/raw completion |
+| `src/main/services/learning/official-case-plan.ts` | Same leased plan; narrow Judge-only Expected view, current barrier budget guards, input-borrow count and successful content-release facts |
+| `src/main/services/learning/runtime/official-execution-contracts.ts` | Additive Main-only Judge handle extending existing raw completion; language input descriptor unchanged |
+| `tests/main/generic-judge-service.test.ts` |37 controlled Judge tests, plus60 directly affected existing regressions; [S3 evidence](PHASE-9E4-S3-JUDGE-INTEGRATION-ACCEPTANCE.md) |
+
+S1/S2 implementation/semantics, language adapters, shared driver/Core, Registry and frozen data unchanged. No public API/storage/history or native acceptance.97 unique relevant tests PASS after documented fixture corrections; inherited12 models PENDING_RUNTIME and target-host/release UNVERIFIED. Earlier sections retain step-local history.
+
+## Phase 9E-4 E4-S2 actual reducer — 2026-10-26
+
+S1 formally accepted COMPLETE — PASS WITH LIMITATIONS; original93 PASS/scoped checks/failures/limitations preserved. Phase9E-4 IN_PROGRESS; S2 REVIEW COMPLETED — AWAITING USER ACCEPTANCE, tracking IN_PROGRESS; S3/S4 NOT_STARTED.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/main/services/learning/judge/verdict-reducer.ts` | Pure Main-private fact consistency/precedence/case/overall/eligibility reduction. No execution, comparison, owner authentication or lifecycle |
+| `src/main/services/learning/judge/judge-contracts.ts` | S2 adds observed operation binding, post-VERIFIED comparator evidence, release-failure fact and safe Core reason/Runtime failure-phase projection |
+| `tests/main/judge-verdict-reducer.test.ts` |110 synthetic reducer PASS;93 affected S1 regression PASS; scoped checks and limitations in [S2 report](PHASE-9E4-S2-VERDICT-REDUCER-ACCEPTANCE.md) |
+
+No comparator semantic, Runtime/driver/Core/Registry/policy/resource/public API change. Real owner attestation/leased hook/final handoff awaits S3; native Judge acceptance awaits S4; public transport package allocation remains required.12 models PENDING_RUNTIME; target-host/release UNVERIFIED. Earlier step records below retain historical scope/status.
+
+## Phase 9E-4 E4-S1 actual modules — 2026-10-26
+
+Design/four-step plan/E4-D1–D4 APPROVED; S1 only authorized. Phase9E-3 COMPLETE — PASS WITH LIMITATIONS; Phase9E-4 IN_PROGRESS — E4-S1 delivered/awaiting user acceptance. S2–S4 NOT_STARTED.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/main/services/learning/judge/exact-typed-comparator.ts` | Main-private pure exact-typed@1; six types, density/Unicode/rectangular validation, Expected L6 versus Actual Runtime bounds; no clone/process/I/O |
+| `src/main/services/learning/judge/judge-contracts.ts` | Main-private type-only comparator/case/verdict/state/evidence/owner/cleanup/eligibility vocabulary; no reducer/runtime authority |
+| `tests/main/exact-typed-comparator.test.ts` | Behavioral/type boundaries;93 targeted PASS, scoped tsc/lint PASS; [evidence](PHASE-9E4-S1-COMPARATOR-ACCEPTANCE.md) |
+
+Judge service/reducer/integration remain planned. No public Run/Submit/IPC/Preload/Renderer/storage/Runtime/frozen-resource changes. Public transport allocation remains required under E4-D4.12 models PENDING_RUNTIME; target-host/release UNVERIFIED.
+
 ## E2-S6 Wave B actual modules — 2026-10-25
 
 Current inventory: **49 full/14 public-only, release5**; Wave A accepted COMPLETE,

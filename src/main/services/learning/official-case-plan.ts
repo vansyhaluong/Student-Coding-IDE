@@ -11,6 +11,15 @@ import type { ExerciseRunRequest } from '../../../shared/contracts/exercise'
 import type { ExerciseWorkspace } from './runtime/exercise-workspace'
 import type { OfficialAdapterFactory, OfficialLanguageAdapter, OfficialLanguageEvidence } from './runtime/official-execution-contracts'
 import type { ExerciseRuntimeAdapter } from './runtime/exercise-runtime-adapter'
+import type { ExerciseType } from '../../../shared/contracts/practice'
+
+/** Judge-only lease alias. Never part of OfficialAdapterFactory's input. */
+export interface OfficialJudgeView {
+  readonly identity: Readonly<OfficialPlanIdentity>
+  readonly returnType: ExerciseType
+  readonly caseCount: number
+  expectedAt(index: number): ExecutionValue
+}
 
 export interface OfficialPlanIdentity {
   readonly exerciseId: string
@@ -28,11 +37,11 @@ export interface OfficialPlanIdentity {
  * cleanup. Construction is synchronous; acquisition/factory run only in Prepare. */
 export function bindOfficialCasePlan(registry: ExercisePackageRegistry, expected: OfficialPlanIdentity,
   owner: Omit<OfficialPlanOwner, 'currentPhase' | 'retainContent'>, request: Readonly<ExerciseRunRequest>, workspace: ExerciseWorkspace,
-  create: OfficialAdapterFactory) {
+  create: OfficialAdapterFactory, initializeJudge?: (view: OfficialJudgeView) => void) {
   let phase: ExerciseExecutionPhase, context: ExercisePhaseContext
   let delegate: OfficialLanguageAdapter | undefined, plan: OfficialCasePlan | undefined, release: (() => void) | undefined
   let settled: OfficialLanguageEvidence | undefined
-  let acquired = false, identity = expected
+  let acquired = false, identity = expected, contentReleased = false
   const get = () => { if (!delegate) throw exerciseCoreError('RESULT_PENDING'); return delegate }
   const adapter: ExerciseRuntimeAdapter & { hasNextCase(): boolean } = {
     async runPhase(p, c) {
@@ -44,13 +53,24 @@ export function bindOfficialCasePlan(registry: ExercisePackageRegistry, expected
           plan = await acquireOfficialCasePlan(registry, expected, { ...owner,
             currentPhase: () => ({ phase, context }), retainContent: r => { release = r } })
           acquired = true; identity = plan.identity
+          const acquiredPlan = plan
+          initializeJudge?.(Object.freeze({ identity, returnType: plan.execution.signature.returnType, caseCount: plan.execution.caseCount,
+            expectedAt(index: number) {
+              if (phase !== 'execute') throw exerciseCoreError('ADMISSION_CLOSED')
+              return acquiredPlan.caseAt(index).expected
+            } }))
           return { execution: plan.execution, representInput: plan.representInput }
         })
       }
       await get().runPhase(p, c)
     },
     hasNextCase: () => get().hasNextCase(),
-    verifyBetweenCases: c => get().verifyBetweenCases!(c),
+    verifyBetweenCases: c => {
+      // The completed phase budget no longer governs: this is Core's existing
+      // operation-budget barrier, also surrounding the synchronous consumer.
+      context = { ...context, signal: c.signal, deadline: c.deadline }
+      return get().verifyBetweenCases!(c)
+    },
     async terminate(reason) { await delegate?.terminate(reason) },
     async settleObservers() { await delegate?.settleObservers() },
     async evidence() { return delegate ? delegate.evidence() : { members: [], retained: [], activeProcesses: 0, totalProcesses: 0,
@@ -61,11 +81,14 @@ export function bindOfficialCasePlan(registry: ExercisePackageRegistry, expected
   const evidence = (): OfficialLanguageEvidence => settled ?? delegate?.officialEvidence() ?? {
     cases: [], notRunCaseIndices: [], failure: { kind: 'INFRASTRUCTURE_FAILURE', phase: 'prepare', caseIndex: null } }
   return { adapter, evidence, identity: () => identity, planAcquired: () => acquired,
+    representationBorrows: () => plan?.representationBorrows() ?? 0,
+    contentReleased: () => contentReleased,
     releaseContent() {
+      if (contentReleased) return
       // Capture aliases of bounded Runtime data, not another payload clone; the
       // language delegate/plan are then forgotten after final VERIFIED cleanup.
       settled ??= evidence()
-      release?.(); release = undefined; delegate = undefined; plan = undefined
+      release?.(); release = undefined; delegate = undefined; plan = undefined; contentReleased = true
     },
   }
 }
@@ -87,6 +110,7 @@ export interface OfficialCasePlan {
   /** Registers serialized input + parsed representation in the existing ledger.
    * Caller releases this borrow after use, before releasing the plan. */
   representInput(index: number): ReturnType<PackageLease['representCooperative']>
+  representationBorrows(): number
   release(): void
 }
 
@@ -96,6 +120,7 @@ export async function acquireOfficialCasePlan(registry: ExercisePackageRegistry,
   expected = Object.freeze({ ...expected })
   const original = owner.packageOwner
   let released = false
+  let borrows = 0
   let preparing = true
   const initial = owner.currentPhase()
   const signal = initial.context.signal
@@ -106,7 +131,7 @@ export async function acquireOfficialCasePlan(registry: ExercisePackageRegistry,
   }
   const canRelease = () => {
     const cleanup = owner.cleanup()
-    return cleanup.proof === 'VERIFIED' && cleanup.cleanupComplete && cleanup.processClean && !cleanup.pendingIo && original.canRelease()
+    return borrows === 0 && cleanup.proof === 'VERIFIED' && cleanup.cleanupComplete && cleanup.processClean && !cleanup.pendingIo && original.canRelease()
   }
   if (initial.phase !== 'prepare' || original.phase !== 'prepare') throw exerciseCoreError('ADMISSION_CLOSED')
   check()
@@ -140,8 +165,15 @@ export async function acquireOfficialCasePlan(registry: ExercisePackageRegistry,
   } })
   preparing = false
   return Object.freeze({ identity: Object.freeze(identity), execution, caseAt,
-    representInput(index: number) {
+    representationBorrows: () => borrows,
+    async representInput(index: number) {
       const args = execution.inputAt(index)
-      return lease.representCooperative(JSON.stringify({ protocolVersion: 1, caseIndex: index, args }), P.requestBytes)
+      const representation = await lease.representCooperative(JSON.stringify({ protocolVersion: 1, caseIndex: index, args }), P.requestBytes)
+      borrows++
+      let done = false
+      return Object.freeze({ get data() { return representation.data }, release() {
+        if (done) return
+        representation.release(); done = true; borrows--
+      } })
     }, release })
 }

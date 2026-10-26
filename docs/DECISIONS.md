@@ -1,5 +1,24 @@
 # Architecture Decision Log
 
+## Phase 9E-4 — Option A recorded-hash acceptance APPROVED — 2026-10-26
+
+The user explicitly approves **Option A — Recorded-hash Acceptance** in the [final acceptance](PHASE-9E4-FINAL-ACCEPTANCE.md). S1/S2/S3 remain COMPLETE — PASS WITH LIMITATIONS; S4 COMPLETE — PASS WITH LIMITATIONS (recorded-hash scope only); Phase9E-4 COMPLETE — PASS WITH LIMITATIONS (amended acceptance scope);9E-5 NOT_STARTED. Existing4/4 native PASS/22 Jobs/VERIFIED cleanup/content release/zero Registry ledger and scoped checks are accepted for recorded native-run artifact hashes only. This supersedes prior pending acceptance statements without rewriting receipts, hashes or drift audit.
+
+Current-artifact handoff remains **NOT PASS**. The different current native binary is UNVERIFIED; `out/main/index.js` changed post-run without full-app verification. No current-artifact/release certification; finalized artifacts require appropriate release verification.12 models PENDING_RUNTIME; general Official60s/target-host/reliability/release UNVERIFIED; deferred loader/installed/offline/filesystem gates unchanged. No architecture/verdict/Runtime/security decision changes.9E-5 must design commit-time owner validation, same-operation hold-through-commit and storage/recovery; public Submit transport remains unimplemented and needs explicit allocation under E4-D4. Documentation-only acceptance; no tests/native operations/rebuild/restore/production changes or9E-5 implementation authorization.
+
+## Phase 9E-4 — User approval / E4-S1 authorization — 2026-10-26
+
+The user **APPROVES** the [Generic Judge design](PHASE-9E4-GENERIC-JUDGE-DESIGN.md), [four-step plan](PHASE-9E4-IMPLEMENTATION-PLAN.md) and E4-D1–D4. Only S1 comparator/private types is authorized; S2–S4 NOT_STARTED. Existing verdict semantics/precedence, Runtime/security/quotas/deadlines/ownership/Policy B unchanged.
+
+| Decision | APPROVED selection |
+|---|---|
+| E4-D1 | Option A: narrow leased Judge view, synchronous consumer, service-owned final handoff after VERIFIED cleanup/release; integration awaits S3 |
+| E4-D2 | Main-private comparator/reducer/scalar eligibility contracts, preserving approved verdict semantics/precedence; S1 defines types/comparator only |
+| E4-D3 | Four independently accepted steps, targeted verification. S1 explicit amendment: targeted tests/scoped typecheck/lint/diff checks only; no full checks/build/E3/native/benchmark/UI smoke |
+| E4-D4 | Main-private Judge only in 9E-4. Public Submit transport/IPC/UI remains required/unimplemented and must be assigned to an approved package before UI work; no silent omission/automatic implementation |
+
+Historical document deletions are user-intended; no restore/investigation. User-restored ExerciseService briefly checked unchanged against Git baseline with E3 seams/dependencies present. [S1 evidence](PHASE-9E4-S1-COMPARATOR-ACCEPTANCE.md) is pure comparator evidence, not native Judge certification. Phase9E-3 COMPLETE — PASS WITH LIMITATIONS; Phase9E-4 IN_PROGRESS — E4-S1, awaiting acceptance. Stop before S2.
+
 This log records decisions for Student Coding IDE. It does not describe Orca decisions. `Accepted` decisions are implementation constraints; `Proposed` decisions require the named gate before implementation.
 
 ## ADR-001 — Build and development tool

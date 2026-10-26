@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import type { AppError } from '../../../shared/contracts/app-error'
@@ -22,7 +22,9 @@ import type { ExercisePackageRegistry } from './content/exercise-package-registr
 import { packageRunBinding } from './package-run-binding'
 import { bindOfficialCasePlan, type OfficialPlanIdentity } from './official-case-plan'
 import { executionDriverState, runExecutionDriver, type ExecutionDriverState } from './runtime/execution-driver'
-import type { OfficialAdapterFactory, OfficialExecutionCompletion, OfficialOperationHandle, OfficialSettledCaseConsumer } from './runtime/official-execution-contracts'
+import type { OfficialAdapterFactory, OfficialExecutionCompletion, OfficialJudgeOperationHandle, OfficialOperationHandle, OfficialSettledCaseConsumer } from './runtime/official-execution-contracts'
+import { createOfficialJudge } from './judge-service'
+import type { JudgeOwnerBoundIdentity, JudgeResult } from './judge/judge-contracts'
 
 type Navigation = (event: unknown, url: string, inPlace: boolean, mainFrame: boolean) => void
 export interface ExerciseOwner {
@@ -54,7 +56,7 @@ export interface ExerciseServiceOptions {
   /** Main-only configuration. The adapter factory is invoked in admitted Prepare. */
   official?: { registry: ExercisePackageRegistry; createAdapter: OfficialAdapterFactory }
 }
-interface OwnerEntry { owner: ExerciseOwner; accepts: boolean; remove(): void }
+interface OwnerEntry { owner: ExerciseOwner; accepts: boolean; documentEpoch: number; remove(): void }
 interface Operation {
   kind: 'RUN' | 'OFFICIAL'
   owner: number
@@ -67,7 +69,9 @@ interface Operation {
   completion: Promise<ExerciseSnapshot>
   execution: ExerciseExecution
   official?: { binding: ReturnType<typeof bindOfficialCasePlan>; driver: ExecutionDriverState;
-    consumer: OfficialSettledCaseConsumer; tasks: Set<Promise<unknown>>; cleanupFailure: boolean }
+    consumer: OfficialSettledCaseConsumer; tasks: Set<Promise<unknown>>; cleanupFailure: boolean; releaseFailed: boolean;
+    judge?: { engine: ReturnType<typeof createOfficialJudge>; identity: Readonly<JudgeOwnerBoundIdentity>; documentEpoch: number;
+      finalizationFailed: boolean; result?: JudgeResult } }
 }
 interface RecoveryEntry {
   workspace: ExerciseWorkspace
@@ -156,7 +160,7 @@ export class ExerciseService {
   }
   observe(owner: ExerciseOwner): void {
     if (this.sealed || this.owners.has(owner.id) || owner.isDestroyed()) return
-    const entry: OwnerEntry = { owner, accepts: true, remove: () => {
+    const entry: OwnerEntry = { owner, accepts: true, documentEpoch: 0, remove: () => {
       owner.removeListener('did-start-navigation', navigation); owner.removeListener('did-finish-load', loaded)
       owner.removeListener('render-process-gone', lost); owner.removeListener('destroyed', destroyed)
       if (this.owners.get(owner.id) === entry) this.owners.delete(owner.id)
@@ -191,7 +195,28 @@ export class ExerciseService {
         return this.officialCompletion(op)
       } })
   }
-  private admit(owner: number, value: ExerciseRunRequest, official?: { identity: Readonly<OfficialPlanIdentity>; consumer: OfficialSettledCaseConsumer }): Operation {
+  /** Main-private entry on the SAME slot. Caller supplies source/plan identity only. */
+  runJudge(owner: number, value: ExerciseRunRequest, identity: Readonly<OfficialPlanIdentity>): OfficialJudgeOperationHandle {
+    if (!value || !identity || identity.exerciseId !== value.exerciseId) throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
+    const engine = createOfficialJudge()
+    const op = this.admit(owner, value, { identity: Object.freeze({ ...identity }), consumer: engine.consume, judge: engine })
+    return Object.freeze({ reference: Object.freeze({ sessionId: op.session.snapshot().sessionId, generation: op.generation }),
+      completion: async () => {
+        try { await op.completion } catch { /* Read actual retained completion; do not start another wait. */ }
+        return this.officialCompletion(op)
+      },
+      judgeResult: async () => {
+        try { await op.completion } catch { /* Pending/failed cleanup stays owned by this operation. */ }
+        const judge = op.official!.judge!
+        if (judge.result && this.currentJudge(op)) return structuredClone(judge.result)
+        if (judge.finalizationFailed) throw serviceError('OFFICIAL_JUDGE_FINALIZATION_FAILED')
+        // Preview/invalidation is not a second finalization or a new operation.
+        return this.reduceJudge(op)
+      },
+    })
+  }
+  private admit(owner: number, value: ExerciseRunRequest, official?: { identity: Readonly<OfficialPlanIdentity>; consumer: OfficialSettledCaseConsumer;
+    judge?: ReturnType<typeof createOfficialJudge> }): Operation {
     const request = validateExerciseRunRequest(value)
     if (!request.ok) throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
     const entry = this.owners.get(owner)
@@ -208,7 +233,7 @@ export class ExerciseService {
         check() {}, retain: task => { tasks.add(task); void task.finally(() => tasks.delete(task)).catch(() => {}) },
         canRelease: () => operation.executionDone && !operation.session.ownsResources && tasks.size === 0 },
       cleanup: () => operation.session.snapshot().cleanup,
-    }, Object.freeze(request.value), workspace, this.options.official!.createAdapter) : undefined
+    }, Object.freeze(request.value), workspace, this.options.official!.createAdapter, official.judge?.initialize) : undefined
     const execution: ExerciseExecution = binding ? { adapter: binding.adapter, phases: ['compile', 'execute'], releaseContent: binding.releaseContent }
       : this.options.createExecution!(Object.freeze(request.value), workspace)
     if (!execution.phases.length || execution.phases.some(p => p !== 'compile' && p !== 'execute')
@@ -218,7 +243,13 @@ export class ExerciseService {
       hostEpoch: this.hostEpoch, workspace, adapter: execution.adapter, checkpoints: this.store(workspace), clock: this.clock })
     const operation: Operation = { kind: official ? 'OFFICIAL' : 'RUN', owner, ownerEntry: entry, generation, session, invalidated: false,
       executionDone: false, lastPublished: -1, execution, completion: undefined as unknown as Promise<ExerciseSnapshot> }
-    if (binding && official) operation.official = { binding, tasks, consumer: official.consumer, driver: executionDriverState(), cleanupFailure: false }
+    if (binding && official) {
+      operation.official = { binding, tasks, consumer: official.consumer, driver: executionDriverState(), cleanupFailure: false, releaseFailed: false }
+      if (official.judge) operation.official.judge = { engine: official.judge, documentEpoch: entry.documentEpoch, finalizationFailed: false,
+        identity: Object.freeze({ ownerId: owner, ownerEntry: entry, session: Object.freeze({ sessionId: workspace.sessionId, generation }),
+          plan: official.identity, language: request.value.language, sourceRevision: request.value.sourceRevision,
+          sourceHash: createHash('sha256').update(request.value.code, 'utf8').digest('hex') }) }
+    }
     this.last = undefined; this.active = operation
     // Begin Core prepare immediately, before returning admission to the caller.
     operation.completion = this.execute(operation, [...execution.phases])
@@ -275,7 +306,7 @@ export class ExerciseService {
       }
       // Core retains the same execution/cleanup tasks, including 12s caller waits.
     }
-    finally { op.executionDone = true }
+    finally { op.executionDone = true; op.official?.judge?.engine.revokeView() }
     // Official completion must not start a second12s caller wait after the
     // driver's close failed. Keep this same task/slot for explicit managed retry.
     if (retainedCleanupFailure) throw retainedCleanupFailure
@@ -291,9 +322,24 @@ export class ExerciseService {
     if (!op.session.ownsResources && op.executionDone && this.active === op) {
       if (op.execution.releaseContent) {
         if (!snapshot.cleanup.cleanupComplete || snapshot.cleanup.proof !== 'VERIFIED') throw serviceError('PACKAGE_CLEANUP_UNVERIFIED')
-        op.execution.releaseContent()
+        if (op.official?.judge && (snapshot.cleanup.state !== 'FINALIZED' || !snapshot.cleanup.processClean
+          || snapshot.cleanup.workspace !== 'REMOVED' || snapshot.cleanup.pendingIo)) throw serviceError('PACKAGE_CLEANUP_UNVERIFIED')
+        try { op.execution.releaseContent(); if (op.official) op.official.releaseFailed = false }
+        catch {
+          if (op.official) { op.official.releaseFailed = true; op.official.cleanupFailure = true }
+          const error = serviceError('PACKAGE_RELEASE_FAILED'); this.report(error); throw error
+        }
       }
       if (op.official) op.official.cleanupFailure = false
+      if (op.official?.judge && !op.official.judge.result) {
+        // No await between owner/release checks, scalar reduction and slot release.
+        // A throwing finalizer leaves the same slot available to managed retry.
+        try { op.official.judge.result = this.reduceJudge(op); op.official.judge.finalizationFailed = false }
+        catch {
+          op.official.judge.finalizationFailed = true
+          const error = serviceError('OFFICIAL_JUDGE_FINALIZATION_FAILED'); this.report(error); throw error
+        }
+      }
       if (op.kind === 'RUN' && this.isCurrent(op)) this.last = { owner: op.owner, ownerEntry: op.ownerEntry, snapshot: structuredClone(snapshot) }
       this.active = undefined
     }
@@ -302,13 +348,35 @@ export class ExerciseService {
   private officialCompletion(op: Operation): OfficialExecutionCompletion {
     const state = op.official!
     const evidence = state.binding.evidence(), snapshot = op.session.snapshot()
-    const invalidated = !this.isCurrent(op)
-    const failed = state.driver.failure || state.cleanupFailure || evidence.failure
+    const invalidated = state.judge ? !this.currentJudge(op) : !this.isCurrent(op)
+    const failed = state.driver.failure || state.cleanupFailure || state.releaseFailed || evidence.failure
     return structuredClone({ identity: state.binding.identity(), planAcquired: state.binding.planAcquired(),
       disposition: invalidated ? 'INVALIDATED' : failed ? 'EXECUTION_FAILURE' : state.driver.disposition,
       compile: evidence.compile ?? evidence.syntax ?? null, cases: evidence.cases, notRunCaseIndices: evidence.notRunCaseIndices,
       failure: evidence.failure ?? (!invalidated && failed ? { kind: 'INFRASTRUCTURE_FAILURE', phase: state.binding.planAcquired() ? 'cleanup' : 'prepare', caseIndex: null } : null),
       endReason: snapshot.reason ?? 'INTERNAL_ERROR', cleanup: snapshot.cleanup })
+  }
+  private currentJudge(op: Operation): boolean {
+    return this.isCurrent(op) && op.official!.judge!.documentEpoch === op.ownerEntry.documentEpoch
+  }
+  private reduceJudge(op: Operation): JudgeResult {
+    const state = op.official!, judge = state.judge!, snapshot = op.session.snapshot()
+    let completion: OfficialExecutionCompletion | null
+    try { completion = this.officialCompletion(op) }
+    catch (error) {
+      if (!(error instanceof DomainError) || error.details?.reason !== 'RESULT_PENDING') throw serviceError('OFFICIAL_RESULT_INVALID')
+      completion = null // Runtime still owns unsettled phase evidence; no invented prefix.
+    }
+    return judge.engine.reduce({ identity: judge.identity,
+      operationIdentity: { ownerId: op.owner, ownerEntry: this.owners.get(op.owner) ?? op.ownerEntry,
+        session: { sessionId: snapshot.sessionId, generation: snapshot.generation }, plan: state.binding.identity(),
+        language: snapshot.language, sourceRevision: snapshot.sourceRevision, sourceHash: judge.identity.sourceHash },
+      completion, ownerCurrent: this.currentJudge(op),
+      decisionSecuredBeforeClose: op.executionDone && !state.driver.consumerFailure && (!state.driver.failure || op.session.lastPhaseError !== undefined),
+      cleanup: { snapshot: snapshot.cleanup, executionDone: op.executionDone, ownsResources: op.session.ownsResources,
+        retainedPackageTasks: state.tasks.size, representationBorrows: state.binding.representationBorrows(),
+        contentReleased: state.binding.contentReleased(), contentReleaseFailed: state.releaseFailed },
+    })
   }
   snapshot(owner: number, reference: ExerciseSessionReference): ExerciseSnapshot {
     if (!validateExerciseSessionReference(reference).ok) throw serviceError('INVALID_REFERENCE', 'INVALID_INPUT')
@@ -337,6 +405,8 @@ export class ExerciseService {
     return op ? this.cleanup(op, request.value.reason) : snapshot
   }
   invalidate(owner: number, reason: 'CONTEXT_CHANGED' | 'LEARNING_LEFT' | 'OWNER_LOST'): void {
+    const entry = this.owners.get(owner)
+    if (entry) entry.documentEpoch++ // Revoke idle Judge receipts too, including context/leave after slot release.
     if (this.last?.owner === owner) { this.last = undefined; this.generation++ }
     const op = this.active
     if (!op || op.owner !== owner || op.invalidated) return
