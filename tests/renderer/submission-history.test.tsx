@@ -198,7 +198,7 @@ async function workspaceFixture() {
   const editor = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: 'Practice code' })
   const workspace = within(editor.closest<HTMLElement>('.practice-workspace')!)
   const openHistory = async () => {
-    fireEvent.click(workspace.getByRole('tab', { name: 'Submission' })); await flush()
+    fireEvent.click(workspace.getByRole('tab', { name: 'Submissions' })); await flush()
     return within(workspace.getByRole('region', { name: 'Lịch sử nộp bài' }))
   }
   return { ...f, ...view, run, editor, workspace, openHistory }
@@ -214,7 +214,7 @@ it('defaults to Description with all exercise content and accessible keyboard ta
   expect(f.api.history).not.toHaveBeenCalled()
   fireEvent.change(f.editor, { target: { value: 'draft kept while viewing history' } }); f.editor.setSelectionRange(4, 8); f.editor.scrollTop = 12
   fireEvent.keyDown(f.workspace.getByRole('tab', { name: 'Description' }), { key: 'ArrowRight' }); await flush()
-  const tab = f.workspace.getByRole('tab', { name: 'Submission' })
+  const tab = f.workspace.getByRole('tab', { name: 'Submissions' })
   expect(tab.getAttribute('aria-selected')).toBe('true')
   expect(document.getElementById(tab.getAttribute('aria-controls')!)?.getAttribute('role')).toBe('tabpanel')
   fireEvent.keyDown(tab, { key: 'ArrowLeft' })
@@ -224,16 +224,18 @@ it('defaults to Description with all exercise content and accessible keyboard ta
 })
 
 it.each(['Accepted', 'WrongAnswer', 'CompilationError', 'SyntaxError', 'RuntimeError', 'TimeLimitExceeded', 'MemoryLimitExceeded', 'OutputLimitExceeded'] as const)(
-  'renders committed %s with timestamp, language and saved state without details/private data', async verdict => {
+  'renders committed %s in the three-column table without metrics or private data', async verdict => {
     const f = await workspaceFixture(); f.api.history.mockResolvedValueOnce(ok(page([row(1, verdict), row(2, verdict)])))
     const history = await f.openHistory(), table = history.getByRole('table')
     expect(within(table).getByText('C#')).toBeTruthy(); expect(within(table).getByText('JavaScript')).toBeTruthy()
     expect(table.querySelector('time')?.dateTime).toBe(row().submittedAt)
-    expect(table.textContent).toContain('saved')
+    expect(within(table).getAllByRole('columnheader').map(cell => cell.textContent)).toEqual(['Status', 'Language', 'Submitted At'])
+    expect([...table.querySelectorAll('td[data-accepted]')].every(cell => cell.getAttribute('data-accepted') === String(verdict === 'Accepted'))).toBe(true)
+    expect(table.textContent).not.toMatch(/saved|Runtime\s*Memory|Notes/)
     expect(table.textContent).toContain(verdict.replace(/([a-z])([A-Z])/g, '$1 $2'))
     expect(history.getAllByRole('button', { name: 'Chi tiết' })).toHaveLength(2)
     expect(history.queryByRole('button', { name: /Restore/ })).toBeNull()
-    expect(history.getByText('Tiến độ: Chưa có Accepted đã commit')).toBeTruthy()
+    expect(history.queryByText(/^Tiến độ:/)).toBeNull()
     expect(f.container.textContent).not.toContain('private_opaque_source_')
     expect(f.api.source).not.toHaveBeenCalled()
   })
@@ -248,6 +250,36 @@ it('renders load-more loading and appends pages in Main order', async () => {
   await act(async () => more.resolve(ok(page([row(2, 'WrongAnswer')], { total: 2, knownCount: 2 }))))
   expect([...history.getByRole('table').querySelectorAll('time')].map(t => t.dateTime)).toEqual([row().submittedAt, row(2).submittedAt])
   expect(history.queryByRole('button', { name: 'Tải thêm' })).toBeNull()
+})
+
+it('displays newest first in exactly three columns without mutating pagination rows, with row/keyboard Details', () => {
+  const rows = [row(3, 'RuntimeError'), row(1), row(2, 'WrongAnswer')], onSelect = vi.fn(), onRefresh = vi.fn()
+  const history = { view: { rows, loading: false, loadingMore: false, page: page(rows) }, refresh: vi.fn(), loadMore: vi.fn() }
+  render(<SubmissionHistoryPanel history={history} completion={{ busy: false, completion: 'NOT_COMPLETED', possibleDataLoss: false }} onRefresh={onRefresh} onSelect={onSelect} />)
+  const refresh = screen.getByRole('button', { name: 'Tải lại lịch sử' })
+  expect(refresh.textContent).toBe(''); expect(refresh.querySelector('svg')).toBeTruthy()
+  fireEvent.click(refresh); expect(onRefresh).toHaveBeenCalledOnce()
+  expect(screen.queryByText(/^Tiến độ:|^Accepted:|^Đã tải /)).toBeNull()
+  expect(screen.getAllByRole('columnheader').map(c => c.textContent)).toEqual(['Status', 'Language', 'Submitted At'])
+  const displayed = screen.getAllByRole('row').slice(1)
+  expect(displayed.map(r => r.querySelector('time')?.dateTime)).toEqual([row(1).submittedAt, row(2).submittedAt, row(3).submittedAt])
+  expect(rows.map(r => r.submissionId)).toEqual([row(3).submissionId, row(1).submissionId, row(2).submissionId])
+  expect(displayed.every(r => within(r).getAllByRole('cell').length === 3)).toBe(true)
+  fireEvent.click(displayed[0]); expect(onSelect).toHaveBeenLastCalledWith(row(1))
+  fireEvent.keyDown(displayed[1], { key: 'Enter' }); expect(onSelect).toHaveBeenLastCalledWith(row(2, 'WrongAnswer'))
+  fireEvent.keyDown(displayed[2], { key: ' ' }); expect(onSelect).toHaveBeenLastCalledWith(row(3, 'RuntimeError'))
+  expect(onSelect).toHaveBeenCalledTimes(3)
+})
+
+it('reloads language-scoped source references and ignores a late previous-context History reply', async () => {
+  const f = apiFixture(), old = deferred<AppResult<SubmissionHistory>>()
+  f.api.history.mockReturnValueOnce(old.promise).mockResolvedValueOnce(ok(page([row(2)])))
+  const hook = renderHook(({ key }) => useSubmissionHistory('ch2-01', true, undefined, f.api, key), { initialProps: { key: 'ch2-01/csharp' } })
+  await flush()
+  hook.rerender({ key: 'ch2-01/javascript' }); await flush()
+  await act(async () => old.resolve(ok(page([row(1)]))))
+  expect(hook.result.current.view.rows.map(r => r.source.reference)).toEqual([row(2).source.reference])
+  expect(f.api.history).toHaveBeenCalledTimes(2)
 })
 
 it('shows a stale-cursor reload and replaces visible old rows with the fresh first page', async () => {
@@ -268,7 +300,7 @@ it('renders a committed-read conflict as an error, not an empty store or a provi
   f.api.completion.mockResolvedValue(ok(completed('UNKNOWN')))
   const history = await f.openHistory()
   expect(history.getByRole('alert').textContent).toContain('xung đột')
-  expect(history.getByText('Tiến độ: Chưa xác định')).toBeTruthy()
+  expect(history.queryByText(/^Tiến độ:/)).toBeNull()
   expect(history.queryByRole('table')).toBeNull()
   expect(history.queryByText('Chưa có lần nộp bài đã commit cho bài tập này.')).toBeNull()
 })
@@ -277,13 +309,13 @@ it('revalidates previously completed progress if Accepted becomes unavailable du
   const f = await workspaceFixture()
   f.api.completion.mockResolvedValue(ok(completed('COMPLETED')))
   const history = await f.openHistory()
-  expect(history.getByText('Tiến độ: Hoàn thành (Accepted đã commit)')).toBeTruthy()
+  expect(f.api.completion).toHaveBeenCalled()
   f.api.history.mockResolvedValueOnce(ok(page([], { stores: { ACCEPTED: { state: 'CORRUPT', readable: false }, FAILED: stores.FAILED },
     coverage: 'PARTIAL', countScope: 'READABLE_ONLY', total: null })))
   f.api.completion.mockResolvedValue(ok(completed('UNKNOWN')))
   fireEvent.click(history.getByRole('button', { name: 'Tải lại lịch sử' })); await flush()
-  expect(history.getByText('Tiến độ: Chưa xác định')).toBeTruthy()
-  expect(f.workspace.getByText('Completion chưa xác định')).toBeTruthy()
+  expect(history.queryByText(/^Tiến độ:/)).toBeNull()
+  expect(f.workspace.queryByText('Hoàn thành · Accepted đã commit')).toBeNull()
 })
 
 it('refreshes Failed committed history without revoking earlier committed completion', async () => {
@@ -296,16 +328,18 @@ it('refreshes Failed committed history without revoking earlier committed comple
   f.emit({ ...saved(), sequence: 3, sourceRevision: request.sourceRevision, verdict: 'WrongAnswer',
     storage: { state: 'saved', recordKey: { storeKind: 'FAILED', recordId: uuid(2) } } })
   await waitFor(() => expect(history.getByText('Wrong Answer')).toBeTruthy())
-  expect(history.getByText('Tiến độ: Hoàn thành (Accepted đã commit)')).toBeTruthy()
+  expect(f.api.completion).toHaveBeenCalled()
 })
 
-it('loads saved records when opening Submission after a commit while Description was selected', async () => {
+it('switches to Submissions immediately and reads History only after verified saved settlement', async () => {
   const f = await workspaceFixture()
   fireEvent.click(f.workspace.getByRole('button', { name: 'Submit' })); await flush()
   const request = f.api.submit.mock.calls[0][0]
-  f.emit({ ...saved(), sequence: 3, sourceRevision: request.sourceRevision })
+  expect(f.workspace.getByRole('tab', { name: 'Submissions' }).getAttribute('aria-selected')).toBe('true')
   expect(f.api.history).not.toHaveBeenCalled()
   f.api.history.mockResolvedValueOnce(ok(page([row()])))
+  f.emit({ ...saved(), sequence: 3, sourceRevision: request.sourceRevision })
+  await flush()
   const history = await f.openHistory()
   expect(history.getByRole('table')).toBeTruthy(); expect(f.api.history).toHaveBeenCalledOnce()
 })
@@ -319,7 +353,7 @@ it.each(['UNAVAILABLE', 'CORRUPT', 'UNSUPPORTED_SCHEMA', 'RECOVERY_PENDING', 'RE
   const history = await f.openHistory()
   fireEvent.click(history.getByRole('button', { name: 'Tải lại lịch sử' })); await flush()
   expect(history.getByText(/Chỉ hiển thị phần lịch sử đọc được/)).toBeTruthy()
-  expect(history.getByText('Tiến độ: Chưa xác định')).toBeTruthy()
+  expect(history.queryByText(/^Tiến độ:/)).toBeNull()
   expect(history.queryByText('Chưa có lần nộp bài đã commit cho bài tập này.')).toBeNull()
   if (recovered) expect(history.getByText(/POSSIBLE_DATA_LOSS/)).toBeTruthy()
 })
@@ -327,7 +361,7 @@ it.each(['UNAVAILABLE', 'CORRUPT', 'UNSUPPORTED_SCHEMA', 'RECOVERY_PENDING', 'RE
 it('renders missing-store empty state, loading and errors distinctly with explicit refresh', async () => {
   const f = await workspaceFixture(), read = deferred<AppResult<SubmissionHistory>>()
   f.api.history.mockReturnValueOnce(read.promise)
-  fireEvent.click(f.workspace.getByRole('tab', { name: 'Submission' }))
+  fireEvent.click(f.workspace.getByRole('tab', { name: 'Submissions' }))
   const history = within(f.workspace.getByRole('region', { name: 'Lịch sử nộp bài' }))
   expect(history.getByRole('status').textContent).toContain('Đang tải')
   await act(async () => read.resolve(ok(page([], { stores: { ACCEPTED: { state: 'MISSING', readable: true }, FAILED: { state: 'MISSING', readable: true } } }))))
@@ -346,7 +380,7 @@ it('updates after saved Submit, excludes pending results and shows completion on
   expect(history.queryByRole('table')).toBeNull(); expect(f.api.history).toHaveBeenCalledOnce()
   f.api.history.mockResolvedValueOnce(ok(page([row()]))); f.api.completion.mockResolvedValue(ok(completed('COMPLETED')))
   f.emit({ ...saved(), sequence: 3, sourceRevision: request.sourceRevision })
-  await waitFor(() => expect(history.getByText('Tiến độ: Hoàn thành (Accepted đã commit)')).toBeTruthy())
+  await waitFor(() => expect(history.getByRole('table')).toBeTruthy())
   expect(history.getByRole('table')).toBeTruthy(); expect(f.api.history).toHaveBeenCalledTimes(2)
   expect(f.api.submit).toHaveBeenCalledOnce()
 })
@@ -354,14 +388,14 @@ it('updates after saved Submit, excludes pending results and shows completion on
 it('switches exercises to default Description and ignores late old-exercise history', async () => {
   const f = await workspaceFixture(), old = deferred<AppResult<SubmissionHistory>>()
   f.api.history.mockReturnValueOnce(old.promise)
-  fireEvent.click(f.workspace.getByRole('tab', { name: 'Submission' }))
+  fireEvent.click(f.workspace.getByRole('tab', { name: 'Submissions' }))
   fireEvent.click(f.workspace.getByRole('button', { name: '← Danh sách' }))
   fireEvent.click(await screen.findByRole('button', { name: new RegExp(exercises[1].title) }))
   const nextEditor = await screen.findByRole('textbox', { name: 'Practice code' })
   const workspace = within(nextEditor.closest<HTMLElement>('.practice-workspace')!)
   expect(workspace.getByRole('tab', { name: 'Description' }).getAttribute('aria-selected')).toBe('true')
   f.api.history.mockResolvedValueOnce(ok(page([row(2, 'WrongAnswer', exercises[1].id)])))
-  fireEvent.click(workspace.getByRole('tab', { name: 'Submission' })); await flush()
+  fireEvent.click(workspace.getByRole('tab', { name: 'Submissions' })); await flush()
   await act(async () => old.resolve(ok(page([row()]))))
   const history = workspace.getByRole('region', { name: 'Lịch sử nộp bài' })
   expect(history.querySelector('time')?.dateTime).toBe(row(2).submittedAt)
@@ -373,7 +407,8 @@ it.each(['Run', 'Submit'] as const)('switching description tabs leaves an in-fli
   if (action === 'Run') f.run.mockReturnValueOnce(pending.promise)
   else f.api.submit.mockReturnValueOnce(pending.promise)
   fireEvent.click(f.workspace.getByRole('button', { name: action }))
-  await f.openHistory()
+  if (action === 'Run') await f.openHistory()
+  else expect(f.workspace.getByRole('status', { name: 'Đang chấm bài' })).toBeTruthy()
   fireEvent.click(f.workspace.getByRole('tab', { name: 'Description' }))
   expect(f.workspace.getByRole<HTMLButtonElement>('button', { name: 'Run' }).disabled).toBe(true)
   expect(f.workspace.getByRole<HTMLButtonElement>('button', { name: 'Submit' }).disabled).toBe(true)
@@ -384,6 +419,6 @@ it.each(['Run', 'Submit'] as const)('switching description tabs leaves an in-fli
 it('does not infer completion from an Accepted history row when completion is UNKNOWN', () => {
   const history = { view: { rows: [row()], loading: false, loadingMore: false, page: page([row()]) }, refresh: vi.fn(), loadMore: vi.fn() }
   render(<SubmissionHistoryPanel history={history} completion={{ busy: false, completion: 'UNKNOWN', possibleDataLoss: false }} onRefresh={vi.fn()} />)
-  expect(screen.getByText('Tiến độ: Chưa xác định')).toBeTruthy()
+  expect(screen.queryByText(/^Tiến độ:/)).toBeNull()
   expect(screen.queryByText('Tiến độ: Hoàn thành (Accepted đã commit)')).toBeNull()
 })

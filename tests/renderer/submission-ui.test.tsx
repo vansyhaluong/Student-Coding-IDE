@@ -46,7 +46,9 @@ function apiFixture() {
     retry: vi.fn<SubmissionApi['retry']>().mockResolvedValue({ ok: true, value: status() }),
     completion: vi.fn<SubmissionApi['completion']>().mockResolvedValue({ ok: true, value: completion() }),
     context: vi.fn<SubmissionApi['context']>().mockResolvedValue({ ok: true, value: null }),
-    history: vi.fn<SubmissionApi['history']>(), source: vi.fn<SubmissionApi['source']>(),
+    history: vi.fn<SubmissionApi['history']>().mockResolvedValue({ ok: true, value: { ok: true, rows: [], stores: {
+      ACCEPTED: { state: 'MISSING', readable: true }, FAILED: { state: 'MISSING', readable: true } },
+      coverage: 'COMPLETE', countScope: 'ALL_SELECTED', knownCount: 0, total: 0, nextCursor: null } }), source: vi.fn<SubmissionApi['source']>(),
     onChanged: vi.fn<SubmissionApi['onChanged']>(fn => { listeners.add(fn); return () => { listeners.delete(fn) } }),
   }
   const emit = (s: SubmissionStatus) => act(() => { for (const fn of [...listeners]) fn(s) })
@@ -215,7 +217,7 @@ it.each(['blocked', 'inactive', 'oversize', 'unicode'] as const)('prevents %s Su
 it.each(['pending', 'unknown', 'saved', 'failed'] as const)('renders explicit %s storage independently from verdict without private data', state => {
   const storage = state === 'unknown' ? { state, recoveryPending: true as const } : state === 'saved' ? saved().storage
     : state === 'failed' ? { state, reason: 'FULL' as const } : { state }
-  render(<SubmissionResult view={{ busy: state === 'pending' || state === 'unknown', status: status(2, { verdict: 'Accepted', storage }),
+  render(<SubmissionResult view={{ busy: state === 'pending' || state === 'unknown', status: status(2, { stage: state === 'pending' || state === 'unknown' ? 'STORAGE' : 'SETTLED', verdict: 'Accepted', storage }),
     completion: 'NOT_COMPLETED', possibleDataLoss: false }} staleSource onCheck={vi.fn()} onCompletion={vi.fn()} />)
   const result = screen.getByRole('region', { name: 'Submit Result' })
   expect(result.textContent).toContain(state)
@@ -255,13 +257,15 @@ it('integrates Submit beside unchanged Run, captures edits and displays late res
   await act(async () => { ack.resolve({ ok: true, value: s }) })
   expect(request.code).toBe('immutable source')
   expect(Object.keys(request).sort()).toEqual(['code', 'exerciseId', 'language', 'sourceRevision'])
-  expect(f.workspace.getByText('Code đã thay đổi. Kết quả này thuộc source lúc bấm Submit.')).toBeTruthy()
-  f.api.completion.mockResolvedValueOnce({ ok: true, value: completion('COMPLETED') })
+  expect(f.workspace.queryByText('Code đã thay đổi. Kết quả này thuộc source lúc bấm Submit.')).toBeNull()
+  expect(f.workspace.getByRole('status', { name: 'Đang chấm bài' })).toBeTruthy()
+  f.api.completion.mockResolvedValue({ ok: true, value: completion('COMPLETED') })
   f.emit({ ...saved(4), sourceRevision: request.sourceRevision })
   await waitFor(() => expect(f.workspace.getByText('Hoàn thành · Accepted đã commit')).toBeTruthy())
+  expect(f.workspace.getByText('Code đã thay đổi. Kết quả này thuộc source lúc bấm Submit.')).toBeTruthy()
   expect(f.workspace.getByRole<HTMLButtonElement>('button', { name: 'Run' }).disabled).toBe(false)
   expect(f.run).not.toHaveBeenCalled()
-  expect(f.api.history).not.toHaveBeenCalled(); expect(f.api.source).not.toHaveBeenCalled()
+  expect(f.api.history).toHaveBeenCalledOnce(); expect(f.api.source).not.toHaveBeenCalled()
 })
 
 it('keeps public Run separate from Submit/committed completion', async () => {
@@ -281,6 +285,63 @@ it('disables Submit throughout an existing public Run without calling Official S
   expect(f.api.submit).not.toHaveBeenCalled()
   await act(async () => { ack.resolve(unavailable) })
   expect(f.workspace.getByRole<HTMLButtonElement>('button', { name: 'Submit' }).disabled).toBe(false)
+})
+
+it('opens Submissions before ACK with only the Judge spinner and prevents a second Submit', async () => {
+  const f = await workspaceFixture(), ack = deferred<AppResult<SubmissionStatus>>()
+  f.api.submit.mockReturnValueOnce(ack.promise)
+  fireEvent.click(f.workspace.getByRole('button', { name: 'Submit' }))
+  fireEvent.click(f.workspace.getByRole('button', { name: 'Submit' }))
+  expect(f.workspace.getByRole('tab', { name: 'Submissions' }).getAttribute('aria-selected')).toBe('true')
+  const result = f.workspace.getByRole('region', { name: 'Submit Result' })
+  expect(within(result).getByRole('status', { name: 'Đang chấm bài' }).querySelector('svg')).toBeTruthy()
+  expect(result.textContent).toBe('')
+  expect(f.workspace.queryByRole('table')).toBeNull()
+  expect(f.workspace.queryByRole('region', { name: 'Submission Details' })).toBeNull()
+  expect(f.api.submit).toHaveBeenCalledOnce()
+  expect(f.api.history).not.toHaveBeenCalled()
+  expect(f.run).not.toHaveBeenCalled()
+  const request = f.api.submit.mock.calls[0][0]
+  await act(async () => { ack.resolve({ ok: true, value: status(1, { sourceRevision: request.sourceRevision }) }) })
+})
+
+it('opens Submissions even for an immediately settled ACK without inventing a History row', async () => {
+  const f = await workspaceFixture()
+  f.api.submit.mockImplementation(async request => ({ ok: true, value: { ...saved(), sourceRevision: request.sourceRevision } }))
+  fireEvent.click(f.workspace.getByRole('button', { name: 'Submit' }))
+  await waitFor(() => expect(f.workspace.getByText('saved · Đã xác minh bản ghi được lưu.')).toBeTruthy())
+  expect(f.workspace.getByRole('tab', { name: 'Submissions' }).getAttribute('aria-selected')).toBe('true')
+  await waitFor(() => expect(f.api.history).toHaveBeenCalledOnce())
+  expect(f.workspace.queryByRole('table')).toBeNull()
+  expect(f.workspace.getByText('Chưa có lần nộp bài đã commit cho bài tập này.')).toBeTruthy()
+})
+
+it('shows only the spinner throughout Runtime, then replaces it with truthful verdict/storage', () => {
+  const callbacks = { staleSource: false, onCheck: vi.fn(), onCompletion: vi.fn() }
+  const view = { busy: true, completion: 'NOT_COMPLETED' as const, possibleDataLoss: false }
+  const ui = render(<SubmissionResult {...callbacks} view={{ ...view, status: status() }} />)
+  expect(screen.getByRole('status', { name: 'Đang chấm bài' })).toBeTruthy()
+  expect(screen.queryByText(/Compiling|Running|Đang biên dịch|source revision|testcase/)).toBeNull()
+  ui.rerender(<SubmissionResult {...callbacks} view={{ ...view, status: status(2, {
+    stage: 'STORAGE', verdict: 'WrongAnswer', storage: { state: 'unknown', recoveryPending: true } }) }} />)
+  expect(screen.queryByRole('status', { name: 'Đang chấm bài' })).toBeNull()
+  expect(screen.getByText('Wrong Answer').getAttribute('data-accepted')).toBe('false')
+  expect(screen.getByText(/unknown · Chưa xác định/)).toBeTruthy()
+  fireEvent.click(screen.getByText('Kiểm tra trạng thái'))
+  expect(callbacks.onCheck).toHaveBeenCalledOnce()
+})
+
+it('keeps explicit status recovery available when Runtime reports a failure but still owns cleanup', () => {
+  const onCheck = vi.fn()
+  render(<SubmissionResult view={{ busy: true, status: status(2, { verdict: 'InfrastructureFailure',
+    storage: { state: 'not-requested', reason: 'INELIGIBLE' } }), completion: 'NOT_COMPLETED', possibleDataLoss: false }}
+    staleSource={false} onCheck={onCheck} onCompletion={vi.fn()} />)
+  expect(screen.getByText('Không thể hoàn tất chấm bài')).toBeTruthy()
+  expect(screen.getByText('Chưa xác nhận hoàn tất thu hồi tài nguyên.')).toBeTruthy()
+  expect(screen.queryByText('Đang hoàn tất lưu bài.')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Kiểm tra trạng thái' }))
+  expect(onCheck).toHaveBeenCalledOnce()
+  expect(screen.queryByRole('status', { name: 'Đang chấm bài' })).toBeNull()
 })
 
 it('does not overwrite new completion with an older initial read, or publish a read after navigation', async () => {

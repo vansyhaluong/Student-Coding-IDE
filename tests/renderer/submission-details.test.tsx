@@ -265,7 +265,7 @@ async function workspaceFixture(language: ExerciseLanguage = 'csharp', code = sa
   fireEvent.click(await screen.findByRole('button', { name: /Tổng hai số/ }))
   const editor = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: 'Practice code' })
   const workspace = within(editor.closest<HTMLElement>('.practice-workspace')!)
-  fireEvent.click(workspace.getByRole('tab', { name: 'Submission' }))
+  fireEvent.click(workspace.getByRole('tab', { name: 'Submissions' }))
   await workspace.findByRole('button', { name: 'Chi tiết' })
   const openDetails = async (waitForSource = true) => {
     fireEvent.click(workspace.getByRole('button', { name: 'Chi tiết' }))
@@ -370,6 +370,13 @@ it.each(['Run', 'Submit'] as const)('views source without disturbing in-flight %
   if (action === 'Run') f.run.mockReturnValueOnce(pending.promise)
   else f.api.submit.mockReturnValueOnce(pending.promise)
   fireEvent.click(f.workspace.getByRole('button', { name: action }))
+  if (action === 'Submit') {
+    expect(f.workspace.getByRole('status', { name: 'Đang chấm bài' })).toBeTruthy()
+    expect(f.workspace.queryByRole('region', { name: 'Submission Details' })).toBeNull()
+    expect(f.editor.value).toBe('current C# draft')
+    expect(f.run).not.toHaveBeenCalled(); expect(f.stop).not.toHaveBeenCalled()
+    return
+  }
   const details = await f.openDetails()
   expect(details.getByRole<HTMLButtonElement>('button', { name: 'Restore to Editor' }).disabled).toBe(true)
   fireEvent.click(details.getByRole('button', { name: '← History' }))

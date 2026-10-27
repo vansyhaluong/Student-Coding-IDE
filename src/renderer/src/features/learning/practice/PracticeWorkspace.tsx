@@ -6,8 +6,8 @@ import { PracticeTestPanel, type TestPanelDock, type TestPanelSize } from './Pra
 import type { ExerciseRunView } from './use-exercise-runtime'
 import type { PracticeSourceReplacement } from './use-practice'
 import type { useSubmission } from './use-submission'
-import { SubmissionResult } from './SubmissionResult'
 import type { RestoreSubmissionSource } from './SubmissionDetails'
+import { RunErrorAlert } from './RunErrorAlert'
 const PracticeEditor = lazy(async () => ({ default: (await import('./PracticeEditor')).PracticeEditor }))
 
 interface Props {
@@ -26,6 +26,8 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
   const [selectedCase, setSelectedCase] = useState(0)
   const [panelSize, setPanelSize] = useState<TestPanelSize>('open')
   const [panelDock, setPanelDock] = useState<TestPanelDock>('editor')
+  const [submitRequest, setSubmitRequest] = useState(0)
+  const [runRequest, setRunRequest] = useState(0)
   if (!ready) return <p role="status">Đang tải bài tập và Code Draft…</p>
   if (!exercise) return <section className="practice-list" aria-label={`Bài tập chương ${chapter}`}>
     <p className="learning-eyebrow">Luyện tập / Chương {chapter}</p><h1>Viết code. Giải bài.</h1>
@@ -39,21 +41,24 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
         </button>)}
     </section>)}
   </section>
-  const testPanel = <PracticeTestPanel exercise={exercise} tab={tab} onTab={setTab} selectedCase={selectedCase} onCase={setSelectedCase}
+  const testPanel = <PracticeTestPanel exercise={exercise} language={language} tab={tab} onTab={setTab} selectedCase={selectedCase} onCase={setSelectedCase}
     size={panelSize} onSize={setPanelSize} dock={panelDock} onDock={setPanelDock} execution={execution} />
   return <div className="practice-workspace">
     <header className="practice-heading"><button type="button" disabled={locked} onClick={() => { setReset(false); onOpen() }}>← Danh sách</button>
       <span>Chương {chapter} / {exercise.title}</span><span className="practice-difficulty" data-level={exercise.difficulty}>{exercise.difficulty}</span>
       <button type="button" className="practice-icon-button practice-run" disabled={locked || execution.busy || submission.view.busy} aria-label="Run" title="Run"
-        onClick={() => { setTab('result'); if (panelSize === 'collapsed') setPanelSize('open'); onRun() }}><Play aria-hidden="true" fill="currentColor" /></button>
+        onClick={() => { setRunRequest(value => value + 1); setTab('result'); if (panelSize === 'collapsed') setPanelSize('open'); onRun() }}><Play aria-hidden="true" fill="currentColor" /></button>
       <button type="button" className="practice-submit" disabled={locked || !!submission.disabledReason}
-        title={submission.disabledReason ?? 'Submit'} aria-describedby="practice-submit-availability"
-        onClick={() => { void submission.submit() }}>Submit</button>
+        title={submission.disabledReason ?? 'Submit'} aria-describedby={submission.disabledReason && !submission.view.busy ? 'practice-submit-availability' : undefined}
+        onClick={() => {
+          setSubmitRequest(value => value + 1)
+          if (panelDock === 'bottom' && panelSize === 'expanded') setPanelSize('open')
+          void submission.submit()
+        }}>Submit</button>
     </header>
-    {submission.disabledReason && <p id="practice-submit-availability" className="practice-submit-availability">{submission.disabledReason}</p>}
-    <SubmissionResult view={submission.view} staleSource={submission.staleSource} onCheck={submission.checkStatus} onCompletion={submission.refreshCompletion} />
+    {submission.disabledReason && !submission.view.busy && <p id="practice-submit-availability" className="practice-submit-availability">{submission.disabledReason}</p>}
     <div className="practice-split" data-panel-dock={panelDock} data-panel-size={panelSize}>
-      <PracticeDescription key={exercise.id} exercise={exercise} language={language} locked={locked} active={active && !locked}
+      <PracticeDescription key={exercise.id} exercise={exercise} language={language} submitRequest={submitRequest} locked={locked} active={active && !locked}
         hidden={panelDock === 'bottom' && panelSize === 'expanded'} submission={submission} sourceRevision={sourceRevision} draftCode={code}
         restoreBlocked={locked || execution.busy || submission.view.busy} onReplace={onReplace} onRestore={onRestore} />
       <div className="practice-code-column" hidden={panelDock === 'bottom' && panelSize === 'expanded'}>
@@ -69,6 +74,8 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
           <button type="button" onClick={() => setReset(false)}>Hủy</button>
         </div>}
         <div className="practice-editor" aria-label="Code Editor" hidden={panelDock === 'editor' && panelSize === 'expanded'}><Suspense fallback={<p>Đang tải Code Editor…</p>}><PracticeEditor key={`${exercise.id}/${language}`} exercise={exercise} language={language} code={code} sourceReplacement={sourceReplacement} readOnly={locked} onChange={onEdit} /></Suspense></div>
+        <RunErrorAlert key={`${exercise.id}/${language}/${runRequest}`} exercise={exercise} language={language} execution={execution}
+          hidden={panelDock === 'editor' && panelSize === 'expanded'} />
         {panelDock === 'editor' && testPanel}
       </div>
       {panelDock === 'bottom' && testPanel}

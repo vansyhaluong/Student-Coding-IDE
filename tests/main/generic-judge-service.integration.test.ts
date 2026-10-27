@@ -27,7 +27,7 @@ import * as reducer from '../../src/main/services/learning/judge/verdict-reducer
 
 const enabled = process.platform === 'win32' && process.arch === 'x64' && process.env.LEARNING_GENERIC_JUDGE_LIVE === '1'
 const runId = new Date().toISOString().replace(/[:.]/g, '-')
-const evidenceRoot = resolve('out/e4-s4/native')
+const evidenceRoot = resolve('out/e7/candidate-20261027-r1/s2/native')
 const digest = (v: string | Uint8Array) => createHash('sha256').update(v).digest('hex')
 const operations = [
   { language: 'csharp' as const, mode: 'correct', code: 'public class Solution { public int[] Divide(int a,int b) => new[]{a/b,a%b}; }' },

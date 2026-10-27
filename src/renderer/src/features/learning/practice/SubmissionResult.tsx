@@ -1,5 +1,6 @@
 import type { PublicSubmissionStorage, PublicSubmissionVerdict } from '../../../../../shared/contracts/submission'
 import type { SubmissionView } from './use-submission'
+import { LoaderCircle } from 'lucide-react'
 
 const verdicts: Record<PublicSubmissionVerdict, string> = {
   Accepted: 'Accepted', WrongAnswer: 'Wrong Answer', CompilationError: 'Compilation Error', SyntaxError: 'Syntax Error',
@@ -22,6 +23,11 @@ export function SubmissionResult({ view, staleSource, onCheck, onCompletion }: {
   view: SubmissionView; staleSource: boolean; onCheck(): void; onCompletion(): void
 }) {
   const status = view.status
+  if (view.busy && (!status || status.stage === 'RUNTIME' && status.verdict === null) && !view.error) return <section
+    className="practice-submission-result practice-submission-loading" aria-label="Submit Result" aria-busy="true">
+    <div role="status" aria-label="Đang chấm bài"><LoaderCircle aria-hidden="true" /></div>
+  </section>
+  if (!status && !view.busy && !view.error) return null
   return <section className="practice-submission-result" aria-label="Submit Result" aria-live="polite" aria-busy={view.busy}>
     <div className="practice-submission-summary"><strong>Submit Result</strong>
       <span data-completed={view.completion === 'COMPLETED'}>{view.completion === 'COMPLETED' ? 'Hoàn thành · Accepted đã commit'
@@ -29,9 +35,9 @@ export function SubmissionResult({ view, staleSource, onCheck, onCompletion }: {
     </div>
     {view.possibleDataLoss && <p>POSSIBLE_DATA_LOSS · Dữ liệu được đọc từ bản khôi phục, có thể thiếu bản ghi.</p>}
     {status ? <>
-      <p><strong>{status.verdict ? verdicts[status.verdict] : 'Đang chấm bài…'}</strong> · {status.language === 'csharp' ? 'C#' : 'JavaScript'} · source revision {status.sourceRevision}</p>
+      <p><strong className="practice-submission-verdict" data-accepted={status.verdict === 'Accepted'}>{status.verdict ? verdicts[status.verdict] : 'Chưa xác định verdict'}</strong> · {status.language === 'csharp' ? 'C#' : 'JavaScript'}</p>
       <p>{storageMessage(status.storage)}</p>
-      {status.stage !== 'SETTLED' && <p>Operation vẫn đang được xử lý an toàn.</p>}
+      {status.stage !== 'SETTLED' && <p>{status.stage === 'STORAGE' ? 'Đang hoàn tất lưu bài.' : 'Chưa xác nhận hoàn tất thu hồi tài nguyên.'}</p>}
       {staleSource && <p>Code đã thay đổi. Kết quả này thuộc source lúc bấm Submit.</p>}
     </> : <p>{view.busy ? 'Đang gửi Submit và chờ xác nhận…' : 'Chọn Submit để chấm bài. Run chỉ chạy test mẫu.'}</p>}
     {view.error && <p role="alert">{view.error}</p>}

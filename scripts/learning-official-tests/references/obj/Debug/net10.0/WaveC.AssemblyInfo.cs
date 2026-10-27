@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WaveC")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+275e31768e21a440597f0bb4f3c136734264e6aa")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d4fc2dbdff197c61d1d8fd508fcebf582f7f6094")]
 [assembly: System.Reflection.AssemblyProductAttribute("WaveC")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WaveC")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
