@@ -16,17 +16,18 @@ function panel(result: NonNullable<ExerciseSnapshot['csharp']>['result'] | undef
     ...(result ? { csharp: { schema: { parameterTypes: exercise.parameters.map(p => p.type), returnType: exercise.returnType, sampleCount: exercise.samples.length }, result } } : {}), ...override }
   function Harness() {
     const [selectedCase, onCase] = useState(0)
-    return <PracticeTestPanel exercise={exercise} tab="result" onTab={vi.fn()} selectedCase={selectedCase} onCase={onCase}
+    return <PracticeTestPanel exercise={exercise} language="csharp" tab="result" onTab={vi.fn()} selectedCase={selectedCase} onCase={onCase}
       size="open" onSize={vi.fn()} dock="editor" onDock={vi.fn()} execution={{ status: result ? result.failure ? 'error' : 'finished' : 'idle',
         busy: false, message: result?.failure ? csharpFailureMessage[result.failure.kind] : result ? 'Đã kết thúc thực thi.' : 'Chưa có kết quả thực thi.', snapshot: result ? snapshot : undefined }} />
   }
   return render(<Harness />)
 }
 const compile = { status: 'SUCCEEDED' as const, exitCode: 0, diagnostics: [], stdout: '', stderr: '', failure: null }
-it('shows actual zero, escaped student streams and the untouched suffix without a comparison verdict', () => {
+it('shows an actual mismatch, escaped student streams and a neutral untouched suffix', () => {
   panel({ compile, cases: [{ caseIndex: 0, outcome: 'RETURNED', actual: 0, exitCode: 0, stdout: '<script>unsafe()</script>', stderr: 'student error', failure: null }], notRunCaseIndices: [1], failure: null })
   expect(screen.getByLabelText('Actual Case 1').textContent).toBe('0')
-  expect(screen.getByRole('status').textContent).toBe('Đã chạy xong')
+  expect(screen.getByRole('status').textContent).toBe('Wrong Answer')
+  expect(screen.getByRole('tab', { name: 'Case 1 · FAIL' }).getAttribute('data-state')).toBe('FAIL')
   expect(screen.getByLabelText('Input Case 1').textContent).toContain('a =14')
   expect(screen.getByLabelText('Expected Case 1').textContent).toBe('8')
   fireEvent.click(screen.getByText('Console output'))
@@ -38,13 +39,16 @@ it('shows actual zero, escaped student streams and the untouched suffix without 
   expect(screen.queryByLabelText('Actual Case 1')).toBeNull()
   expect(screen.queryByLabelText('Actual Case 2')).toBeNull()
   expect(screen.queryByText('<script>unsafe()</script>')).toBeNull()
-  expect(screen.queryByText(/Accepted|Wrong Answer|PASS/)).toBeNull()
+  expect(screen.getByRole('tab', { name: 'Case 2 · NOT_RUN' }).getAttribute('data-state')).toBe('NOT_RUN')
+  expect(screen.queryByText('Accepted')).toBeNull()
 })
-it('shows bounded code/position diagnostics and no fabricated actual after compilation failure', () => {
+it('keeps the compilation-error summary without fabricated testcase results or duplicate diagnostics', () => {
   const failure = { kind: 'COMPILE_ERROR' as const, phase: 'compile' as const, caseIndex: null }
   panel({ compile: { ...compile, status: 'FAILED', exitCode: 1, diagnostics: [{ code: 'CS1002', severity: 'error', source: 'solution', line: 4, column: 9 }], failure },
     cases: [], notRunCaseIndices: [0, 1], failure })
-  expect(screen.getByLabelText('Compiler diagnostics').textContent).toContain('CS1002 · Lỗi · Dòng 4, cột 9')
+  expect(screen.getByRole('status').textContent).toBe('Compilation Error')
+  expect(screen.queryByRole('tab')).toBeNull()
+  expect(screen.queryByLabelText('Compiler diagnostics')).toBeNull()
   expect(screen.queryByLabelText('Actual Case 1')).toBeNull()
 })
 it.each(['RUNTIME_ERROR', 'TIMEOUT', 'JOB_MEMORY_LIMIT', 'OUTPUT_LIMIT', 'INFRASTRUCTURE_FAILURE'] as const)('shows safe %s failure and no actual', kind => {
@@ -56,10 +60,11 @@ it('does not display results for a mismatched catalogue schema', () => {
   const result = { compile, cases: [], notRunCaseIndices: [0, 1], failure: null }
   panel(result, { csharp: { schema: { parameterTypes: [], returnType: 'boolean', sampleCount: 2 }, result } })
   expect(screen.queryByLabelText('Actual Case 1')).toBeNull()
-  expect(screen.getByLabelText('Output Case 1').textContent).toBe('Chưa có kết quả.')
+  expect(screen.getByText('Nhấn Run để xem kết quả kiểm thử')).toBeTruthy()
+  expect(screen.queryByLabelText('Output Case 1')).toBeNull()
 })
 
-it('switches one detail view with mouse and arrow/Home/End keys, without comparing actual and expected', () => {
+it('switches one detail view with mouse and arrow/Home/End keys for real sample mismatches', () => {
   panel({ compile, cases: [0, 1].map(caseIndex => ({ caseIndex, outcome: 'RETURNED', actual: 999, exitCode: 0, stdout: '', stderr: '', failure: null })), notRunCaseIndices: [], failure: null })
   const first = screen.getByRole('tab', { name: /^Case 1/ }), second = screen.getByRole('tab', { name: /^Case 2/ })
   expect(screen.getAllByRole('tabpanel')).toHaveLength(1)
@@ -72,7 +77,8 @@ it('switches one detail view with mouse and arrow/Home/End keys, without compari
   fireEvent.keyDown(first, { key: 'End' }); expect(second.getAttribute('aria-selected')).toBe('true')
   fireEvent.keyDown(second, { key: 'ArrowRight' }); expect(first.getAttribute('aria-selected')).toBe('true')
   fireEvent.keyDown(first, { key: 'ArrowLeft' }); expect(second.getAttribute('aria-selected')).toBe('true')
-  expect(screen.queryByText(/Accepted|Wrong Answer|Runtime.*ms/)).toBeNull()
+  expect(screen.getByRole('status').textContent).toBe('Wrong Answer')
+  expect(screen.queryByText(/Accepted|Runtime.*ms/)).toBeNull()
 })
 
 const typedValues: [ExerciseType, ExerciseValue][] = [['int32', 0], ['boolean', false], ['string', 'Việt 日本語 😀\n'],
@@ -85,11 +91,11 @@ it.each(typedValues)('formats catalogue Input/Expected and structured %s actual 
   expect(screen.getByLabelText('Expected Case 1').textContent).toBe(JSON.stringify(value))
 })
 
-it('keeps an honest empty state, catalogue values and no invented output or timing', () => {
+it('keeps an honest centered empty state without sample results or invented output/timing', () => {
   panel(undefined)
-  expect(screen.getByRole('status').textContent).toBe('Chưa có kết quả thực thi.')
-  expect(screen.getByText('Chọn Run để xem Output của các test mẫu.')).toBeTruthy()
-  expect(screen.getByLabelText('Output Case 1').textContent).toBe('Chưa có kết quả.')
+  expect(screen.getByRole('status').textContent).toBe('Nhấn Run để xem kết quả kiểm thử')
+  expect(screen.queryByRole('tab')).toBeNull()
+  expect(screen.queryByLabelText('Output Case 1')).toBeNull()
   expect(screen.queryByLabelText('Actual Case 1')).toBeNull()
   expect(screen.queryByText(/NOT_RUN|Runtime.*ms/)).toBeNull()
 })

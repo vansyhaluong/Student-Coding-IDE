@@ -15,7 +15,7 @@ function panel(javascript = structuredClone(javascriptObservation), exerciseId =
     stdout: '', stderr: '', javascript, cleanup: { state: 'FINALIZED', proof: 'VERIFIED', processClean: true, cleanupComplete: true, workspace: 'REMOVED', pendingIo: false } }
   function Harness() {
     const [selectedCase, onCase] = useState(0)
-    return <PracticeTestPanel exercise={exercises[0]} selectedCase={selectedCase} onCase={onCase} tab="result" onTab={vi.fn()}
+    return <PracticeTestPanel exercise={exercises[0]} language="javascript" selectedCase={selectedCase} onCase={onCase} tab="result" onTab={vi.fn()}
       size="open" onSize={vi.fn()} dock="editor" onDock={vi.fn()} execution={{ status: javascript.result.failure ? 'error' : 'finished', busy: false,
         message: javascript.result.failure ? javascriptFailureMessage[javascript.result.failure.kind] : 'Done', snapshot }} />
   }
@@ -24,6 +24,7 @@ function panel(javascript = structuredClone(javascriptObservation), exerciseId =
 it('shows catalogue input/expected and actual in selectable tabs with an honest NOT_RUN suffix', () => {
   panel()
   expect(screen.getByLabelText('Actual Case 1').textContent).toBe('8')
+  expect(screen.getByRole('tab', { name: 'Case 1 · PASS' }).getAttribute('data-state')).toBe('PASS')
   expect(screen.getByLabelText('Input Case 1').textContent).toContain('14')
   expect(screen.getByLabelText('Expected Case 1').textContent).toBe('8')
   fireEvent.click(screen.getByRole('tab', { name: /^Case 2/ }))
@@ -39,13 +40,14 @@ it.each(['RUNTIME_ERROR', 'PROTOCOL_FAILURE'] as const)('renders safe %s and ret
   expect(screen.getByLabelText('Output Case 1').textContent).toBe(javascriptFailureMessage[kind])
   expect(screen.queryByLabelText('Actual Case 1')).toBeNull()
 })
-it('renders syntax diagnostics with every sample NOT_RUN', () => {
+it('keeps the syntax-error summary without fabricated testcase results', () => {
   const observation = structuredClone(javascriptObservation), failure = { kind: 'SYNTAX_ERROR' as const, phase: 'compile' as const, caseIndex: null }
   observation.result = { syntax: { status: 'FAILED', exitCode: 1, diagnostics: [{ code: 'SYNTAX_ERROR', source: 'solution', line: 2, column: 3 }],
     stdout: '', stderr: '', failure }, cases: [], notRunCaseIndices: [0, 1], failure }
   panel(observation)
-  expect(screen.getByLabelText('Syntax diagnostics').textContent).toContain('Dòng 2, cột 3')
-  expect(screen.getByLabelText('Output Case 1').textContent).toContain('NOT_RUN')
+  expect(screen.getByRole('status').textContent).toBe('Syntax Error')
+  expect(screen.queryByRole('tab')).toBeNull()
+  expect(screen.queryByLabelText('Output Case 1')).toBeNull()
 })
 it('rejects results from another displayed exercise or catalogue schema', () => {
   panel(undefined, 'ch2-02')

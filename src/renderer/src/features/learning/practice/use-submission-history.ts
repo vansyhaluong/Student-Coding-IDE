@@ -17,19 +17,19 @@ const readError = 'Không thể đọc lịch sử nộp bài. Hãy tải lại.
 
 /** Read-only pagination over E5 committed summaries; never creates a Submit or progress index. */
 export function useSubmissionHistory(exerciseId: string, active: boolean, status?: SubmissionStatus,
-  api: SubmissionApi | undefined = window.studentIde.learning.submission) {
+  api: SubmissionApi | undefined = window.studentIde.learning.submission, contextKey = exerciseId) {
   const savedKey = status?.exerciseId === exerciseId && status.storage.state === 'saved'
     ? `${status.storage.recordKey.storeKind}/${status.storage.recordKey.recordId}` : undefined
   const context = useRef<Context | undefined>(undefined)
-  const [state, setState] = useState<{ exerciseId: string; view: HistoryView }>({ exerciseId, view: initial() })
+  const [state, setState] = useState<{ exerciseId: string; contextKey: string; view: HistoryView }>({ exerciseId, contextKey, view: initial() })
   const current = (ctx: Context) => ctx.live && context.current === ctx
   const update = (ctx: Context, change: Partial<HistoryView>) => {
-    if (current(ctx)) setState(s => ({ exerciseId: ctx.exerciseId, view: { ...s.view, ...change } }))
+    if (current(ctx)) setState(s => ({ exerciseId: ctx.exerciseId, contextKey, view: { ...s.view, ...change } }))
   }
   const refresh = (ctx: Context, notice?: string) => {
     if (!current(ctx)) return
     ctx.version++; ctx.rows = []; ctx.cursor = null; ctx.cursors.clear()
-    setState({ exerciseId: ctx.exerciseId, view: { ...initial(), notice } })
+    setState({ exerciseId: ctx.exerciseId, contextKey, view: { ...initial(), notice } })
     if (ctx.busy) ctx.refreshPending = true
     else void load(ctx, false)
   }
@@ -83,12 +83,12 @@ export function useSubmissionHistory(exerciseId: string, active: boolean, status
     context.current = ctx; refresh(ctx)
     return () => { ctx.live = false; if (context.current === ctx) context.current = undefined }
     // Saved records refresh below; ordinary status sequences/edits do not reset pages.
-  }, [api, exerciseId, active])
+  }, [api, exerciseId, active, contextKey])
   useEffect(() => {
     const ctx = context.current
     if (ctx && current(ctx) && savedKey && ctx.savedKey !== savedKey) { ctx.savedKey = savedKey; refresh(ctx) }
   }, [savedKey])
-  const view = state.exerciseId === exerciseId ? state.view : initial()
+  const view = state.exerciseId === exerciseId && state.contextKey === contextKey ? state.view : initial()
   return { view: !api ? { ...initial(), loading: false, error: 'Lịch sử nộp bài chưa khả dụng.' } : view,
     refresh: () => { const ctx = context.current; if (ctx) refresh(ctx) },
     loadMore: () => { const ctx = context.current; if (ctx && !view.moreBlocked) void load(ctx, true) },

@@ -17,6 +17,7 @@ export function PracticeEditor({ exercise, language, code, readOnly, onChange, s
   const latest = useRef({ onChange, sourceReplacement, exerciseId: exercise.id, language })
   latest.current = { onChange, sourceReplacement, exerciseId: exercise.id, language }
   const applied = useRef<PracticeSourceReplacement | undefined>(undefined)
+  const replacing = useRef(false)
   const replace = useCallback(() => {
     const ed = instance.current, { sourceReplacement: change, exerciseId, language } = latest.current
     const model = ed?.getModel()
@@ -26,14 +27,29 @@ export function PracticeEditor({ exercise, language, code, readOnly, onChange, s
     applied.current = change
     if (model.getValue() === change.code) return
     const view = ed.saveViewState()
+    const selections = ed.getSelections() ?? undefined
+    const eol = /\r\n|\n/.exec(change.code)?.[0]
     ed.pushUndoStop()
-    ed.executeEdits('learning.source.replace', [{ range: model.getFullModelRange(), text: change.code, forceMoveMarkers: true }], ed.getSelections() ?? undefined)
+    replacing.current = true
+    try {
+      if (eol && eol !== model.getEOL()) {
+        // Change EOL on an empty buffer so Undo's text offsets stay valid in
+        // both directions. All three operations share one Undo stack element.
+        ed.executeEdits('learning.source.replace', [{ range: model.getFullModelRange(), text: '', forceMoveMarkers: true }], selections)
+        model.pushEOL(eol === '\r\n' ? 1 : 0)
+      }
+      ed.executeEdits('learning.source.replace', [{ range: model.getFullModelRange(), text: change.code, forceMoveMarkers: true }], selections)
+    } finally {
+      replacing.current = false
+    }
     ed.pushUndoStop()
     if (view) ed.restoreViewState(view)
+    // Do not persist the temporary empty buffer or a normalized intermediate edit.
+    latest.current.onChange(model.getValue())
   }, [])
   useEffect(replace, [sourceReplacement, replace])
   const mounted = useCallback((ed: editor.IStandaloneCodeEditor) => { instance.current = ed; replace() }, [replace])
-  const changed = useCallback((value: string | undefined) => { if (value !== undefined) latest.current.onChange(value) }, [])
+  const changed = useCallback((value: string | undefined) => { if (value !== undefined && !replacing.current) latest.current.onChange(value) }, [])
   return <Editor key={`${exercise.id}/${language}`} height="100%" theme="vs"
     path={`practice:///${exercise.id}/solution.${language === 'csharp' ? 'cs' : 'js'}`}
     language={language} defaultValue={initialCode.current} onChange={changed} onMount={mounted}

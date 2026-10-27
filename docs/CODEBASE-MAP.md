@@ -1,5 +1,83 @@
 # Student Coding IDE Codebase Map
 
+## Learning Chapter 7 Solutions — 2026-10-27
+
+Chapter 6 was accepted by the user before authorizing this content extension. No UI redesign or E7/candidate acceptance change.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/chapter7-solutions.ts` | Offline authored guidance for ch7-01–ch7-09, C#/JavaScript; exact array signatures, full source and meaningful-line explanations |
+| Existing `solutions.ts` | Add nine Chapter 7 mappings under unchanged public ID/signature lookup |
+| `tests/fixtures/learning/chapter7-solution-public.ts` | Public-only metadata/samples/starters and independent boundary examples |
+| `tests/renderer/chapter7-solutions.test.tsx`, `tests/main/chapter7-solution-runtime.test.ts` | UI/content/Copy/no-division/preservation tests, isolated .NET/Node execution and nine finite-domain oracles |
+
+Results and limitations: [Chapter 7 Solution review](LEARNING-SOLUTIONS-CHAPTER7-REVIEW.md).
+
+## Learning Chapter 6 Solutions — 2026-10-27
+
+Chapter 5 was accepted by the user before authorizing this content extension. Existing UI and earlier content remain unchanged; no E7/candidate acceptance change.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/chapter6-solutions.ts` | Independently authored offline guidance for ch6-01–ch6-09, C#/JavaScript; statement-required local helpers, exact public signatures, complete code and ordered meaningful-line explanations |
+| Existing `solutions.ts` | Add nine Chapter 6 mappings under unchanged exact ID/signature lookup |
+| `tests/fixtures/learning/chapter6-solution-public.ts` | Public-only metadata/samples/starters and independent boundary examples |
+| `tests/renderer/chapter6-solutions.test.tsx`, `tests/main/chapter6-solution-runtime.test.ts` | UI/content/Copy/helper/preservation checks, isolated .NET/Node execution and independent finite-domain oracles |
+
+Results and limitations: [Chapter 6 Solution review](LEARNING-SOLUTIONS-CHAPTER6-REVIEW.md).
+
+## Learning Chapter 5 Solutions — 2026-10-27
+
+Chapter 4 was accepted by the user before authorizing this content extension. No E7/candidate acceptance change.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/chapter5-solutions.ts` | Independently authored offline guidance for ch5-01–ch5-09, both languages; exact string/string-array signatures, complete source and meaningful-line explanations |
+| Existing `solutions.ts` | Add nine Chapter 5 mappings under unchanged exact ID/signature matching |
+| `tests/fixtures/learning/chapter5-solution-public.ts` | Public metadata/samples/starters and independent examples only |
+| `tests/renderer/chapter5-solutions.test.tsx`, `tests/main/chapter5-solution-runtime.test.ts` | UI/content/Copy/preservation checks, isolated .NET/Node execution and small-domain brute-force oracles |
+
+Results and limitations: [Chapter 5 Solution review](LEARNING-SOLUTIONS-CHAPTER5-REVIEW.md).
+
+## Learning Chapter 4 Solutions — 2026-10-27
+
+User-authorized content extension only; existing Solution UI and Chapter 2/3 content unchanged. No E7/candidate acceptance change.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/chapter4-solutions.ts` | Independently authored offline guidance for ch4-01–ch4-09, C#/JavaScript; complete source and ordered meaningful-line explanations |
+| Existing `solutions.ts` | Register nine Chapter 4 IDs under the existing exact public signature lookup |
+| `tests/fixtures/learning/chapter4-solution-public.ts` | Public-only exercise assets and independent boundary examples; no private testcase reads |
+| `tests/renderer/chapter4-solutions.test.tsx`, `tests/main/chapter4-solution-runtime.test.ts` | All content/Copy/language/mapping checks and isolated .NET/Node teaching-code verification |
+
+Results and limitations: [Chapter 4 Solution review](LEARNING-SOLUTIONS-CHAPTER4-REVIEW.md).
+
+## Learning Chapter 3 Solutions — 2026-10-27
+
+User-authorized content extension and balanced Solution panel gutters; no E7/candidate acceptance change.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/chapter3-solutions.ts` | Independently authored offline guidance for all nine Chapter 3 exercises, both languages; full source retains syntax-only lines while walkthrough includes only meaningful lines with real line numbers |
+| Existing `solutions.ts`, `PracticeSolution.tsx`, `learning.css` | Add Chapter 3 mappings and optional complete-source/line-number fields; preserve ch2-01 content; equal panel gutters, existing UI and editor isolation |
+| `tests/fixtures/learning/chapter3-solution-public.ts` | Public-only metadata/samples/starters and independent examples; no Official testcase reads |
+| `tests/renderer/chapter3-solutions.test.tsx`, `tests/main/chapter3-solution-runtime.test.ts` | Content/Copy/mapping coverage plus isolated .NET 10 and Node teaching-code verification |
+
+Results and limitations: [Chapter 3 Solution review](LEARNING-SOLUTIONS-CHAPTER3-REVIEW.md).
+
+## Learning Solution pilot UI — 2026-10-27
+
+User-authorized Renderer-only phase-1 Solution content; no E7/candidate acceptance change.
+
+| Actual path | Owner / scope |
+|---|---|
+| `src/renderer/src/features/learning/practice/solutions.ts` | Offline independently authored `ch2-01` teaching content, exact exercise/signature lookup, language-specific explained lines and derived complete code |
+| `src/renderer/src/features/learning/practice/PracticeSolution.tsx` | Read-only Solution panel, independent language selection, existing Monaco tokenizers without creating editor models, clipboard feedback |
+| Existing `PracticeDescription.tsx`, `learning.css` | Description / Solution / Submissions navigation and existing scroll-panel styling |
+| `tests/renderer/practice-solution.test.tsx` | Pilot content/public signature checks, JavaScript examples, navigation, copy and editor isolation |
+
+Verification and limitations: [Solution pilot review](LEARNING-SOLUTION-PILOT-REVIEW.md).
+
 ## Phase9E-6 formally accepted actual UI — 2026-10-26
 
 **E6-S1–S3 and Phase 9E-6 COMPLETE — PASS WITH LIMITATIONS; Phase 9E-7 NOT_STARTED.**
