@@ -225,6 +225,15 @@ export class SubmissionReadModel {
     return this.bounded({ ok: true as const, exerciseId, accepted: this.stores.ACCEPTED,
       state: found ? 'COMPLETED' as const : complete(accepted) ? 'NOT_COMPLETED' as const : 'UNKNOWN' as const })
   }
+  /** Main-only bounded read projection from verified committed snapshots. No write authority. */
+  analysisSource(request: SubmissionSourceRequest) {
+    const source = this.source({ ...request, offset: 0, limit: 16 * 1024 })
+    if (!source.ok) return source
+    if (!source.eof) return this.failure('RESPONSE_TOO_LARGE')
+    const entry = this.entries.find(e => e.kind === source.key.storeKind && e.record.id === source.key.recordId)!
+    return { ...source, exerciseId: entry.record.exerciseId, language: entry.record.language,
+      packageVersion: entry.record.packageVersion }
+  }
   source(request: unknown): SubmissionSourceResult {
     if (!fields(request, ['key', 'submissionId', 'sourceHash', 'sourceRevision', 'offset', 'limit'],
       ['key', 'submissionId', 'sourceHash', 'sourceRevision', 'offset'])

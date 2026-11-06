@@ -32,6 +32,10 @@ const disk: CsharpSdkFileSystem = { lstat, realpath, readdir,
     } finally { await handle.close() }
   },
 }
+
+// Main-only reuse of identical bounded/identity-checked I/O by narrower consumers.
+// Exporting this port does not change Learning's discovery or selection policy.
+export { disk as csharpSdkDiskAccess }
 type InvalidReason = 'INSTALLATION_INCOMPLETE' | 'ARCHITECTURE_MISMATCH'
 class InvalidInstallation extends Error { constructor(readonly reason: InvalidReason = 'INSTALLATION_INCOMPLETE') { super('Invalid Learning SDK installation.') } }
 type Version = readonly number[]

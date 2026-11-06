@@ -214,10 +214,16 @@ it('defaults to Description with all exercise content and accessible keyboard ta
   expect(f.api.history).not.toHaveBeenCalled()
   fireEvent.change(f.editor, { target: { value: 'draft kept while viewing history' } }); f.editor.setSelectionRange(4, 8); f.editor.scrollTop = 12
   fireEvent.keyDown(f.workspace.getByRole('tab', { name: 'Description' }), { key: 'ArrowRight' }); await flush()
+  const solution = f.workspace.getByRole('tab', { name: 'Solution' })
+  expect(solution.getAttribute('aria-selected')).toBe('true')
+  fireEvent.keyDown(solution, { key: 'ArrowRight' }); await flush()
   const tab = f.workspace.getByRole('tab', { name: 'Submissions' })
   expect(tab.getAttribute('aria-selected')).toBe('true')
   expect(document.getElementById(tab.getAttribute('aria-controls')!)?.getAttribute('role')).toBe('tabpanel')
   fireEvent.keyDown(tab, { key: 'ArrowLeft' })
+  expect(solution.getAttribute('aria-selected')).toBe('true')
+  fireEvent.keyDown(solution, { key: 'ArrowLeft' })
+  expect(f.workspace.getByRole('tab', { name: 'Description' }).getAttribute('aria-selected')).toBe('true')
   expect(f.workspace.getByRole('textbox', { name: 'Practice code' })).toBe(f.editor)
   expect(f.editor.value).toBe('draft kept while viewing history'); expect(f.editor.selectionStart).toBe(4); expect(f.editor.scrollTop).toBe(12)
   expect(f.api.context).not.toHaveBeenCalled(); expect(f.run).not.toHaveBeenCalled(); expect(f.api.submit).not.toHaveBeenCalled()
@@ -321,12 +327,15 @@ it('revalidates previously completed progress if Accepted becomes unavailable du
 it('refreshes Failed committed history without revoking earlier committed completion', async () => {
   const f = await workspaceFixture()
   f.api.completion.mockResolvedValue(ok(completed('COMPLETED')))
-  const history = await f.openHistory()
+  await f.openHistory()
   fireEvent.click(f.workspace.getByRole('button', { name: 'Submit' })); await flush()
   const request = f.api.submit.mock.calls[0][0]
-  f.api.history.mockResolvedValueOnce(ok(page([row(2, 'WrongAnswer'), row()])))
+  // A saved refresh may retire when WA auto-opens; subsequent committed reads see the same stored page.
+  f.api.history.mockResolvedValue(ok(page([row(2, 'WrongAnswer'), row()])))
   f.emit({ ...saved(), sequence: 3, sourceRevision: request.sourceRevision, verdict: 'WrongAnswer',
     storage: { state: 'saved', recordKey: { storeKind: 'FAILED', recordId: uuid(2) } } })
+  // Qualified WA now auto-opens its result tab; committed History reads resume on reopening.
+  const history = await f.openHistory()
   await waitFor(() => expect(history.getByText('Wrong Answer')).toBeTruthy())
   expect(f.api.completion).toHaveBeenCalled()
 })
@@ -389,7 +398,7 @@ it('switches exercises to default Description and ignores late old-exercise hist
   const f = await workspaceFixture(), old = deferred<AppResult<SubmissionHistory>>()
   f.api.history.mockReturnValueOnce(old.promise)
   fireEvent.click(f.workspace.getByRole('tab', { name: 'Submissions' }))
-  fireEvent.click(f.workspace.getByRole('button', { name: '← Danh sách' }))
+  fireEvent.click(f.workspace.getByRole('button', { name: 'Về danh sách bài tập' }))
   fireEvent.click(await screen.findByRole('button', { name: new RegExp(exercises[1].title) }))
   const nextEditor = await screen.findByRole('textbox', { name: 'Practice code' })
   const workspace = within(nextEditor.closest<HTMLElement>('.practice-workspace')!)

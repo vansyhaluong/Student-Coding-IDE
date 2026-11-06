@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "types": ["vite/client", "node"] },
+  "include": [
+    "../src/renderer/src/student-ide.d.ts",
+    "../src/renderer/src/monaco-workers.d.ts",
+    "../src/main/**/*.d.ts",
+    "../src/renderer/src/features/learning/practice/SubmissionDetails.tsx",
+    "../src/renderer/src/features/learning/practice/SubmissionAnalysis.tsx",
+    "../src/renderer/src/features/learning/practice/use-submission-analysis.ts",
+    "renderer/submission-analysis*.test.tsx",
+    "renderer/submission-history.test.tsx"
+  ]
+}

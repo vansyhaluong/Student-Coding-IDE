@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.node.json",
+  "include": [
+    "../src/main/index.ts", "../src/preload/index.ts", "../src/main/**/*.d.ts",
+    "../src/main/services/learning/smart-hints/*.ts",
+    "main/smart-hints*.test.ts", "preload/smart-hints*.test.ts", "contracts/smart-hints*.test.ts"
+  ]
+}

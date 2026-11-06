@@ -1,5 +1,7 @@
 import type { AppResult } from './app-error'
 import type { ExerciseLanguage } from './practice'
+import type { SubmissionDiagnostic } from './submission-diagnostic'
+export type { SubmissionDiagnostic } from './submission-diagnostic'
 
 /** Transport budgets mirror approved E5 policies; no storage authority. */
 export const SUBMISSION_API_LIMITS = Object.freeze({ sourceCodeUnits: 256 * 1024, rowsDefault: 32, rowsMaximum: 100,
@@ -25,6 +27,8 @@ export interface SubmissionStatus {
   stage: 'RUNTIME' | 'STORAGE' | 'SETTLED'
   verdict: PublicSubmissionVerdict | null
   counts?: { total: number; attempted: number; passed: number }
+  /** Ephemeral evidence, bound to this status/reference; never a History field. */
+  diagnostic?: SubmissionDiagnostic
   storage: PublicSubmissionStorage
 }
 export type SubmissionAvailabilityState = 'MISSING' | 'AVAILABLE' | 'RECOVERED' | 'READ_ONLY' | 'UNAVAILABLE'

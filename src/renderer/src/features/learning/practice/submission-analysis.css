@@ -1,0 +1,35 @@
+/* Scoped dark surface using existing IDE tokens; surrounding Practice is unchanged. */
+.submission-analysis { min-width: 0; margin: 18px 0; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--card); color: var(--card-foreground); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.submission-analysis-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.submission-analysis-header > div { flex: 1 1 200px; min-width: 0; }
+.submission-analysis-label, .submission-analysis h3, .submission-analysis-advisory, .submission-analysis-status, .submission-analysis-progress { display: flex; align-items: center; gap: 8px; }
+.submission-analysis-label { color: var(--foreground); font-weight: 500; letter-spacing: .01em; }
+.submission-analysis svg { flex: 0 0 auto; width: 16px; height: 16px; }
+.submission-analysis p { margin: 8px 0; white-space: pre-wrap; }
+.submission-analysis .submission-analysis-caption { color: var(--muted-foreground); font-size: 12px; }
+.submission-analysis .ui-button { flex: 0 1 auto; white-space: normal; height: auto; min-height: 32px; padding-block: 6px; }
+.submission-analysis .ui-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.submission-analysis-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.submission-analysis-progress { padding-block: 16px; }
+.submission-analysis-error { color: var(--destructive); }
+.submission-analysis-result { margin-top: 16px; }
+.submission-analysis-advisory { color: var(--muted-foreground); font-size: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.submission-analysis-result section { min-width: 0; padding-block: 16px; border-bottom: 1px solid var(--border); }
+.submission-analysis-result > section:last-child { border-bottom: 0; padding-bottom: 0; }
+.submission-analysis h3 { color: var(--foreground); font-size: 13px; font-weight: 600; margin: 0 0 12px; }
+.submission-analysis h3 svg { color: var(--muted-foreground); }
+.submission-analysis-complexities { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; }
+.submission-analysis-complexities section { align-self: stretch; border-bottom: 1px solid var(--border); }
+.submission-analysis-bigo { display: inline-block; max-width: 100%; padding: 4px 10px; border-radius: var(--radius-sm); background: var(--secondary); font: 500 20px/1.5 var(--font-mono); overflow-wrap: anywhere; }
+.submission-analysis ul { padding-inline-start: 20px; margin: 8px 0 0; }
+.submission-analysis li { padding-inline-start: 4px; margin: 8px 0; white-space: pre-wrap; }
+.submission-analysis-consent { min-width: 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.65; }
+.submission-analysis-consent dl > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.submission-analysis-consent dt { color: var(--muted-foreground); }
+.submission-analysis-consent dd { color: var(--foreground); font-variant-numeric: tabular-nums; }
+.submission-analysis .ui-dialog { max-width: min(100%, 480px); max-height: calc(100dvh - 40px); overflow-y: auto; }
+.submission-analysis .dialog-heading h2 { margin: 0; font-size: 15px; }
+.submission-analysis-spinner { animation: submission-analysis-spin 1s linear infinite; }
+@keyframes submission-analysis-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .submission-analysis-spinner { animation: none; } }
+@media (max-width: 480px) { .submission-analysis { padding: 12px; } .submission-analysis .dialog-actions { flex-wrap: wrap; } }

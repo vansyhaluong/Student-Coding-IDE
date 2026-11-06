@@ -1,5 +1,228 @@
 # REQUIREMENT.md
 
+## Selection Fix syntax errors — authorized 2026-11-06
+
+Suggest Fix supports logic errors and safely isolated syntax errors in C#/JS
+function bodies. Preflight uses parser recovery/diagnostics to prove the selected
+target and intact required signature; errors outside selection or unprovable
+headers/boundaries fail closed. Missing-semicolon diagnostics attached to a next
+token must be attributed to the selected owning statement, never to that token
+merely because it is selected. Postflight requires an error-free candidate in
+supported grammar and preserved headers/outside-selection structure. No automatic
+source repair, range adjustment or change to consent, SH-1, quota or manual Apply.
+
+## SH4-D6-5 selection Fix integration — authorized/verified scoped, 2026-11-06
+
+Suggest Fix uses one exact Monaco selection and the existing full-source consent,
+Main validation, canonical output and manual Diff/Apply/Undo path. Before consent,
+selection changes cancel only Fix and preserve Hint progression. At consent the
+target freezes; source/revision/model/context changes still invalidate it. No
+automatic retarget/retry/Apply/Run/Submit; a failed Fix requires a fresh capture.
+Consent explicitly discloses full source and selection sent to Gemini. NO_FIX
+shows advice without a proposal or Diff. Preview and Apply require exactly one
+canonical edit matching the frozen range and old text.
+
+This supersedes the D6-1…4 normal-app disabled hold: SELECTION_V1 is available only
+after Main's local parser/runtime probes pass, separately per language. Missing,
+unsupported or changed parser assets fail closed. Offline integrated Electron
+evidence covers the current Windows x64 build; installer/ASAR/Windows 10 and live
+quality remain unverified. No change to SH-1, parser policy, provider/model,
+quotas/timeouts or the other Smart Hints actions. D6-6 is not authorized here.
+
+## SH4-D6-3 Gemini selection wire — authorized 2026-11-05
+
+Only Gemini SUGGEST_FIX now requests a strict replacement-only proposal or
+NO_FIX, using the frozen selection and full source/public task as context.
+Reject model-authored locations/old text/edits and extra fields without repair.
+Preserve Hint/Analyze/Explain prompts/schema, consent for full source, model,
+token/time/quota limits, canonical outputs and SH-1. Main still disables Fix;
+private wire cannot reach IPC or Apply until separately authorized construction
+and structural/signature validation in D6-4 and later integration gates pass.
+No parser, inference/live acceptance or mode enablement in D6-3.
+
+## SH4-D6-2 selection Fix contract migration — authorized 2026-11-05
+
+SUGGEST_FIX now requires one exact Practice SmartSelection. Public binding keeps
+range/fingerprint only; Main retains an immutable source/selection capture and
+trusted package/signature identity. Hint/Analyze/Explain and canonical output,
+SH-1, manual Diff/Apply/Undo, provider settings and quotas retain their contracts.
+Capabilities require suggestFixMode and suggestFixLanguages. Fix stays DISABLED
+until the complete selection pipeline is integrated; reject legacy kind-only
+requests and mixed bundles without fallback. D6-2 prepares a private strict
+replacement-only validator, without changing Gemini schema/prompt or constructing
+edits. This supersedes earlier ordinary-app Fix availability during migration.
+D6-3 and later packages require separate authorization; no live calls in D6-2.
+
+## Ordinary Gemini Suggest Fix timeout — authorized 2026-11-03
+
+Suggest Fix alone gets at most30 seconds in the normal development/packaged
+composition. Hint/Analyze/Explain and Settings checks retain10 seconds. Main and
+Gemini use one Main-owned deadline, including metadata/reservation/body/validation;
+session TTL may shorten it. Preserve loading/Cancel, manual consent, all quotas,
+strict schema/source guards and manual Diff/Apply. Log only safe action/state,
+elapsed/duration, stage, request kind, numeric HTTP status and timeout owner in
+Main. No retry/duplicate, real API, new launcher or unrelated feature change.
+
+## Normal Smart Hints usage-limit correction — authorized 2026-11-03
+
+Replace normal-app lifetime3 with a configurable local UTC-day reservation limit
+(new default20, range1–300). Preserve all durable reservations/lifetime totals.
+Legacy settings require explicit daily-limit confirmation, not a silent grant.
+Display daily usage/remaining/reset and distinguish LOCAL_BUDGET_EXHAUSTED,
+LOCAL_RATE_LIMIT, GEMINI_RATE_LIMIT and GEMINI_QUOTA_EXHAUSTED. Keep6/min,30/hour,
+timeouts, cancellation, snapshot consent and manual edits. Status/readiness never
+reserves inference. Model checks cannot prove generation quota or billing tier.
+No provider quota reset, ledger deletion, automatic retry, billing action, real
+Gemini call or new acceptance launcher is authorized for this correction.
+
+## Smart Hints normal-application provisioning — authorized 2026-11-03
+
+Current user authorization supersedes earlier acceptance-only/production-disabled
+provisioning restrictions for the normal feature. Both ordinary development and
+packaged Windows IDE support explicit Settings enablement (default off), fixed
+Gemini gemini-3.1-flash-lite, secure Main-only credential configuration/storage,
+status-only connection check and real Learning/Practice data after per-action
+privacy consent. No approval ID, acceptance launcher or samples-only restriction
+in the normal flow. Keep existing quotas, source/revision guards, cancellation,
+manual Diff/Apply/Undo/Redo and no automatic Run/Submit. No developer key shipped.
+Actual UI acceptance may use at most3 human-initiated inferences; fake tests are
+regression evidence only. No automatic retry, billing enablement or free-cost claim.
+
+## SH-4 development Live UI launcher authorized — 2026-11-03
+
+Prepare a development-only Learning/Practice Gemini launcher with Main-only
+credential access, explicit per-launch approval ID and separately approved
+inference budget, model/project-tier preflight, sample-only input and per-action
+consent. Normal development and packaged production stay DISABLED. Preserve
+SH-1/2/3 contracts/guards; no auto AI/Apply/Run/Submit, retry or paid fallback.
+Verify only offline using fake transport; STOP before real key/API/live budget use.
+
+## SH-4 Gemini replacement authorized - 2026-11-02
+
+User replaces OpenRouter with direct Google Gemini REST in Electron Main, fixed gemini-3.1-flash-lite and Main-only GEMINI_API_KEY. Preserve SH-1/2/3 business contracts, UI/actions, validation/source guards/manual Apply and Undo/Redo. Structured Outputs application/json with a provider-specific JSON Schema, plus full internal validation. Free Tier only: require per-attempt project Free Tier/no-billing attestation and authenticated model metadata before inference; metadata cannot attest billing tier. No billing enablement, retries, alternate models or paid fallback. This task is offline only; live requires separate approval. Preserve OpenRouter history; no Judge/Run/Submit/dependency/Monaco patch or Git publication.
+
+
+## SH-4 timeout correction authorized ? 2026-11-02
+
+Isolated development live-smoke execution may use at most 30 seconds. Preserve production 10s, all earlier evidence, strict schema/parser, single inference, no retry/paid fallback. This task authorizes offline verification only; no real API request or key access. STOP after offline.
+
+
+## SH-4 runner attempt management authorized - 2026-11-02
+
+The user authorizes offline-only runner correction for independent attempts:
+explicit live attempt ID, immutable model/time/approval scope, separate reservation
+and result, atomic no-clobber publication, concurrency/duplicate prevention and
+UNKNOWN on uncertain delivery. Preserve all legacy evidence/markers. Existing
+North profile, Main-only key, consent, zero-price/cap/source guards and production
+DISABLED stay unchanged. No actual OpenRouter request in this task. Deliver one
+manual PowerShell command bound to the already approved North first-live attempt;
+creating a different ID is not an automatic grant for another inference.
+
+
+## SH-4 diagnostics and optional North development profile ? 2026-11-02
+
+Latest user authorization permits offline corrective diagnostics and preparation of
+`cohere/north-mini-code:free` in the isolated development/manual runner only.
+Default/production model and DISABLED gate remain unchanged. Fresh catalogue and
+endpoint availability/$0/max_tokens verification must precede North use. Preserve
+JSON-only prompt/strict validation/SH-3 guards, zero price ceilings and disabled
+fallbacks. No real OpenRouter request or key access is authorized in this task;
+STOP after offline verification and await separate live approval.
+
+
+## SH-4 OpenRouter replacement authorized — 2026-11-02
+
+Current user authorization replaces SH-4 NVIDIA NIM with OpenRouter Free only:
+`openrouter/free`, fixed Chat Completions endpoint, Main environment key. Preserve
+SH-1–3 consent, quotas, validation, source guards and native Diff/Apply/Undo/Redo.
+No automatic action/retry/paid fallback. Production defaults DISABLED. Offline
+tests/build and Electron/Monaco smoke are authorized; at most one synthetic live
+request after key/free-route verification, then STOP for SH-4 user acceptance.
+Missing key or unverifiable free routing stops live work. No D2/D3 scope change.
+
+## SH-3 accepted / SH-4 authorized — 2026-10-29
+
+The user accepts SH-0/1/2/3 COMPLETE — PASS WITH LIMITATIONS and authorizes SH-4:
+Main-only NVIDIA NIM hosted DeepSeek for personal development/test/demo, using
+NVIDIA_API_KEY without persistence or Renderer exposure. This replaces direct
+DeepSeek provider selection for SH-4 only; accepted AI-D2/D3 remain unchanged.
+Reuse snapshot consent, public-only capture, strict outputs, caps, cancellation
+and guarded native Diff/Apply/Undo. No automatic actions/retry/paid fallback.
+Production stays DISABLED. Offline integration/tests/build/Electron are authorized;
+STOP before the first real API request for separate endpoint/model/budget approval.
+No new dependency, Monaco patch change, Judge/Storage/Completion or Git mutation.
+
+## SH-2 accepted / SH-3 authorized — 2026-10-29
+
+Explicit user authorization accepts SH-0/SH-1/SH-2 COMPLETE — PASS WITH LIMITATIONS
+and enables SH-3 only: read-only Monaco diff, explicitly confirmed validated
+structured edits, exact source/context/model/revision/TTL guards, one native Undo
+group per Apply and existing draft/autosave integration. Real Monaco standalone
+verification and scoped Electron smoke are authorized. No auto Run/Submit, rewrite,
+rebase, new dependencies, Judge/Storage/Completion/D2 contract changes or live keys.
+Production stays DISABLED; SH-4 NOT_STARTED. STOP after SH-3 for user acceptance.
+
+## SH-1 accepted / SH-2 authorized — 2026-10-28
+
+SH-1 is COMPLETE — PASS WITH LIMITATIONS by explicit user acceptance;114 focused
+PASS and known Main/typecheck/Monaco-import/Electron/live limits are retained.
+SH-2 authorizes only Practice Smart Hints drawer, progressive hints, analysis,
+Practice/Solution selection explanation, proposal/NO_FIX presentation, per-snapshot
+consent and Renderer lifecycle wiring through unchanged SH-1 APIs. Production
+remains unconfigured; no Diff/Apply/Undo, provider/key, Judge/History/D2 changes.
+SH-3/SH-4 remain NOT_STARTED; no unrelated phase acceptance changes.
+
+## SH-0 accepted / SH-1 authorized — 2026-10-28
+
+SH-0 is COMPLETE — PASS WITH LIMITATIONS by explicit user acceptance. SH-1 alone
+is authorized: independent Smart Hints contracts/service, public draft capture,
+Main-private exact Public Run Receipt, per-snapshot consent, bounded fake-provider
+operations and typed IPC/Preload. HINT/ANALYZE/EXPLAIN/SUGGEST_FIX support C#/JS,
+empty/incomplete source and read-only Solution explanation. G1–G5 and G6 consent
+structure are approved for this scope; live cost/key/model/provisioning remain SH-4.
+No UI/Monaco Apply, live requests, Judge/Official/History/Completion/D2-contract
+changes. Existing dirty work, acceptance and historical evidence are preserved.
+
+## WA-B1 accepted / WA-B2 UI authorized — 2026-10-28
+
+WA-B1 COMPLETE — PASS WITH LIMITATIONS, formally accepted.550 relevant PASS
+including80 focused; scoped tsc/lint/diff PASS; native/Electron/build/performance/RAM
+limitations retained. WA-B2 adds a dynamic Wrong Answer tab after Submissions for
+the current qualified Submit only, without waiting for History commit. Public
+values use B1 diagnostic; absent/unavailable detail uses truthful unclassified
+fallback. Same-reference once-only auto-open, Attempt/context retirement, independent
+storage status, committed-only three-column History and existing Run/Source/Restore/
+Completion remain required. No AI/network, Main contract or hidden-policy changes.
+
+## WA-B1 authorization — 2026-10-28
+
+User-approved public-only exception to aggregate Submit status: final qualified
+WrongAnswer may include Main-verified public-sample Input/Actual/Expected from the
+same submission, or a fixed DETAIL_UNAVAILABLE fallback without case classification.
+Diagnostic is ephemeral, bounded32 KiB within the existing256 KiB response, and
+never stored in History/records/backup/checksum. Hidden Official values/IDs/indices/
+visibility/logs and private Judge metadata remain forbidden. Grading, fail-fast,
+Run, Storage/Restore/Completion remain unchanged. WA-B1 covers Main/shared/IPC/
+Preload only; no UI/WA-B2, AI/network or unrelated phase work. See ADR-025 amendment.
+
+## AI-D authorization — 2026-10-28
+
+The user accepts **AI-D1 COMPLETE — PASS WITH LIMITATIONS** (65 targeted PASS,
+0 FAIL; 42 fake requests in the final batch). Historical prototype evidence is
+unchanged. Real DeepSeek, production Electron verification and key provisioning
+remain UNVERIFIED.
+
+The user explicitly authorizes **AI-D2 only**: advisory analysis of verified
+committed Accepted/graded Failed source plus matching public statement through
+dedicated typed Main/Preload/IPC. Payload contains only language, saved source,
+public statement and packageVersion; no samples/Expected/Judge internals. Consent
+is mandatory. Verification uses synthetic fixtures/fake providers exclusively;
+production fails closed without separately approved provisioning. No editor/draft
+capture, source/verdict/completion changes, tools/agents, UI (AI-D3) or live API
+(AI-D4). This narrow online advisory use is an explicit addition to the previous
+Local AI scope; it does not authorize any excluded agent capability. E7 and all
+unrelated historical acceptance remain unchanged.
+
 ## 1. Tổng quan dự án
 
 ### 1.1. Tên dự án

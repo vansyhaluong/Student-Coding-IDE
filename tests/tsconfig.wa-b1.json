@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.node.json",
+  "include": [
+    "../src/main/services/learning/exercise-service.ts",
+    "../src/main/ipc/exercise-ipc-service.ts",
+    "../src/main/**/*.d.ts",
+    "../src/preload/bridge/submission.ts",
+    "contracts/wa-diagnostic.test.ts", "main/wa-diagnostic.test.ts", "preload/wa-diagnostic.test.ts",
+    "main/exact-typed-comparator.test.ts", "main/judge-verdict-reducer.test.ts",
+    "main/generic-judge-service.test.ts", "main/submission-service.test.ts", "main/submission-ipc.test.ts",
+    "contracts/submission.test.ts", "preload/submission-bridge.test.ts"
+  ]
+}

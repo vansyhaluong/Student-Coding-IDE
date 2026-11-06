@@ -1,5 +1,288 @@
 # Architecture Decision Log
 
+## Selection Fix syntax recovery amendment — authorized 2026-11-06
+
+The user authorizes superseding G0's blanket rejection of invalid baseline syntax
+only for recoverable errors isolated in the selected function body. Keep the
+existing Roslyn/TypeScript versions, grammar whitelist, required signatures and
+outside-selection structural comparison. Use parser diagnostics and recovered
+AST spans, never repair/reprint source or infer offsets. Missing/ambiguous body
+boundaries, damaged headers, skipped/unisolated errors fail closed. Candidate must
+parse without errors and preserve entry/header and outside-target structure.
+Alternative of dropping structural validation is rejected. Scope is guards and
+targeted offline tests; no provider, SH-1, SDK, Apply or execution changes.
+
+## SH4-D6-3 applies approved G0-WIRE — 2026-11-05
+
+User authorizes only Gemini replacement-only schema/instructions and reuse of
+the D6-2 private validator. Apply G0-WIRE without changing canonical outputs or
+SH-1. Fix gets a standalone instruction to avoid the old shared offset/old-text
+guidance; other actions retain the exact original instruction/schema/input.
+Local UTF-8 byte checks remain authoritative alongside schema character bounds:
+replacement at most 16,384 bytes, rationale 2,048, advice 4,096, evidence at most
+8 supplied public IDs (empty for CODE_ONLY), existing result bound unchanged.
+No response repair/fallback or SELECTION_V1 enablement. G0-C1 construction and
+structural/signature gates remain D6-4, not an implicit authorization here.
+
+## SH4-D6-2 approved contract migration — 2026-11-05
+
+User authorizes D6-2 after G0/D6-1. Apply G0-A nested required Fix selection and
+range/fingerprint binding; retain consentVersion 1 and canonical outputs. Main
+alone obtains packageVersion and private signatureIdentity from its package
+lease. Capabilities require suggestFixMode DISABLED/SELECTION_V1 and a dense,
+unique canonical C#/JS language list (DISABLED requires empty). Ship DISABLED
+through this package, including a pre-dispatch Main guard; no kind-only fallback.
+Prepare replacement-only private validation without wiring it to Gemini or SH-1.
+No parser/dependency/provider/Apply decision changes. G0-C1 construction and
+parser/signature guards remain authorized only by their later work packages.
+
+## Normal Gemini Suggest Fix deadline amendment — 2026-11-03
+
+User explicitly authorizes30 seconds for ordinary-app Suggest Fix only. Normal
+Gemini Hint/Analyze/Explain and metadata-only Settings checks retain10 seconds.
+Main selects the bounded action deadline and passes it privately to Gemini; the
+adapter uses that same deadline/abort signal rather than a second duration timer.
+Default standalone/legacy provider execution remains unchanged. Exact deadline
+is exclusive: results processed before it may complete; at/after it time out.
+Keep session TTL, quota/reservations, validation, privacy consent and manual edits.
+Record only fixed action/stage/state/owner and numeric elapsed/deadline/status
+diagnostics in Main; no source, key, provider text, request IDs or paths in logs.
+No real inference, retry, new launcher, billing or unrelated changes authorized.
+
+## Smart Hints normal usage policy correction — 2026-11-03
+
+Authorized by the user's usage-limit fix task. Supersedes the normal-app lifetime
+budget of3 below; the historical acceptance ledger and budget remain unchanged.
+New normal configurations default to20 reservations per UTC day, configurable
+1–300/day with native confirmation. Keep6/min and30/hour local throttles.
+Reservations are never deleted/refunded; UTC rollover derives a new local day,
+not a Google quota reset. Legacy configurations retain their limit (capped300)
+and require an explicit Settings limit confirmation before further inference.
+Show daily used/remaining/reset and lifetime reservations separately. Metadata
+checks spend no local reservation and cannot prove generation quota recovery.
+Distinguish local budget/throttle from Google's rate/quota observations. Unknown
+HTTP429 is rate-limited with quota unspecified; never infer billing entitlement.
+No automatic retry, credential change, billing action or live test is authorized.
+
+## Smart Hints user configuration in ordinary/packaged IDE — 2026-11-03
+
+Explicit user authorization replaces the isolated-only SH-4 provisioning choice
+for the normal application. Reuse the Gemini adapter and SmartHintsService through
+a Main-owned configurable provider; Settings defaults off and controls enable,
+credential entry/removal and source-free status checks. Main serializes provider
+replacement and aborts prior operations without resetting request quotas. No
+acceptance CLI/ID/sample restriction in the normal flow; historical tools remain.
+
+Credential must never enter any Electron Renderer, including an auxiliary window.
+Choose a narrow Windows Node-API8 native key dialog in the Main process, rather
+than a React password field/BrowserWindow or secret-bearing child-process pipe.
+Use existing Windows x64/MSVC/Electron header toolchain, no new package; build and
+load capability gates required. Main encrypts using Electron safeStorage async
+DPAPI and persists ciphertext only. Fail closed if native entry or secure storage
+is unavailable. DPAPI protects against other OS users, not malware in the same
+Windows account; no forensic memory-wiping guarantee. Secret not part of IPC DTO.
+
+Normal local request budget defaults to3, persisted and not reset by restart,
+provider toggle or key rotation. Further budget is a deliberate Settings action
+with native confirmation; it does not bypass6/min,30/hour,2048-token limits.
+Agent has no authorization to increase the3 live-acceptance requests. Per-snapshot
+privacy consent remains required; no automatic source, retries or paid fallback.
+Model metadata verifies fixed model access only, not project billing/free tier.
+Remove Free Tier guarantees from normal UI copy. Status check GET carries no code.
+Reference: https://www.electronjs.org/docs/latest/api/safe-storage (checked today).
+
+## SH-4 development Live UI launcher — authorized preparation, 2026-11-03
+
+User authorizes launcher implementation and offline verification, not live calls.
+Use a Main-only development argv gate, explicit approval ID/budget (1..30, no
+default), project Free Tier/no-billing and samples-only attestations, plus native
+Cancel-first confirmation. Packaged apps and ordinary development remain disabled.
+Each approval is one activation, <=30 minutes; atomic no-clobber approval/POST
+reservation records prevent relaunch renewal and refunds on failed/cancelled
+delivery. Keep existing 6/min,30/hour,2048 tokens and per-action snapshot consent.
+Isolated acceptance uses the already authorized30s cap; normal default10s remains.
+Only exact supplied ch2-01 C#/JS draft snapshots (LF/CRLF, buggy or corrected
+`a + b`) may leave Main; no other exercise, Solution origin or arbitrary source.
+Model GET remains before every POST; project ownership/billing/quota cannot be
+proved by metadata and must be explicitly attested, never inferred. No SDK,
+contract/IPC/key field, retry, fallback, auto Apply/Run/Submit, production rollout
+or separate live budget grant. This narrows acceptance data/provisioning only;
+accepted SH-1/2/3 contracts and editing protections are unchanged.
+
+## SH-4 Gemini Authorization Key compatibility - 2026-11-02
+
+User explicitly authorizes the shared credential validator to support AQ. Authorization Keys alongside legacy Standard/AIza keys, consistent with Google API-key documentation. Confirmed defect: the old alphabet rejects the AQ. separator unconditionally; the old512 cap can also reject longer authorization strings. Keep legacy16..512 URL-safe shape, add only the AQ. branch with a4096-byte ASCII application cap and nonempty URL-safe payload; no trim, repair, Bearer conversion, key access/logging, retry or real API request. Google does not publish a fixed authorization-key length in the cited guide;4096 is our bounded header-safety policy, not a claimed Google limit. Production DISABLED and existing G4/G6/live acceptance gates remain. This is the user-authorized narrow key-format/bound amendment only; no architecture/business/schema decision changes.
+
+
+## SH-4 G4/G6 Gemini provider amendment - 2026-11-02
+
+Explicit user authorization supersedes OpenRouter as the active SH provider. Direct Gemini REST generateContent, fixed gemini-3.1-flash-lite, GEMINI_API_KEY via x-goog-api-key header in Main only. No SDK/dependency. Preserve SH-1 action/output validators and all SH-2/3 safety boundaries. Send a separate supported JSON Schema per action via generationConfig.responseJsonSchema and responseMimeType application/json; source-dependent UTF-16/exact text/evidence/EOL/byte constraints remain local. Use default production 10s, isolated development smoke 30s, existing quotas/token/size caps. Require development/live approval plus explicit project Free Tier attestation; models.get checks exact model/capability before POST but cannot prove billing or remaining quota. Uncertain tier means no inference. Production default stays disabled. No real API/key access now. OpenRouter modules/scripts/evidence remain historical; new app composition and Gemini runner never invoke them. Final acceptance pending.
+
+
+## SH-4 development smoke timeout amendment ? 2026-11-02
+
+User explicitly authorizes offline correction of the 10s timeout. Isolated development smoke uses a fixed 30000ms execution cap in Main service, OpenRouter adapter, preflight GET and new attempt manifests/consent. Production/shared SMART_HINT_POLICY stays 10000ms; normal development composition also keeps 10000ms unless Main explicitly selects developmentSmoke. Overall runner watchdog is 300000ms (two 60s consents, up to three 30s metadata GETs, one 30s inference, startup/persistence margin); it is not an inference timeout. No schema/parser, retry, fallback, key access, real API, history overwrite or rollout authorization. G4/G6 live acceptance stays open.
+
+
+## SH-4 G4/G6 bounded development profile amendment ? 2026-11-02
+
+The user explicitly authorizes an optional named North free development profile,
+not a production substitution. This amends the fixed-model restriction below only
+for isolated manual/development composition. Main validates the exact :free ID,
+fresh catalogue and endpoint zero prompt/completion prices (request price zero if
+present), availability and max_tokens support; unverifiable metadata fails closed.
+No response_format, provider fallback, model fallback or retry; caps unchanged.
+Diagnostics are a Main/manual-only numeric/enum projection with UNKNOWN on absent,
+unrecognized or conflicting evidence. No raw body/message/header dump or IPC field.
+This task permits fake/offline work only; the spent live marker is preserved.
+Separate live approval and a separately reviewed attempt identity are still needed.
+No other decision or architecture boundary changes.
+
+
+## SH-4 G4/G6 provider replacement — 2026-11-02
+
+Explicit user authorization supersedes NVIDIA NIM for SH-4 only: fixed OpenRouter
+`openrouter/free`, `https://openrouter.ai/api/v1/chat/completions`, Main-only
+`OPENROUTER_API_KEY`. Official Free Router documentation and public model catalogue
+confirm zero prompt/completion pricing. Keep existing caps and dev/approval gates,
+production DISABLED. Send zero price ceilings and disable provider fallbacks; no
+client retry, repair, alternate endpoint/model, OpenCode or paid route. Prompt-only
+JSON avoids requiring endpoint-specific structured-output support; strict envelope,
+content and action/edit validators remain mandatory. Accept bounded routed-model
+metadata privately, discard reasoning, never convert prose into edits. Consent names
+OpenRouter and its selected free provider, whose data policy may vary. At most one
+synthetic live smoke is authorized after valid key/free-route verification, with no
+retry; missing key or unverifiable free route requires STOP. This is a connectivity
+test budget, not a permanent feature quota. Final user acceptance/rollout stays open.
+See `docs/AI/AI-SMART-HINTS-SH4-ACCEPTANCE.md` for sources and actual results.
+
+## SH-3 acceptance / SH-4 G4-G6 offline provisioning — 2026-10-29
+
+The user accepts SH-3 COMPLETE — PASS WITH LIMITATIONS and explicitly selects
+NVIDIA NIM hosted DeepSeek for SH-4 personal development/test/demo, superseding
+the earlier direct-DeepSeek selection only for SH. No D2/D3 contract/rollout change.
+Official current catalogue/reference identify deepseek-ai/deepseek-v4.1-flash and
+https://integrate.api.nvidia.com/v1/chat/completions. Older DeepSeek free routes
+are marked deprecated; no automatic model substitution. See SH-4 acceptance for
+primary sources, trial conditions and unresolved account-specific limits.
+Use Main-only process environment NVIDIA_API_KEY, ephemeral scoped credential,
+no persisted key/config UI/dependency. Existing2048 output tokens,10s timeout,
+6/min30/hour caps remain; do not adopt the model's much larger default budget.
+JSON-only prompt plus strict parser/service schema guards; no undocumented JSON/
+thinking extensions. Reasoning, if returned, is bounded and discarded, never an
+advisory or Renderer field. Dev + Main approval gate defaults false, prior to key
+access. No real API request until separately approved; G4/G6 live account quota,
+quality/latency and final consent/rollout acceptance remain open.
+
+## SH-3 option A verification — 2026-10-29
+
+User-approved dependency exception is implemented exactly:0.56.0 import/factory
+correction with fixed original/patched hashes, captured backup, checked rollback,
+idempotence and install/build script. No other dependency source/version change.
+Modal layout uses the existing SH-3 component's single observer/RAF ownership,
+not a new shared service. Repeated automated native gates PASS; normal injected
+FAKE may advertise Apply, unconfigured production and shutdown remain false.
+Delivery FIXED — AWAITING USER ACCEPTANCE; tracking IN_PROGRESS, no COMPLETE.
+Original Redo timeout's individual cause remains unverified; current native gate
+passes exact repeated scenarios. See acceptance. Earlier blocked notes are history;
+SH-4 remains NOT_STARTED and no unrelated ADR changed.
+
+## SH-3 option A approved — 2026-10-29
+
+The user explicitly approves option A from the unblock proposal: the exact
+Monaco0.56.0 import/hover-factory correction, strict version/original/patched hashes,
+captured original, checked idempotence/rollback, reproducible script and install/
+build hook. No package installation, other dependency patch or renderer service
+redesign is authorized by this exception. Root instantiation lifetime is used by
+the factory; no provider or editing authority changes. G3 safety remains pending:
+keep normal Diff/Apply disabled until repeated zero-console-error Monaco/app
+gates pass. Production DISABLED and SH-4 NOT_STARTED. No automatic COMPLETE.
+
+## SH-3 unblock dependency gate — 2026-10-29, PENDING APPROVAL
+
+Renewed user authorization permits investigation and scoped SH-3 corrections,
+requiring STOP before dependency/architecture/out-of-scope module changes.
+Independent controls establish Monaco0.56.0's global hover factory retaining a
+Diff-owned disposed child instantiation service. No product correction or new
+architecture was chosen. The reviewed dependency candidate remains unapplied;
+see [Unblock options](AI/AI-SMART-HINTS-SH3-UNBLOCK-OPTIONS.md). Historical native
+Redo and current ResizeObserver gates remain open. G3 safety is unresolved, all
+normal Apply false, SH-3 BLOCKED and SH-4 NOT_STARTED. No unrelated ADR changed.
+
+## Smart Hints G3 enable authorization — 2026-10-29
+
+Execution result: **BLOCKED — NOT PASS**. Repeated real standalone verification
+produced unresolved lifecycle/disposed-service/model errors and a native Redo
+timeout. G3 safety gate is not resolved. All normal compositions, including fake,
+report Apply false and hide Diff entry. Only isolated diagnostic harness enables
+the draft implementation. STOP under the user's explicit safety instruction.
+
+User authorizes SH-3 guarded native transaction and real Monaco/Electron evidence.
+Accepted G3 offset bounds/exact old text/no rewrite policy is unchanged. Renderer
+may mint a local single-use Apply grant only for a verified current Practice
+COMPLETE proposal. No new IPC edit authority. FAKE capabilities may advertise Apply;
+DISABLED production must keep Apply false. No await between final guard and edits,
+no custom Undo/setValue rollback/rebase; transaction evidence failure locks Apply.
+G4/G6 live provisioning and SH-4 remain gated. No unrelated ADR is reopened.
+
+## Smart Hints G1–G6 scope approval — 2026-10-28
+
+SH-0 accepted COMPLETE — PASS WITH LIMITATIONS; implement SH-1 only. G1: separate
+service/contracts, safe reuse of unchanged D2 transport/validation primitives.
+G2: Main-private Public Run Receipt tied to exact leased package/source/operation;
+otherwise CODE_ONLY. G3: structured UTF-16 edits/exact old text/binding/validation,
+no Apply yet. G4: System Design technical caps approved for fake-only testing;
+live monetary policy is not approved. G5: progressive source/context sessions and
+Solution Explain read-only; UI deferred SH-2. G6: per-request/snapshot consent;
+key/model/live provisioning deferred SH-4. No existing ADR/D2 authority is replaced.
+
+## WA-B1 formal acceptance / WA-B2 authorization — 2026-10-28
+
+User accepts **WA-B1 COMPLETE — PASS WITH LIMITATIONS**:550 related PASS including
+80 focused PASS, scoped tsc/lint/diff PASS. Accepted public-only provenance,
+32 KiB/final qualified WA/operation-local/no History policy remains unchanged.
+Native/Electron/build and target-host performance/RAM remain unverified.
+WA-B2 is separately authorized for Renderer UI using the accepted contract, current
+Practice theme/Tabs and existing ownership/lifecycle/History/Run boundaries. No new
+Main authority or ADR change is needed; E7/AI-D1/D2/D3 history/status unchanged.
+
+## ADR-025 amendment — WA-B1 approved, 2026-10-28
+
+The user approves a narrow exception to aggregate-only Submit projection: only
+Main-verified public-sample mismatch evidence from the same operation may accompany
+final qualified WrongAnswer in STORAGE/SETTLED. Public Input/Expected come from
+the matching leased public sample; Actual comes from the same settled RETURNED
+comparison. No hidden values, Official IDs/indices/visibility, private plan metadata,
+console/stack/internal diagnostics may cross transport. Missing provenance or
+capture failure yields a fixed safe fallback. Diagnostic is operation-local,
+at most32 KiB encoded inside the unchanged256 KiB response cap, never persisted
+in records/history/backup/checksum. Comparator/reducer/fail-fast, Runtime budgets,
+Storage/Restore/Completion authority remain unchanged. B1 excludes Renderer UI,
+AI/network, native/full-suite/build/E2E. Existing acceptance history is unchanged.
+This explicit user-approved public-only amendment supersedes aggregate-only wording
+solely for this diagnostic; hidden Official Tests remain private.
+
+## AI-D1 acceptance / AI-D2 authorized decisions — 2026-10-28
+
+User accepts AI-D1 **COMPLETE — PASS WITH LIMITATIONS**: 65 targeted PASS/0 FAIL,
+42 final-batch fake requests; native fetch/direct API, strict JSON, timeout,
+cancellation, single-use and redaction accepted within the prototype. Historical
+evidence/OpenCode prototypes remain intact. Real API, Electron runtime and key
+provisioning remain UNVERIFIED.
+
+User authorizes D2 saved-submission advisory analysis only. Accepted D1 bounds
+and no-retry/no-repair/no-fallback policy apply. Source must be a verified
+committed Accepted/graded Failed record; current public content must match its
+packageVersion or fail `CONTENT_VERSION_MISMATCH` (no historical lookup added).
+Input is exactly language/source/publicStatement/packageVersion. Capture TTL is
+60 seconds; status is pull-based, correlated by requestId/sequence. One retained
+operation per owner suppresses duplicate prepare/start and recovers lost ACK.
+Explicit consent version 1 is required before dispatch. D2 production composition
+has no provider/credential loader, environment-key lookup or live transport.
+Tests may inject a Main-private fake transport/provider. No existing Runtime,
+Registry identity, Storage write or E7 policy changes. Live model/endpoint,
+provisioning, budgets and data terms remain separate D4 approval gates.
+
 ## Phase 9E-5 formal final acceptance — 2026-10-26
 
 User formally accepts **Phase 9E-5 and E5-S1–S6: COMPLETE — PASS WITH LIMITATIONS**.

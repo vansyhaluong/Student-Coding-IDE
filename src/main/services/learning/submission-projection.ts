@@ -3,7 +3,9 @@ import { SUBMISSION_API_LIMITS as L, type SubmissionStatus, type SubmissionHisto
   type SubmissionStores, type SubmissionStoreAvailability, type CommittedSubmissionKey } from '../../../shared/contracts/submission'
 import { isSubmissionStatus, isSubmissionHistory, isSubmissionSource, isSubmissionCompletion } from '../../../shared/contracts/submission-validation'
 import { DomainError } from '../../errors/app-error'
+import type { AnalysisSubmissionBinding } from './analysis/capture'
 import type { SubmissionServiceStatus } from './exercise-service'
+import { isSubmissionDiagnostic, unavailableDiagnostic, type SubmissionDiagnostic } from '../../../shared/contracts/submission-diagnostic'
 import type { SubmissionHistoryResult, SubmissionSourceRequest, SubmissionSourceResult, SubmissionCompletionResult,
   SubmissionReadStores, SubmissionReadAvailability } from './storage/submission-read-model'
 
@@ -40,9 +42,21 @@ export class SubmissionProjection {
   }
   status(v: SubmissionServiceStatus, sequence: number): SubmissionStatus {
     const s = v.storage
+    // Diagnostic failure never turns a qualified grade into a transport failure.
+    let diagnostic: SubmissionDiagnostic | undefined
+    if (v.verdict === 'WrongAnswer' && v.stage !== 'RUNTIME' && v.diagnostic !== undefined) {
+      const d = v.diagnostic
+      diagnostic = isSubmissionDiagnostic(d) && (d.kind !== 'PUBLIC_SAMPLE_MISMATCH' || d.exerciseId === v.exerciseId)
+        ? d.kind === 'DETAIL_UNAVAILABLE' ? { kind: d.kind, reason: d.reason }
+          : { kind: d.kind, exerciseId: d.exerciseId, packageVersion: d.packageVersion, sampleOrdinal: d.sampleOrdinal,
+              parameterTypes: [...d.parameterTypes], input: structuredClone(d.input), returnType: d.returnType,
+              actual: structuredClone(d.actual), expected: structuredClone(d.expected) }
+        : unavailableDiagnostic()
+    }
     const result = { reference: { sessionId: v.reference.sessionId, generation: v.reference.generation, submissionId: v.submissionId },
       exerciseId: v.exerciseId, language: v.language, sourceRevision: v.sourceRevision, sequence,
       stage: v.stage, verdict: v.verdict,
+      ...(diagnostic ? { diagnostic } : {}),
       ...(v.counts ? { counts: { total: v.counts.total, attempted: v.counts.attempted, passed: v.counts.passed } } : {}),
       storage: { state: s.state, ...(s.reason ? { reason: s.reason } : {}), ...(s.recoveryPending ? { recoveryPending: true } : {}),
         ...(s.recordKey ? { recordKey: key(s.recordKey) } : {}) } }
@@ -53,7 +67,8 @@ export class SubmissionProjection {
     const result = v.ok ? { ok: true as const, stores: stores(v.stores), coverage: v.coverage, countScope: v.countScope,
       knownCount: v.knownCount, total: v.total, rows: v.rows.map(r => ({ key: key(r.key), submissionId: r.submissionId,
         exerciseId: r.exerciseId, language: r.language, submittedAt: r.submittedAt, verdict: r.verdict, packageVersion: r.packageVersion,
-        source: { reference: this.seal('S', scope, [r.key.storeKind, r.key.recordId, r.submissionId, r.source.hash, r.source.revision]),
+        source: { reference: this.seal('S', scope, [r.key.storeKind, r.key.recordId, r.submissionId, r.source.hash, r.source.revision,
+          r.exerciseId, r.language, r.packageVersion]),
           revision: r.source.revision, byteLength: r.source.byteLength } })),
       nextCursor: v.nextCursor ? this.seal('C', scope, v.nextCursor) : null }
       : { ok: false as const, reason: v.reason, stores: stores(v.stores) }
@@ -67,10 +82,16 @@ export class SubmissionProjection {
   }
   sourceBinding(reference: string, scope: string, offset: number, limit?: number): SubmissionSourceRequest {
     const v = this.open('S', scope, reference)
-    if (!Array.isArray(v) || v.length !== 5) throw invalid()
+    if (!Array.isArray(v) || v.length !== 8) throw invalid()
     // S4 runtime-validates every identity/hash/range below; none is a path.
     return { key: { storeKind: v[0], recordId: v[1] }, submissionId: v[2], sourceHash: v[3], sourceRevision: v[4],
       offset, ...(limit !== undefined ? { limit } : {}) }
+  }
+  analysisBinding(reference: string, scope: string): AnalysisSubmissionBinding {
+    const v = this.open('S', scope, reference)
+    if (!Array.isArray(v) || v.length !== 8 || typeof v[5] !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(v[5])
+      || !['csharp', 'javascript'].includes(v[6]) || !Number.isSafeInteger(v[7]) || v[7] < 1) throw invalid()
+    return { ...this.sourceBinding(reference, scope, 0), exerciseId: v[5], language: v[6], packageVersion: v[7] }
   }
   source(v: SubmissionSourceResult, reference: string, binding: SubmissionSourceRequest): SubmissionSource {
     if (v.ok && (v.key.storeKind !== binding.key.storeKind || v.key.recordId !== binding.key.recordId

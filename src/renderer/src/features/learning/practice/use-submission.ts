@@ -5,6 +5,8 @@ import { isSubmissionCompletion, isSubmissionStatus, validateSubmitRequest } fro
 
 interface Input { active: boolean; exerciseId?: string; language: ExerciseLanguage; code: string; sourceRevision: number; blocked: boolean }
 export interface SubmissionView {
+  /** Local UI admission marker; increments only after Submit guards/validation. */
+  attempt?: number
   busy: boolean
   status?: SubmissionStatus
   error?: string
@@ -27,6 +29,7 @@ export function useSubmission(input: Input, api: SubmissionApi | undefined = win
   const latest = useRef(input)
   latest.current = input
   const context = useRef<Context | undefined>(undefined)
+  const attemptSerial = useRef(0)
   const [state, setState] = useState<{ key: string; view: SubmissionView }>({ key: '', view: idle })
   const current = (ctx: Context) => ctx.live && context.current === ctx
   const update = (ctx: Context, change: Partial<SubmissionView>) => {
@@ -92,6 +95,7 @@ export function useSubmission(input: Input, api: SubmissionApi | undefined = win
     void completion(ctx)
     const retire = (reason: 'CONTEXT_CHANGED' | 'LEARNING_LEFT') => {
       if (!ctx.live) return
+      update(ctx, { status: undefined, busy: false, error: undefined })
       ctx.live = false; clearTimeout(ctx.timer); ctx.remove()
       // E5 retains the operation/lease through actual settlement after invalidation.
       if (ctx.attempt) void api.context({ reason }).catch(() => {})
@@ -113,7 +117,7 @@ export function useSubmission(input: Input, api: SubmissionApi | undefined = win
     if (!request.ok) return
     const attempt: Attempt = { request: request.value, savedObserved: false, afterGeneration: ctx.highestGeneration }
     ctx.attempt = attempt
-    update(ctx, { busy: true, status: undefined, error: undefined })
+    update(ctx, { attempt: ++attemptSerial.current, busy: true, status: undefined, error: undefined })
     try {
       const result = await api.submit(attempt.request)
       if (!current(ctx) || ctx.attempt !== attempt) return

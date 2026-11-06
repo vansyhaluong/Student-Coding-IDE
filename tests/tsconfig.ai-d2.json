@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.node.json",
+  "include": [
+    "../src/main/index.ts", "../src/preload/index.ts",
+    "../src/main/services/learning/analysis/*.ts",
+    "../src/main/**/*.d.ts",
+    "main/analysis*.test.ts", "preload/analysis*.test.ts", "contracts/analysis*.test.ts"
+  ]
+}

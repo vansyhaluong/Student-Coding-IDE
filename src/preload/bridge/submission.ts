@@ -13,6 +13,9 @@ interface UnloadPort { addEventListener(event: 'unload', listener: () => void): 
 const invalid = <T>(operation: string): AppResult<T> => ({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid or stale submission request.', operation, retryable: false } })
 const same = (a: SubmissionReference, b: SubmissionReference) => a.sessionId === b.sessionId && a.generation === b.generation && a.submissionId === b.submissionId
 const context = (a: SubmissionStatus, b: SubmissionStatus) => a.exerciseId === b.exerciseId && a.language === b.language && a.sourceRevision === b.sourceRevision
+// Once published, same-operation diagnostic evidence is immutable across storage polls.
+const diagnosticMatches = (a: SubmissionStatus, b: SubmissionStatus) => !a.diagnostic
+  || JSON.stringify(a.diagnostic) === JSON.stringify(b.diagnostic)
 export function createSubmissionBridge(ipc: IpcRendererLike,
   lifetime: UnloadPort | undefined = typeof window === 'undefined' ? undefined : window,
   order: LearningOrder = createLearningOrder()): SubmissionApi {
@@ -20,7 +23,7 @@ export function createSubmissionBridge(ipc: IpcRendererLike,
   let current: SubmissionStatus | undefined, buffered: SubmissionStatus | undefined, pending = 0, subscribed = false, disposed = false
   const accept = (s: SubmissionStatus) => {
     if (current && s.reference.generation === current.reference.generation
-      && (!same(current.reference, s.reference) || !context(current, s) || s.sequence < current.sequence)) return false
+      && (!same(current.reference, s.reference) || !context(current, s) || s.sequence < current.sequence || !diagnosticMatches(current, s))) return false
     if (!order.accept('SUBMIT', s.reference.sessionId, s.reference.generation)) return false
     current = structuredClone(s); return true
   }
@@ -32,6 +35,7 @@ export function createSubmissionBridge(ipc: IpcRendererLike,
       return
     }
     if (!current || !same(current.reference, v.reference) || !context(current, v) || v.sequence <= current.sequence
+      || !diagnosticMatches(current, v)
       || !order.current('SUBMIT', v.reference.sessionId, v.reference.generation)) return
     current = structuredClone(v)
     for (const listener of [...listeners]) if (listeners.has(listener)) {

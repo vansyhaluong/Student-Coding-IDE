@@ -2,7 +2,7 @@ import { SnapshotTransaction, type SnapshotTransactionOptions } from './storage/
 import { compareSubmissionIdentity } from './storage/submission-validation'
 import { StoreIOError, storeIOError } from './storage/store-lease'
 import type { StoreLease } from './storage/store-lease'
-import { SubmissionReadModel, type SubmissionCompletionResult, type SubmissionHistoryResult, type SubmissionSourceResult } from './storage/submission-read-model'
+import { SubmissionReadModel, type SubmissionCompletionResult, type SubmissionHistoryResult, type SubmissionSourceResult, type SubmissionSourceRequest } from './storage/submission-read-model'
 
 /** Main-private storage façade. No service wiring or commit authority. */
 export class LearningStore {
@@ -72,5 +72,10 @@ export class LearningStore {
   }
   async history(request: unknown = {}): Promise<SubmissionHistoryResult> { return (await this.loadReads()).history(request) }
   async source(request: unknown): Promise<SubmissionSourceResult> { return (await this.loadReads()).source(request) }
+  async analysisSource(request: SubmissionSourceRequest) {
+    const model = await this.loadReads()
+    // Never dispatch while a failed read cleanup still retains the shared lease.
+    return (this.readRetained ? SubmissionReadModel.unavailable() : model).analysisSource(request)
+  }
   async completion(exerciseId: unknown): Promise<SubmissionCompletionResult> { return (await this.loadReads('ACCEPTED')).completion(exerciseId) }
 }

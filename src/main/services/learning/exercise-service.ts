@@ -20,6 +20,8 @@ import { WindowsJavascriptExecutionAdapter, createOfficialJavascriptExecutionAda
 import { runJavascriptSamples } from './runtime/javascript-orchestrator'
 import type { ExercisePackageRegistry } from './content/exercise-package-registry'
 import { packageRunBinding } from './package-run-binding'
+import { createPublicRunReceipt, type PublicRunPackage, type PublicRunReceipt } from './smart-hints/public-run-receipt'
+import { SMART_HINT_POLICY } from '../../../shared/contracts/smart-hints'
 import { bindOfficialCasePlan, type OfficialPlanIdentity, type OfficialPlanSelection } from './official-case-plan'
 import { executionDriverState, runExecutionDriver, type ExecutionDriverState } from './runtime/execution-driver'
 import type { OfficialAdapterFactory, OfficialExecutionCompletion, OfficialJudgeOperationHandle, OfficialOperationHandle, OfficialSettledCaseConsumer } from './runtime/official-execution-contracts'
@@ -27,6 +29,7 @@ import { createOfficialJudge } from './judge-service'
 import type { JudgeOwnerBoundIdentity, JudgeResult } from './judge/judge-contracts'
 import type { LearningStore } from './learning-store'
 import type { SnapshotTransaction, CommitGuardContext } from './storage/snapshot-transaction'
+import type { SubmissionDiagnostic } from '../../../shared/contracts/submission-diagnostic'
 import { SUBMISSION_STORE_POLICY, type SubmissionCapture, type SubmissionRecord, type SubmissionStorageResult } from './storage/submission-contracts'
 import { bindSubmissionTarget, compareSubmissionIdentity, validateSubmissionCapture, validateSubmissionForCandidate, validateSubmissionSource, validateSubmissionLineage } from './storage/submission-validation'
 
@@ -47,6 +50,7 @@ export interface ExerciseExecution {
   observation?(): ExerciseSnapshot['csharp']
   javascriptObservation?(): ExerciseSnapshot['javascript']
   releaseContent?(): void
+  publicRunPackage?(): PublicRunPackage | undefined
 }
 export interface ExerciseServiceOptions {
   root: string
@@ -71,6 +75,7 @@ export interface SubmissionServiceStatus {
   readonly stage: 'RUNTIME' | 'STORAGE' | 'SETTLED'
   readonly verdict: JudgeResult['verdict']
   readonly counts?: { readonly total: number; readonly attempted: number; readonly passed: number }
+  readonly diagnostic?: SubmissionDiagnostic
   readonly storage: { readonly state: SubmissionStorageResult['state']; readonly reason?: string;
     readonly recoveryPending?: true; readonly recordKey?: { readonly storeKind: 'ACCEPTED' | 'FAILED'; readonly recordId: string } }
 }
@@ -94,6 +99,7 @@ interface SubmitState {
 }
 interface OwnerEntry { owner: ExerciseOwner; accepts: boolean; documentEpoch: number; remove(): void }
 interface Operation {
+  runFingerprint?: string
   kind: 'RUN' | 'OFFICIAL'
   owner: number
   ownerEntry: OwnerEntry
@@ -139,7 +145,10 @@ export class ExerciseService {
   private recoveryFailed = false
   private recoveryTask?: Promise<void>
   private active?: Operation
-  private last?: { owner: number; ownerEntry: OwnerEntry; snapshot: ExerciseSnapshot }
+  private last?: { owner: number; ownerEntry: OwnerEntry; snapshot: ExerciseSnapshot; publicRun?: PublicRunReceipt }
+  private publicReceiptTimer?: ReturnType<typeof setTimeout>
+  /** Clear even idle receipts whose handles still exist after slot settlement. */
+  private diagnosticReceipt?: { owner: number; discard(): void }
   private error?: AppError
   constructor(private readonly options: ExerciseServiceOptions) {
     this.root = resolve(options.root); this.clock = options.clock ?? exerciseClock
@@ -259,7 +268,7 @@ export class ExerciseService {
     const request = validateExerciseRunRequest(value)
     if (!request.ok || !validateSubmissionSource(request.value.code).ok) throw serviceError('INVALID_REQUEST', 'INVALID_INPUT')
     if (!this.options.submissions) throw serviceError('SUBMISSION_STORAGE_UNAVAILABLE', 'UNSUPPORTED')
-    const engine = createOfficialJudge(), r = request.value
+    const engine = createOfficialJudge(true), r = request.value
     const submit: SubmitState = { intent: Object.freeze({ id: randomUUID(), submissionId: randomUUID(),
       exerciseId: r.exerciseId, language: r.language, code: r.code, sourceRevision: r.sourceRevision,
       codeHash: createHash('sha256').update(r.code, 'utf8').digest('hex'), submittedAt: new Date().toISOString() }),
@@ -313,6 +322,7 @@ export class ExerciseService {
       hostEpoch: this.hostEpoch, workspace, adapter: execution.adapter, checkpoints: this.store(workspace), clock: this.clock })
     const operation: Operation = { kind: official ? 'OFFICIAL' : 'RUN', owner, ownerEntry: entry, generation, session, invalidated: false,
       executionDone: false, lastPublished: -1, execution, submit: official?.submit, completion: undefined as unknown as Promise<ExerciseSnapshot> }
+    if (!official) operation.runFingerprint = createHash('sha256').update(request.value.code, 'utf8').digest('hex')
     if (binding && official) {
       operation.official = { binding, tasks, consumer: official.consumer, driver: executionDriverState(), cleanupFailure: false, releaseFailed: false }
       if (official.judge) operation.official.judge = { engine: official.judge, documentEpoch: entry.documentEpoch, finalizationFailed: false,
@@ -321,6 +331,9 @@ export class ExerciseService {
           language: request.value.language, sourceRevision: request.value.sourceRevision,
           sourceHash: createHash('sha256').update(request.value.code, 'utf8').digest('hex') }) }
     }
+    this.diagnosticReceipt?.discard()
+    this.diagnosticReceipt = official?.submit && official.judge ? { owner, discard: official.judge.discardDiagnostic } : undefined
+    clearTimeout(this.publicReceiptTimer); this.publicReceiptTimer = undefined
     this.last = undefined; this.active = operation
     // Begin Core prepare immediately, before returning admission to the caller.
     operation.completion = this.execute(operation, [...execution.phases])
@@ -413,6 +426,11 @@ export class ExerciseService {
     const snapshot = op.kind === 'RUN' ? this.observation(op) : op.session.snapshot()
     this.publish(op)
     if (!op.runtimeSettled && !op.session.ownsResources && op.executionDone && this.active === op) {
+      let publicRun: PublicRunReceipt | undefined
+      // Advisory capture must never change Run cleanup, result or eligibility.
+      if (op.kind === 'RUN' && this.isCurrent(op)) {
+        try { publicRun = createPublicRunReceipt(op.runFingerprint!, snapshot, op.execution.publicRunPackage?.()) } catch { /* CODE_ONLY */ }
+      }
       if (op.execution.releaseContent) {
         if (!snapshot.cleanup.cleanupComplete || snapshot.cleanup.proof !== 'VERIFIED') throw serviceError('PACKAGE_CLEANUP_UNVERIFIED')
         if (op.official?.judge && (snapshot.cleanup.state !== 'FINALIZED' || !snapshot.cleanup.processClean
@@ -434,7 +452,14 @@ export class ExerciseService {
         }
       }
       op.runtimeSettled = true
-      if (op.kind === 'RUN' && this.isCurrent(op)) this.last = { owner: op.owner, ownerEntry: op.ownerEntry, snapshot: structuredClone(snapshot) }
+      if (op.kind === 'RUN' && this.isCurrent(op)) {
+        this.last = { owner: op.owner, ownerEntry: op.ownerEntry, snapshot: structuredClone(snapshot), publicRun }
+        if (publicRun) {
+          const receiptOwner = op.owner // Never retain the operation/session/leased adapter in this timer.
+          this.publicReceiptTimer = setTimeout(() => this.retirePublicRunReceipt(receiptOwner), SMART_HINT_POLICY.resultMs)
+          this.publicReceiptTimer.unref()
+        }
+      }
       if (!op.submit) this.active = undefined
     }
     return snapshot
@@ -498,12 +523,14 @@ export class ExerciseService {
     if (!op.submit || !this.currentJudge(op)) throw serviceError('STALE_SESSION', 'PERMISSION_DENIED')
     const s = op.submit, result = s.transaction?.status ?? s.storage
     const judge = op.official!.judge!.result
+    const diagnostic = judge ? op.official!.judge!.engine.diagnostic(judge) : undefined
     const recordKey = result.state === 'saved' ? { storeKind: result.target.storeKind, recordId: result.target.id } : undefined
     return structuredClone({ submissionId: s.intent.submissionId,
       reference: { sessionId: op.session.snapshot().sessionId, generation: op.generation },
       exerciseId: s.intent.exerciseId, language: s.intent.language, sourceRevision: s.intent.sourceRevision,
       stage: s.finished ? 'SETTLED' : op.runtimeSettled ? 'STORAGE' : 'RUNTIME',
       verdict: judge?.verdict ?? null,
+      ...(op.runtimeSettled && diagnostic ? { diagnostic } : {}),
       ...(judge?.state === 'FINAL' && judge.requiredCases !== null ? { counts: {
         total: judge.requiredCases, attempted: judge.attemptedCases, passed: judge.passedCases } } : {}),
       storage: { state: result.state, ...(result.state === 'failed' ? { reason: result.reason } : {}),
@@ -592,6 +619,14 @@ export class ExerciseService {
       if (this.clock.now() >= due) throw serviceError('SUBMISSION_STORAGE_PENDING')
     } finally { cancel() }
   }
+  publicRunReceipt(owner: number, reference: ExerciseSessionReference): PublicRunReceipt | undefined {
+    this.snapshot(owner, { sessionId: reference.sessionId, generation: reference.generation }) // Exact owner/document/generation authority.
+    return this.last?.publicRun ? structuredClone(this.last.publicRun) : undefined
+  }
+  retirePublicRunReceipt(owner: number): void {
+    if (this.last?.owner !== owner) return
+    this.last.publicRun = undefined; clearTimeout(this.publicReceiptTimer); this.publicReceiptTimer = undefined
+  }
   snapshot(owner: number, reference: ExerciseSessionReference): ExerciseSnapshot {
     if (!validateExerciseSessionReference(reference).ok) throw serviceError('INVALID_REFERENCE', 'INVALID_INPUT')
     const op = this.active
@@ -619,9 +654,10 @@ export class ExerciseService {
     return op ? this.cleanup(op, request.value.reason) : snapshot
   }
   invalidate(owner: number, reason: 'CONTEXT_CHANGED' | 'LEARNING_LEFT' | 'OWNER_LOST'): void {
+    if (this.diagnosticReceipt?.owner === owner) { this.diagnosticReceipt.discard(); this.diagnosticReceipt = undefined }
     const entry = this.owners.get(owner)
     if (entry) entry.documentEpoch++ // Revoke idle Judge receipts too, including context/leave after slot release.
-    if (this.last?.owner === owner) { this.last = undefined; this.generation++ }
+    if (this.last?.owner === owner) { this.retirePublicRunReceipt(owner); this.last = undefined; this.generation++ }
     const op = this.active
     if (!op || op.owner !== owner || op.invalidated) return
     op.invalidated = true; this.generation++
@@ -634,6 +670,8 @@ export class ExerciseService {
   }
   beginShutdown(): void {
     if (this.sealed) return
+    this.diagnosticReceipt?.discard(); this.diagnosticReceipt = undefined
+    clearTimeout(this.publicReceiptTimer); this.publicReceiptTimer = undefined
     this.sealed = true; this.generation++; this.last = undefined
     if (this.active) {
       this.active.invalidated = true
@@ -689,7 +727,7 @@ export function createWindowsExerciseService(root: string, options: {
         if (request.language === 'javascript') {
           const plan = packageRunBinding<import('./runtime/javascript-execution-contracts').JavascriptExecutionAdapter>(options.packages, request.exerciseId,
             exercise => new WindowsJavascriptExecutionAdapter(request, workspace, binding(), undefined, [exercise], 4096))
-          return { adapter: plan.adapter, phases: ['compile', 'execute'], releaseContent: plan.releaseContent,
+          return { adapter: plan.adapter, phases: ['compile', 'execute'], releaseContent: plan.releaseContent, publicRunPackage: plan.publicRunPackage,
             orchestrate: (session, progress) => runJavascriptSamples(session, plan.adapter, progress),
             javascriptObservation: () => {
               if (!plan.available()) return undefined
@@ -699,7 +737,7 @@ export function createWindowsExerciseService(root: string, options: {
         }
         const plan = packageRunBinding<import('./runtime/csharp-execution-contracts').CsharpExecutionAdapter>(options.packages, request.exerciseId,
           exercise => new WindowsCsharpExecutionAdapter(request, workspace, binding(), undefined, [exercise], 4096))
-        return { adapter: plan.adapter, phases: ['compile', 'execute'], releaseContent: plan.releaseContent,
+        return { adapter: plan.adapter, phases: ['compile', 'execute'], releaseContent: plan.releaseContent, publicRunPackage: plan.publicRunPackage,
           orchestrate: (session, progress) => runCsharpSamples(session, plan.adapter, progress),
           observation: () => {
             if (!plan.available()) return undefined

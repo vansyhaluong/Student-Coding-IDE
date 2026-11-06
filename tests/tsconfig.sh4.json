@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.sh3.json",
+  "include": [
+    "../src/renderer/src/student-ide.d.ts", "../src/renderer/src/monaco-workers.d.ts", "../src/main/**/*.d.ts",
+    "../src/main/index.ts", "../src/preload/index.ts",
+    "../src/main/services/learning/smart-hints/*.ts",
+    "../src/main/services/learning/smart-hints/parsers/*.ts",
+    "../scripts/sh4-attempt-store.d.mts", "../scripts/sh4-gemini-smoke.ts", "../scripts/sh4-gemini-smoke-main.ts", "../scripts/sh4-openrouter-diagnostics.ts", "../scripts/sh4-openrouter-smoke.ts", "../scripts/sh4-openrouter-smoke-main.ts", "../scripts/sh4-consent-window.ts", "../scripts/sh4-consent-electron-tests.ts",
+    "../src/renderer/src/features/learning/practice/PracticeWorkspace.tsx",
+    "main/smart-hints*.test.ts", "renderer/smart-hints*.test.tsx",
+    "preload/smart-hints*.test.ts", "contracts/smart-hints*.test.ts"
+  ]
+}

@@ -1,5 +1,681 @@
 # Student Coding IDE Implementation Plan
 
+## AI-C2-A1 shared execution coordinator — COMPLETE scoped, 2026-11-06
+
+Authorized first implementation step after the directly presented AI-C1 design.
+Extract shared admission/concurrency/rate windows and a once-only daily reservation
+port. Keep the existing configuration as sole durable ledger owner and Smart Hints
+as sole production consumer. Consumer status, ownership, deadline/timer/cleanup,
+provider/wire and Hint/Fix semantics stay unchanged. Fake consumers and targeted
+regression only; no ChatService/UI/IPC/conversation or C2-A2 implementation.
+
+277 distinct targeted tests PASS: 273 in the seven-file coordinator/configuration/
+core/construction/Gemini/contract batch, plus four new duplicate-Start, normal
+cancel/10s-timeout and shared shutdown cases run separately. New fixture initially
+used an unsupported gate.reject helper; corrected before the passing batch.
+Scoped TypeScript/changed-file ESLint/whitespace PASS. Scoped Main/parser build
+PASS in out/ai-c2-a1, preserving the running user's output/application. No full
+suite, global gates, unrelated Electron test, real Gemini or SDK/dependency change.
+Stop after C2-A1; C2-A2 requires separate approval.
+
+## Selection Fix syntax recovery — COMPLETE scoped, 2026-11-06
+
+User-authorized narrow extension of preflight/postflight after D6-6. Verify
+recoverable C#/JS expression, statement, multiline and whole-function body errors;
+strict candidate syntax/signature/structure and existing lifecycle remain gates.
+Targeted parser/service tests, scoped checks and parser asset build only. No
+new report, live inference, provider/schema/SH-1/Apply or runtime policy changes.
+
+125 distinct targeted tests PASS: 50 real parser/service tests (26 recovery cases
+plus ch4-01 SumToN reproducer and 23 existing grammar/lifecycle cases), 75 shared
+construction/contract/availability/selection lifecycle cases. Initial new fixtures
+were corrected; regression exposed next-token diagnostic ownership, fixed and
+verified by the final parser run. Scoped TypeScript/ESLint/whitespace PASS and
+scoped Main/parser build PASS. Final relocated artifact under Electron 44 Node
+mode verifies both languages with no TypeScript devDependency resolution.
+No GUI or live Gemini test, full suite or global gates. Installer/ASAR/clean
+machine/Windows 10 remain unverified. Ready for separately approved D7 on this
+host using a fresh artifact, not release certification or permission to infer.
+
+## C# Suggest Fix SDK resolution correction — verified scoped, 2026-11-06
+
+Authorized correction after D6-6: private Fix candidate selection accepts only
+SDK 10.0.112/runtime and reference pack 10.0.12, with existing path/PE/closure
+validation and Roslyn 5.0.0.0 checks. Helper uses the selected absolute host
+with explicit runtime version and disabled roll-forward. No G0 matrix expansion,
+Learning/LSP policy, dev launcher, provider, JS, SH-1 or Apply change.
+
+101 distinct targeted tests PASS across SDK selection, real C#/JS parser,
+Learning resolver, LSP dependencies and dev environment. One existing Learning
+case initially hit its 5-second parallel-run timeout, then passed alone without
+changing assertions or timeout. One optional evidence-writing SDK test excluded.
+Scoped TypeScript, ESLint and Main/parser build PASS. Built artifact read-only
+Electron Node probes report both parser languages available under both Dev and
+Preview environments. No GUI/live Gemini/installer acceptance performed; D6-6
+historical artifact identity below does not describe this corrected build.
+
+## SH4-D6-6 final offline acceptance — COMPLETE scoped, 2026-11-06
+
+Authorized final offline acceptance only. No production regression found and no
+production code changed: aggregate SHA-256 of all src paths/bytes is unchanged
+before/after (85af4b746237bdc7d1b95eb9d49e8890ceeb2c72254bea13d7fb649cfa1a9f8f).
+Only the existing offline runner adds --final-acceptance for gaps left by D6-5;
+no new task/acceptance report, feature, dependency or parser/validator relaxation.
+
+One disjoint targeted batch: 303/303 tests PASS in 14 files, 0 failed. Contracts,
+selection binding/construction/availability, real C#/JS parser syntax/signature/
+escape/failure/timeout/cancel/cleanup, Main lifecycle/core, Gemini contracts, IPC,
+Preload, Monaco capture, Renderer selection flow and Diff/native Apply/Undo/Redo
+are covered. SH-4 scoped TypeScript, runner eslint and scoped whitespace PASS.
+No full suite or global lint/typecheck. Build PASS, Monaco patch changed=false;
+build ran before parser tests to avoid the earlier Windows artifact lock issue.
+
+Final Electron 44.0.0 normal built Main/Preload/Renderer with fake HTTP only:
+8 check groups PASS. Actual runtime advertises SELECTION_V1 for C#/JavaScript.
+Empty/multi-cursor/whole-file reject locally without HTTP. JS single-line and
+whole-function selections with CRLF and Unicode preserve exact UTF-16 ranges,
+original/candidate, manual Discard/Apply, native Undo/Redo and preview disposal.
+Source edit then Undo back to identical text while provider is pending still
+aborts/drops the old request; explicit cancel likewise drops a late response
+without proposal/Apply/retry. Analyze/Explain still complete through real IPC
+after those cancellations. Exactly 6 GET + 6 POST fake exchanges; 0 real HTTP,
+0 Run/Submit. D6-5's existing evidence covers C# expression/function, before-
+consent cancellation/Hint progression, post-consent cursor freeze and NO_FIX.
+
+Parser verification: all 5 asset lengths/SHA-256 match manifest; protocol 1,
+TypeScript 6.0.3, SDK 10.0.112/runtime 10.0.12/Roslyn 5.0.0.0. Relocated built
+parser entry outside node_modules PASS for both languages under Electron Node
+mode; TypeScript devDependency resolution unavailable. Normal private persisted
+diagnostics contain no source/selection/key and match the built Main identity
+ece14d7c01ac150d0222fbb42d59324e0f2fdabfa05938c1e32614c93b36fec9.
+
+ASAR/packaged acceptance remains unverified: no application .asar/installer or
+installed @electron/asar/asar/packager/electron-builder tooling was found; no
+dependency was installed or speculative packager implemented. Installer, clean
+machine, Windows 10 and other SDK/CPU environments remain holds. Runtime probes
+must continue to fail closed for unavailable layouts; not release-ready.
+Initial new Electron fixture used Range instead of ISelection for multi-cursor;
+corrected only the runner, before any HTTP, then final acceptance passed.
+
+Verdict PASS_WITH_LIMITATIONS. Ready to propose separately approved live Gemini
+acceptance on this verified Windows x64 artifact with public fixtures and user
+consent, not permission to perform it. No user application was restarted/killed,
+no provider/model/quota/token/timeout/Judge/Run/Submit changes, no commit/push/merge.
+Stop after D6-6; no live request has been made.
+
+## SH4-D6-5 selection UI / Diff integration — COMPLETE scoped, 2026-11-06
+
+Authorized D6-5 only after D6-4 PASS_WITH_LIMITATIONS. Connect captureFix to the
+existing panel/hook/Preload/IPC/Main/Gemini/guard path. Main probes actual runtime
+availability before advertising SELECTION_V1 languages; failures remain closed
+per language and do not disable other action paths. No legacy fallback. Freeze
+at consent, cancel only unconfirmed Fix on cursor changes (including late prepare
+ACK), preserve Hint progression and reject source/revision/model/context staleness.
+Preview/Apply assert one canonical edit at the frozen target. Existing readonly
+Diff, single-use grant and native Apply/Undo/Redo transaction are reused; Applied
+and Discarded have separate completion behavior. NO_FIX never opens a Diff.
+
+Targeted test batches PASS: 78/6 files, 149/7 files, 236/8 files, then 73/3 files
+and final selection-flow 15/1 file; these overlap and are not summed. The final
+cases cover actionable preflight failure and a cancelled Fix capability reply
+never overwriting newer Hint consent. Coverage includes capability missing/error/
+rotation, real parsers, before/after consent, exact single/multiline/function
+targets, stale source/revision/model, Hint history, canonical Apply/Undo/Redo,
+NO_FIX/invalid response and direct SH-1/Gemini/quota/privacy regressions. Final
+SH-4 scoped tsc, changed-file eslint and CRLF-aware source/test whitespace PASS.
+
+Integrated Main/Preload/Renderer builds in isolated and default output PASS;
+final Renderer-only rebuild also passes. Real Electron
+44.0.0 offline scenarios PASS all 8 check groups with actual normal Main config,
+typed IPC/Preload, Monaco, trusted package capture and C#/JS parsers; only HTTP
+transport is fake. Current host advertises ['csharp','javascript']. Proven: no
+HTTP before consent, unsupported target exits loading before consent/HTTP,
+no-selection disabled, pre-consent cancellation preserves
+Hint Level 2, C# expression and JS multiline Apply/Undo/Redo, C# whole-function
+Discard, NO_FIX and invalid wire without Diff/grant, disposed preview models.
+Exactly 6 GET + 6 POST fake exchanges; 0 real HTTP, 0 Run/Submit. Build identity
+ece14d7c01ac150d0222fbb42d59324e0f2fdabfa05938c1e32614c93b36fec9.
+
+Initial default build collided with parser tests' Windows file locks; both
+isolated and later sequential default builds passed. Runner startup/async language-model race were fixed
+without changing production assertions or parser policy. No full suite/global
+typecheck/lint, unrelated smoke, live Gemini, dependency install, commit or new
+task/acceptance report. Existing unrelated working-tree changes were retained.
+
+Verdict PASS_WITH_LIMITATIONS: installer/ASAR, clean machines, Windows 10 and live
+usefulness are not certified. Runtime probes/guards must keep unavailable layouts
+and unsupported SDK/languages disabled; no fallback. Normal app must load the new
+bundle on restart; no running user process was restarted or killed. D6-6 is ready
+for separate review/authorization, not started. Stop after D6-5.
+
+## SH4-D6-4 deterministic construction and parse-only guard — COMPLETE scoped, 2026-11-06
+
+Authorized D6-4 only, continuing the interrupted implementation under approved
+G0-C1/CS/JS/LIFE. Main preflights the frozen target before PREPARED/consent or
+inference reservation. Start rechecks parser readiness within the existing shared
+deadline; strict replacement wire maps to exactly one source-derived edit, then
+unchanged SH-1 and candidate syntax/signature/outside-target structure checks run
+before cleanup and proposalId publication. Valid NO_FIX completes without a grant.
+Normal composition still has no selection guard provisioned and advertises
+DISABLED/[]; D6-5/6 and Selection V1 cutover are not implemented or authorized here.
+
+App-owned runtime assets: standalone TypeScript 6.0.3 worker with license/notice,
+trusted Roslyn helper using only validated Windows x64 SDK 10.0.112, runtime
+10.0.12 and Roslyn 5.0.0.0. Manifest digests, versions, SDK anchors and readiness
+are checked; unavailable/changed/crashed/timed-out parsers fail closed. Workers
+terminate and helpers are killed/awaited; no student compile/execute/project load.
+Signature/structural diagnostics retain only private allowlisted stage/reason.
+
+Final scoped verification: 51 D6-4 tests (28 construction/lifecycle, 23 real parser)
+and 352 direct regressions in 11 disjoint files PASS, 403 total. SH-4 scoped tsc,
+build-config-only tsc, scoped eslint and D6-4 whitespace PASS. Main-only build from
+the current entries/config plus required package/parser plugins PASS in isolated
+out/sh4-d64-build; parser closure relocated outside node_modules PASS for both
+languages under Electron 44.0.0 Node mode, bare TypeScript resolution unavailable.
+No full suite/global gates, GUI smoke, live Gemini, dependency install or new
+report. Initial targeted run had two rejection-reason mismatches (fixed to
+STRUCTURE) and repeated SDK discovery test timeout (real SDK resolved once for
+grammar fixtures; actual resolver availability remains separately tested).
+
+Verdict PASS_WITH_LIMITATIONS: Windows 10, clean-machine installer/ASAR layouts,
+other SDK/CPU versions and final normal-app integration remain unverified and
+must not enable a language without its availability checks. Unsupported grammar
+fails closed; syntax/signature proof does not prove program correctness. Ready
+for D6-5 review/authorization, not automatic cutover; stop after D6-4.
+
+## SH4-D6-3 Gemini replacement-only schema/instructions — COMPLETE, 2026-11-05
+
+User authorizes D6-3 after D6-2/D6-2.1. Only Gemini Fix changes to the approved
+private replacement-only schema/instruction and D6-2 wire validator. Input keeps
+full public source/task/signature plus frozen action.selection and sourceEol.
+No canonical construction, parser/structural guard, service/IPC/Renderer changes
+or Selection V1 enablement. Other actions and transport/model/token/quota/time
+policy stay unchanged. Final verification: 169 targeted tests in 3 files and
+231 directly related regressions in 10 disjoint files PASS (400 total). Full
+scoped SH-4 TypeScript, eslint for the five code/test files and changed-file
+whitespace PASS. Shared SmartEdit/SmartOutput and SH-1 file hashes match the
+before-copy. Non-Fix full prompt/schema/input equality, C#/JS selection matrix,
+strict wire/legacy rejection, consent, quota and disabled mode are covered with
+synthetic fake transports. Initial sandbox worker spawn EPERM ran no tests;
+the scoped runs outside sandbox passed. No full suite/global gates, build,
+Electron smoke, live call or new report file. D6-4 remains NOT_STARTED until
+separately authorized. Private wire acceptance does not prove no-op/EOL/source
+or structural/signature safety and cannot produce a public proposal or grant.
+
+## SH4-D6-2 contract migration — COMPLETE after authorized D6-2.1 cleanup, 2026-11-05
+
+Authorized D6-2 only. Required public Fix selection and bound range/fingerprint;
+immutable Main target with trusted package/signature identity; strict capability
+migration and private replacement-only wire validator. Normal selection Fix stays
+DISABLED and cannot dispatch/reserve inference. Canonical outputs, SH-1 and
+provider prompt/schema are unchanged. No D6-3 implementation or new acceptance
+report file; verification and limitations are reported directly to the user.
+Initial scoped verification: 136 tests PASS across 9 files, D6-2 tsc and eslint
+PASS. Canonical SmartEdit/SmartOutput and SH-1 predicates match the before-copy.
+Whole-tree whitespace retains the two existing unrelated failures; D6-2 files
+are clean. No build/live/smoke or full/global quality run. The broader SH-4 tsc
+configuration initially exposed legacy Fix test/runner fixtures
+missing the new required fields; these are migration incompatibilities, not
+baseline failures or a passing wider gate at that point.
+
+User-authorized D6-2.1 now resolves that compatibility hold: runner Hint captures
+derive private signature identity from their trusted synthetic task; test Fix
+targets/bindings use exact ranges in their own source, and capability fixtures
+stay DISABLED with no languages. Normal service/UI tests assert no Fix dispatch,
+reservation or grant. Legacy schema/SH-1/advisory coverage runs directly on
+adapter/validator/presentation fixtures, not an enabled Selection V1 pipeline.
+Final cleanup gate: full scoped `tests/tsconfig.sh4.json` PASS; 530 targeted tests
+PASS in 17 files, scoped eslint and changed-file whitespace PASS. Main immutable
+binding, SH-1, canonical output and Gemini provider/schema/prompt are unchanged.
+No full suite, global gates, build, Electron smoke, live request or new report.
+Contract migration was ready for the now separately authorized D6-3 above.
+Do not infer general D6 completion or enabled Selection V1. Actual
+selection generation/consent/grant/deadline/diagnostic integration belongs to its
+later authorized packages and must receive integration acceptance there.
+
+## SH4-D6-1 local selection capture — IN_PROGRESS, 2026-11-05
+
+User authorizes D6-1 only after G0_PASS_WITH_LIMITATIONS. Add Renderer-only
+single-range Fix capture/readiness with immutable source/model/revision/EOL
+binding, exact UTF-16 geometry and phase-specific local freshness. Retain legacy
+Hint/Analyze/Explain capture, shared/Main/IPC/provider contracts and manual editing.
+Selection mode stays unprovisioned: no SELECTION_V1 capability or new Gemini flow.
+Structural/signature preflight remains D6-4; D6-2 is not authorized by this task.
+Acceptance: `SH4-D6-1-SELECTION-CAPTURE-ACCEPTANCE.md`; scoped/regression/build
+verification and existing baseline limitations must be recorded before review.
+Verified offline: 728 Smart Hints tests and 48 Practice compatibility tests PASS,
+including 32 added cases; SH-4 scoped tsc/scoped lint/final build PASS. Global
+typecheck/lint/whitespace retain pre-existing failures. Verdict PASS_WITH_LIMITATIONS;
+no live request or Selection V1 request/consent integration has been performed.
+Keep IN_PROGRESS until acceptance/exit-gate limitations are reviewed; do not mark
+general D6/SH-4 COMPLETE or infer live success from local tests.
+
+## SH4-D3 Gemini output instructions — IN_PROGRESS, 2026-11-05
+
+User authorizes offline Suggest Fix prompt/schema guidance after SH4-D2 confirmed
+HTTP200/STOP/JSON PASS with OLD_TEXT_MISMATCH. Clarify original-snapshot UTF-16
+zero-based/exclusive offsets, exact old text/EOL, focused edits and NO_FIX; add
+schema descriptions only. Private sourceEol may reuse the captured LF/CRLF enum.
+Shared validators/public DTOs, response processing, model/tokens/usage/timeouts,
+Judge/Run/Submit/manual edits remain unchanged. Required: targeted and broad SH
+regressions, scoped tsc/lint, build and feasible Electron offline evidence.
+No live inference/retry or general SH-4 COMPLETE claim is authorized. Report:
+`AI-SMART-HINTS-GEMINI-CONTRACT-FIX-ACCEPTANCE.md`.
+Verified offline:158 targeted tests and696 broad tests PASS; scoped tsc/lint and
+build PASS.12 Electron scenario families have successful evidence, including
+C#/JS Diff/Apply/Undo/Redo. Initial Monaco-import hook and Electron readiness
+timeouts are retained; unchanged reruns PASS. Global tsc/lint/whitespace retain
+baseline failures. Verdict PASS_WITH_LIMITATIONS; keep IN_PROGRESS pending user
+acceptance/live evidence, no general SH-4 COMPLETE or new live authorization.
+
+## SH4-D1 safe Suggest Fix diagnostics — IN_PROGRESS, 2026-11-05
+
+User authorizes instrumentation and offline regression only, following
+`AI-SMART-HINTS-GEMINI-SUGGEST-ROOT-CAUSE.md`. Preserve SH-1 predicates, public
+contracts, prompt/schema, model/provider, token/deadline/usage policies and manual
+editing. Add Main-only rejection reasons and provider failure origins, correlate
+normal-app diagnostics privately, and retain bounded atomic best-effort storage.
+No live request/retry or root-cause correction is authorized. Acceptance evidence:
+`AI-SMART-HINTS-GEMINI-DIAGNOSTICS-ACCEPTANCE.md`; ordinary-app live acceptance and
+the original reported PROVIDER cause remain open. Do not mark SH-4 COMPLETE.
+Implementation verified offline:661/661 scoped tests, scoped tsc/lint, final build,
+12 Electron offline scenarios and3 final-artifact rechecks PASS. Global tsc/lint/
+whitespace retain documented unrelated baseline failures. SH4-D1 verdict is
+PASS_WITH_LIMITATIONS; IN_PROGRESS tracking retains the acceptance boundary,
+not authorization for a live request or root-cause correction. STOP for review.
+
+## Suggest Fix generic PROVIDER failure — BLOCKED on request evidence, 2026-11-03
+
+User authorizes offline diagnosis/correction without real inference or provider
+change. Exact Renderer text maps to PROVIDER; current MAX_TOKENS instead maps to
+INVALID_RESPONSE, so do not assume token exhaustion from the message. No live
+request diagnostic has been supplied or found in captured logs; prior terminal
+record omitted finish/usage data. Added safe finish/token/envelope/output JSON
+and schema evidence and atomic last-Suggest-Fix diagnostic storage in Main.
+Token cap remains2048 pending actual cause.677 scoped regressions, scoped tsc/
+lint, build and12/12 Electron UI cases PASS with fake transport only. The actual
+request remains unobserved; do not mark this defect COMPLETE from fake cases.
+[Evidence/blocker](AI/AI-SMART-HINTS-SUGGEST-FIX-PROVIDER-INVESTIGATION.md).
+
+## Ordinary Suggest Fix timeout correction — COMPLETE (offline), 2026-11-03
+
+Authorized30s for ordinary Gemini Suggest Fix only; other actions stay10s. Main
+owns the deadline/abort; adapter shares it. Preserve quotas/key/schema/source
+guards and manual edits. Implemented safe terminal diagnostics and UI consent/
+timeout copy.672 scoped tests, SH-4 tsc/scoped lint and build PASS. Electron UI
+PASS9/9 using normal built Main/IPC/Monaco and fake transport; C#/JS15s fixes,
+30s timeout, Diff/Apply/Discard/Undo/Redo and guards verified. No real API.
+Unrelated baseline tsc/lint/whitespace failures are retained; whole live
+acceptance stays open. [Full evidence](AI/AI-SMART-HINTS-SUGGEST-FIX-30S-FIX.md).
+
+## Normal Smart Hints usage-limit correction — COMPLETE (offline), 2026-11-03
+
+Explicitly authorized defect correction: normal configuration mistakenly copied
+the lifetime3 policy, not the historical approval ledger. Implemented daily
+default20/configurable1–300, explicit legacy review, immutable usage recovery,
+separate local-budget/local-rate/Google-rate/Google-quota states and source-free
+status. No request/key/approval/ledger reset or Judge/Run/Submit change.
+Exit evidence:658/658 scoped tests (34 files), SH-4 tsc, scoped lint and final
+build PASS. Global baseline tsc/lint/whitespace failures remain outside scope.
+Real Gemini/manual post-fix Electron acceptance NOT_TESTED; this does not close
+the ordinary-application live acceptance package below. Report:
+[Usage-limit correction](AI/AI-SMART-HINTS-USAGE-LIMIT-FIX.md).
+
+## Smart Hints ordinary-application implementation — IN_PROGRESS, 2026-11-03
+
+User authorizes practical Settings enablement/secure key configuration in normal
+dev and packaged Windows IDE, replacing acceptance-only provisioning. Preserve
+existing safeguards; no Judge/Run/Submit or unrelated baseline fixes. Required:
+native key-entry feasibility, encrypted storage, validated settings bridge,
+dynamic Main provider, status/consent UI, offline regressions/build and actual
+ordinary-IDE human-triggered Gemini UI evidence within3 inferences. Do not mark
+COMPLETE from offline tests. One expected user step is native key entry and live
+action/consent. Existing deletion of LANGUAGE-SUPPORT.md is unrelated user work;
+not restored (HEAD reference read; no language capability changes).
+
+## SH-4 NOT_READY corrective work — 2026-11-03
+
+Authorized offline diagnosis/correction: two Renderer defects reproduced before
+fix (source-revision-bound capability response discarded; disabled capability
+cached without manual recheck). Capability refresh now trusts only a current Main
+response with API/sequence/lifetime guards; source/action guards unchanged.
+Safe private Main reason enums distinguish approval/key/budget failures; no DTO
+or provisioning policy change.619 scoped tests, scoped tsc/lint, build and5
+Electron cases PASS (positive race case retains fake budget3 and uses1 explicitly
+consented fake inference; negative gates remain locked/zero HTTP). Global baseline
+failures retained. No actual key/API, live approval ID/ledger mutation or retry.
+User's particular live incident attribution remains NOT_VERIFIED: no active real
+session or budget3 approval evidence was available; awaiting safe ID/flags/Main
+code. [Corrective report](AI/AI-SMART-HINTS-SH4-NOT-READY-FIX.md).
+SH-4 IN_PROGRESS, production DISABLED; STOP before real requests/recovery.
+
+## SH-4 current offline UI acceptance review — 2026-11-03
+
+Authorized offline re-verification PASS with limitations:614 scoped tests,
+scoped TypeScript/lint, approved build,14 actual UI/Main/Gemini-adapter fake HTTP
+scenarios and native Monaco25 checks/8 transactions PASS. Reviewed Sum fixtures
+now demonstrate progressive hints/current-code feedback and exact0→b fix;
+computed read-only diff/source assertions added to the harness only. No product
+implementation change, real key/API, baseline repair or Git publication.
+Global typecheck/lint/whitespace remain FAIL baseline. Existing gated development
+launcher is ready for separately approved live ID/budget; educational/live/manual
+acceptance still pending. SH-4 IN_PROGRESS, production DISABLED.
+[Current UI review/checklist](AI/AI-SMART-HINTS-SH4-UI-FINAL-OFFLINE-ACCEPTANCE.md).
+STOP before live UI. This supersedes the older missing-launcher readiness note.
+
+## SH-4 development Live UI launcher — 2026-11-03
+
+Authorized launcher preparation verified offline:614 scoped regression tests,
+scoped TypeScript/lint, final build and14 Electron UI/entry scenarios PASS with
+fake transport only. Main requires development, explicit approval ID/budget,
+project/free-tier/sample attestations and native confirmation; production DISABLED.
+Durable one-use approval/POST reservations,30-minute expiry, exact ch2-01 sample
+captures and existing consent/quotas/guards preserved. Global baseline failures
+retained. SH-4 IN_PROGRESS; actual live budget/quality/final acceptance pending.
+[Launcher handoff/checklist](AI/AI-SMART-HINTS-SH4-LIVE-UI-LAUNCHER.md).
+STOP offline; no real key/API, next work package or Git publication.
+
+## SH-4 Learning/Practice offline UI acceptance - 2026-11-03
+
+User-authorized SH-4 offline UI acceptance only; SH-1/2/3 remain accepted. Real
+Learning/Practice UI/preload/IPC/capture/service/Gemini adapter tested with
+synthetic HTTP and isolated Main test composition; production DISABLED. Scoped
+regression589/589, scoped TypeScript/lint, build and native Monaco25 checks/8
+transactions PASS. Global typecheck/lint/whitespace retain baseline failures.
+Live smoke PASS is user-reported evidence, not full live UI/educational acceptance.
+SH-4 remains IN_PROGRESS; gated live Learning/Practice launch and manual quality
+review pending separate approval. See [UI acceptance and checklist](AI/AI-SMART-HINTS-SH4-UI-ACCEPTANCE.md).
+STOP before live UI; no real API/key, Judge/Run/Submit or production change.
+
+## SH-4 AQ. key compatibility correction - 2026-11-02
+
+Authorized corrective SH-4 scope: extend the existing shared Main/runner key classifier for Google Authorization Keys (AQ.) and preserve Standard/AIza support; retain x-goog-api-key. SH-1/2/3 accepted; SH-4 remains IN_PROGRESS, production DISABLED. Offline fake-key/transport regression, scoped typecheck/lint and build required. No actual key read, API call, retry, historical evidence mutation or next-package work. Verified offline:127/127 focused tests, scoped typecheck/lint/build/whitespace PASS. Global typecheck/lint/diff-check retain unrelated failures. [Report](AI/AI-SMART-HINTS-SH4-GEMINI-AUTH-KEY-COMPATIBILITY.md). STOP offline.
+
+
+## SH-4 Gemini credential diagnostics correction - 2026-11-02
+
+User authorized source tracing and offline fake-only correction of
+KEY_MISSING_OR_INVALID. Exact emitter: post-PREFLIGHT local key check; old evidence
+cannot distinguish missing from malformed input. No environment/format defect
+reproduced: actual PowerShell -> Node supervisor -> bundled Electron Main with a
+fake key/transport PASS. Shared validation preserves bounds/alphabet; private
+smoke codes/stage distinguish missing/format/cancel/HTTP auth.90 focused tests,
+scoped typecheck/lint/build/whitespace PASS; unrelated global failures retained.
+SH-4 stays IN_PROGRESS, production DISABLED. No real key/API, old attempt ID or
+evidence change/retry. [Investigation](AI/AI-SMART-HINTS-SH4-GEMINI-KEY-INVESTIGATION.md).
+STOP after offline; no next package authorized.
+
+
+## SH-4 Gemini replacement - 2026-11-02, IN_PROGRESS
+
+Authorized SH-4 provider replacement only; prerequisites SH-1/2/3 accepted. Implement Main Gemini REST/Structured Outputs plus isolated synthetic smoke and fake-transport regression; preserve prior evidence and gates. No real API/key read. Required scoped tests/typecheck/lint/build and offline Electron smoke. G4/G6 project/tier/live compatibility and final acceptance remain open; production DISABLED. STOP after offline. Verified offline:538/538 scoped tests, scoped typecheck/lint, build, two Gemini Electron fake attempts and Monaco regression25 checks/8 transactions PASS. Global typecheck/lint/diff-check retain unrelated baseline failures. See [Gemini acceptance](AI/AI-SMART-HINTS-SH4-GEMINI-ACCEPTANCE.md).
+
+
+## SH-4 timeout corrective work ? 2026-11-02
+
+User authorizes offline 10s timeout diagnosis/correction only. SH-1?3 accepted; SH-4 remains IN_PROGRESS and production DISABLED. Development smoke fixed 30s across Main/adapter/preflight/manifest/consent; production default 10s preserved. Offline delayed response/timeout/abort/race/cleanup verified:325 scoped tests PASS, scoped typecheck/lint and build PASS. Global typecheck/lint/diff-check retain unrelated failures. See [timeout report](AI/AI-SMART-HINTS-SH4-TIMEOUT-FIX.md). STOP after offline; no next package or live acceptance claimed.
+
+
+SH-4 envelope audit/correction (2026-11-02): user-authorized offline work
+verified. Two contract-proven scalar metadata incompatibilities fixed; named
+safe envelope guard/field-shape diagnostics added. Root cause of named North
+live attempt remains UNKNOWN; no retrospective inference or schema/parser change.
+192 scoped / 454 broader overlapping tests and scoped TypeScript/ESLint/build
+PASS; global baseline failures remain. No API/key access, retry, dependency,
+Monaco, model or history change. SH-4 IN_PROGRESS, production DISABLED; see
+`AI/AI-SMART-HINTS-SH4-ENVELOPE-INVESTIGATION.md`. STOP after offline.
+
+
+SH-4 response classification (2026-11-02): explicitly authorized offline scope
+implemented and verified; SH-4 remains IN_PROGRESS pending live/user acceptance.
+Main-only four-stage failure taxonomy, safe content type/known field projection
+and truthful schema PASS/FAIL/NOT_RUN; no public contract or validation relaxation.
+164 focused / 426 broader overlapping fake-only tests, scoped TypeScript/ESLint
+and build PASS; documented global baseline failures unchanged. No API/key access,
+retry, dependency/Monaco or history change. See
+`AI/AI-SMART-HINTS-SH4-RESPONSE-CLASSIFICATION.md`; STOP after offline.
+
+
+SH-4 North INVALID_RESPONSE investigation (2026-11-02): named live attempt
+north-live-keyfixed-20261102 returned HTTP 200 but INVALID_RESPONSE. Rejecting
+layer remains UNKNOWN: stored schema FAIL is assigned for all INVALID_RESPONSE
+codes and does not prove schema validation ran. 141 focused fake-only tests and
+scoped TypeScript/ESLint PASS; no speculative runtime/schema/prompt fix or new API
+call. SH-4 IN_PROGRESS, production DISABLED, live compatibility acceptance pending.
+See `AI/AI-SMART-HINTS-SH4-NORTH-INVALID-RESPONSE.md`; STOP after offline review.
+
+
+SH-4 runner attempt management (2026-11-02): explicitly authorized offline
+corrective offline package verified; SH-4 stays IN_PROGRESS pending live/user acceptance.
+Separate immutable attempt metadata/reservation/result and active-lock ownership;
+no legacy artifact writes. Required checks: fake two-attempt workflow, crash,
+concurrency/duplicate dispatch, atomic result, scoped TypeScript/ESLint/build and
+actual offline Electron consent. No API/key access, dependency/Monaco/architecture
+change or other work package. Deliver the previously approved North command only
+after offline verification, then STOP without running it.
+
+
+SH-4 diagnostics/free-model corrective work (2026-11-02): authorized offline
+only; offline checks complete, IN_PROGRESS pending live/user acceptance. Safe Main-only
+429 metadata and optional North development profile; production DISABLED, no live
+HTTP/key access/retry. Preserve the spent attempt marker. Latest scope supersedes
+older live allowances below. See SH-4 Acceptance for current checks/limitations.
+
+
+SH-4 visible-consent corrective review (2026-11-02): interactive live/offline
+runner now uses explicit taskbar BrowserWindows for both decisions, without
+automatic confirmation. 133 focused tests and 32 actual offline Electron checks
+PASS. Direct OS mouse/Alt+Tab automation was blocked by the desktop input helper;
+that acceptance is not claimed. Production DISABLED, SH-4 IN_PROGRESS; STOP before
+live request. See [consent UI report](AI/AI-SMART-HINTS-SH4-CONSENT-UI.md).
+
+SH-4 runner debug (2026-11-02) is authorized for offline corrective work only:
+run-correlated failure evidence, bounded child lifecycle and fake transport
+regressions. Earlier uncorrelated HTTP dispatch remains UNKNOWN, not inferred zero.
+Follow-up run c36e0afd-d419-48e3-8848-acb61a7ae864 stopped at PREFLIGHT_CONSENT
+before workflow HTTP. Corrective work bounds consent and adds an explicit offline
+Electron harness without changing HTTP/watchdog limits or production gates.
+Final evidence ownership: Main writes immutable snapshots, launcher alone writes
+the aggregate result. 124 focused tests and five final offline Electron runs PASS;
+native dialog visibility/live connectivity remain unverified.
+SH-4 stays IN_PROGRESS, production DISABLED; STOP before any real API request.
+See [runner debug](AI/AI-SMART-HINTS-SH4-RUNNER-DEBUG.md).
+
+## SH-4 OpenRouter Free replacement — 2026-11-02
+
+Manual smoke tooling is authorized for preparation only in the latest user task:
+isolated Electron Main runner, inherited shell key, native snapshot consent, free
+account/catalogue preflight and persistent one-inference reservation. Production
+wiring unchanged. No agent-run live request; user runs the documented command in
+their own PowerShell. SH-4 remains IN_PROGRESS pending actual result/acceptance.
+
+Authorized package remains SH-4, IN_PROGRESS pending user acceptance. SH-1–3
+accepted prerequisites unchanged. The current user replaces NIM with fixed
+OpenRouter Free and Main-only OPENROUTER_API_KEY, reusing all consent/quota/source
+guards. Production/default DISABLED. Offline regressions, scoped typecheck/lint,
+build and Electron/Monaco smoke are required. One synthetic connectivity request
+is permitted only after valid key/free-route verification; no retry. Missing key
+or unverifiable zero-cost route requires STOP. This supersedes earlier NIM/live
+approval notes only for SH-4; no other package starts. Actual results and remaining
+acceptance gates: [SH-4 report](AI/AI-SMART-HINTS-SH4-ACCEPTANCE.md).
+
+## SH-3 accepted / SH-4 authorized — 2026-10-29
+
+SH-0/1/2/3 **COMPLETE — PASS WITH LIMITATIONS**, explicitly accepted by user.
+SH-3 artifact review verifies767 selected PASS,3 consecutive real Monaco/Electron
+PASS with zero console errors and exact unchanged approved patch hash. Existing
+baseline failures and known limitations remain. SH-4 **IMPLEMENTED — AWAITING LIVE
+ACCEPTANCE**, tracking IN_PROGRESS: NVIDIA NIM hosted DeepSeek integration/offline
+gates PASS (777 selected regression,298 additional overlapping Judge/Submit/provider,
+81 final provider/core; scoped tsc/lint/build; real Electron25 checks/8 native
+transactions zero console errors). Full-project baseline failures remain. No
+direct paid DeepSeek or
+OpenCode, no dependency upgrade/Monaco change/Git mutation. Main-only ephemeral
+environment key, production default DISABLED. STOP before first real API request;
+live terms/account/model/request budget need separate approval. Current execution
+supersedes historical SH-3/4 status notes below. See
+[SH-4 acceptance](AI/AI-SMART-HINTS-SH4-ACCEPTANCE.md).
+
+## SH-3 option A final — FIXED, AWAITING USER ACCEPTANCE, 2026-10-29
+
+**SH-3: FIXED — AWAITING USER ACCEPTANCE**; tracking IN_PROGRESS, not COMPLETE.
+This supersedes earlier SH-3 blocked execution notes below. User-approved exact
+Monaco0.56.0 factory patch, version/hash/backup/rollback tooling and install/build
+hooks are verified. Local modal layout now has one host observer with cancellable
+RAF writes, avoiding observed ResizeObserver feedback. Native Undo/guards/draft
+semantics remain unchanged. Final33 suites734 PASS; separate6 Monaco/Project
+suites33 PASS. Three consecutive final full Electron/Monaco runs PASS, zero
+console errors,8 transactions each, no probe. Build/scoped checks PASS; existing
+global fixture/lint/whitespace failures and manual/historical Redo-cause limitations
+remain explicit in [acceptance](AI/AI-SMART-HINTS-SH3-ACCEPTANCE.md).
+Apply is enabled only for injected FAKE; actual production DISABLED/no provider.
+SH-0/1/2 COMPLETE — PASS WITH LIMITATIONS. SH-4 NOT_STARTED. STOP for user acceptance;
+no auto COMPLETE, live request, package installation or Git mutation.
+
+## SH-3 unblock investigation — 2026-10-29
+
+**SH-3: BLOCKED — NOT PASS**, not FIXED — AWAITING USER ACCEPTANCE. The user
+authorized root-cause work and required STOP before dependency/architecture or
+out-of-scope module changes. The keep-live-editor/Suggest failure now reproduces
+independently in Monaco0.56.0: Diff inner editors install a global hover factory
+bound to a Diff-owned child instantiation service, then Diff disposal leaves that
+factory pointing at a disposed service. Matching no-Diff controls pass. This is
+also described by upstream issue5518. The historical Redo timeout is not yet
+independently reproduced/fixed; fresh native and app controls pass their Redo
+cases. Strict app smokes still fail on a ResizeObserver console error.
+
+No product/dependency correction or enable was made. Normal fake/production Apply
+remain false and Diff entry hidden. A version/hash-checked dependency candidate,
+exact target and validation gates are ready for review in
+[Unblock options](AI/AI-SMART-HINTS-SH3-UNBLOCK-OPTIONS.md); applying it needs separate
+approval under the user's section1. See the updated
+[acceptance](AI/AI-SMART-HINTS-SH3-ACCEPTANCE.md) for fresh results, controls and
+failed attempts. SH-0/1/2 remain COMPLETE — PASS WITH LIMITATIONS; SH-4 NOT_STARTED.
+STOP after investigation at the dependency gate; no install or Git mutation.
+
+## SH-3 guarded implementation blocked — 2026-10-29
+
+SH-0/SH-1/SH-2: **COMPLETE — PASS WITH LIMITATIONS**, user accepted.
+SH-3: **BLOCKED — NOT PASS**, not IMPLEMENTED — AWAITING USER ACCEPTANCE.
+Readonly diff, source guards, local transaction and native Undo/draft wiring exist;
+97 focused tests,392 Renderer and224 Main/contracts/Preload regressions passed.
+Repeated real standalone Monaco/Electron stress also produced a native Redo timeout
+and disposed context-key/instantiation/model errors during later context switching.
+Earlier passing smoke is insufficient to override these failures. Causality is
+unresolved; no baseline classification. Normal fake and production compositions
+keep Apply false; Diff entry is hidden. Diagnostic harness alone injects true.
+Final fail-closed build/scoped checks/115-case rerun PASS; post-STOP readonly
+Electron smoke PASS with no Diff/Apply controls. SH-3 release gate remains FAIL.
+See [SH-3 acceptance](AI/AI-SMART-HINTS-SH3-ACCEPTANCE.md) for actual evidence and
+retained global failures. SH-4 **NOT_STARTED**. STOP under the user's safety gate;
+no dependency install, live API/key, unrelated repair or Git mutation.
+
+## SH-2 stabilization and final acceptance — 2026-10-28
+
+SH-0/SH-1 remain COMPLETE — PASS WITH LIMITATIONS with their historical evidence.
+**SH-2: COMPLETE — PASS WITH LIMITATIONS** under explicit stabilization/conditional
+acceptance authorization. Fixed duplicate polling timers, equivalent-text DOM
+selection staleness, Solution retirement before operation admission and consent
+modal centering. Fresh50 focused/392 Renderer/224 contract+Main+Preload tests PASS;
+scoped tsc/lint and final build PASS. Real Monaco/Electron smoke PASS with synthetic
+SH IPC replies and isolated userData; real production capability remains DISABLED.
+Learning timeout and Run regression are reproduced without SH-2 changes through
+read-only HEAD controls; global typecheck/lint/whitespace failures are independent
+and retained. Missing design source, OS mouse/IME/screen-reader/Windows10 and
+performance/live limitations are explicit in [SH-2 acceptance](AI/AI-SMART-HINTS-SH2-ACCEPTANCE.md).
+No Main/shared contract, Judge/Storage/D2 change. SH-3/SH-4 remain NOT_STARTED.
+STOP after SH-2; separate authorization is required before any SH-3 work.
+
+## SH-0 accepted / SH-1 delivery — 2026-10-28
+
+- SH-0: **COMPLETE — PASS WITH LIMITATIONS**, formally accepted by user.
+- SH-1 delivery: **IMPLEMENTED — AWAITING USER ACCEPTANCE**, with recorded limits;
+  tracking remains IN_PROGRESS until acceptance. G1–G5 and G6 per-snapshot consent
+  approved within fake-only scope; no live budget/key/model provisioning approval.
+- SH-2/SH-3/SH-4: **NOT_STARTED**; no UI, Diff/Apply/Undo or live work authorized.
+
+[SH plan](AI-SMART-HINTS-IMPLEMENTATION-PLAN.md) and
+[SH-1 acceptance](AI-SMART-HINTS-SH1-ACCEPTANCE.md) record independent contracts,
+public capture/Run receipt, service and typed IPC/Preload.114 focused PASS;
+scoped SH-1/Renderer TypeScript and targeted lint PASS. Main regression batch
+546 PASS/1 existing Run FAIL, reproduced with read-only HEAD Main overlay.
+Full project typecheck is not PASS due an incomplete legacy Project Explorer mock;
+global whitespace also includes an unowned Renderer declaration edit preserved
+unchanged. No full suite/build/Native Judge/Electron/live certification or unrelated
+phase/ADR acceptance changes. STOP after SH-1 for user acceptance.
+
+## WA-B1 — Safe Wrong Answer Diagnostic Contract, 2026-10-28
+
+**COMPLETE — PASS WITH LIMITATIONS**, formally accepted by user.
+Explicitly authorized. Implements only same-operation verified
+public-sample diagnostic → final qualified WrongAnswer → existing status/IPC/Preload.
+Requires current leased Official public-prefix validation and accepted Submit
+ownership/commit/transport boundaries. ADR-025 public-only exception is approved;
+hidden policy, grading/fail-fast/Run/Storage/Restore/Completion are unchanged.
+Exit: synthetic provenance/bounds/privacy/lifecycle/transport tests, scoped tsc,
+targeted lint and relevant Judge/Submit/IPC/Preload regressions plus diff check.
+No full suite/build/Native Judge/Electron E2E, no Renderer/WA-B2 or AI/network.
+E7/AI-D1/D2/D3 statuses and historical evidence remain unchanged. User acceptance
+retains550 relevant PASS including80 focused PASS, scoped tsc/lint/diff PASS;
+native/Electron/build and target-host performance/RAM remain unverified.
+
+[WA-B1 acceptance packet](WA-B1-SAFE-DIAGNOSTIC-ACCEPTANCE.md):80 focused tests
+PASS;13-file related batch550 PASS (includes focused tests, do not add counts).
+Scoped typecheck/targeted lint PASS; no full-suite/build/native/Electron E2E or
+performance certification. No phase completion/acceptance is inferred from delivery.
+
+## WA-B2 — Wrong Answer Detail UI, 2026-10-28
+
+**IN_PROGRESS — delivered PASS WITH LIMITATIONS, awaiting user acceptance.**
+Explicitly authorized after formal WA-B1 acceptance. Renderer-only
+dynamic tab after Submissions, same-operation public diagnostic/fallback, once-only
+auto-open at qualified WA without waiting for storage, Attempt/context retirement
+and existing History/Source/Restore/Completion/Run preservation. Reuse current
+Practice tokens/Tabs; no global redesign. No Main/private/diagnostic contract changes.
+Exit: focused UI and relevant regressions, scoped tsc, targeted lint, diff checks;
+Electron manual checklist documented but no E2E/native/build/full-suite authorized.
+No AI-D3/D4/provider/network work, E7 or other acceptance/status changes. Stop after
+B2 delivery for user acceptance.
+
+[WA-B2 acceptance](WA-B2-WRONG-ANSWER-UI-ACCEPTANCE.md):42 focused UI PASS;
+final13-file related batch380 PASS/1 five-second timeout in Learning roadmap test;
+isolated unchanged Learning suite retry10 PASS/0 FAIL/0 SKIP.381 distinct selected
+cases have PASS evidence across runs, not381 simultaneous batch PASS. Scoped tsc,
+targeted lint and tracked/new-file diff checks PASS. Manual Electron/visual/native/
+build/target-host performance/RAM remain unverified. No other phase status change.
+
+## AI-D work packages — 2026-10-28
+
+- AI-D1: **COMPLETE — PASS WITH LIMITATIONS**, formally accepted by user.
+  65 targeted PASS/0 FAIL; 42 final fake requests. Prototype evidence retained;
+  real DeepSeek/Electron runtime/key provisioning remain UNVERIFIED.
+- AI-D2: **COMPLETE — PASS WITH LIMITATIONS**, formally accepted by user;
+  explicitly authorized saved Submission Analysis Service. Final D2 110 PASS/0 FAIL/
+  0 SKIP; scoped typecheck and targeted lint PASS. Selected regression 275 PASS/
+  1 baseline UI FAIL/1 deliberately filtered SKIP, independently reproduced on unchanged HEAD; no blanket
+  regression PASS or E7 reopening. Production is unprovisioned and fails closed.
+  Requires accepted D1 design and current committed-read/public-content boundaries.
+  Exit: scoped typecheck, targeted lint/tests, diff check; exact source/version,
+  public allowlist, owner/frame/context, consent/TTL/single-use, cancellation,
+  duplicate/lost-ACK/stale safety, provider failures and no request on denial.
+  Only synthetic/fake verification; no full suite/native Judge/build/Electron E2E.
+  [Acceptance packet](AI-D2-SUBMISSION-ANALYSIS-SERVICE-ACCEPTANCE.md).
+- AI-D3: **IN_PROGRESS**, explicitly authorized Submission Details UI using D2
+  **Temporarily hidden at the user's subsequent request.** The production Details
+  mount/import has been removed; staged component/controller/styles/tests remain
+  available for later continuation. D3 is not COMPLETE or accepted; no visible
+  analysis UI or analysis request is created by opening Details. See the
+  [current D3 note](AI-D3-SUBMISSION-ANALYSIS-UI-ACCEPTANCE.md).
+  unchanged contracts. Consent v1, stable operation identity/status polling,
+  cancellation/stale protection, safe five-section advisory text; no charts or
+  fake production result. Scope permits correcting only the obsolete keyboard-tab
+  regression expectation. Exit: targeted UI/regression tests, scoped tsc/lint/diff.
+  No full suite/Native Judge/production build/live API. Await user acceptance after
+  [D3 delivery](AI-D3-SUBMISSION-ANALYSIS-UI-ACCEPTANCE.md).
+- AI-D4: **NOT_STARTED**; no real API/key provisioning authorization.
+
+E7 and unrelated phase statuses/evidence are unchanged. Stop after D3 delivery.
+
 ## 1. Purpose
 
 This document converts the accepted Student Coding IDE requirements and

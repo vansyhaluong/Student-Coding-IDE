@@ -12,6 +12,13 @@ import { SharedSubmissionStoreLease } from './services/learning/storage/store-le
 import { loadLearningNative, type LearningNativeBinding } from './services/learning/runtime/windows-exercise-native'
 import { SUBMISSION_CHANNELS } from '../shared/contracts/submission'
 import { ExerciseIpcService } from './ipc/exercise-ipc-service'
+import { SubmissionAnalysisService } from './services/learning/analysis/service'
+import { captureSavedAnalysis } from './services/learning/analysis/capture'
+import { SmartHintsConfiguration } from './services/learning/smart-hints/configuration'
+import { MainSelectionFixGuard } from './services/learning/smart-hints/selection-fix-parser-runtime'
+import { NativeSmartHintsKeyEntry } from './services/learning/smart-hints/native-key'
+import { SmartHintsSettingsIpcService } from './ipc/smart-hints-settings-ipc-service'
+import { captureSmartHints } from './services/learning/smart-hints/capture'
 import { EXERCISE_CHANNELS } from '../shared/contracts/exercise'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
@@ -25,6 +32,7 @@ import {
   ipcMain,
   shell,
   webContents,
+  safeStorage,
 } from 'electron'
 import { join } from 'node:path'
 
@@ -89,6 +97,31 @@ let quitCoordinator: ApplicationQuitCoordinator | undefined
 let removeLifecyclePublisher: (() => void) | undefined
 
 void app.whenReady().then(async () => {
+  // Normal feature uses only the user's native Settings entry, never a developer environment key.
+  delete process.env.GEMINI_API_KEY
+  const keyEntry = new NativeSmartHintsKeyEntry()
+  const smartHintsConfiguration = new SmartHintsConfiguration({
+    selectionFixGuard: new MainSelectionFixGuard(),
+    file: join(app.getPath('userData'), 'smart-hints-settings.json'),
+    encryption: {
+      available: () => process.platform === 'win32' ? safeStorage.isAsyncEncryptionAvailable() : Promise.resolve(false),
+      encrypt: value => safeStorage.encryptStringAsync(value),
+      decrypt: async value => (await safeStorage.decryptStringAsync(value)).result,
+    },
+    transport: { send: request => fetch(request) },
+    onDiagnostic: diagnostic => console.info('[SmartHints execution]', JSON.stringify(diagnostic)),
+    onDiagnosticStoreError: () => console.warn('Smart Hints diagnostic could not be saved.'),
+    promptKey: async () => { throw Error('Owned Settings key request required.') }, cancelPrompt: () => keyEntry.cancel(),
+    confirm: async (kind, count) => {
+      const options = { type: 'question' as const, buttons: ['Hủy', 'Xác nhận'], defaultId: 0, cancelId: 0, noLink: true,
+        title: 'AI Smart Hints · Google Gemini',
+        message: kind === 'ENABLE' ? 'Bật AI Smart Hints?' : kind === 'BUDGET' ? `Đặt hạn mức cục bộ ${count} yêu cầu AI mỗi ngày UTC?` : 'Xóa API Key đã lưu?',
+        detail: kind === 'REMOVE_KEY' ? 'AI sẽ tắt. Số lượt đã dùng được giữ nguyên.'
+          : `Model gemini-3.1-flash-lite. Có thể phát sinh phí theo project của bạn; ứng dụng không xác minh Free Tier hoặc bật billing. Nội dung có thể được Google xử lý/lưu theo chính sách tài khoản. Chỉ chia sẻ code bạn có quyền gửi, không chứa secrets. Còn/được phép ${count} yêu cầu. Mỗi lần gửi source vẫn cần bạn xác nhận snapshot. Không tự retry, đổi model, Apply, Run hoặc Submit.` }
+      const owner = BrowserWindow.getFocusedWindow()
+      return (await (owner ? dialog.showMessageBox(owner, options) : dialog.showMessageBox(options))).response === 1
+    },
+  })
   const processManager = new ProcessManager()
   const persistenceService = createAppPersistence(join(app.getPath('userData'), 'app-state.json'))
   const settingsService = new SettingsService(persistenceService)
@@ -186,7 +219,10 @@ void app.whenReady().then(async () => {
     }, { store: getSubmissionStore, send: (context, status) => {
       authorizePreferencesFrame(context)
       webContents.fromId(context.senderId)?.mainFrame.send(SUBMISSION_CHANNELS.changed, status)
-    } })
+    } }, { service: new SubmissionAnalysisService(), // Fail closed: D4 provisioning is not authorized.
+      capture: (binding, check) => captureSavedAnalysis(getSubmissionStore(), exercisePackages, binding, check) },
+    { service: smartHintsConfiguration.service,
+      capture: (request, generation, check, receipt) => captureSmartHints(exercisePackages, request, generation, check, receipt) })
   exerciseIpcReference.current = exerciseIpc
   const practiceIpc = new PracticeIpcService(ipcRegistry, practiceStore, authorizePreferencesFrame,
     (owner, channel, payload) => {
@@ -329,6 +365,18 @@ void app.whenReady().then(async () => {
     try { git = (await gitDetector.detect()).state } catch { git = 'INVALID_CONFIGURATION' }
     return { node: node.state, git }
   })
+  const smartHintsSettingsIpc = new SmartHintsSettingsIpcService(ipcRegistry, smartHintsConfiguration, authorizePreferencesFrame,
+    (context, cancel) => {
+      const owner = webContents.fromId(context.senderId)
+      if (!owner || owner.isDestroyed()) throw Error('Settings owner unavailable.')
+      owner.once('destroyed', cancel); owner.on('did-start-navigation', cancel)
+      return () => { owner.removeListener('destroyed', cancel); owner.removeListener('did-start-navigation', cancel) }
+    }, async (context, signal) => {
+      authorizePreferencesFrame(context)
+      const owner = BrowserWindow.fromWebContents(webContents.fromId(context.senderId)!)
+      if (!owner || owner.isDestroyed()) throw Error('Settings owner unavailable.')
+      return keyEntry.prompt(owner.getNativeWindowHandle(), signal)
+    })
   const gitService = new GitService(
     projectService,
     fileSystemService,
@@ -415,6 +463,8 @@ void app.whenReady().then(async () => {
     terminalService,
     foundationIpc,
     settingsIpc,
+    smartHintsConfiguration,
+    smartHintsSettingsIpc,
     aiService,
     aiIpc,
     new LearningIpcService(ipcRegistry, getBundledCourse, authorizePreferencesFrame),
