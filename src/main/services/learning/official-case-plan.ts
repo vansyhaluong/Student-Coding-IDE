@@ -12,6 +12,8 @@ import type { ExerciseWorkspace } from './runtime/exercise-workspace'
 import type { OfficialAdapterFactory, OfficialLanguageAdapter, OfficialLanguageEvidence } from './runtime/official-execution-contracts'
 import type { ExerciseRuntimeAdapter } from './runtime/exercise-runtime-adapter'
 import type { ExerciseType } from '../../../shared/contracts/practice'
+import type { SubmissionDiagnostic } from '../../../shared/contracts/submission-diagnostic'
+import { capturePublicSampleDiagnostic } from './judge/public-sample-diagnostic'
 
 /** Judge-only lease alias. Never part of OfficialAdapterFactory's input. */
 export interface OfficialJudgeView {
@@ -19,6 +21,7 @@ export interface OfficialJudgeView {
   readonly returnType: ExerciseType
   readonly caseCount: number
   expectedAt(index: number): ExecutionValue
+  publicDiagnostic?(index: number, actual: ExecutionValue): SubmissionDiagnostic
 }
 
 export interface OfficialPlanIdentity {
@@ -60,6 +63,10 @@ export function bindOfficialCasePlan(registry: ExercisePackageRegistry, expected
             expectedAt(index: number) {
               if (phase !== 'execute') throw exerciseCoreError('ADMISSION_CLOSED')
               return acquiredPlan.caseAt(index).expected
+            },
+            publicDiagnostic(index: number, actual: ExecutionValue) {
+              if (phase !== 'execute') throw exerciseCoreError('ADMISSION_CLOSED')
+              return acquiredPlan.publicDiagnostic(index, actual)
             } }))
           return { execution: plan.execution, representInput: plan.representInput }
         })
@@ -112,6 +119,7 @@ export interface OfficialCasePlan {
   readonly execution: ExecutionPlan
   /** Judge-side alias only; NEVER part of a language descriptor or public DTO. */
   caseAt(index: number): Readonly<Omit<OfficialPackageCase, 'args' | 'expected'> & { args: readonly ExecutionValue[]; expected: ExecutionValue }>
+  publicDiagnostic(index: number, actual: ExecutionValue): SubmissionDiagnostic
   /** Registers serialized input + parsed representation in the existing ledger.
    * Caller releases this borrow after use, before releasing the plan. */
   representInput(index: number): ReturnType<PackageLease['representCooperative']>
@@ -171,6 +179,10 @@ export async function acquireOfficialCasePlan(registry: ExercisePackageRegistry,
   } })
   preparing = false
   return Object.freeze({ identity: Object.freeze(identity), execution, caseAt,
+    publicDiagnostic(index: number, actual: ExecutionValue) {
+      check()
+      return capturePublicSampleDiagnostic(lease.data, identity, index, actual)
+    },
     representationBorrows: () => borrows,
     async representInput(index: number) {
       const args = execution.inputAt(index)

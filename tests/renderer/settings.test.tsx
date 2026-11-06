@@ -28,7 +28,7 @@ describe('Settings UX', () => {
     render(createElement(SettingsDialog, { value: defaultSettings(), recovered: true, error: null, onSave: save, onClose: close }))
     expect(await screen.findByText('Node.js: MISSING')).toBeDefined()
     expect(screen.getByText('Git: INVALID_CONFIGURATION')).toBeDefined()
-    expect(screen.getByRole('status').textContent).toContain('recovered')
+    expect(screen.getByText(/Application preferences were recovered/).getAttribute('role')).toBe('status')
     const font = screen.getByLabelText('Editor font size (px)')
     font.focus()
     fireEvent.change(font, { target: { value: '41' } })

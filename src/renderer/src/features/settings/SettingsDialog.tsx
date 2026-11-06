@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { type AppSettings, type DependencyGuidance, validateSettings } from '../../../../shared/contracts'
 import { Dialog } from '../../components/ui/Dialog'
 import { Button } from '../../components/ui/Button'
+import { SmartHintsSettings } from './SmartHintsSettings'
 export function SettingsDialog({ value, recovered, error, onSave, onClose }: {
   value: AppSettings; recovered: boolean; error: string | null; onSave(value: AppSettings): Promise<boolean>; onClose(): void
 }) {
@@ -33,6 +34,7 @@ export function SettingsDialog({ value, recovered, error, onSave, onClose }: {
         <option value="2">2 spaces</option><option value="4">4 spaces</option></select></label>
       <label className="settings-check"><input type="checkbox" checked={draft.autoSave} onChange={e => setDraft({ ...draft, autoSave: e.target.checked })} />Auto Save</label>
       <p>Save after 1 second without edits. Save errors keep changes unsaved.</p>
+      <SmartHintsSettings />
       <h3>Keyboard shortcuts</h3>
       <dl className="settings-shortcuts">{[['Save (editor)', 'Ctrl+S'], ['Find (editor)', 'Ctrl+F'], ['New file', 'Ctrl+N'],
         ['Open project', 'Ctrl+O'], ['Terminal', 'Ctrl+Backquote'], ['Search project', 'Ctrl+Shift+F']].map(([name, keys]) => <div key={name}><dt>{name}</dt><dd>{keys}</dd></div>)}</dl>

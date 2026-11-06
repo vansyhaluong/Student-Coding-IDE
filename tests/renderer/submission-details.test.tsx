@@ -344,7 +344,7 @@ it.each(['back', 'description', 'language', 'inactive', 'close'] as const)('pres
 it('suppresses old-exercise source after navigating to a different exercise', async () => {
   const f = await workspaceFixture(), source = deferred<AppResult<SubmissionSource>>()
   f.api.source.mockReturnValueOnce(source.promise); await f.openDetails(false)
-  fireEvent.click(f.workspace.getByRole('button', { name: '← Danh sách' }))
+  fireEvent.click(f.workspace.getByRole('button', { name: 'Về danh sách bài tập' }))
   fireEvent.click(await screen.findByRole('button', { name: new RegExp(exercises[1].title) }))
   const editor = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: 'Practice code' })
   await act(async () => source.resolve(ok(chunk(f.selection))))

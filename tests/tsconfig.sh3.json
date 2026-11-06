@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.sh2.json",
+  "include": [
+    "../src/renderer/src/student-ide.d.ts", "../src/renderer/src/monaco-workers.d.ts", "../src/main/**/*.d.ts",
+    "../src/renderer/src/features/learning/practice/PracticeWorkspace.tsx",
+    "renderer/smart-hints*.test.tsx"
+  ]
+}

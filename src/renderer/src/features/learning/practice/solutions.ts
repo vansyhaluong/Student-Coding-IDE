@@ -1,4 +1,5 @@
 import type { Exercise, ExerciseLanguage } from '../../../../../shared/contracts/practice'
+import { chapter2Solutions } from './chapter2-solutions'
 import { chapter3Solutions } from './chapter3-solutions'
 import { chapter4Solutions } from './chapter4-solutions'
 import { chapter5Solutions } from './chapter5-solutions'
@@ -52,7 +53,7 @@ const sum: ExerciseSolution = {
   },
 }
 
-const solutions: ReadonlyMap<string, ExerciseSolution> = new Map([sum, ...chapter3Solutions, ...chapter4Solutions, ...chapter5Solutions, ...chapter6Solutions, ...chapter7Solutions].map(solution => [solution.exerciseId, solution]))
+const solutions: ReadonlyMap<string, ExerciseSolution> = new Map([sum, ...chapter2Solutions, ...chapter3Solutions, ...chapter4Solutions, ...chapter5Solutions, ...chapter6Solutions, ...chapter7Solutions].map(solution => [solution.exerciseId, solution]))
 export function solutionFor(exercise: Exercise): ExerciseSolution | undefined {
   const solution = solutions.get(exercise.id)
   return solution && solution.signature.functionName === exercise.functionName

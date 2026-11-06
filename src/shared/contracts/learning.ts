@@ -2,6 +2,8 @@ import type { AppResult } from './app-error'
 import type { PracticeApi } from './practice'
 import type { ExerciseApi } from './exercise'
 import type { SubmissionApi } from './submission'
+import type { AnalysisApi } from './analysis'
+import type { SmartHintsApi } from './smart-hints'
 import { isPlainObject } from './validation'
 
 export const LEARNING_CHANNELS = { getCourse: 'learning:get-course' } as const
@@ -32,7 +34,7 @@ export interface LearningManifest {
 }
 export interface LearningMaterial { chapterId: string; markdown: string }
 export interface LearningCourse { manifest: LearningManifest; materials: LearningMaterial[] }
-export interface LearningApi { getCourse(): Promise<AppResult<LearningCourse>>; practice: PracticeApi; exercise: ExerciseApi; submission: SubmissionApi }
+export interface LearningApi { getCourse(): Promise<AppResult<LearningCourse>>; practice: PracticeApi; exercise: ExerciseApi; submission: SubmissionApi; analysis: AnalysisApi; smartHints: SmartHintsApi }
 
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
 function reference(v: unknown): v is LearningReference {

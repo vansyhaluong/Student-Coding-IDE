@@ -1,5 +1,545 @@
 # Student Coding IDE Codebase Map
 
+## AI-C2-A1 shared execution — actual paths, 2026-11-06
+
+- `src/main/services/learning/smart-hints/execution-coordinator.ts`:
+  Main-private admission lease, active exclusion, shared rate windows, once-only
+  daily reservation port, cancellation/drain and shutdown sealing.
+- `service.ts`, `configuration.ts`, `adapter.ts` in that directory: Smart Hints
+  admission consumer and private reservation capability; configuration remains
+  sole ledger owner and normal coordinator composition root.
+- `tests/main/smart-hints-execution-coordinator.test.ts` and extended
+  `smart-hints-configuration.test.ts`: synthetic consumer cross-admission/rates,
+  real temporary durable ledger, failure/dedup/cancel/timeout/shutdown checks.
+- `electron.vite.config.ts`: includes coordinator source in build identity.
+
+No ChatService, conversation, Chat IPC/Preload/UI or C2-A2 code is added.
+
+## Selection Fix syntax recovery — 2026-11-06
+
+- `src/main/services/learning/smart-hints/parsers/{SelectionFixGuard.cs,javascript.ts}`:
+  selected diagnostic/missing-node ownership, intact function-body boundaries,
+  recovery preflight and strict candidate validation with the existing AST hole.
+- `tests/main/smart-hints-selection-parser.test.ts`: recoverable syntax/logic,
+  canonical construction/SH-1, fake service publication/NO_FIX, boundary rejection
+  and ch4-01 SumToN whole-function reproducer using real parser assets.
+
+## C# Suggest Fix SDK resolution correction — 2026-11-06
+
+- `src/main/services/learning/smart-hints/selection-fix-sdk-resolver.ts`:
+  Main-private G0 candidate filter reusing Learning's installation validation
+  through its exported bounded filesystem port. Learning's default policy stays
+  unchanged; only Fix restricts SDK/runtime/reference-pack/hostfxr versions.
+- `selection-fix-parser-runtime.ts`, `parsers/SelectionFixGuard.cs`: selected
+  absolute host, pinned runtime without roll-forward, both Roslyn assembly
+  identities checked before readiness. Resolver participates in build identity.
+- `tests/main/smart-hints-selection-sdk.test.ts`: installed SDK discovery,
+  fail-closed faults and actual helper execution; parser tests use the private
+  resolver and support an explicit scoped asset directory.
+
+## SH4-D6-5 UI and Diff integration — actual paths, 2026-11-06
+
+- `src/main/index.ts`, `services/learning/smart-hints/configuration.ts`: normal
+  Main-owned parser guard composition, with existing provider/key/quota behavior.
+- `src/main/services/learning/smart-hints/{service,selection-fix-guard}.ts`:
+  local availability probe, supported-language capability, rotation/shutdown and
+  runtime-failure invalidation; `src/main/ipc/exercise-ipc-service.ts` awaits the
+  same capability response through existing owner/frame checks.
+- `src/renderer/src/features/learning/practice/PracticeWorkspace.tsx`,
+  `use-smart-hints.ts`, `SmartHintsPanel.tsx`, `smart-hints-selection.ts`:
+  captureFix entry, supported-language readiness, range/consent copy, pre-consent
+  Fix-only cancellation, consent freeze and stale/NO_FIX/error handling.
+- `smart-hint-edits.ts`, `SmartHintDiffPreview.tsx` in that directory: canonical
+  one-edit range/old-text assertion and distinct Applied/Discarded callbacks;
+  reuse existing Diff/native Apply/Undo transaction.
+- `tests/renderer/smart-hints-selection-flow.test.tsx`,
+  `tests/main/smart-hints-selection-availability.test.ts`: typed bridge/Main/fake
+  Gemini selection lifecycle and capability failure/race tests. Existing parser,
+  edits and Diff suites are updated for the integrated selection invariant.
+- `scripts/test-smart-hints-selection-offline.mjs`: isolated real built app and
+  Monaco/parser/IPC flow with fake HTTP only; stdout evidence, no acceptance file.
+
+No second Apply path, parser-policy/SH-1 change, or D6-6 implementation.
+
+## SH4-D6-4 construction and parsers — actual paths, 2026-11-06
+
+- `src/main/services/learning/smart-hints/selection-fix.ts`: strict wire and
+  exact immutable selection assertion; source-derived canonical one-edit mapper.
+- `service.ts` in that directory: private guard preflight/readiness/postflight,
+  lifecycle cleanup and publication ordering; normal capability stays disabled.
+- `selection-fix-{guard,protocol,parser-runtime,diagnostics}.ts`: Main-private
+  lease/scope, bounded protocol, verified runtime assets/SDK and safe fixed enums.
+- `parsers/javascript.ts`, `parsers/SelectionFixGuard.cs`: parse-only AST grammar,
+  required signatures, target geometry and outside-target structure comparison.
+- `configuration.ts`, `gemini-provider.ts`: safe guard diagnostic projection and
+  shared private wire rejection classification, preserving other action behavior.
+- `scripts/build-smart-hints-parser-assets.mjs`,
+  `scripts/check-smart-hints-parser-assets.mjs`, `electron.vite.config.ts`: trusted
+  build assets/license/manifest in actual Main output; relocated built-entry check.
+- `tests/main/smart-hints-selection-{construction,parser}.test.ts`: synthetic
+  provider/service and real C#/JS parser, assets, failure and lifecycle coverage.
+- `tests/tsconfig.sh4.json`: includes private parser TypeScript in scoped checks.
+
+No Renderer/Apply pipeline or D6-5 cutover is added by D6-4.
+
+## SH4-D6-3 Gemini selection wire — actual paths, 2026-11-05
+
+- `src/main/services/learning/smart-hints/gemini-schema.ts`: Fix-only strict
+  replacement/no-fix schema with bounded strings/evidence; other schemas retained.
+- `gemini-provider.ts` in that directory: standalone Fix instruction, same frozen
+  source/selection/EOL input, private wire validation before returning; no mapper.
+- `selection-fix.ts`: existing private validator is now used by Gemini; validation
+  rules are unchanged. Main `service.ts` still blocks Fix dispatch.
+- `tests/main/smart-hints-gemini-contract.test.ts`, `smart-hints-gemini.test.ts`:
+  fake-transport C#/JS selection matrix, strict replacement/legacy rejection,
+  non-Fix compatibility and unchanged network policy. No new report file.
+
+## SH4-D6-2 contract migration — actual paths, 2026-11-05
+
+- `src/shared/contracts/smart-hints{,-validation}.ts`: required Fix selection,
+  bound range/fingerprint, strict selection and capability migration validation.
+- `src/main/services/learning/smart-hints/capture.ts`, `service.ts`: detached,
+  frozen private target/trusted signature identity; Fix dispatch remains disabled.
+- `src/main/services/learning/smart-hints/selection-fix.ts`: private replacement
+  wire type/validator only, not connected to provider or edit construction.
+- `src/preload/bridge/smart-hints.ts`, Main `exercise-ipc-service.ts`: strict
+  first-response binding/capability guards using existing ownership/lifecycle.
+- Practice hook/workspace/panel: no legacy Fix fallback; other actions retained.
+- `tests/main/smart-hints-selection-contract.test.ts`,
+  `tests/renderer/smart-hints-selection-capability.test.tsx`, contract/core/IPC/
+  Preload suites and `tests/tsconfig.sh4-d6-2.json`: scoped migration verification.
+
+## SH4-D6-1 local Fix selection capture — actual paths, 2026-11-05
+
+- `src/renderer/src/features/learning/practice/smart-hints-selection.ts`:
+  `createPracticeFixSelectionBinding`, local immutable Fix snapshot/readiness,
+  geometry checks and source/selection epochs; legacy capture functions unchanged.
+- `PracticeEditor.tsx` in that directory: local `captureFix` editor capability,
+  owned cursor/model/content/language observers and current workspace context.
+- `PracticeWorkspace.tsx`, `SmartHintsPanel.tsx`: source-free readiness summary,
+  explicitly unavailable selection mode; no new request/consent action wiring.
+- `tests/renderer/smart-hints-fix-selection{,-monaco}.test.tsx`: geometry/races/
+  freshness/disposal and real Monaco model coverage; existing integration tests
+  verify readiness does not reset Hint progression or dispatch requests.
+- `docs/SH4-D6-1-SELECTION-CAPTURE-ACCEPTANCE.md`: verification and limitations.
+  No Main/shared/provider/Apply pipeline changes; D6-2 and D6-4 remain separate.
+
+## SH4-D3 Suggest Fix contract guidance — actual paths, 2026-11-05
+
+- Existing `src/main/services/learning/smart-hints/gemini-provider.ts`: Fix-only
+  exact UTF-16/original source/EOL/NO_FIX instructions and private sourceEol enum.
+- Existing `gemini-schema.ts` in that domain: Fix-only field/branch descriptions;
+  no change to schema constraints or output shape.
+- `tests/main/smart-hints-gemini-contract.test.ts`: synthetic C#/JS/LF/CRLF,
+  UTF-16/end-exclusive/NO_FIX/unsafe edits, schema equivalence and other actions.
+- `docs/AI-SMART-HINTS-GEMINI-CONTRACT-FIX-ACCEPTANCE.md`: offline acceptance,
+  D2 exact mismatch evidence and explicit next-live-acceptance boundary.
+
+## SH4-D1 safe diagnostics — actual paths, 2026-11-05
+
+- `src/main/services/learning/smart-hints/validation-diagnostics.ts`: Main-private
+  read-only SH-1 rejection reasons and bounded output summary; shared validators
+  remain unchanged.
+- Existing `response-failure.ts`, `service.ts`, `configuration.ts`,
+  `gemini-provider.ts`, `adapter.ts`: projected/correlated normal-app diagnostics
+  and provider failure sources, with unchanged public contracts/request behavior.
+- `electron.vite.config.ts`: build-time diagnostics source identity injection.
+- `tests/main/smart-hints-safe-diagnostics.test.ts`: synthetic normal-app
+  regression, privacy, I/O/cancellation and acceptance-equivalence corpus.
+- `docs/AI-SMART-HINTS-GEMINI-DIAGNOSTICS-ACCEPTANCE.md`: SH4-D1 offline report;
+  no live evidence or original root-cause correction claimed.
+
+## Suggest Fix failure evidence — actual paths, 2026-11-03
+
+- `gemini-provider.ts` under `src/main/services/learning/smart-hints/`: safe
+  finish/token/usage/envelope/output JSON projections before strict rejection.
+- `service.ts`: exact private SH-1 schema-validation result in lifecycle evidence.
+- `configuration.ts`: terminal projection and atomic bounded last-Suggest-Fix
+  JSON under userData, separate from secrets/settings/reservations.
+- `src/main/index.ts`: fixed-message diagnostic-store failure sink only.
+- Existing Main configuration tests and Electron Gemini UI harness cover503,
+  MAX_TOKENS, safety, missing JSON and valid focused edits without real inference.
+- `docs/AI/AI-SMART-HINTS-SUGGEST-FIX-PROVIDER-INVESTIGATION.md`: actual-request
+  evidence missing; product failure remains BLOCKED, not declared fixed.
+
+## Ordinary Suggest Fix30s correction — actual paths, 2026-11-03
+
+- `src/shared/contracts/smart-hints.ts`: normal Gemini action timeout helper,
+  no change to shared10s default or IPC payload shape.
+- `src/main/services/learning/smart-hints/service.ts`, `adapter.ts`: Main-only
+  execution deadline/context and one-shot lifecycle diagnostics.
+- `gemini-provider.ts`, `configuration.ts` in that directory: shared Main
+  deadline, action selection, reservation stage and safe terminal projection.
+- `src/main/index.ts`: `[SmartHints execution]` Main console diagnostic sink.
+- `SmartHintsPanel.tsx`, `use-smart-hints.ts` in renderer practice: consent30s
+  for Gemini Suggest Fix, clear timeout message, existing loading/Cancel.
+- Main configuration/Renderer Smart Hints tests plus the existing
+  `scripts/smoke-smart-hints-gemini-ui.mjs`: normal Main dependency injection,
+  fake15s response,30s timeout and real Monaco/IPC UI coverage. No new runner.
+
+## Normal Smart Hints usage limits — actual paths, 2026-11-03
+
+- `src/main/services/learning/smart-hints/configuration.ts`: daily policy, legacy
+  review/migration, immutable reservation recovery, source-free status, persisted
+  sanitized provider-limit observation; normal path independent of acceptance.
+- `src/main/services/learning/smart-hints/gemini-limit.ts`: bounded structured429
+  classification and cooldown extraction, abort/stream cleanup, no raw error DTO.
+- `src/main/services/learning/smart-hints/service.ts`: read-only local rate reset.
+- `src/shared/contracts/smart-hints-settings.ts`, Settings IPC/preload and
+  `src/renderer/src/features/settings/SmartHintsSettings.tsx`: validated daily
+  limits, four distinct limit states, usage/reset display and offline refresh.
+- `tests/main/smart-hints-configuration.test.ts`, `smart-hints-gemini-limit.test.ts`,
+  scoped Settings IPC/preload/Renderer tests: fake-only usage-policy regressions.
+
+## SH-4 NOT_READY corrective coverage — actual paths, 2026-11-03
+
+- Existing practice `use-smart-hints.ts`/`SmartHintsPanel.tsx`: independent provider
+  capability probes, guarded explicit refresh, manual availability when disabled.
+- Existing Main `smart-hints/live-ui-acceptance.ts`: safe private reason enums,
+  unchanged approval/budget/sample/credential guards; no new IPC/DTO.
+- Existing renderer/main Smart Hints tests: before/after race, stale probe order,
+  negative cache recovery, diagnostic reasons and budget3 no-renewal coverage.
+- Existing `smoke-smart-hints-gemini-ui.mjs` scenario `capability-race`: real
+  Main/IPC + actual Monaco revision change, fake budget3/transport; explicit
+  recheck of negative gates remains disabled with zero HTTP.
+- `docs/AI/AI-SMART-HINTS-SH4-NOT-READY-FIX.md`: evidence, state distinctions and
+  safe recheck; original live incident cannot be attributed without session data.
+
+## SH-4 current UI acceptance review — actual coverage, 2026-11-03
+
+- Existing `scripts/smoke-smart-hints-gemini-ui.mjs`: public Sum educational fake
+  responses/exact0→b proposal; computed current-host Monaco diff, old/new source
+  and read-only editor assertions before screenshot/Apply. No app code change.
+- `docs/AI/AI-SMART-HINTS-SH4-UI-FINAL-OFFLINE-ACCEPTANCE.md`: current matrix,
+  fresh evidence/logs, baseline failures, manual checklist and readiness with the
+  existing gated launcher. Replaces older missing-launcher readiness limitation.
+
+## SH-4 development Live UI launcher — actual paths, 2026-11-03
+
+- `src/main/services/learning/smart-hints/live-ui-acceptance.ts`: Main argv
+  approval, sample allowlist, one-use activation and durable inference budget;
+  composes existing service/Gemini adapter. Main index retains disabled default.
+- `scripts/run-smart-hints-live-ui.mjs`: offline preparation, local Electron entry
+  and isolated userData; no key argument/config or implicit live budget.
+- `scripts/smoke-smart-hints-gemini-ui.mjs --launcher`: fake HTTP/confirmation,
+  actual Main argv composition and launcher entry; no app fake-transport switch.
+- `tests/main/smart-hints-live-ui.test.ts`:25 service/provider integration cases.
+- `docs/AI/AI-SMART-HINTS-SH4-LIVE-UI-LAUNCHER.md`: PowerShell/key/budget/off
+  instructions, evidence and manual checklist; STOP before live grant.
+
+## SH-4 offline Learning/Practice UI acceptance - actual paths, 2026-11-03
+
+- `scripts/smoke-smart-hints-gemini-ui.mjs`: isolated real Electron UI/preload/IPC,
+  capture/service/Gemini adapter, synthetic transport and credential only;
+  progressive actions, review/edit guards, error and owner-abort scenarios.
+  Test-only in-memory composition; no production config/source change or live mode.
+- `docs/AI/AI-SMART-HINTS-SH4-UI-ACCEPTANCE.md`: actual offline matrix, limitations,
+  baseline failures, manual checklist and STOP before separately approved live UI.
+
+## SH-4 AQ. compatibility - actual coverage, 2026-11-02
+
+Existing gemini-provider.ts shared geminiKeyState now recognizes the literal AQ. separator with a bounded4KiB local auth-key branch; Standard/AIza bounds remain512. Main composition and manual smoke use this same validator. Existing Gemini provider/smoke tests and native PowerShell/Node/Electron env test cover both fake key types and unchanged x-goog-api-key, with no Authorization/Bearer. No new runtime module/IPC/business contract.127 focused tests PASS; [report](AI/AI-SMART-HINTS-SH4-GEMINI-AUTH-KEY-COMPATIBILITY.md).
+
+
+## SH-4 Gemini key investigation - actual coverage, 2026-11-02
+
+Existing gemini-provider.ts exports the single Main-only geminiKeyState safety
+classifier; existing smoke/runner use precise private key/consent/HTTP codes and
+KEY_VALIDATION stage. No business DTO/IPC/secret authority change or new runtime
+module. New tests/scripts/smart-hints-gemini-env.test.mjs runs a fake-key actual
+PowerShell -> Node supervisor -> Electron Main chain using a separate temp root,
+without workspace attempt/evidence mutation. Existing Gemini Main/smoke tests
+cover local rejection and unchanged header.90 focused PASS; details:
+[Key investigation](AI/AI-SMART-HINTS-SH4-GEMINI-KEY-INVESTIGATION.md).
+
+
+## SH-4 Gemini replacement - actual paths, 2026-11-02
+
+- `src/main/services/learning/smart-hints/gemini-provider.ts`: Main-owned fixed
+  Gemini REST model check/inference, bounded reads/diagnostics, approval and Free
+  Tier attestation gates; existing SmartHintsService owns consent/quota/state and
+  output/edit validation. `gemini-schema.ts`: provider wire-only JSON schemas.
+- `src/main/index.ts`: Gemini factory, production/default approval and tier false.
+  Existing shared smart-hints capability type/validator add GEMINI_FREE only;
+  SmartHintsPanel existing consent identifies Google/model/Free Tier.
+- `scripts/sh4-gemini-smoke.ts`, `sh4-gemini-smoke-main.ts`,
+  `run-smart-hints-gemini-live.mjs`: new isolated synthetic Main smoke, offline
+  Electron GUI test and bounded supervisor. Only Main reads GEMINI_API_KEY.
+- Existing neutral `scripts/sh4-attempt-store.mjs`/`.d.mts`: fixed Gemini profile
+  with separate `out/sh4-gemini-attempts/<offline|live>/<attempt-id>/` namespace;
+  existing consent window adds Gemini recipient copy. Legacy OpenRouter live CLI
+  is retired before dispatch; its source/tests/historical evidence are retained.
+- `tests/main/smart-hints-gemini.test.ts`, `smart-hints-gemini-smoke.test.ts`:
+  fake-transport schema/envelope/HTTP/quota/deadline/cancellation/lifecycle tests.
+  `tests/scripts/smart-hints-gemini-runner.test.mjs`: immutable attempts, isolation,
+  supervisor timeout/cleanup and retired/denied CLI. Existing renderer UI test
+  adds Gemini consent; SH-4 scoped tsconfig covers the new TS entries.
+- Acceptance and live handoff: `AI/AI-SMART-HINTS-SH4-GEMINI-ACCEPTANCE.md`.
+  SH-1/2/3 ownership and business DTOs remain; no new IPC/dependency/Monaco patch.
+
+
+SH-4 envelope audit actual paths (2026-11-02):
+`src/main/services/learning/smart-hints/envelope-diagnostics.ts` projects only
+fixed guard/field names and presence/type states. The existing response-failure
+sink sanitizes it; adapter and isolated smoke attach it. Regression coverage:
+`tests/main/smart-hints-openrouter-envelope.test.ts`. No shared IPC owner changed.
+Evidence/contract audit: `AI/AI-SMART-HINTS-SH4-ENVELOPE-INVESTIGATION.md`.
+
+
+SH-4 response classification actual paths (2026-11-02):
+`src/main/services/learning/smart-hints/response-failure.ts` owns Main-private safe
+failure-stage/content-type/schema-field projection. Existing adapter/service and
+development factory feed only the isolated smoke's private evidence; no shared
+IPC DTO or Renderer import. Covered by
+`tests/main/smart-hints-response-classification.test.ts` plus current SH suites.
+Evidence: `AI/AI-SMART-HINTS-SH4-RESPONSE-CLASSIFICATION.md`.
+
+
+SH-4 runner attempt management actual paths (2026-11-02):
+`scripts/sh4-attempt-store.mjs` and `.d.mts` implement private runner artifact
+ownership/no-clobber publication; tested by
+`tests/scripts/smart-hints-attempt-store.test.mjs` and
+`tests/main/smart-hints-attempts.test.ts`. Existing launcher/Main/offline Electron
+entry now use `out/sh4-attempts/<live|offline>/<attempt-id>/` for manifest,
+reservation, final result, progress, bundle and user-data. Legacy out/ evidence
+is read-only; no production/IPC owner changed. See SH-4 Acceptance for checks.
+
+
+SH-4 offline stabilization actual paths (2026-11-02):
+`scripts/sh4-openrouter-diagnostics.ts` is a Main/manual-only bounded projection,
+covered by `tests/main/smart-hints-openrouter-diagnostics.test.ts` and the existing
+runner tests. Existing OpenRouter factory/runner support the optional fixed North
+development profile; no Renderer/shared IPC module or architecture owner changed.
+See the latest SH-4 investigation/Acceptance for evidence and live restrictions.
+
+
+SH-4 manual consent UI actual paths:
+`scripts/sh4-consent-window.ts` (isolated secure BrowserWindow, no preload/IDE IPC),
+`scripts/sh4-consent-electron-tests.ts` (`--offline-consent-tests` only),
+`tests/scripts/smart-hints-consent-window.test.mjs` (window/security/lifecycle).
+The existing launcher bundles either interactive Main or explicit offline tests;
+interactive `--offline-check` now requires both consent decisions. Scoped tsconfig
+includes both new TS scripts. See `docs/AI/AI-SMART-HINTS-SH4-CONSENT-UI.md`.
+
+SH-4 runner corrective coverage also exists at
+`tests/scripts/smart-hints-live-supervisor.test.mjs` (isolated fake/dummy-child
+lifecycle). Runner stages and atomic run-correlated results remain in the existing
+manual launcher/Main/support files. Diagnosis: `docs/AI/AI-SMART-HINTS-SH4-RUNNER-DEBUG.md`.
+The same launcher/Main also expose `--offline-check`: synthetic transport/key,
+separate offline result/user-data, no production import or live marker mutation.
+Main evidence lives in immutable `out/sh4-live-runner/progress-<runId>-<sequence>.json`
+snapshots; only the launcher publishes the final aggregate result. Safe fallback
+failure snapshots also remain private to this manual runner.
+
+## SH-4 OpenRouter replacement — actual paths, 2026-11-02
+
+- Manual-only `scripts/run-smart-hints-openrouter-live.mjs` bundles/launches isolated
+  `sh4-openrouter-smoke-main.ts`; `sh4-openrouter-smoke.ts` uses existing Main SH
+  service/adapter with synthetic C# capture, native consent, free metadata checks
+  and one persistent inference reservation. No production entry import or new IPC.
+  `tests/main/smart-hints-live-runner.test.ts`, existing SH-4 scoped tsconfig:
+  offline injected-transports verification; safe artifacts under out/.
+
+- `src/main/services/learning/smart-hints/openrouter-provider.ts` replaces the NIM
+  provider file; fixed free route/model and existing gated ephemeral credential.
+- SH `adapter.ts`: OpenRouter envelope/metadata support, prompt JSON validation,
+  zero price ceilings, no provider fallback; historical fake protocol remains.
+- `src/main/index.ts`: OPENROUTER_API_KEY loader, liveApproved false.
+- Shared SmartCapabilities/validator: OPENROUTER_FREE replaces NVIDIA_NIM;
+  Practice `SmartHintsPanel.tsx`: OpenRouter/routed-provider consent text.
+- `tests/main/smart-hints-openrouter.test.ts` replaces NVIDIA tests; Renderer UI
+  tests verify new recipient/consent. Existing SH-4 scoped tsconfig includes both.
+- SH-1–3 service/capture/receipt/diff/apply modules retain their existing ownership.
+
+## SH-4 actual integration paths — 2026-10-29
+
+- Main SH `nvidia-provider.ts`: fixed NVIDIA NIM adapter, scoped ephemeral key,
+  development/approval-gated factory; `index.ts` keeps liveApproved false.
+- SH `adapter.ts`: bounded shared SH-only JSON transport with separate fake/NIM
+  protocol parameters, credential reflection rejection, response-stream cleanup.
+- SH `service.ts`: provider identity capability and shutdown credential disposal;
+  shared SmartCapabilities/validator: NVIDIA_NIM mode, no new channel or payload key.
+- Practice `SmartHintsPanel.tsx`: NVIDIA recipient/trial/privacy consent copy.
+- `tests/main/smart-hints-nvidia.test.ts`, existing Renderer UI tests and
+  `tests/tsconfig.sh4.json`: fake-only security/protocol/lifecycle verification.
+- `docs/AI/AI-SMART-HINTS-SH4-ACCEPTANCE.md`: actual evidence/live approval checklist.
+
+## SH-3 option A — verified actual paths, 2026-10-29
+
+- `scripts/apply-monaco-hover-lifetime-patch.mjs`, `package.json`: exact-version/
+  hash dependency patch, captured-original backup, checked rollback/idempotence,
+  prebuild/postinstall; no new package.
+- `tests/scripts/monaco-hover-lifetime-patch.test.mjs`:17 filesystem safety cases.
+- `practice/SmartHintDiffPreview.tsx`: single owned host observer, cancellable RAF
+  mode/size writes, read-only models and ordered disposal.
+- `tests/renderer/smart-hints-diff.test.tsx`:3 layout/coalescing/disposal cases.
+- Main SH `service.ts` and core test: verified fake-only Apply and shutdown guard.
+- Diagnostic/smoke scripts retain strict console failures, native trace and
+  responsive DOM readiness; final3 full native runs PASS without probe.
+- Status FIXED — AWAITING USER ACCEPTANCE, tracking IN_PROGRESS. Earlier blocked
+  entries below are historical. Actual production DISABLED; SH-4 NOT_STARTED.
+
+## SH-3 unblock diagnostics — actual paths, 2026-10-29
+
+- `scripts/diagnose-smart-hints-lifecycle.mjs`: isolated real standalone Monaco
+  no-Diff/live-editor baseline, Diff/dispose/Suggest reproducer and native keyboard
+  Undo/Redo control. No SH provider or Run/Submit.
+- Existing `scripts/smoke-smart-hints-apply.mjs`: diagnostic `--baseline` and
+  `--matrix-only`, native content/key/focus/canRedo traces; every console error now
+  fails the smoke. Actual product controls remain disabled.
+- `docs/AI/AI-SMART-HINTS-SH3-UNBLOCK-OPTIONS.md`: independently established source
+  ownership chain, exact unapplied dependency candidate/hash and validation gate.
+- SH-3 remains BLOCKED. No application/dependency/architecture changes in this
+  investigation; further correction needs approval at the dependency boundary.
+
+## SH-3 Diff/Apply/Undo — actual paths, 2026-10-29
+
+**BLOCKED — NOT PASS:** these paths exist as gated implementation. Real standalone
+lifecycle/Redo safety failed; normal compositions keep Apply false and hide Diff.
+The diagnostic script alone injects true; do not treat it as a release entry point.
+
+- `practice/SmartHintDiffPreview.tsx`: native modal, readonly Monaco DiffEditor,
+  isolated ephemeral models, inline narrow layout, accessible hunk text, disposal.
+- `practice/smart-hint-edits.ts`: synchronous guarded one-batch native transaction,
+  deterministic selection mapping, scroll/focus and postcondition checks.
+- Existing `practice/{PracticeEditor,PracticeWorkspace,SmartHintsPanel}.tsx`,
+  `use-smart-hints.ts`, `smart-hints-selection.ts`, `smart-hints.css`: local grant,
+  Preview/Apply/Discard, busy gates, context retirement and existing draft path.
+- Shared `smart-hints.ts`, `smart-hints-validation.ts` and Main SH `service.ts`:
+  fake-only Apply capability, production still disabled; no new IPC channel.
+- `tests/renderer/smart-hints-edits.test.tsx`: real model/UTF-16/EOL/native undo,
+  draft queue failure/inflight and Project sentinel; existing SH UI tests add
+  grant/fingerprint/context/expiry/duplicate protections. `tests/tsconfig.sh3.json`.
+- `scripts/smoke-smart-hints-apply.mjs`: production app and real standalone editor,
+  fake IPC, isolated userData; keyboard Undo/Redo, diff/focus/selection/autosave.
+- [SH-3 acceptance](AI/AI-SMART-HINTS-SH3-ACCEPTANCE.md): actual verification,
+  baseline failures, manual checklist and limitations. No SH-4 implementation.
+
+## SH-2 Smart Hints UI — actual paths, 2026-10-28
+
+- `src/renderer/src/features/learning/practice/SmartHintsPanel.tsx`: drawer,
+  per-snapshot consent dialog, progressive hints, host Run observations, advisory
+  analysis/explanation, read-only proposals/NO_FIX and recovery controls.
+- `practice/use-smart-hints.ts`: Renderer-local context, admission, binding/hash/
+  sequence validation, consent, polling, expiry and independent retirement.
+- `practice/smart-hints-selection.ts`: exact Practice model/primary selection and
+  registered single-code-node Solution DOM capture; no edit capability.
+- Existing `PracticeWorkspace.tsx`, `PracticeEditor.tsx`, `PracticeDescription.tsx`,
+  `PracticeSolution.tsx`: local capture, Monaco action/keyboard/toolbar, Solution
+  selection and lifecycle wiring; established Practice presentation retained.
+- `practice/smart-hints.css`, existing `src/renderer/src/styles.css`: scoped
+  drawer/dialog styles loaded through the existing stylesheet entry.
+- `tests/renderer/smart-hints-{selection,ui,integration}.test.tsx`,
+  `tests/tsconfig.sh2.json`: component/selection and accepted bridge → Main service
+  → fake transport tests. Component Monaco hosts are mocked.
+- `scripts/smoke-smart-hints-ui.mjs`: separate Electron acceptance harness using
+  production Renderer/Preload and real Monaco, synthetic SH IPC responses and
+  isolated userData; no provider/network or Run/Submit execution. No test mode is
+  added to production composition. Evidence/screenshots are generated under `out/`.
+- `tests/sh2-baseline.vitest.config.mts`: read-only HEAD overlay of four Practice
+  components for the Learning timeout absence control; no checkout/fixture edits.
+- [SH-2 acceptance](AI-SMART-HINTS-SH2-ACCEPTANCE.md): evidence and limitations.
+
+## SH-1 Smart Hints core — actual paths, 2026-10-28
+
+- `src/shared/contracts/smart-hints.ts`, `smart-hints-validation.ts`: separate
+  semantic APIs, exact schemas, request consent, bounded typed public evidence and edits.
+- `src/main/services/learning/smart-hints/{capture,public-run-receipt,service,adapter}.ts`:
+  public acquisition, Main-only receipt, independent ephemeral lifecycle and injected
+  fake DeepSeek transport. Unchanged D2 parser/transport interfaces are imported.
+- Existing `package-run-binding.ts`, `exercise-service.ts`: detached public mapping
+  from admitted leased inputs, finalized owner-bound receipt, TTL/retirement only.
+- Existing `src/main/ipc/exercise-ipc-service.ts`, `src/main/index.ts`: dedicated SH
+  channels, owner/frame checks and unprovisioned production composition.
+- `src/preload/bridge/smart-hints.ts`; existing `bridge/learning.ts`, shared
+  `learning.ts`/`index.ts`: typed capability, immutable binding/epoch/sequence guards.
+- `tests/{contracts,main,preload}/smart-hints*.test.ts`,
+  `tests/fixtures/learning/smart-hints.ts`, `tests/tsconfig.sh1.json`: synthetic
+  focused integration/security/lifecycle/Run tests. No production Renderer change.
+- `tests/sh1-baseline.vitest.config.mts`: read-only HEAD overlay for the existing
+  Run regression control; never checks out or overwrites working files.
+- [SH-1 acceptance](AI-SMART-HINTS-SH1-ACCEPTANCE.md): actual checks and limitations.
+
+## Learning Chapter 2 Solutions — 2026-10-28
+
+User-authorized content extension only; preserve existing ch2-01 Sum and Solution
+UI. All9 Chapter2 exercises now have C#/JavaScript teaching content;8 added.
+
+- `src/renderer/src/features/learning/practice/chapter2-solutions.ts`: authored
+  ch2-02–ch2-09 analysis, algorithm, meaningful numbered source lines, complete
+  code and complexity. Existing `solutions.ts` adds the eight exact-signature mappings.
+- `tests/fixtures/learning/chapter2-solution-public.ts`: public metadata/samples/
+  starters only and independent boundary examples; no Official/hidden test reads.
+- `tests/renderer/chapter2-solutions.test.tsx`,
+  `tests/main/chapter2-solution-runtime.test.ts`, `tests/tsconfig.solutions-chapter2.json`:
+  content/Copy/signature/pilot-preservation, trusted teaching-code C#/JS execution
+  and independent finite-domain checks. No Native Judge/IDE build.
+- [Chapter2 review](LEARNING-SOLUTIONS-CHAPTER2-REVIEW.md):157 selected PASS/0 FAIL/
+  0 SKIP, scoped tsc/targeted lint/diff PASS; inherited phase acceptance unchanged.
+
+## WA-B1 accepted / WA-B2 Wrong Answer UI — 2026-10-28
+
+WA-B1 is formally COMPLETE — PASS WITH LIMITATIONS;550 related PASS including80
+focused and scoped tsc/lint/diff evidence retained without native/build/E2E or
+target-host performance/RAM certification. B2 actual Renderer paths:
+
+- `practice/WrongAnswerPanel.tsx`: existing validated B1 status only; safe typed
+  JSON text for public values, truthful fallback, fail-fast counts, storage and
+  stale-source notice. No data acquisition/History/AI authority.
+- Existing `practice/PracticeDescription.tsx`, `PracticeWorkspace.tsx`,
+  `use-submission.ts`: dynamic fourth tab, guarded local Attempt marker, same-ref
+  once-only selection and context/pagehide retirement. Editor/Run remain mounted
+  independently. `SubmissionResult.tsx` exports unchanged storage message formatter.
+- Existing `learning.css`: scoped light Practice tokens, restrained error/success
+  accents and independently scrollable values; shared Tabs implementation unchanged.
+- `tests/renderer/wrong-answer-ui.test.tsx`, `tests/tsconfig.wa-b2.json`: synthetic
+  UI verification. Existing `submission-history.test.tsx` has a narrow assertion/
+  fixture update for approved WA auto-navigation; pre-existing edits preserved.
+- [WA-B2 acceptance](WA-B2-WRONG-ANSWER-UI-ACCEPTANCE.md): delivery/verification,
+  Electron manual checklist and limitations. No Main/Preload/shared/storage change.
+
+## WA-B1 safe public diagnostic — 2026-10-28
+
+- `src/shared/contracts/submission-diagnostic.ts`:32 KiB bounded descriptor/typed
+  validation and public mismatch/unavailable union; `submission.ts` and
+  `submission-validation.ts` bind optional diagnostic to WA STORAGE/SETTLED status.
+- `src/main/services/learning/judge/public-sample-diagnostic.ts`: Main-only same
+  leased package public provenance verification, bounded detached capture/fallback.
+- Existing `official-case-plan.ts`, `judge-service.ts`, `exercise-service.ts`:
+  synchronous resolver at mismatch, final-qualified publication and retirement.
+  Comparator/verdict reducer, execution count and storage authority are unchanged.
+- Existing `submission-projection.ts`, `src/preload/bridge/submission.ts`:
+  explicit projection, strict validation/clone and immutable same-ref evidence.
+  Existing Exercise IPC routes carry the extended status without new channels.
+- `tests/{contracts,main,preload}/wa-diagnostic.test.ts`,
+  `tests/fixtures/learning/wa-diagnostic.ts`, `tests/tsconfig.wa-b1.json`:
+  synthetic contract/provenance/real-service/storage/IPC/Preload verification.
+- [WA-B1 acceptance](WA-B1-SAFE-DIAGNOSTIC-ACCEPTANCE.md): no Renderer/WA-B2,
+  hidden policy relaxation, storage schema/migration, AI/network or native/build work.
+
+## AI-D2 Submission Analysis — 2026-10-28
+
+Actual paths:
+
+- `src/shared/contracts/analysis.ts`, `analysis-validation.ts`: semantic operations,
+  consent, status/result allowlists and bounds; exported by contracts index.
+- `src/main/services/learning/analysis/`: Main-private `contracts.ts`,
+  `validation.ts`, `adapter.ts` promoted independently from accepted D1; `capture.ts`
+  for existing committed-read/public Registry projection; `service.ts` for ephemeral
+  single-use operations, deduplication, cancellation and status.
+- Existing `storage/submission-read-model.ts` and `learning-store.ts`: bounded
+  read-only analysis projection; existing write/recovery/lease policy unchanged.
+  `submission-projection.ts` extends its encrypted source token with selected
+  exercise/language/version metadata for exact Main-private analysis binding.
+- Existing `src/main/ipc/exercise-ipc-service.ts`: separate analysis channels use
+  the same owner/frame/context/source-reference authority as Submission History.
+  `src/main/index.ts` composes a fail-closed unprovisioned service.
+- `src/preload/bridge/analysis.ts` through `bridge/learning.ts`: typed pull-based
+  analysis API, requestId/sequence/shared epoch filtering and unload cleanup.
+- `tests/{main,preload,contracts}/analysis*.test.ts`,
+  `tests/fixtures/learning/analysis.ts`, `tests/tsconfig.ai-d2.json`: synthetic
+  isolated verification and scoped compiler closure. No Renderer UI added.
+
 ## Learning Chapter 7 Solutions — 2026-10-27
 
 Chapter 6 was accepted by the user before authorizing this content extension. No UI redesign or E7/candidate acceptance change.

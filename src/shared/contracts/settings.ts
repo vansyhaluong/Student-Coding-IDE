@@ -1,5 +1,6 @@
 import type { AppResult } from './app-error'
 import { validateExactObject, type ValidationResult } from './validation'
+import type { SmartHintsSettingsApi } from './smart-hints-settings'
 export interface AppSettings { theme: 'dark' | 'light' | 'system'; fontSize: number; tabSize: 2 | 4; autoSave: boolean }
 export const defaultSettings = (): AppSettings => ({ theme: 'dark', fontSize: 13, tabSize: 2, autoSave: false })
 export function validateSettings(value: unknown): ValidationResult<AppSettings> {
@@ -24,6 +25,7 @@ export function isDependencyGuidance(v: unknown): v is DependencyGuidance {
 }
 export const SETTINGS_CHANNELS = { get: 'settings:get', update: 'settings:update', dependencies: 'settings:dependencies' } as const
 export interface SettingsApi {
+  smartHints?: SmartHintsSettingsApi
   get(): Promise<AppResult<SettingsSnapshot>>
   update(settings: AppSettings): Promise<AppResult<SettingsSnapshot>>
   dependencies(): Promise<AppResult<DependencyGuidance>>

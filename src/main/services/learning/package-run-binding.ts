@@ -9,6 +9,7 @@ import { exerciseCoreError } from './runtime/exercise-limits'
 import type { ExercisePackageRegistry, PublicPackageLease } from './content/exercise-package-registry'
 import { publicExercise } from './content/public-exercise-projection'
 import { PACKAGE_POLICY as P } from './content/exercise-package-policy'
+import { publicRunPackage } from './smart-hints/public-run-receipt'
 
 /** Additive Main binding; delegates unchanged9D adapters after Core admits Prepare. */
 export function packageRunBinding<T extends CsharpExecutionAdapter | JavascriptExecutionAdapter>(registry: ExercisePackageRegistry,
@@ -17,6 +18,7 @@ export function packageRunBinding<T extends CsharpExecutionAdapter | JavascriptE
   let representation: ReturnType<PublicPackageLease['represent']> | undefined
   let pending: Promise<unknown> | undefined, signal: AbortSignal | undefined
   let released = false, clean = false
+  let receiptPackage: ReturnType<typeof publicRunPackage>
   const owner = {}
   let schema: { parameterTypes: Exercise['parameters'][number]['type'][]; returnType: Exercise['returnType']; sampleCount: number } | undefined
   const get = (): T => { if (!delegate) throw exerciseCoreError('RESULT_PENDING'); return delegate }
@@ -33,6 +35,12 @@ export function packageRunBinding<T extends CsharpExecutionAdapter | JavascriptE
         check()
         const exercise = representation.data
         if (!isExercise(exercise)) throw exerciseCoreError('INTERNAL_ERROR')
+        // Capture detached public mapping now, from the inputs actually projected to this adapter.
+        // Advisory failure never changes the admitted Run or its cleanup.
+        try {
+          const candidate = publicRunPackage(lease.data)
+          if (candidate && JSON.stringify(candidate.samples.map(s => ({ args: s.args, expected: s.expected }))) === JSON.stringify(exercise.samples)) receiptPackage = candidate
+        } catch { receiptPackage = undefined }
         delegate = factory(exercise)
         schema = { parameterTypes: exercise.parameters.map(p => p.type), returnType: exercise.returnType, sampleCount: exercise.samples.length }
       }
@@ -52,7 +60,9 @@ export function packageRunBinding<T extends CsharpExecutionAdapter | JavascriptE
     adapter,
     schema: () => schema,
     available: () => !!delegate,
+    // Detached public-only evidence from the SAME leased input used by the adapter.
+    publicRunPackage: () => !released && receiptPackage ? structuredClone(receiptPackage) : undefined,
     /** Called by ExerciseService only after Core cleanup AND execution settle. */
-    releaseContent() { clean = true; released = true; delegate = undefined; schema = undefined; representation?.release(); representation = undefined; lease?.release(); lease = undefined; pending = undefined },
+    releaseContent() { clean = true; released = true; delegate = undefined; schema = undefined; receiptPackage = undefined; representation?.release(); representation = undefined; lease?.release(); lease = undefined; pending = undefined },
   }
 }

@@ -11,6 +11,27 @@ import { SubmissionProjection } from '../services/learning/submission-projection
 import type { LearningStore } from '../services/learning/learning-store'
 import { SubmissionReadModel } from '../services/learning/storage/submission-read-model'
 import type { IpcHandlerRegistry, IpcRequestContext, IpcSenderFrame } from './ipc-handler-registry'
+import { ANALYSIS_CHANNELS as A } from '../../shared/contracts/analysis'
+import { validateAnalysisPrepare, validateAnalysisStart, validateAnalysisReference, isAnalysisStatus } from '../../shared/contracts/analysis-validation'
+import type { SubmissionAnalysisService } from '../services/learning/analysis/service'
+import type { SavedAnalysisCapture, AnalysisSubmissionBinding } from '../services/learning/analysis/capture'
+import { SMART_HINT_CHANNELS as H } from '../../shared/contracts/smart-hints'
+import { validateSmartPrepare, validateSmartReference, validateSmartStart, validateSmartRetire, isSmartStatus, isSmartCapabilities } from '../../shared/contracts/smart-hints-validation'
+import { validateEmptyObject } from '../../shared/contracts/validation'
+import type { SmartHintsService } from '../services/learning/smart-hints/service'
+import type { SmartCapture } from '../services/learning/smart-hints/capture'
+import type { SmartPrepare } from '../../shared/contracts/smart-hints'
+import type { PublicRunReceipt } from '../services/learning/smart-hints/public-run-receipt'
+
+export interface SmartHintsIpcPorts {
+  service: SmartHintsService
+  capture(request: SmartPrepare, generation: number, check: () => void, receipt?: PublicRunReceipt): Promise<SmartCapture>
+}
+
+export interface AnalysisIpcPorts {
+  service: SubmissionAnalysisService
+  capture(binding: AnalysisSubmissionBinding, check: () => void): Promise<SavedAnalysisCapture>
+}
 
 interface Publication { context: IpcRequestContext; epoch: object; sessionId: string; generation: number; sequence: number }
 interface ReadStamp { entry: object; epoch: object; serviceEntry: object; serviceEpoch: number; scope: string }
@@ -33,11 +54,15 @@ export class ExerciseIpcService {
   constructor(private readonly registry: IpcHandlerRegistry, private readonly service: ExerciseService,
     private readonly authorize: (context: IpcRequestContext) => void,
     private readonly send: (context: IpcRequestContext, snapshot: ExerciseSnapshot) => void,
-    private readonly submissions?: SubmissionIpcPorts) {}
+    private readonly submissions?: SubmissionIpcPorts,
+    private readonly analysis?: AnalysisIpcPorts,
+    private readonly smartHints?: SmartHintsIpcPorts) {}
   observe(owner: ExerciseOwner): void {
     if (this.sealed || owner.isDestroyed() || this.owners.has(owner.id)) return
     const invalidate = () => {
       if (this.owners.get(owner.id) !== entry) return
+      this.analysis?.service.invalidate(owner.id)
+      this.smartHints?.service.invalidate(owner.id)
       entry.epoch = {}
       entry.scope = randomUUID()
       if (this.publication?.context.senderId === owner.id) this.publication = undefined
@@ -77,6 +102,74 @@ export class ExerciseIpcService {
         }) }),
     ]
     if (this.submissions) this.startSubmission()
+    if (this.analysis) this.startAnalysis()
+    if (this.smartHints) this.startSmartHints()
+  }
+  /** Document authority only: SH source edits never invalidate Run/Submit/D2 generations. */
+  private async smartBoundary<T>(context: IpcRequestContext, action: (scope: string, check: () => void) => T | Promise<T>): Promise<T> {
+    try {
+      this.assertContext(context)
+      const entry = this.owners.get(context.senderId)!, epoch = entry.epoch, frame = context.senderFrame
+      const check = () => {
+        this.assertContext(context)
+        if (this.owners.get(context.senderId) !== entry || entry.epoch !== epoch || !sameFrame(frame, entry.frame)) throw this.denied()
+      }
+      const value = await action(entry.scope, check)
+      check(); return value
+    } catch { throw new DomainError({ code: 'INVALID_INPUT', operation: 'smart-hints', message: 'The Smart Hints request could not be completed.', retryable: false }) }
+  }
+  private startSmartHints(): void {
+    const ports = this.smartHints!, safe = (value: unknown) => { if (!isSmartStatus(value)) throw this.denied(); return value }
+    this.removers.push(
+      this.registry.register({ channel: H.capabilities, validate: validateEmptyObject,
+        handle: (_, context) => this.smartBoundary(context, async () => {
+          const value = await ports.service.probeCapabilities()
+          if (!isSmartCapabilities(value)) throw this.denied()
+          return value
+        }) }),
+      this.registry.register({ channel: H.prepare, validate: validateSmartPrepare,
+        handle: (request, context) => this.smartBoundary(context, (scope, check) => {
+          let receipt: PublicRunReceipt | undefined
+          if (request.run) { try { receipt = this.service.publicRunReceipt(context.senderId, request.run) } catch { /* CODE_ONLY */ } }
+          return ports.service.prepare(context.senderId, scope, request, check,
+            (generation, guard) => ports.capture(request, generation, guard, receipt)).then(safe)
+        }) }),
+      this.registry.register({ channel: H.start, validate: validateSmartStart,
+        handle: (request, context) => this.smartBoundary(context, scope => safe(ports.service.start(context.senderId, scope, request))) }),
+      this.registry.register({ channel: H.status, validate: validateSmartReference,
+        handle: (request, context) => this.smartBoundary(context, scope => safe(ports.service.status(context.senderId, scope, request))) }),
+      this.registry.register({ channel: H.cancel, validate: validateSmartReference,
+        handle: (request, context) => this.smartBoundary(context, scope => safe(ports.service.cancel(context.senderId, scope, request))) }),
+      this.registry.register({ channel: H.retireContext, validate: validateSmartRetire,
+        handle: (request, context) => this.smartBoundary(context, scope => {
+          if (ports.service.retireContext(context.senderId, scope, request)) this.service.retirePublicRunReceipt(context.senderId)
+          return null
+        }) }),
+    )
+  }
+  private startAnalysis(): void {
+    const service = this.analysis!.service
+    const safe = (value: unknown) => { if (!isAnalysisStatus(value)) throw this.denied(); return value }
+    this.removers.push(
+      this.registry.register({ channel: A.prepare, validate: validateAnalysisPrepare,
+        handle: (request, context) => this.submissionBoundary(A.prepare, context, scope => {
+          const stamp = this.stamp(context), binding = this.projection.analysisBinding(request.sourceReference, scope)
+          // History reissues encrypted tokens; deduplicate by their authenticated identity.
+          const identity = JSON.stringify([binding.key.storeKind, binding.key.recordId, binding.submissionId,
+            binding.sourceHash, binding.sourceRevision, binding.exerciseId, binding.language, binding.packageVersion])
+          return safe(service.prepare(context.senderId, scope, { requestId: request.requestId, sourceReference: identity }, () => this.checkStamp(context, stamp),
+            check => this.analysis!.capture(binding, check)))
+        }) }),
+      this.registry.register({ channel: A.start, validate: validateAnalysisStart,
+        handle: (request, context) => this.submissionBoundary(A.start, context,
+          scope => safe(service.start(context.senderId, scope, request))) }),
+      this.registry.register({ channel: A.status, validate: validateAnalysisReference,
+        handle: (request, context) => this.submissionBoundary(A.status, context,
+          scope => safe(service.status(context.senderId, scope, request.requestId))) }),
+      this.registry.register({ channel: A.cancel, validate: validateAnalysisReference,
+        handle: (request, context) => this.submissionBoundary(A.cancel, context,
+          scope => safe(service.cancel(context.senderId, scope, request.requestId))) }),
+    )
   }
   private startSubmission(): void {
     this.removers.push(
@@ -113,6 +206,7 @@ export class ExerciseIpcService {
         }) }),
       this.registry.register({ channel: S.context, validate: validateSubmissionContext, handle: (request, context) => this.submissionBoundary(S.context, context, () => {
         this.service.invalidate(context.senderId, request.reason)
+        this.analysis?.service.invalidate(context.senderId)
         const entry = this.owners.get(context.senderId)!; entry.epoch = {}; entry.scope = randomUUID()
         if (this.publication?.context.senderId === context.senderId) this.publication = undefined
         if (this.submitRoute?.context.senderId === context.senderId) this.submitRoute = undefined
@@ -191,6 +285,8 @@ export class ExerciseIpcService {
       throw new DomainError({ code: 'PERMISSION_DENIED', message: 'Learning owner is unavailable.', retryable: false })
     }
     if (owner.frame && !sameFrame(owner.frame, context.senderFrame)) {
+      this.analysis?.service.invalidate(context.senderId)
+      this.smartHints?.service.invalidate(context.senderId)
       owner.epoch = {}; owner.scope = randomUUID()
       if (this.publication?.context.senderId === context.senderId) this.publication = undefined
       if (this.submitRoute?.context.senderId === context.senderId) this.submitRoute = undefined
@@ -245,9 +341,11 @@ export class ExerciseIpcService {
       this.send(route.context, snapshot)
     } catch { this.publication = undefined /* Owner loss/stale/invalid result revokes routing, never broadcasts. */ }
   }
-  beginShutdown(): void { this.sealed = true; this.publication = undefined; this.submitRoute = undefined }
-  stop(): void {
+  beginShutdown(): void { this.sealed = true; this.publication = undefined; this.submitRoute = undefined; this.analysis?.service.beginShutdown(); this.smartHints?.service.beginShutdown() }
+  async stop(): Promise<void> {
     this.beginShutdown(); for (const remove of this.removers.splice(0)) remove()
     for (const entry of [...this.owners.values()]) entry.remove()
+    await this.analysis?.service.stop()
+    await this.smartHints?.service.stop()
   }
 }

@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "types": ["vite/client", "node"] },
+  "include": [
+    "../src/renderer/src/student-ide.d.ts", "../src/renderer/src/monaco-workers.d.ts", "../src/main/**/*.d.ts",
+    "../src/renderer/src/features/learning/practice/PracticeWorkspace.tsx",
+    "../src/renderer/src/features/learning/practice/WrongAnswerPanel.tsx",
+    "renderer/wrong-answer-ui.test.tsx", "renderer/submission-ui.test.tsx", "renderer/submission-history.test.tsx",
+    "renderer/submission-details.test.tsx"
+  ]
+}

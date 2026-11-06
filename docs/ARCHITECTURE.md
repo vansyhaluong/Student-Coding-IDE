@@ -1,5 +1,358 @@
 # Student Coding IDE Architecture
 
+## AI-C2-A1 shared execution ownership — 2026-11-06
+
+Normal SmartHintsConfiguration owns one SharedExecutionCoordinator and injects
+it into SmartHintsService. Coordinator owns the exclusive admitted execution and
+6/minute, 30/hour windows. Settings/configuration retains the only durable daily
+ledger, UTC budget, encrypted credential and remote limit state. An admitted
+Main-private lease calls that existing reservation port at most once, immediately
+before inference; repeated/failed/uncertain calls cannot spend twice or retry.
+Neither admission nor metadata checking creates a daily reservation.
+
+SmartHintsService retains consent/owner/status/Hint/Fix authority and the existing
+10s/30s timer, AbortController and cleanup. It releases admission in execution
+finally; abort alone does not free an unsettled execution. Early release also
+waits for outstanding reservation I/O. Configuration provider retirement cancels
+and joins the active consumer; shutdown seals admission and drains it. Future
+Main consumers must use this configured instance and release after their cleanup,
+not instantiate independent rate/budget state. Existing standalone fixtures retain
+their rate-only composition. No new public capability or provider wire field.
+
+## Selection Fix isolated syntax recovery — authorized 2026-11-06
+
+Original-source parsing may retain recovery nodes only when every syntax error
+is contained in the exact selection inside an intact function body. Required
+headers, real body delimiters, supported grammar and target identity must remain
+provable. Postflight parses the entire candidate strictly and compares the
+outside-target AST and headers against the recovered baseline. No source repair,
+normalization or offset changes; canonical construction/SH-1 remain unchanged.
+This supersedes the baseline-syntax rejection in historical G0/D6 evidence only.
+
+Roslyn can place a missing-semicolon diagnostic on the next physical token. The
+guard accepts that boundary case only with a recovered missing semicolon owned
+by a fully selected statement and whitespace-only gap to the token; frozen
+offsets never move. Physical token ends define the AST hole, excluding recovery
+tokens' zero-width positions. TypeScript likewise checks missing-node ownership
+and the preceding statement for its pinned semicolon diagnostic. A diagnostic
+being inside selection alone is insufficient. Candidate parsing remains strict.
+
+## SH4-D6-5 integrated selection capability — 2026-11-06
+
+Normal Main provisions MainSelectionFixGuard into SmartHintsConfiguration.
+The existing capability IPC now awaits a read-only, single-flight local probe;
+only ready parser languages are advertised in canonical C#/JS order. Probes do
+not call HTTP or reserve quota. Provider rotation/shutdown abort and join probes;
+runtime guard failure withdraws the affected language. Prepare and Start still
+fail closed, with per-operation preflight/readiness/postflight from D6-4.
+
+PracticeWorkspace captures through captureFix; the hook retains its exact target
+and selection fingerprint. Cursor readiness only cancels an unconfirmed Fix,
+using the existing cancel(reference), including a late prepare ACK; it never
+retires the Hint context. Explicit consent rechecks and freezes target freshness.
+Source/model/revision/context guards remain active through COMPLETE/preview/Apply.
+Fix errors require recapture rather than reuse of an already frozen snapshot.
+
+One canonical selection assertion runs before result preview and in the existing
+Apply helper. Native transaction/undo stops, single-use consume and readonly Diff
+stay in their existing owners. Applied closes through its own callback; Discard
+does not report success or mutate source. No raw provider/parser authority crosses
+IPC. The normal capability hold in D6-4 is superseded only for actual ready assets.
+Installer/ASAR/clean-machine/Windows 10 acceptance and D6-6 remain outside this task.
+
+## SH4-D6-4 Main construction and structural fence — 2026-11-06
+
+The Main-private selection guard port preflights immutable captured source and
+trusted signature before PREPARED. No inference/reservation occurs on preflight
+failure. The existing Start path rechecks asset readiness, validates replacement
+wire and maps one edit using frozen offsets/source.slice; SH-1 stays unchanged.
+Only after candidate parse/signature/outside-target structure checks and owned
+cleanup may the existing COMPLETE path allocate proposalId. Valid NO_FIX skips
+candidate construction and has no grant. Other actions retain their paths.
+
+The app builds a standalone TypeScript 6.0.3 worker and trusted Roslyn helper;
+runtime never resolves the TypeScript devDependency or compiles student code.
+C# is restricted to validated Windows x64 SDK 10.0.112/runtime 10.0.12/Roslyn
+5.0.0.0; unsupported/missing assets or grammar fail closed without regex fallback.
+Main validates manifest digests/version/SDK anchors, uses bounded per-operation
+resources within the existing outer deadline, and terminates/awaits parser exit.
+Private stage/reason telemetry contains no source, selection, response or paths.
+The normal composition still supplies no guard and advertises DISABLED/[];
+UI/consent/cutover remains D6-5. Canonical output and Diff/Apply/Undo are unchanged.
+
+## SH4-D6-3 Gemini replacement-only boundary — 2026-11-05
+
+Gemini Fix uses its own system instruction and strict schema: EDIT_PROPOSAL has
+only replacementText/rationale/evidence; NO_FIX has only reason/advice. The input
+keeps full source/public task/signature/context plus action.selection (exact text
+and range) and sourceEol. Model identity, private signature identity, hashes and
+tokens stay out of provider input. Hint/Analyze/Explain retain the original
+complete instruction, schema and input fields.
+
+After strict JSON parsing, Gemini validates Fix with isSelectionFixWire and
+returns that private object unchanged. This is not canonical SmartOutput and
+does not run SH-1 or construct edits. Existing Main Fix dispatch remains blocked
+before reservation/network, so private wire cannot reach public status/Renderer.
+D6-4 owns deterministic construction plus source/EOL/no-op/structural/signature
+validation; later integration owns actual consent/Diff/Apply acceptance. No
+timeout, token, quota, provider selection or process-lifecycle change here.
+
+## SH4-D6-2 selection contract boundary — 2026-11-05
+
+Renderer/Preload/Main share required Fix selection and strict capability fields.
+Prepare validates exact UTF-16 slice/positions/EOL/boundaries/caps/proper subset;
+bound action contains range plus SHA-256, never selection text. Preload checks
+the first reply against source and selection fingerprints and range, then pins
+the operation binding. Main clones before package await and freezes its private
+capture; signatureIdentity version/hash comes from the trusted public lease and
+never enters status/provider DTOs. Selection does not enter the Hint source key.
+Normal capability is DISABLED with an empty language list; service start rejects
+Fix before reservation/dispatch, and Renderer disables Fix. No legacy fallback.
+The private selection-fix.ts validator is unconnected preparation only. Canonical
+output, SH-1, provider schema/prompt and manual editing are unchanged. Structural
+preflight, wire mapping and full selection consent integration remain later D6.
+
+## SH4-D3 Suggest Fix wire guidance — 2026-11-05
+
+Gemini Main adapter appends exact original-snapshot UTF-16/edit instructions
+only for SUGGEST_FIX. Its private inference input adds sourceEol from the
+already-validated PRACTICE origin (LF/CRLF), including single-line snapshots;
+this enum does not grant new authority or expose model identity/path/secrets.
+Suggest Fix JSON Schema adds descriptions only; public/shared output shapes,
+constraints and SH-1 predicates remain authoritative and unchanged. Other
+actions keep existing prompts/schema/context. No output repair, fuzzy matching,
+retry, provider/token/quota/lifecycle or manual editing changes. Offline evidence:
+`AI-SMART-HINTS-GEMINI-CONTRACT-FIX-ACCEPTANCE.md`; live quality remains unverified.
+
+## SH4-D1 private failure diagnostics — 2026-11-05
+
+Main-only validation-diagnostics explains rejected outputs without changing the
+shared acceptance predicates. Normal configuration correlates projected failure
+reasons by ephemeral request ID, then removes that ID from terminal logs/storage.
+Allowlisted reason/field/output kind, bounded edit count, provider error origin
+and build/model identity extend the existing one-record atomic best-effort sink.
+No diagnostic DTO/authority crosses IPC. HTTP, metadata, reservation and later
+persistence failures remain distinct privately while public status codes remain
+unchanged. No prompt/schema/provider/quota/retry/editing behavior change.
+See `AI-SMART-HINTS-GEMINI-DIAGNOSTICS-ACCEPTANCE.md` for offline evidence and limits.
+
+## Suggest Fix failure evidence — 2026-11-03
+
+Main diagnostics now project allowlisted finishReason, configured wire token cap,
+inference-dispatch flag, nullable numeric usage counts and envelope/output JSON/
+SH-1 schema validation states. Missing provider data remains unknown, not zero.
+No source, response text, error message, key or provider-controlled string is
+retained. Main atomically stores only its latest Suggest Fix terminal diagnostic
+in `smart-hints-last-suggest-fix.json` under userData (bounded one-record file),
+independently of the encrypted settings and immutable reservation ledger. Best-
+effort diagnostic persistence cannot change inference/acceptance; stop awaits it.
+No IPC shape, provider, timeout, token cap or other feature policy changes here.
+
+## Ordinary Gemini Suggest Fix execution deadline — 2026-11-03
+
+Normal configuration selects30s for Suggest Fix and10s for other actions. Shared
+defaults, standalone/legacy provider policies and Settings metadata checks remain
+unchanged. SmartHintsService owns the execution timer and passes a private
+request/deadline/clock context to the provider. Gemini uses the same deadline and
+parent abort signal; it does not start a second timer in that composition. Direct
+adapter callers retain their existing bounded timer. Validate before and after
+output processing; deadline equality fails closed. Per-operation diagnostics are
+discarded after one terminal event and contain no source or credentials. Main
+logs an allowlisted projection only; no new public IPC field or authority.
+
+## Normal Smart Hints Settings composition — 2026-11-03
+
+Main owns secure native credential input, OS-encrypted key persistence, enablement,
+connection state and local usage budget. Narrow settings IPC carries only
+booleans/enums/counters, never a key. Renderer settings invoke native credential
+entry and status check without source data. The same SmartHintsService used by
+Learning/Practice swaps its internal provider on explicit configuration changes,
+retaining rate counters and aborting stale operations. Source capture, consent,
+strict outputs and manual Monaco transactions remain unchanged. Ordinary and
+packaged Windows composition uses this path, default off; acceptance modules are
+optional legacy test tools. Native input runs in Main, not a hidden Renderer.
+
+Normal usage policy correction: Main derives local UTC-day usage from immutable
+timestamped reservation files and preserves the lifetime reservation sequence.
+Default20/day, configurable1–300 via native-confirmed Settings; legacy limits
+require explicit review. Local6/min and30/hour throttles remain separate. Main
+persists sanitized Google429 kind/cooldown without raw errors or quota IDs.
+Metadata success and local-day rollover cannot clear Google's last observation;
+only a successful manual inference clears it. Provider cooldowns gate manual
+attempts; expiration never dispatches a request. Unknown429 means rate-limited
+with unspecified quota, not proof of daily exhaustion. All keys stay in Main.
+
+## SH-4 development Live UI composition — 2026-11-03
+
+Main optionally provisions a scoped acceptance SmartHintsService through a
+development argv gate and native attestation. Packaged runtime exits that gate
+before parsing/IO/secret access; default service stays disabled. Separate local
+userData owns draft/settings isolation and one-use approval/reservation records.
+Main limits capture to fixed public ch2-01 draft snapshots, budgets before model
+GET and reserves durably before POST. No new shared DTO, IPC, Renderer privilege
+or auto execution. Credential is removed from Main environment after acquisition
+and retained only in the disposable provider closure; cancel/failure removes the
+live-launch credential environment entry. No memory-zeroing guarantee is claimed.
+
+## SH-4 Gemini Main boundary - 2026-11-02
+
+Gemini replaces the active Main provider through SmartProvider/SmartHintsService; no new IPC channels, business DTO shape or UI flow. Only capability identity adds GEMINI_FREE and provider consent copy changes. Fixed REST endpoints and ephemeral Main-only GEMINI_API_KEY, private bounded diagnostics, provider-specific wire schema; internal strict JSON/output/edit checks remain authoritative. Authenticated models.get precedes inference; Free Tier is an explicit Main approval/consent attestation, not inferred from metadata. Default production disabled/10s, isolated smoke30s. Preserve OpenRouter audit modules and artifacts without using their transport in Gemini flow. Offline-only authorization; no billing/retry/fallback or other subsystem change.
+
+
+## SH-4 development smoke deadline ? 2026-11-02
+
+Isolated Main smoke explicitly selects developmentSmoke after development and
+approval gates. Main execution and OpenRouter adapter both use 30000ms; the
+Main timer starts first and bounds adapter work, reservation/evidence I/O,
+headers, body and validation. Shared/default production policy remains 10000ms.
+Only private smoke evidence gains fixed stage/timeout-owner enums; no IPC or
+Renderer configuration, schema/parser or lifecycle ownership change.
+
+
+## SH-4 OpenRouter provider boundary — 2026-11-02
+
+Supersedes NIM provisioning below only for SH-4. Main owns the fixed OpenRouter
+Free adapter and ephemeral OPENROUTER_API_KEY behind existing development/approval
+gates. Renderer receives OPENROUTER_FREE capability identity, never credentials or
+network authority. Existing snapshot consent/start/quota/lifecycle and SH-3 edit
+guards remain owners; no new IPC/dependency. Prompt-only JSON, strict bounded
+response/action validation, private routed model metadata and discarded reasoning.
+Production remains DISABLED; no automatic retry, paid route or alternate endpoint.
+
+## SH-4 authorized provider boundary — 2026-10-29
+
+SH-3 is accepted COMPLETE — PASS WITH LIMITATIONS. SH-4 extends the existing
+Main-owned SH provider seam with fixed NVIDIA NIM endpoint/model and ephemeral
+environment credential, without a new backend or generic network IPC. Production
+and unapproved development compositions stay DISABLED, even when a key is present.
+Development and explicit Main approval gates precede reading NVIDIA_API_KEY;
+existing consent/start owns the only dispatch. Shutdown aborts operations and
+clears the retained credential. JS strings/environment cannot promise memory wiping.
+The bounded SH JSON adapter retains fake protocol compatibility; D2 is unchanged.
+Capabilities add NVIDIA_NIM without exposing key/endpoint configuration to Renderer.
+NIM consent identifies NVIDIA, public snapshot/selection/prior-hint data and
+trial/abuse-monitoring limitations. No new edit authority: SH-3 exact source guards,
+native Undo, and draft ownership remain unchanged. No real request is authorized yet.
+
+## SH-3 option A verified integration — 2026-10-29
+
+This supersedes earlier SH-3 blocked notes. The approved pinned dependency patch
+binds Monaco's global hover factory to its root standalone instantiation service,
+with strict build/install version/hash verification and checked rollback. Diff
+continues to own ephemeral models. Its component owns one host ResizeObserver and
+coalesces mode/dimension writes into a cancellable animation frame; automatic
+Diff-root observation is disabled to prevent native-modal geometry feedback.
+Cleanup cancels pending layout, detaches model and disposes editor before models.
+Native one-batch edits/Undo/source guards and existing draft ownership are unchanged.
+Only injected FAKE may enable local Apply; default production has no provider/key
+and remains DISABLED. No new IPC editing/process/filesystem authority or shared
+preview service. Delivery FIXED — AWAITING USER ACCEPTANCE, SH-4 NOT_STARTED.
+
+## SH-3 unblock diagnosis — 2026-10-29
+
+No architecture change is authorized or implemented. The independent reproducer
+establishes an installed Monaco dependency lifetime defect: a global hover factory
+retains the instantiation service of a disposed Diff. A separate live editor can
+then fail creating SuggestWidgetStatus/ActionBar. This does not require an Apply
+transaction, draft write or SH controller. The dependency correction is a pending
+decision in [Unblock options](AI/AI-SMART-HINTS-SH3-UNBLOCK-OPTIONS.md). Native Redo
+and strict console safety gates remain open; all normal Diff/Apply controls stay
+disabled. No window-owned preview service or internal Monaco bridge was added.
+
+## SH-3 local diff and transaction — 2026-10-29
+
+**Release gate BLOCKED:** real-editor stress produced unresolved disposed-service/
+model errors and a native Redo timeout. The implementation below is gated off:
+all normal compositions, including FAKE, report Apply false; Diff entry is hidden.
+Only the separate diagnostic harness injects true. Do not treat the description
+as a successful safety/acceptance claim. See SH-3 acceptance for actual results.
+
+Verified current Practice COMPLETE proposals may mint an immutable, single-use
+Renderer-local grant. Its verified source SHA-256 binding is retained from the
+operation; exact source equality to that hashed snapshot, context, revision,
+snapshot closure/model object, URI, local model ID/version, EOL and TTL are
+rechecked synchronously at Apply. No rehash await or rebase between guard and edits.
+`smartCandidate` is repeated before mutation; a single `executeEdits` batch is
+bounded by native Undo stops, maps primary/reversed/multiple selections and keeps
+scroll/focus. No setValue/custom undo or rollback fallback. A failed transaction
+locks the editor's Apply capability. Existing onChange/usePractice/DraftQueue owns
+Apply/Undo/Redo persistence; no draft format/Storage owner change. Stale/consumed
+preview grants are cleared; ephemeral diff models are disposed independently.
+The schema permits true only with FAKE, but current runtime keeps Apply false in
+all normal compositions after the failed safety gate. Production remains DISABLED;
+no provider/key, IPC edit authority or auto Run/Submit. SH-4 stays gated.
+
+## SH-2 Renderer integration — 2026-10-28
+
+After formal SH-1 acceptance, the authorized Practice drawer uses the unchanged
+`learning.smartHints` capability. Renderer captures exact Practice model identity,
+version/source/primary selection or a single registered Solution code node with
+independent language. Explicit per-action snapshot consent precedes `start`.
+Independent context retirement covers edit/model change, reset, admitted Restore,
+exercise/language switch, leaving Learning, pagehide, close and disposal. Late
+responses cannot publish into a retired context; uncertain ACKs recover status
+without replaying start. Admission records Solution origin before asynchronous
+hashing, so retirement also revokes captures that have no operation yet. Solution
+snapshots bind descendant DOM identities as well as text; equivalent-text
+retokenization retires selection provenance. Manual recovery replaces the one
+scheduled status poll. The editor remains mounted while opening the drawer.
+Proposals are read-only; no edit/Apply API or D2/Run/Submit authority is added.
+Production remains DISABLED with no provider/key. SH-3/SH-4 remain separately gated.
+
+## SH-1 Smart Hints core — 2026-10-28
+
+SH-0 accepted COMPLETE — PASS WITH LIMITATIONS; SH-1 implemented pending acceptance.
+Separate `learning.smartHints` typed capability and Main service own public capture,
+consent/token, sequence, SH context/session, quota, abort/TTL and validated outputs.
+Main IPC reuses owner/main-frame/document authority without the Run/Submit service
+generation. Source retirement does not call Run/Submit/D2 context invalidation.
+Main-private Public Run Receipt copies verified public mapping during the same Run
+lease, binds source fingerprint/operation/schema and is released/expired separately.
+Only terminal finalized safe public results attach to matching captures; otherwise
+CODE_ONLY. No Official acquisition or raw logs/paths/stack enter SH capture.
+Structured UTF-16 proposals validate against exact captured old text; no Apply API.
+Production composition has no provider/key/network transport and reports DISABLED.
+Only tests inject the fake transport adapter. D2 contracts/policy, Judge, Storage,
+History, Completion and Renderer remain unchanged. See
+[SH-1 acceptance](AI-SMART-HINTS-SH1-ACCEPTANCE.md) for baseline test/typecheck limits.
+
+## WA-B2 authorized UI boundary — 2026-10-28
+
+WA-B1 is formally accepted COMPLETE — PASS WITH LIMITATIONS; evidence and native/
+build/Electron/performance limitations remain unchanged. B2 consumes existing
+SubmissionStatus in the Renderer observer; PracticeDescription owns the dynamic
+Wrong Answer tab and a presentational panel renders only validated public values
+or fixed fallback. No History persistence or Main/IPC authority/contract changes.
+Reuse existing Tabs/Practice tokens and same operation/context/sequence suppression.
+
+## WA-B1 approved boundary — 2026-10-28
+
+Same leased package verifies public prefix/sample identity/args/Expected; only
+public sample source values and the same settled comparison's Actual enter a
+bounded detached diagnostic. Judge verdict reduction is unchanged. Only final
+qualified WrongAnswer publishes the diagnostic through existing SubmissionStatus
+projection/IPC/typed Preload, under existing owner/frame/context/ref/sequence checks.
+Capture errors never alter grading.32 KiB diagnostic fits unchanged256 KiB response.
+Hidden mismatches or unverifiable provenance use a fixed unclassified fallback.
+No hidden values/Official case metadata/logs/private plan details cross transport.
+Diagnostic retires with operation/context and never enters persistence/History.
+This public-only ADR-025 exception adds no authority, channels, UI or network.
+
+## AI-D2 authorized boundary — 2026-10-28
+
+Dedicated `learning.analysis` prepare/start/status/cancel → typed Preload → Main
+semantic channels. Existing Exercise IPC owns source-reference decryption and
+owner/main-frame/context stamps. Main captures a bounded exact committed source
+from SubmissionReadModel and version-matching statement using the Registry's
+public capability. Capture releases store/Registry resources before dispatch;
+no private record or storage authority crosses IPC. Main-private provider seam
+reuses the accepted D1 direct adapter with fixed request policy and strict JSON.
+TTL/single-use capture, explicit versioned consent, requestId/sequence, context
+revocation and independent AbortController protect lifecycle. Advisory results
+are ephemeral; no grading, completion, editing or persistence authority. Default
+composition supplies no provider/credentials and fails closed. Local AI remains
+separate. UI/live provisioning require separate authorization. E7 is unchanged.
+
 ## 1. Architecture goals
 
 Student Coding IDE is an independent Electron + React + TypeScript desktop application. Orca is evidence for architecture study only; this design does not depend on Orca source, history, or runtime artifacts.

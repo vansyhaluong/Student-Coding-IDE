@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 import type { Exercise, ExerciseLanguage } from '../../../../../shared/contracts/practice'
 import { solutionCode, solutionFor } from './solutions'
+import { captureSolutionSelection, type SmartSourceSnapshot } from './smart-hints-selection'
 
 type Tokens = { offset: number; type: string }[][]
 let highlighter: Promise<typeof import('../../editor/monaco')> | undefined
@@ -12,12 +13,21 @@ async function highlight(code: string, language: ExerciseLanguage): Promise<Toke
   return monaco.editor.tokenize(code, language)
 }
 
-function SolutionCode({ code, language, label }: { code: string; language: ExerciseLanguage; label: string }) {
+function SolutionCode({ exerciseId, code, language, label, onExplain, onRetire }: { exerciseId: string; code: string; language: ExerciseLanguage; label: string
+  onExplain?(snapshot: SmartSourceSnapshot): void; onRetire?(blockId: string): void }) {
   const [tokens, setTokens] = useState<Tokens>()
   const [highlightFailed, setHighlightFailed] = useState(false)
   const [copy, setCopy] = useState<'idle' | 'copied' | 'error'>('idle')
   const lifetime = useRef({ active: true, request: 0 })
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const node = useRef<HTMLElement>(null), blockId = useMemo(() => crypto.randomUUID(), [exerciseId, code, language])
+  useEffect(() => () => { onRetire?.(blockId) }, [blockId, tokens, onRetire])
+  const explain = () => {
+    const snapshot = node.current && captureSolutionSelection(node.current, code, language, blockId, exerciseId)
+    if (snapshot) onExplain?.(snapshot)
+    else setSelectionMessage('Hãy chọn code bên trong một khối để giải thích.')
+  }
+  const [selectionMessage, setSelectionMessage] = useState('')
   useEffect(() => {
     const current = lifetime.current; current.active = true
     let active = true
@@ -38,17 +48,26 @@ function SolutionCode({ code, language, label }: { code: string; language: Exerc
   return <div className="learning-code-block practice-solution-code">
     <div className="learning-code-toolbar"><span>{label}</span><button type="button" aria-label={`Copy ${label}`} onClick={() => { void copyCode() }}>
       {copy === 'copied' ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}<span>{copy === 'copied' ? 'Đã sao chép' : 'Copy'}</span>
-    </button></div>
+    </button>{onExplain && <button type="button" onPointerDown={event => event.preventDefault()} onClick={explain}>Explain with AI</button>}</div>
+    {selectionMessage && <p role="status">{selectionMessage}</p>}
     <span className="sr-only" role="status">{copy === 'copied' ? `Đã sao chép ${label}` : ''}</span>
     {copy === 'error' && <p role="alert">Không thể sao chép. Bạn có thể chọn code và sao chép trực tiếp.</p>}
     {highlightFailed && <p role="status">Không thể tô màu cú pháp. Nội dung code vẫn được giữ nguyên.</p>}
-    <pre aria-label={label}><code className={`language-${language}`} data-highlighted={!!tokens}>{tokens ? lines.map((line, row) => <span key={row}>
+    <pre aria-label={label} tabIndex={onExplain ? 0 : undefined} aria-description={onExplain ? 'Ctrl+A chọn code trong khối; Ctrl+Shift+E giải thích lựa chọn với AI.' : undefined}
+      onKeyDown={event => {
+        if (!onExplain || !(event.ctrlKey || event.metaKey)) return
+        if (event.key.toLowerCase() === 'a' && node.current) {
+          event.preventDefault(); const range = document.createRange(); range.selectNodeContents(node.current)
+          const selection = window.getSelection(); selection?.removeAllRanges(); selection?.addRange(range)
+        } else if (event.shiftKey && event.key.toLowerCase() === 'e') { event.preventDefault(); explain() }
+      }}><code ref={node} className={`language-${language}`} data-smart-hints-block={blockId} data-highlighted={!!tokens}>{tokens ? lines.map((line, row) => <span key={row}>
       {(tokens[row]?.length ? tokens[row] : [{ offset: 0, type: '' }]).map((token, index, list) => <span key={index} className={`learning-syntax-${token.type.split('.')[0] || 'plain'}`}>
         {line.slice(token.offset, list[index + 1]?.offset ?? line.length)}</span>)}{row < lines.length - 1 ? '\n' : ''}</span>) : code}</code></pre>
   </div>
 }
 
-export function PracticeSolution({ exercise, editorLanguage }: { exercise: Exercise; editorLanguage: ExerciseLanguage }) {
+export function PracticeSolution({ exercise, editorLanguage, onExplain, onRetire }: { exercise: Exercise; editorLanguage: ExerciseLanguage
+  onExplain?(snapshot: SmartSourceSnapshot): void; onRetire?(blockId: string): void }) {
   const [language, setLanguage] = useState(editorLanguage)
   const id = useId(), solution = solutionFor(exercise)
   if (!solution) return <div className="practice-solution-empty" role="status">Chưa có hướng dẫn cho bài tập này</div>
@@ -68,9 +87,9 @@ export function PracticeSolution({ exercise, editorLanguage }: { exercise: Exerc
     </section>
     <div role="tabpanel" id={`${id}-code`} aria-labelledby={`${id}-${language}`}>
       <ol className="practice-solution-steps">{solution.languages[language].lines.map((line, index) => <li key={`${language}-${index}`}>
-        <SolutionCode code={line.code} language={language} label={`Dòng ${line.lineNumber ?? index + 1}`} /><p>{line.explanation}</p>
+        <SolutionCode exerciseId={exercise.id} code={line.code} language={language} label={`Dòng ${line.lineNumber ?? index + 1}`} onExplain={onExplain} onRetire={onRetire} /><p>{line.explanation}</p>
       </li>)}</ol>
-      <section><h2>4. Code hoàn chỉnh</h2><SolutionCode key={language} code={solutionCode(solution, language)} language={language} label="Code hoàn chỉnh" /></section>
+      <section><h2>4. Code hoàn chỉnh</h2><SolutionCode key={language} exerciseId={exercise.id} code={solutionCode(solution, language)} language={language} label="Code hoàn chỉnh" onExplain={onExplain} onRetire={onRetire} /></section>
     </div>
     <section><h2>5. Độ phức tạp</h2><dl><dt>Time Complexity</dt><dd>{solution.complexity.time}</dd><dt>Space Complexity</dt><dd>{solution.complexity.space}</dd></dl></section>
   </article>

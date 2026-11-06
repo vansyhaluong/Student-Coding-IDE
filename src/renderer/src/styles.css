@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./features/learning/learning.css";
+@import "./features/learning/practice/smart-hints.css";
 
 /* Utility expected by the unmodified beUI PromptInput source. */
 @utility scrollbar-hide {
@@ -1440,6 +1441,8 @@ input:focus-visible,
 .settings-content p { margin: 0; color: var(--muted-foreground); line-height: 1.5; }
 .settings-content h3 { font-size: 12px; margin: 8px 0 0; border-top: 1px solid var(--border); padding-top: 12px; }
 .settings-content [role="alert"] { color: var(--destructive); }
+.smart-hints-settings { display: flex; flex-direction: column; gap: 12px; }
+.smart-hints-settings-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .settings-shortcuts { margin: 0; }
 .settings-shortcuts div { display: flex; justify-content: space-between; margin-bottom: 5px; }
 .settings-shortcuts dd { font-family: var(--font-mono); color: var(--muted-foreground); }

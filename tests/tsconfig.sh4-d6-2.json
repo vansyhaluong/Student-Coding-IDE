@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.sh4.json",
+  "include": [
+    "../src/renderer/src/student-ide.d.ts", "../src/renderer/src/monaco-workers.d.ts", "../src/main/**/*.d.ts",
+    "../src/shared/contracts/smart-hints*.ts",
+    "../src/main/services/learning/smart-hints/capture.ts", "../src/main/services/learning/smart-hints/service.ts",
+    "../src/main/services/learning/smart-hints/selection-fix.ts", "../src/main/ipc/exercise-ipc-service.ts",
+    "../src/preload/bridge/smart-hints.ts", "../src/renderer/src/features/learning/practice/PracticeWorkspace.tsx",
+    "contracts/smart-hints.test.ts", "main/smart-hints-core.test.ts", "main/smart-hints-ipc.test.ts",
+    "main/smart-hints-selection-contract.test.ts", "preload/smart-hints.test.ts",
+    "renderer/smart-hints-integration.test.tsx", "renderer/smart-hints-fix-selection*.test.tsx",
+    "renderer/smart-hints-selection-capability.test.tsx"
+  ]
+}

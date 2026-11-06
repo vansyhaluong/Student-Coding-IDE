@@ -4,6 +4,7 @@ import { SUBMISSION_API_LIMITS as L, type SubmitRequest, type SubmissionReferenc
 import type { ValidationResult } from './validation'
 import { isExerciseId, isExerciseLanguage } from './practice'
 import { isExerciseSessionId } from './exercise-validation'
+import { isSubmissionDiagnostic } from './submission-diagnostic'
 
 const bad = <T>(): ValidationResult<T> => ({ ok: false, issues: [{ path: '$', message: 'Invalid submission data.' }] })
 const good = <T>(value: T): ValidationResult<T> => ({ ok: true, value })
@@ -86,12 +87,15 @@ function storage(v: unknown): boolean {
   return v.state === 'unknown' && submissionFields(v, ['state', 'recoveryPending']) && v.recoveryPending === true
 }
 export function isSubmissionStatus(v: unknown): v is SubmissionStatus {
-  if (!submissionFields(v, ['reference', 'exerciseId', 'language', 'sourceRevision', 'sequence', 'stage', 'verdict', 'storage', 'counts'],
+  if (!submissionFields(v, ['reference', 'exerciseId', 'language', 'sourceRevision', 'sequence', 'stage', 'verdict', 'storage', 'counts', 'diagnostic'],
     ['reference', 'exerciseId', 'language', 'sourceRevision', 'sequence', 'stage', 'verdict', 'storage'])
     || !validateSubmissionReference(v.reference).ok || !isExerciseId(v.exerciseId) || !isExerciseLanguage(v.language)
     || !submissionInteger(v.sourceRevision) || !submissionInteger(v.sequence) || !member(v.stage, ['RUNTIME', 'STORAGE', 'SETTLED'])
     || v.verdict !== null && !member(v.verdict, [...graded, 'InfrastructureFailure', 'CancelledInvalidated']) || !storage(v.storage)) return false
   const s = v.storage as SubmissionStatus['storage']
+  if (Object.hasOwn(v, 'diagnostic') && (v.verdict !== 'WrongAnswer' || v.stage === 'RUNTIME'
+    || !isSubmissionDiagnostic(v.diagnostic)
+    || v.diagnostic.kind === 'PUBLIC_SAMPLE_MISMATCH' && v.diagnostic.exerciseId !== v.exerciseId)) return false
   if (Object.hasOwn(v, 'counts') && (!submissionFields(v.counts, ['total', 'attempted', 'passed'])
     || !submissionInteger(v.counts.total, 1, 128) || !submissionInteger(v.counts.attempted, 0, v.counts.total)
     || !submissionInteger(v.counts.passed, 0, v.counts.attempted)
