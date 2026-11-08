@@ -16,6 +16,9 @@ interface WindowOpenResult {
 }
 
 export interface WebContentsLike {
+  isDestroyed(): boolean
+  once(event: 'destroyed', listener: () => void): void
+  removeListener(event: 'destroyed', listener: () => void): void
   on(
     event: 'will-navigate',
     listener: (event: PreventableEvent, url: string) => void,
@@ -50,6 +53,8 @@ export interface WindowManagerOptions {
 export class WindowManager implements ManagedService {
   readonly name = 'WindowManager'
   private mainWindow: BrowserWindowLike | undefined
+  private mainContents: WebContentsLike | undefined
+  private stopping: Promise<void> | undefined
   private closeApproved = false
   private closeRequestPending = false
 
@@ -72,6 +77,7 @@ export class WindowManager implements ManagedService {
     this.configureNavigation(mainWindow)
     this.configureClose(mainWindow)
     this.mainWindow = mainWindow
+    this.mainContents = mainWindow.webContents
 
     if (this.options.developmentRendererUrl) {
       await mainWindow.loadURL(this.options.developmentRendererUrl)
@@ -80,11 +86,30 @@ export class WindowManager implements ManagedService {
     }
   }
 
-  stop(): void {
-    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-      this.mainWindow.destroy()
-    }
-    this.mainWindow = undefined
+  stop(): Promise<void> {
+    if (this.stopping) return this.stopping
+    const window = this.mainWindow, contents = this.mainContents
+    if (!window || !contents) return Promise.resolve()
+    const task = (async () => {
+      // BrowserWindow.destroy()/closed can precede WebContents destruction.
+      // Keep Node/IPC alive until the renderer endpoint actually releases it.
+      if (contents.isDestroyed()) {
+        if (!window.isDestroyed()) window.destroy()
+      } else {
+        let destroyed!: () => void
+        const finished = new Promise<void>(resolve => { destroyed = resolve })
+        contents.once('destroyed', destroyed)
+        try {
+          if (!window.isDestroyed()) window.destroy()
+          await finished
+        } finally { contents.removeListener('destroyed', destroyed) }
+      }
+      if (this.mainWindow === window) { this.mainWindow = undefined; this.mainContents = undefined }
+    })()
+    this.stopping = task
+    const clear = () => { if (this.stopping === task) this.stopping = undefined }
+    void task.then(clear, clear)
+    return task
   }
 
   private configureNavigation(window: BrowserWindowLike): void {

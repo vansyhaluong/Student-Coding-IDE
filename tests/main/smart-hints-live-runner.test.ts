@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { runOpenRouterSmoke, SMOKE_SOURCE, type SmokeOptions } from '../../scripts/sh4-openrouter-smoke'
 
 const key = 'sk-or-v1-SYNTHETIC-ONLY-manual-smoke'
-const hint = { kind: 'HINT', level: 1, paragraphs: ['Compare the returned value with the public examples.'], nextQuestion: 'What changes between input and output?', evidence: [] }
+const hint = { kind: 'HINT', thinking: 'Compare the returned value with the public examples.', steps: ['Compare the public inputs.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }
 const json = (data: unknown) => new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' } })
 function fixture(patch: Partial<SmokeOptions> = {}) {
   const calls: Request[] = []
@@ -12,7 +12,7 @@ function fixture(patch: Partial<SmokeOptions> = {}) {
     if (request.method === 'GET' && request.url.endsWith('/key')) return json({ data: { is_free_tier: true, limit_remaining: null, free_model_daily_requests: { remaining: 50 } } })
     if (request.method === 'GET' && request.url.endsWith('/models')) return json({ data: [{ id: 'openrouter/free', pricing: { prompt: '0', completion: '0' }, supported_parameters: ['max_tokens'] }] })
     const body = await request.clone().json(), input = JSON.parse(body.messages[1].content)
-    expect(input.action).toEqual({ kind: 'HINT', level: 1 })
+    expect(input.action).toEqual({ kind: 'HINT' })
     expect(input.signature).toEqual({ functionName: 'Solve', parameters: [{ name: 'x', type: 'int32' }], returnType: 'int32' })
     expect(input).not.toHaveProperty('signatureIdentity')
     return json({ model: 'synthetic/test:free', choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify(hint) } }], usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120, cost: 0 } })
@@ -135,7 +135,7 @@ describe('manual SH-4 runner: injected offline transports only', () => {
     expect(f.calls[0].headers.get('authorization')).toBe(`Bearer ${key}`); expect(f.calls[1].headers.has('authorization')).toBe(false)
     const body = await f.calls[2].json(), input = JSON.parse(body.messages[1].content)
     expect(body).toMatchObject({ model: 'openrouter/free', provider: { allow_fallbacks: false, max_price: { prompt: 0, completion: 0, request: 0 } }, max_tokens: 2048 })
-    expect(input).toMatchObject({ language: 'csharp', source: SMOKE_SOURCE, action: { kind: 'HINT', level: 1 }, previousHints: [], runContext: { kind: 'CODE_ONLY' } })
+    expect(input).toMatchObject({ language: 'csharp', source: SMOKE_SOURCE, action: { kind: 'HINT' }, previousHints: [], runContext: { kind: 'CODE_ONLY' } })
     expect(JSON.stringify(result)).not.toContain(key)
   })
   it.each([

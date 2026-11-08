@@ -6,7 +6,7 @@ import { capture, request } from '../fixtures/learning/smart-hints'
 // Diagnostic investigation only. Synthetic credential and injected transports;
 // no environment reads, persistent reservation, live fetch or candidate selection.
 const key = 'SYNTHETIC-ONLY-429-INVESTIGATION'
-const hint = { kind: 'HINT', level: 1, paragraphs: ['Compare the return value with the public examples.'], nextQuestion: 'How should the input change?', evidence: [] }
+const hint = { kind: 'HINT', thinking: 'Compare the return value with the public examples.', steps: ['Compare the public inputs.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }
 const json = (data: unknown) => new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' } })
 function smoke(inference: (r: Request) => Promise<Response>) {
   const reserve = vi.fn(async () => {}), send = vi.fn(async (r: Request) => {

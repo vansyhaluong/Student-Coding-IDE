@@ -1,4 +1,13 @@
 .practice-workspace { position: relative; }
+.assistant-code-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border, var(--learning-line)); }
+.assistant-code-actions { display: flex; flex-shrink: 0; align-items: center; gap: 2px; padding: 3px 6px; margin-left: auto; }
+.assistant-code-actions button { height: 28px; padding: 4px 7px; border: 0; border-radius: 6px; font-size: 11px; color: var(--muted-foreground, var(--learning-muted)); background: transparent; }
+.assistant-code-actions button:hover:not(:disabled) { color: var(--foreground, var(--learning-ink)); background: var(--muted, var(--learning-selected)); }
+.assistant-code-actions button:focus-visible { outline: 2px solid var(--ring, var(--learning-ink)); outline-offset: 2px; }
+.assistant-code-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.assistant-code-actions svg { width: 14px; height: 14px; }
+.assistant-code-notices { padding: 4px 10px; color: var(--muted-foreground, var(--learning-muted)); font-size: 10px; overflow-wrap: anywhere; }
+.assistant-code-notices small, .assistant-code-notices [role=status] { display: block; font-size: inherit; }
 .smart-hints-drawer { position: absolute; z-index: 20; inset: 48px 0 0 auto; width: min(420px, 100%); display: flex; flex-direction: column; min-height: 0; background: var(--learning-card); color: var(--learning-ink); border-left: 1px solid var(--learning-line); box-shadow: -8px 0 24px #26251e12; }
 .smart-hints-drawer > header { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--learning-line); }
 .smart-hints-drawer h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; }
@@ -10,15 +19,11 @@
 .smart-hints-body p { white-space: pre-wrap; }
 .smart-hints-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .smart-hints-actions button { font-size: 12px; }
-.smart-hints-levels { display: flex; list-style: none; padding: 0; gap: 6px; margin: 12px 0; }
-.smart-hints-levels li { flex: 1; padding: 4px 8px; border-bottom: 2px solid var(--learning-line); color: var(--learning-muted); font-size: 12px; }
-.smart-hints-levels [data-complete="true"], .smart-hints-levels [aria-current="step"] { color: var(--learning-ink); border-bottom-color: var(--learning-ink); }
 .smart-hints-snapshot, .smart-hints-muted { color: var(--learning-body); font-size: 12px; }
 .smart-hints-body pre { white-space: pre; overflow: auto; max-height: 220px; padding: 10px; border: 1px solid var(--learning-line); border-radius: 5px; background: var(--learning-surface); font-size: 12px; }
 .smart-hints-body dd { margin-left: 0; }
 .smart-hints-evidence { padding: 0 10px 8px; border-left: 2px solid var(--learning-line); }
 .smart-hints-edit { margin: 12px 0; padding: 0 10px; border-left: 2px solid var(--learning-muted); }
-.smart-hints-question { font-weight: 500; }
 .smart-hints-consent { margin: auto; max-width: min(480px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow: auto; padding: 22px; background: var(--learning-card, #fff); color: var(--learning-ink, #26251e); border: 1px solid var(--learning-line, #ddd); border-radius: 8px; font-size: 14px; }
 .smart-hints-consent::backdrop { background: #26251e55; }
 .smart-hint-diff { margin: auto; width: min(1100px, calc(100vw - 48px)); max-height: calc(100vh - 48px); overflow: auto; padding: 20px; border: 1px solid var(--learning-line, #ddd); border-radius: 8px; background: var(--learning-card, #fff); color: var(--learning-ink, #26251e); }

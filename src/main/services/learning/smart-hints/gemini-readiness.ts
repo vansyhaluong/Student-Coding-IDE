@@ -1,5 +1,5 @@
 import type { ProviderTransport } from '../analysis/contracts'
-import { GEMINI_MODEL, GEMINI_MODEL_URL } from './gemini-provider'
+import { GEMINI_MODEL, GEMINI_MODEL_URL } from './gemini-transport'
 import { SmartProviderError } from './adapter'
 import { SMART_HINT_POLICY as P } from '../../../../shared/contracts/smart-hints'
 import { geminiLimitError } from './gemini-limit'

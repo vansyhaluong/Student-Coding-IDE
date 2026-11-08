@@ -1,5 +1,306 @@
 # Student Coding IDE Thesis Changelog
 
+## 2026-11-08 - AI-C4-F3.1 scoped exit gate PASS_WITH_LIMITATIONS
+
+Fixed Main shutdown returning before owned WebContents destruction: asynchronous
+WindowManager.stop now joins the endpoint, shares concurrent stop and preserves
+cleanup errors/retry. Chat business is sealed/drained first, while its transport
+is removed after endpoint destruction. Preload revokes correlations at STOPPING/
+STOPPED. Kept Hint Apply/retry, parser/SH-1, model/schema/quota and timeouts intact.
+
+Added delayed-destruction, retry/error, sealed-late-IPC and bridge lifecycle tests;
+138 targeted tests PASS, scoped TypeScript/ESLint and Main/Preload build PASS.
+Existing offline smoke gained PID/phase/exit tracing and ownership assertions,
+with final PASS only after process close. Eight final C#/JavaScript exits were 0
+(three original-stdio plus one strict-stderr run per language), no Chat warning,
+empty strict stderr, all owned counts zero. Baseline reproduced the native error
+in Electron Main after JS exit with WebContents still alive. No native call stack
+was collected; the fix is evidenced at the lifecycle boundary, not symbolicated
+IOCP attribution. No live API, user-IDE restart, new report or publishing.
+
+## 2026-11-08 - AI-C4-F3 scoped Hint Apply correction; exit gate BLOCKED
+
+Implemented fixed target/candidate/signature/source/runtime failure projection
+through the Hint parser, Main, typed IPC, Preload and UI. Added at most three
+manual pre-grant target/candidate preparations on the same trusted Hint, with
+idempotent failed IDs and a single valid proposal; original binding/TTL/package,
+SH-1/parser, manual Diff, consume and native Undo/Redo guards stay in place.
+Failed retryable preparation releases UI state without Discard or inference.
+Source-free last-rejection diagnostics retain fixed stage/reason/attempt and
+optional guard enum; a successful retry does not erase the last rejection.
+
+Verified 466 selected tests across 15 files, scoped TypeScript/ESLint and actual
+parser/Main/Preload/Renderer builds. Real-parser/fake-Gemini Electron confirms
+both Hint flows and same-Hint reselection without a fourth inference. Final C#
+functional checks passed but process exit was 1 after a Windows invalid-handle
+error; JavaScript exit was 0. Normal shutdown also logs a late Chat-close handler
+warning. These are recorded limitations, not a completed exit gate. The original
+manual incident has no retained Hint Apply diagnostic, so its data-specific
+cause remains unconfirmed. No live Gemini or unrelated execution changes.
+
+## AI-C4-F2 Hint Apply UI / Diff — verified scoped, 2026-11-08
+
+Enabled Apply beside Copy for the current owned Practice Hint. Capture freezes
+the live Monaco source/model/revision and explicit selection/caret; Main chooses
+the template body automatically when unimplemented. Typed prepare/consume/discard
+flows preserve F1 authority, recapture package identity at confirmation, and open
+the existing readonly Diff. Only a matching consume ACK arms a frozen local
+object for one shared native transaction. Discard, stale snapshots, cancellation,
+late ACKs and edit→Undo cannot resurrect a grant. Copy, code-last presentation,
+Chat and Suggest Fix remain intact. UI states expose Preparing/Review/Applied/
+Failed/Stale/Discarded and the retained one-preparation limit without retries.
+
+Actual Electron exposed and verified two corrective F1 fixes: reuse source-free
+SDK/asset identities with full byte/anchor checks inside existing budgets, and
+admit only the exact recognized unimplemented JS scaffold in the original Hint
+baseline. Candidate/Suggest Fix grammar, SH-1, signatures and outside-target
+structure remain mandatory. F1 was reopened with evidence and closed after its
+original/corrective 360 scoped checks passed; no unapproved feature was added.
+
+481 distinct targeted cases in 15 files PASS in scoped batches, including all
+30 final F2 UI cases, object-identity forgery, duplicate clicks/double confirmation,
+source/package/TTL/cancellation and native Undo/Redo regressions. Scoped TS/ESLint,
+Main/Preload/Renderer/parser builds and whitespace PASS. Final real-Electron C#/JS
+smokes use real parser assets and fake Gemini, each with exactly three explicit
+Hint POSTs/reservations and zero Apply inference, real HTTP, Run/Judge/Submit,
+Renderer errors or diagnostic leaks. Actual Diff screenshots inspected. Artifact:
+`out/hint-apply-f2`; final build identities are recorded in IMPLEMENTATION-PLAN.
+Earlier fixture/timing failures and initial smoke failures are not passing
+evidence. No new dependency, schema/model/quota/timeout change, native rebuild,
+app restart/install, full suite, report or Git publishing. PASS_WITH_LIMITATIONS:
+current Windows unpacked host, parse-only validation and one preparation per
+current Hint. STOP after F2; no Gemini live started.
+
+## AI-C4-F1 trusted Hint Apply backend — verified scoped, 2026-11-08
+
+Added a strictly validated prepareHintApply API, authorized Main IPC and correlated
+Preload bridge. Main retains minimal immutable material from its eligible owned
+COMPLETE Hint, validates the requested source/model/revision/TTL, and rechecks
+package version/signature/starter before and after parser work. Renderer cannot
+supply Hint text, replacements, candidates or grants. Separate bounded parser
+branches extract only the physical template body from a matching complete
+function/method, or validate explicit entry-function selection/statement-boundary
+insertion. Existing SH-1 canonical limits, signature and outside-target structure
+are mandatory; no whole-file edits or widened Suggest Fix authority.
+
+Independent Hint-provenance proposals retain the original result TTL. Exact
+duplicate preparation is idempotent, changed preparation is rejected, and a
+Main-only grant can be consumed once. Invalidation/expiry clears retained state.
+No additional inference, ledger, model/schema/quota/timeout or Renderer changes;
+Apply UI stays disabled and no consume IPC is exposed before F2.
+
+62 new real-parser C#/JS/backend/contract/IPC/bridge checks and 285 direct
+regressions PASS, 347 in 10 files. Scoped TypeScript/ESLint, Main/Preload bundles,
+pinned TypeScript/Roslyn parser builds and whitespace PASS. Initial fixture
+discovery/CRLF/reservation errors were corrected; final F1 run has no skipped
+cases. Artifacts stay in `out/hint-apply-f1`; no native rebuild, app restart,
+real Gemini, full suite, new report or Git publish. PASS_WITH_LIMITATIONS:
+current Hint only, one preparation per Hint and conservative grammar/target
+admission; parser checks do not prove compilation or algorithm correctness.
+No Electron UI/packaging acceptance. F1 STOP; F2 not started.
+
+## Hint code Copy / disabled Apply — verified scoped, 2026-11-08
+
+Hint code blocks now expose top-right icon-only Copy and icon-plus-label Apply
+using the existing beUI Button; language stays top-left and Code stays last.
+Clipboard preserves exact Unicode/CRLF/whitespace, reports success or failure and
+ignores completion after content replacement. Chat blocks retain their existing
+presentation. Inspection confirmed current Hint output has no verified target
+binding/proposal grant: Apply uses the explicitly authorized disabled fallback
+with a visible accessible reason, for empty templates and partial code alike.
+No target inference, editor grant, Main/Preload/IPC or mutation-path change.
+
+Targeted toolbar/clipboard/UI, Chat, Suggest Fix, readonly Diff, manual Apply,
+native Monaco Undo/Redo and stale/revision regressions pass. Added real-model
+C#/JS checks reject Hint output as an Apply grant; Hint contract/invalid-response
+regressions pass. One concurrent Chat focus assertion failed initially; all 26
+Chat tests passed in the isolated rerun. Scoped TypeScript and changed-code ESLint
+pass, including edit/Diff tests in the scoped config. Renderer-only production
+build PASS in `out/hint-code-toolbar/renderer`; existing Monaco import warning
+remains. Final whitespace PASS. No actual Electron visual smoke, live Gemini,
+full suite, new report or Git publish. PASS_WITH_LIMITATIONS: Hint Apply disabled.
+
+## Context-aware Unified Hint — verified scoped, 2026-11-07
+
+Actual source review found no template/implementation distinction and a Hint
+prompt allowing partial code regardless of progress. Main now classifies trusted
+starter/source snapshots with bounded TypeScript/Roslyn parsers. Empty scaffolds,
+comments, signatures and recognized placeholders require a complete matching
+function; observed implementation gets focused next/corrected-fragment guidance;
+uncertain inputs get conservative observed-code guidance without completion or
+defect claims. Returned whole functions for unimplemented code must parse, retain
+the required signature and contain no recognized unfinished branch. UI remains
+thinking/steps/code-last; no editor authority, SH-1 or model/quota/timeout changes.
+
+536 targeted tests PASS in 13 files (53 new context tests), covering both
+languages, actual parser assets, fake Gemini, exactly-once reservation,
+consent/cancel/timeout/stale, UI order and existing Chat/action/Fix behavior.
+Scoped TypeScript/ESLint, isolated Main/parser builds and diff checks PASS.
+No live Gemini, full suite, installed-IDE restart, packaging gate or Git publish.
+Conservative classification and structural response checks do not establish
+semantic correctness or guarantee live-model pedagogical quality.
+
+## AI-C4-E beUI Learning Assistant — verified scoped, 2026-11-07
+
+Reused official MIT beUI Message/MessageBubble/MessageScroller/PromptInput from
+the existing vendored source; added safe Markdown and escaped offline Monaco
+code blocks without dependencies. Compact composer unifies four actions and a
+context chip; independent timeline preserves reading position, user/AI alignment,
+consent focus and IDE theme tokens. Original AI icon and docked three-column
+layout remain. Main/Preload, history policy, shared slot and guarded editor
+authority are unchanged; proposal Discard reuses the existing pipeline.
+
+206 tests PASS in 10 focused Renderer files; scoped TS/ESLint/Renderer build and
+diff checks PASS. Actual isolated Electron final-bundle Chat/beUI smoke PASS:
+dark/light, two widths, keyboard/reduced motion, consent, two-turn trusted replay,
+cancel/late response, C# guarded Diff/Discard; JavaScript smoke also verified
+public Run evidence and manual Apply/native Undo/Redo. Zero Renderer console
+errors, real Gemini requests or diagnostic leaks; one reservation per fake POST.
+Current Windows host/unpacked artifacts only; inert Markdown links/images and
+plain fallback for unsupported code languages. PASS_WITH_LIMITATIONS. No C5,
+live Gemini, full suite, new acceptance report or commits.
+
+## AI-C4-D Unified Hint — verified scoped, 2026-11-06
+
+Replaced sequential Hint levels with one consented action returning thinking,
+implementation steps and practical language-tagged code last. Main validates all
+sections and language binding; Preload/Renderer revalidate before display. Legacy
+levels normalize away; old incomplete outputs reject. Removed progression and
+summary replay state. Cards remain display-only with safe offline Monaco syntax
+tokens and no editor authority. Other actions/Chat execution policies unchanged.
+
+781 distinct targeted tests PASS in 28 related files; scoped TS/ESLint/build and
+diff checks PASS. Actual isolated Electron C#/JavaScript Hint + follow-up Chat
+PASS: one reservation per POST, no implicit Hint replay or editor edits, zero
+console errors. Advisory code is not compiled/Run or proven semantically correct;
+current Windows host/unpacked build only. PASS_WITH_LIMITATIONS; no live Gemini,
+full suite, policy changes, new report files or commits. Stop after C4-D.
+
+## Learning Assistant docked layout — verified scoped, 2026-11-06
+
+Restored the original AI icon and docked Practice Chat to the editor's right;
+description/editor/assistant share the body width. Opening AI collapses the
+controlled roadmap; closing restores editor space without remounting Monaco.
+40 related Renderer tests PASS; scoped TypeScript/ESLint/build/diff checks PASS.
+Actual Electron at 1440/1280/1000px verifies non-overlapping columns, automatic
+sidebar collapse and preserved editor/model identity on reopen. Zero inference
+or console errors; no backend/consent/authority changes.
+
+## AI-C4-C Offline Electron acceptance — verified scoped, 2026-11-06
+
+Actual isolated Electron builds/typed IPC/Main services, fake Gemini HTTP,
+TS/Roslyn parsers and Monaco Diff/editor passed Chat, JavaScript, C# syntax
+recovery and shared-safety smoke. Fixed a stuck UI lease after asynchronous Main
+history refresh and redundant composer layout during consent review. Added the
+offline smoke driver and delayed-ACK/consent regressions. Measured and scoped
+expensive course-test accessibility queries; the original two tests now pass
+their default 5s timeout without changing product rendering.
+
+304 targeted tests PASS, scoped TypeScript/ESLint/build/diff checks PASS. Main,
+Preload and Renderer identities and five parser hashes verified. Real manual
+Apply/Discard/Undo/Redo, stale proposals, consent/history provenance, shared
+BUSY/rate/ledger, ownership and actual 10.305s timeout verified; zero console
+errors and no canary source/question/key diagnostic leaks. Actual Electron
+screenshots inspected. Current host/unpacked build only; installer, OS matrix
+and live Gemini unverified. PASS_WITH_LIMITATIONS. No live calls, full suite,
+provider/model/quota/timeout or SH-1/parser/Run/Judge/Submit changes. Stop before
+live authorization; preserve unrelated working-tree changes.
+
+## AI-C4-B Unified Learning Assistant — verified scoped, 2026-11-06
+
+Replaced Practice's two AI entries/drawers with one Learning Assistant containing
+Chat and Hint/Analyze/Explain/Suggest Fix controls. Reused the typed bridges,
+Smart Hints hook/service, consent and canonical Fix/Diff/manual Apply pipeline.
+Bounded request-identified cards preserve order across loading/result/failure and
+source invalidation. Action cards never enter Chat history or mint Apply authority.
+Operation-only Cancel preserves completed Hint levels; the existing IPC Cancel
+route atomically returns an already committed Hint, and the hook accepts that
+validated completion rather than losing progression in a polling race.
+
+Final targeted run: 221/221 PASS across 11 files, including 16 unified cases and
+one Main IPC regression. Shared admission/rate window, consent, stale output,
+native Monaco model Apply/Undo/Redo, NO_FIX and forged proposal-like Chat text are
+covered. Scoped TypeScript/ESLint, Renderer production build and whitespace PASS.
+No SH-1 service, parser, provider/model/quota/timeout or Run/Judge/Submit changes.
+No real Gemini/full suite/live Electron visual or installed acceptance; the new
+fixture uses a synthetic guard and simulated Diff view. C4-B PASS_WITH_LIMITATIONS;
+stop pending C4-C acceptance. Existing unrelated working-tree work is preserved.
+
+## AI-C4-A Learning Assistant Chat UI — verified scoped, 2026-11-06
+
+Added Learning/Practice advisory Chat panel and typed UI hook over the existing
+Gemini Chat backend. All scopes require manifest consent before inference;
+selection/source show code previews. Main-owned history, source/context binding,
+session retirement, stale/duplicate guards and cancellation preserve the existing
+Smart Hints flow. No automatic editor edits or Quick Actions timeline integration.
+176 distinct targeted tests in eight files pass with fake HTTP only, including 22 Chat
+integration cases and Hint/consent coexistence. Final lifecycle changes reverified
+all 32 Chat/coexistence cases: rapid remounts share serialized bridge lifetime,
+and unmount cancels inference before reading the close revision. Scoped TypeScript/ESLint,
+Renderer production build and whitespace checks pass. Learning material tests
+needed 20s rather than default 5s timeout. Live Electron/visual and real Gemini
+acceptance were not performed. C4-A PASS_WITH_LIMITATIONS; stop before C4-B.
+
+## AI-C3-B2 typed Chat application boundary — verified scoped, 2026-11-06
+
+Composed ChatService inside the existing Smart Hints configuration with one shared
+coordinator, credential/transport and durable ledger. Added eight typed IPC/Preload
+APIs under Learning Chat, Main-generated document ownership/catalogue checks and
+Main-computed snapshot fingerprints. Navigation/process/context/configuration
+retirement and shutdown revoke captures/history; explicit consent gates inference.
+Preload validates/correlates bindings, revision, operation, sequence and epochs;
+Chat has no editor authority. 347 distinct targeted tests PASS, including 56
+Chat IPC/Preload cases and direct Smart Hints/shared-state regressions. Scoped
+typecheck/lint/whitespace and real-configuration Main/Preload Vite builds PASS.
+No Chat UI, real API/countTokens, full suite/global gates or application restart.
+
+## AI-C3-B1 Main ChatService — verified scoped, 2026-11-06
+
+Added Main ChatService composition for conversation/context and Gemini adapter
+with the mandatory existing coordinator, borrowed credential/provider-generation
+ports and retire subscription. Consent precedes dispatch; one 10s deadline and
+one external reservation protect each request. Only valid COMPLETE commits a
+whole user/assistant pair. Cancellation/retirement/staleness/late output cannot
+commit; shutdown joins Chat cleanup without stopping other consumers.
+249 targeted tests PASS across eight files (44 new service cases), scoped
+typecheck/lint/whitespace and standalone two-turn Main fake-HTTP bundle PASS.
+Actual SmartHintsService contention and the configuration durable daily ledger
+are tested. No live Gemini, application rollout, IPC/Preload/UI or new quota state.
+
+## AI-C3-A Gemini multi-turn adapter — verified scoped, 2026-11-06
+
+Added advisory-only GeminiChatAdapter over the shared fixed-model HTTP boundary.
+Main identity-checked immutable capture supplies eligible history and explicit
+consented context; exact CHAT_REPLY validation supplies no editor authority.
+No session/quota owner, application wiring, retry or live API was added.
+295 scoped tests PASS, including 48 adapter cases for roles/provenance, bounds,
+malformed/safety/partial replies, secrets, HTTP failures, abort/deadline/cleanup
+and stale late responses. Scoped typecheck/lint/whitespace and a standalone
+two-turn fake-HTTP bundle PASS. Smart Hints behavior remains unchanged.
+
+## AI-C2-B Chat contracts/session/context — verified scoped, 2026-11-06
+
+Added strict Chat DTOs and Main-only RAM conversation/context domains. One session
+per owner/document, absolute 30-minute TTL, 32 messages/48KiB, atomic complete pairs
+and at most 8 eligible replay pairs. Consent binds immutable question/history/
+explicit attachment with context/provider-generation provenance; source updates
+invalidate pending work while retaining a non-replayed reference timeline.
+Required Main policy blocks known secret forms; chat text cannot grant editor
+authority. 61 targeted tests, scoped tsc/ESLint/whitespace and standalone domain
+bundle/synthetic completion PASS, no network. Token counting and real composition/
+Gemini/IPC/Preload/UI remain unimplemented. Existing Smart Hints behavior untouched.
+
+## AI-C2-A2 shared Gemini transport — verified scoped, 2026-11-06
+
+Extracted fixed-model HTTP/metadata/byte bounds/abort/error/diagnostic handling
+from GeminiSmartHintsAdapter. Adapter retains action-specific payload and content
+validation, including replacement-only Fix; transport owns no quota/history and
+continues the existing reservation callback and 10s/30s/outer-deadline semantics.
+355 targeted tests PASS across 10 files; scoped tsc/ESLint/whitespace and isolated
+Main/parser build PASS. Synthetic multi-turn contents pass through unchanged;
+two fake consumers share the existing coordinator without another ledger.
+No live Gemini, ChatService/session/UI/IPC, timeout fix or unrelated Electron test.
+
 ## AI-C2-A1 shared execution coordinator — verified scoped, 2026-11-06
 
 Extracted Smart Hints active admission and existing minute/hour limits into a

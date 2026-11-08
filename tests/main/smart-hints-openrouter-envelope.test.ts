@@ -10,7 +10,7 @@ import { runOpenRouterSmoke } from '../../scripts/sh4-openrouter-smoke'
 // Sources: https://openrouter.ai/openapi.json (ChatResult.service_tier),
 // https://openrouter.ai/docs/api_reference/overview (NonStreamingChoice.native_finish_reason).
 const key = 'SYNTHETIC-ONLY-ENVELOPE-KEY'
-const hint = { kind: 'HINT', level: 1, paragraphs: ['Compare the public examples.'], nextQuestion: 'What changes?', evidence: [] }
+const hint = { kind: 'HINT', thinking: 'Compare the public examples.', steps: ['Compare the public inputs.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }
 const wire = () => ({ model, id: 'synthetic', created: 1, object: 'chat.completion', system_fingerprint: null,
   choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify(hint) } }],
   usage: { prompt_tokens: 280, completion_tokens: 385, total_tokens: 665, cost: 0 } })

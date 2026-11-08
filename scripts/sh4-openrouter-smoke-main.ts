@@ -57,7 +57,7 @@ async function main(): Promise<void> {
     if (request.method === 'GET' && request.url === 'https://openrouter.ai/api/v1/models/cohere/north-mini-code:free/endpoints') return json({ data: { id: selectedModel, endpoints: [{ status: 0, pricing: { prompt: '0', completion: '0' }, supported_parameters: ['max_tokens'] }] } })
     if (request.method !== 'POST' || request.url !== 'https://openrouter.ai/api/v1/chat/completions') throw new Error('OFFLINE_ROUTE_DENIED')
     return json({ model: modelProfile === 'NORTH_MINI_CODE_FREE' ? selectedModel : 'synthetic/offline:free', choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant',
-      content: JSON.stringify({ kind: 'HINT', level: 1, paragraphs: ['Compare the return value with the public examples.'], nextQuestion: 'How much should the input change?', evidence: [] }) } }] })
+      content: JSON.stringify({ kind: 'HINT', thinking: 'Compare the return value with the public examples.', steps: ['Return the required value.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }) } }] })
   }
   const evidence = await runOpenRouterSmoke({ electronMainDevelopment: !app.isPackaged, modelProfile,
     readKey: offline ? () => 'SYNTHETIC-ONLY-OFFLINE-SMOKE' : () => process.env.OPENROUTER_API_KEY,

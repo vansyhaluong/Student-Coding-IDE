@@ -8,9 +8,10 @@ import { createSubmissionBridge } from './submission'
 import { createLearningOrder } from './learning-order'
 import { createAnalysisBridge } from './analysis'
 import { createSmartHintsBridge } from './smart-hints'
+import { createLearningChatBridge } from './learning-chat'
 
 export function createLearningBridge(ipc: IpcRendererLike): LearningApi {
   const order = createLearningOrder()
-  return { smartHints: createSmartHintsBridge(ipc, order), analysis: createAnalysisBridge(ipc, order), exercise: createExerciseBridge(ipc, undefined, order), submission: createSubmissionBridge(ipc, undefined, order), practice: createPracticeBridge(ipc), getCourse: async () => parseAppResult(await invokeSafely(ipc, LEARNING_CHANNELS.getCourse, {}),
+  return { chat: createLearningChatBridge(ipc), smartHints: createSmartHintsBridge(ipc, order), analysis: createAnalysisBridge(ipc, order), exercise: createExerciseBridge(ipc, undefined, order), submission: createSubmissionBridge(ipc, undefined, order), practice: createPracticeBridge(ipc), getCourse: async () => parseAppResult(await invokeSafely(ipc, LEARNING_CHANNELS.getCourse, {}),
     isLearningCourse, LEARNING_CHANNELS.getCourse) }
 }

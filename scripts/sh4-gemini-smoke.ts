@@ -61,7 +61,7 @@ export async function runGeminiSmoke(options: GeminiSmokeOptions): Promise<Gemin
   try {
     if (!options.electronMainDevelopment || !options.liveApproved) { evidence.code = 'DEVELOPMENT_APPROVAL_REQUIRED'; return evidence }
     await progress('MAIN_STARTED')
-    if (!await consent('PREFLIGHT', `Google Gemini API. Fixed model: ${GEMINI_MODEL}. Confirm ONLY if you have checked in Google AI Studio that the project owning GEMINI_API_KEY is Free Tier with no active billing/paid tier. Unknown or paid project: Cancel. This is your explicit per-attempt tier attestation; model metadata cannot verify billing or remaining quota. Google may use Free Tier content to improve products. Next: authenticated GET of this exact model to check access/generateContent support, then at most one synthetic Hint L1 inference after snapshot consent. No billing changes, retry, alternative model, paid fallback or tools. 30s execution cap / 2048 output tokens.`)) {
+    if (!await consent('PREFLIGHT', `Google Gemini API. Fixed model: ${GEMINI_MODEL}. Confirm ONLY if you have checked in Google AI Studio that the project owning GEMINI_API_KEY is Free Tier with no active billing/paid tier. Unknown or paid project: Cancel. This is your explicit per-attempt tier attestation; model metadata cannot verify billing or remaining quota. Google may use Free Tier content to improve products. Next: authenticated GET of this exact model to check access/generateContent support, then at most one synthetic Unified Hint inference after snapshot consent. No billing changes, retry, alternative model, paid fallback or tools. 30s execution cap / 2048 output tokens.`)) {
       evidence.code = 'PREFLIGHT_CANCELLED'; return evidence
     }
     evidence.freeTierAttested = true
@@ -100,7 +100,7 @@ export async function runGeminiSmoke(options: GeminiSmokeOptions): Promise<Gemin
       } } })
     const q: SmartPrepare = { requestId: randomUUID(), clientContextId: randomUUID(), exerciseId: 'sh4-gemini-synthetic', language: 'csharp',
       sourceRevision: 1, source: GEMINI_SMOKE_SOURCE, origin: { kind: 'PRACTICE', modelId: randomUUID(), modelVersion: 1, eol: 'LF' },
-      action: { kind: 'HINT', level: 1 }, run: null }
+      action: { kind: 'HINT' }, run: null }
     const prepared = await service.prepare(1, 'gemini-smoke', q, () => {}, async generation => {
       const signature = { functionName: 'Solve', parameters: [{ name: 'x', type: 'int32' }], returnType: 'int32' }
       const capture: SmartCapture = { action: q.action, source: q.source, statement: GEMINI_SMOKE_STATEMENT, constraints: ['0 <= x <= 100'],
@@ -113,14 +113,14 @@ export async function runGeminiSmoke(options: GeminiSmokeOptions): Promise<Gemin
       return capture
     })
     if (prepared.state !== 'PREPARED') throw new Error('PREPARE_FAILED')
-    if (!await consent('SNAPSHOT', `Google Gemini API / ${GEMINI_MODEL} / Free Tier attested.\n${GEMINI_SMOKE_SOURCE}\nTask: ${GEMINI_SMOKE_STATEMENT}\nConstraint: 0 <= x <= 100. Signature: Solve(int32) -> int32. C# / Practice / Hint L1 / no Run evidence / no prior hints. Send ONLY this public synthetic snapshot after the model access check? 30s total execution, 2048 output tokens, one inference reservation. Google may use Free Tier content to improve products. No Run, Submit, Apply, retry or paid fallback.`)) {
+    if (!await consent('SNAPSHOT', `Google Gemini API / ${GEMINI_MODEL} / Free Tier attested.\n${GEMINI_SMOKE_SOURCE}\nTask: ${GEMINI_SMOKE_STATEMENT}\nConstraint: 0 <= x <= 100. Signature: Solve(int32) -> int32. C# / Practice / Unified Hint / no Run evidence / no prior hints. Send ONLY this public synthetic snapshot after the model access check? 30s total execution, 2048 output tokens, one inference reservation. Google may use Free Tier content to improve products. No Run, Submit, Apply, retry or paid fallback.`)) {
       evidence.code = 'CONSENT_CANCELLED'; return evidence
     }
     const ref = { requestId: prepared.requestId, operationId: prepared.operationId }
     service.start(1, 'gemini-smoke', { ...ref, captureToken: prepared.captureToken, consentVersion: 1, consentGranted: true })
     let status = service.status(1, 'gemini-smoke', ref)
     while (status.state === 'RUNNING') { await pause(25); status = service.status(1, 'gemini-smoke', ref) }
-    if (status.state === 'COMPLETE' && status.output.kind === 'HINT' && status.output.level === 1) {
+    if (status.state === 'COMPLETE' && status.output.kind === 'HINT') {
       evidence.result = 'PASS'; evidence.code = 'COMPLETE'; evidence.schemaValidation = 'PASS'; evidence.hint = status.output; evidence.stage = 'COMPLETE'
     } else {
       evidence.result = evidence.httpRequests ? 'FAIL' : 'STOP'; evidence.code = ['ATTEMPT_RESERVATION_FAILED', 'EVIDENCE_PERSISTENCE_FAILED'].includes(evidence.code) ? evidence.code : status.state === 'FAILED' ? status.code : status.state

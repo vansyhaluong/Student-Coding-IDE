@@ -8,6 +8,7 @@ import type { SmartSourceSnapshot, PracticeFixSnapshot } from './smart-hints-sel
 type Prepared = Extract<SmartStatus, { state: 'PREPARED' }>
 type Complete = Extract<SmartStatus, { state: 'COMPLETE' }>
 export interface SmartHintsView {
+  requestId?: string; operationId?: string; action?: SmartAction['kind']
   phase: 'idle' | 'preparing' | 'consent' | 'starting' | 'running' | 'recovering' | 'result' | 'error' | 'cancelled'
   prepared?: Prepared; result?: Complete; message?: string; hints: Complete[]; canCheck?: boolean
 }
@@ -15,6 +16,7 @@ interface Operation {
   q: SmartPrepare; snapshot: SmartSourceSnapshot; fingerprint: string; selectionFingerprint?: string
   sequence: number; binding?: string; signature?: string; status?: SmartStatus; started: boolean; pending: boolean
   polling: boolean; failures: number; timer?: ReturnType<typeof setTimeout>
+  cancelling?: boolean
 }
 interface Context {
   live: boolean; id: string; key: string; code: string; sourceKey?: string; used: boolean
@@ -53,7 +55,8 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     && latest.current.active && !latest.current.locked && latest.current.key === ctx.key && latest.current.source === ctx.code
     && (!op || ctx.op === op && op.snapshot.isCurrent())
   const publish = (ctx: Context, view: Omit<SmartHintsView, 'hints'>) => {
-    if (valid(ctx)) setState({ ctx, view: { ...view, hints: [...ctx.hints] } })
+    if (valid(ctx)) setState({ ctx, view: { requestId: ctx.op?.q.requestId, operationId: ctx.op?.status?.operationId,
+      action: ctx.op?.q.action.kind, ...view, hints: [...ctx.hints] } })
   }
   const retire = (ctx: Context, reason: SmartRetire['reason']) => {
     ctx.live = false; clearTimeout(ctx.op?.timer); clearTimeout(ctx.expiry)
@@ -125,7 +128,7 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     if (ctx.hints.length) expire(ctx, Math.min(...ctx.hints.map(h => h.expiresAt)))
     // Cancel only this operation. Cursor changes must not retire the source/Hint session.
     if (op.status) void api?.cancel({ requestId: op.q.requestId, operationId: op.status.operationId }).catch(() => {})
-    publish(ctx, { phase: 'cancelled', message })
+    publish(ctx, { phase: 'cancelled', message, requestId: op.q.requestId, operationId: op.status?.operationId, action: op.q.action.kind })
   }
   const selectionChanged = useCallback(() => {
     const ctx = current.current, op = ctx?.op
@@ -145,7 +148,6 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     if (value.requestId !== q.requestId || b.clientContextId !== ctx.id || b.exerciseId !== q.exerciseId || b.language !== q.language
       || b.sourceRevision !== q.sourceRevision || b.fingerprint !== op.fingerprint || b.sourceBytes !== new TextEncoder().encode(q.source).length
       || JSON.stringify(b.origin) !== JSON.stringify(q.origin) || b.action.kind !== q.action.kind
-      || b.action.kind === 'HINT' && (q.action.kind !== 'HINT' || b.action.level !== q.action.level)
       || (b.action.kind === 'EXPLAIN' || b.action.kind === 'SUGGEST_FIX') && (q.action.kind !== b.action.kind || !('selection' in q.action) || b.action.selection.fingerprint !== op.selectionFingerprint
         || b.action.selection.startOffset !== q.action.selection.startOffset || b.action.selection.endOffset !== q.action.selection.endOffset
         || b.action.selection.startLine !== q.action.selection.startLine || b.action.selection.startColumn !== q.action.selection.startColumn
@@ -166,15 +168,12 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     else if (value.state === 'COMPLETE') {
       if (value.expiresAt <= Date.now() || !isSmartOutput(value.output, q.action, q.source,
         value.runContext.kind === 'RUN_PUBLIC' ? value.runContext.observations.map(x => x.evidenceId) : [],
-        q.origin.kind === 'PRACTICE' ? q.origin.eol : undefined)
+        q.origin.kind === 'PRACTICE' ? q.origin.eol : undefined, q.language)
         || value.output.kind === 'EDIT_PROPOSAL' && !isCanonicalSelectionFix(q.source, b, value.output)) return bad()
       clearTimeout(op.timer); op.pending = false
       // The consent timer belongs to the prepare token, not to the completed result.
       clearTimeout(ctx.expiry); ctx.expiresAt = ctx.hints.length ? Math.min(...ctx.hints.map(h => h.expiresAt)) : undefined
-      if (value.output.kind === 'HINT') {
-        const level = value.output.level
-        ctx.hints = [...ctx.hints.filter(h => h.output.kind !== 'HINT' || h.output.level !== level), value].slice(-3)
-      }
+      if (value.output.kind === 'HINT') ctx.hints = [value]
       expire(ctx, value.expiresAt); publish(ctx, { phase: 'result', result: value })
     } else {
       clearTimeout(op.timer); op.pending = false; clearTimeout(ctx.expiry); ctx.expiresAt = undefined
@@ -216,12 +215,13 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
       current.current = ctx
     }
     const owner = ctx
-    admission.current = true; setOpen(true); publish(owner, { phase: 'preparing' })
+    admission.current = true; setOpen(true)
     const q: SmartPrepare = { requestId: crypto.randomUUID(), clientContextId: owner.id, exerciseId: latest.current.exerciseId!, language: snapshot.language,
       sourceRevision: latest.current.sourceRevision, source: snapshot.source, origin: snapshot.origin, action: structuredClone(action), run: null }
     if (snapshot.origin.kind === 'PRACTICE') q.run = run.current
     const op: Operation = { q, snapshot, fingerprint: '', sequence: -1, started: false, pending: true, polling: false, failures: 0 }
     owner.op = op
+    publish(owner, { phase: 'preparing' })
     try {
       if (!await probe()) { op.pending = false; if (valid(owner, op)) publish(owner, { phase: 'idle', message: 'AI chưa sẵn sàng hoặc chưa được cấu hình. Chưa gửi source.' }); return }
       if (!valid(owner, op)) { if (valid(owner) && owner.op === op && action.kind === 'SUGGEST_FIX') cancelFix(owner, op, 'Vùng chọn đã thay đổi. Hãy yêu cầu lại.'); return }
@@ -234,11 +234,11 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
       op.fingerprint = hash; op.selectionFingerprint = selectedHash; owner.used = true
       const result = await api.prepare(q)
       if (!valid(owner, op)) {
-        if (valid(owner) && action.kind === 'SUGGEST_FIX') {
+        if (valid(owner)) {
           // A late ACK belongs only to this old Fix, never to a newer operation/context.
           if (result.ok && result.value.requestId === q.requestId)
             void api.cancel({ requestId: q.requestId, operationId: result.value.operationId }).catch(() => {})
-          if (owner.op === op) cancelFix(owner, op, 'Vùng chọn đã thay đổi. Hãy yêu cầu lại.')
+          if (owner.op === op) cancelFix(owner, op, 'Snapshot đã thay đổi. Hãy yêu cầu lại.')
         } else void api.retireContext({ clientContextId: owner.id, reason: 'EDIT' }).catch(() => {})
         return
       }
@@ -279,8 +279,18 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
   const check = useCallback(() => { const ctx = current.current; if (ctx?.op) void poll(ctx, ctx.op) }, [api])
   const cancel = useCallback(() => {
     const ctx = current.current, op = ctx?.op
-    if (ctx && op?.q.action.kind === 'SUGGEST_FIX') { cancelFix(ctx, op, 'Đã hủy Suggest Fix.'); return }
-    invalidate('EDIT'); setState({ view: { ...idle, phase: 'cancelled', message: 'Đã hủy phiên gợi ý. Yêu cầu tiếp theo bắt đầu một phiên mới.' } })
+    if (ctx && op && op.q.action.kind === 'HINT' && op.started && op.status && api) {
+      if (op.cancelling || !valid(ctx, op)) return
+      op.cancelling = true; clearTimeout(op.timer)
+      publish(ctx, { phase: 'recovering', message: 'Đang xác nhận hủy Hint…' })
+      const reference = { requestId: op.q.requestId, operationId: op.status.operationId }
+      void api.cancel(reference).then(result => {
+        if (valid(ctx, op)) { if (result.ok) accept(ctx, op, result.value); else recover(ctx, op) }
+      }).catch(() => recover(ctx, op)).finally(() => { op.cancelling = false })
+      return
+    }
+    if (ctx && op) { cancelFix(ctx, op, op.q.action.kind === 'SUGGEST_FIX' ? 'Đã hủy Suggest Fix.' : 'Đã hủy yêu cầu AI.'); return }
+    setState({ view: { ...idle, phase: 'cancelled', message: 'Đã hủy yêu cầu AI.' } })
   }, [invalidate])
   const close = useCallback(() => { invalidate('EDIT'); setOpen(false) }, [invalidate])
   const retry = useCallback(() => {
@@ -316,6 +326,7 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     || state.ctx.op && !state.ctx.op.snapshot.isCurrent()) ? idle : state.view
   const ctx = current.current, op = ctx?.op
   return { open, show, close, begin, consent, cancel, check, retry, invalidate, retireSolution, setRun, capabilities, previewFix, selectionChanged,
+    isBusy: () => admission.current || !!current.current?.op?.pending,
     language: input.language, frozenSelection: ctx && op?.q.action.kind === 'SUGGEST_FIX' && valid(ctx, op) ? op.q.action.selection : undefined,
     checking, view, capturedSource: ctx && op && valid(ctx, op) ? op.q.source : undefined,
     canRetry: !!ctx && !!op && op.q.action.kind !== 'SUGGEST_FIX' && valid(ctx, op) && !op.pending && view.phase === 'error',

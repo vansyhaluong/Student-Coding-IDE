@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.node.json",
+  "compilerOptions": { "composite": false, "noEmit": true },
+  "include": ["../src/**/*.d.ts", "../src/shared/contracts/learning-chat*.ts", "../src/main/services/learning/chat/*.ts",
+    "../src/main/index.ts", "../src/preload/index.ts", "../src/main/ipc/learning-chat-ipc-service.ts",
+    "contracts/learning-chat.test.ts", "main/learning-chat*.test.ts", "main/submission-ipc.test.ts", "preload/learning-chat.test.ts", "fixtures/learning/chat.ts",
+    "main/window-manager.test.ts"]
+}

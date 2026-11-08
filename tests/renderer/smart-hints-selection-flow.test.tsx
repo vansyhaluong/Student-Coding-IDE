@@ -37,12 +37,13 @@ function fixture(options: { language?: ExerciseLanguage; selection?: string; lan
   let prepareGate: ReturnType<typeof gate<void>> | undefined, providerGate: ReturnType<typeof gate<void>> | undefined
   const reserve = vi.fn(async () => {}), verify = vi.fn(async () => {}), dispose = vi.fn(async () => {})
   const availability = vi.fn(async (l: ExerciseLanguage) => (options.languages ?? ['csharp', 'javascript']).includes(l))
+  let hintCount = 0
   const send = vi.fn(async (r: Request) => {
     if (r.method === 'GET') return Response.json({ name: `models/${GEMINI_MODEL}`, supportedGenerationMethods: ['generateContent'], outputTokenLimit: 65536 })
     const body = await r.json(), input = JSON.parse(body.contents[0].parts[0].text)
     if (providerGate) await providerGate.promise
     const output = input.action.kind === 'HINT'
-      ? { kind: 'HINT', level: input.action.level, paragraphs: [`Hint ${input.action.level}`], nextQuestion: 'Next?', evidence: [] }
+      ? { kind: 'HINT', thinking: `Hint ${++hintCount}`, steps: ['Compare the public inputs.'], code: { language: input.language, text: 'return x + 1;' }, evidence: [] }
       : options.output ?? { kind: 'EDIT_PROPOSAL', replacementText: input.action.selection.text === 'value' ? 'value + 1'
         : input.action.selection.text.replace('return value;', 'return value + 1;'), rationale: 'Synthetic focused change.', evidence: [] }
     return Response.json({ candidates: [{ finishReason: 'STOP', content: { role: 'model', parts: [{ text: JSON.stringify(output) }] } }] })
@@ -110,14 +111,14 @@ describe('D6-5 panel → typed preload → Main → fake Gemini → canonical pr
     expect(fix.source).toBe(f.data.source); expect(fix.candidate).not.toBe(fix.source)
     expect(fix.consume()).toBe(true); expect(fix.consume()).toBe(false)
   })
-  it('selection change before consent cancels just Fix and preserves Hint progression', async () => {
-    const f = fixture(); await open(); await click('Get Hint · Level 1'); await consent(); await screen.findByText('Hint 1')
+  it('selection change before consent cancels just Fix and preserves completed Hint cards', async () => {
+    const f = fixture(); await open(); await click('Hint'); await consent(); await screen.findByText('Hint 1')
     await click('Suggest Fix'); await screen.findByRole('dialog')
     act(() => f.select('value'))
     expect(screen.queryByRole('dialog')).toBeNull(); expect(f.reserve).toHaveBeenCalledOnce()
     await waitFor(() => expect(f.invoke.mock.calls.some(([c]) => c === C.cancel)).toBe(true))
     expect(f.invoke.mock.calls.some(([c]) => c === C.retireContext)).toBe(false)
-    await click('Get Hint · Level 2'); await consent(); await screen.findByText('Hint 2')
+    await click('Hint'); await consent(); await screen.findByText('Hint 2')
     expect(f.reserve).toHaveBeenCalledTimes(2)
   })
   it('late prepare ACK is cancelled by reference, not by retiring Hint context', async () => {
@@ -138,7 +139,7 @@ describe('D6-5 panel → typed preload → Main → fake Gemini → canonical pr
     act(() => { void f.controller.begin({ kind: 'HINT', level: 1 }, f.snapshot()) })
     await screen.findByRole('dialog')
     await act(async () => { held.resolve(); await old })
-    expect(screen.getByRole('dialog').textContent).toContain('Hint Level 1')
+    expect(screen.getByRole('dialog').textContent).toContain('Hint ·')
     expect(f.reserve).not.toHaveBeenCalled()
     await consent(); await screen.findByText('Hint 1')
     expect(f.reserve).toHaveBeenCalledOnce()
@@ -172,7 +173,7 @@ describe('D6-5 panel → typed preload → Main → fake Gemini → canonical pr
   it('parser unavailable leaves Fix disabled while Hint stays available; probes are free of inference', async () => {
     const f = fixture({ languages: [] }); await open()
     expect((screen.getByRole('button', { name: 'Suggest Fix' }) as HTMLButtonElement).disabled).toBe(true)
-    expect((screen.getByRole('button', { name: 'Get Hint · Level 1' }) as HTMLButtonElement).disabled).toBe(false)
+    expect((screen.getByRole('button', { name: 'Hint' }) as HTMLButtonElement).disabled).toBe(false)
     expect(f.service.capabilities()).toMatchObject({ suggestFixMode: 'DISABLED', suggestFixLanguages: [] })
     expect(f.send).not.toHaveBeenCalled(); expect(f.reserve).not.toHaveBeenCalled()
   })

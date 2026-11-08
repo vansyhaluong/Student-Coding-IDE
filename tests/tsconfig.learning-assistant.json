@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "types": ["node", "vite/client"] },
+  "include": ["../src/renderer/src/**/*.d.ts", "../src/renderer/src/features/learning/LearningWorkspace.tsx",
+    "../src/renderer/src/features/learning/practice/PracticeWorkspace.tsx", "renderer/learning-assistant.test.tsx", "renderer/learning-assistant-unified.test.tsx",
+    "renderer/smart-hints-integration.test.tsx", "renderer/smart-hints-ui.test.tsx", "renderer/learning-workspace.test.tsx", "renderer/smart-hints-selection-flow.test.tsx",
+    "renderer/smart-hints-edits.test.tsx", "renderer/smart-hints-diff.test.tsx", "renderer/hint-apply-ui.test.tsx",
+    "main/smart-hints-context.test.ts", "main/smart-hints-unified-hint.test.ts", "main/smart-hints-hint-apply.test.ts", "main/smart-hints-core.test.ts", "main/smart-hints-ipc.test.ts",
+    "main/smart-hints-gemini.test.ts", "main/smart-hints-gemini-contract.test.ts", "main/smart-hints-configuration.test.ts",
+    "main/smart-hints-response-classification.test.ts", "main/smart-hints-safe-diagnostics.test.ts",
+    "main/smart-hints-gemini-smoke.test.ts", "main/smart-hints-live-runner.test.ts", "main/smart-hints-attempts.test.ts",
+    "main/smart-hints-openrouter.test.ts", "main/smart-hints-openrouter-envelope.test.ts", "main/smart-hints-openrouter-429-investigation.test.ts",
+    "main/smart-hints-north-invalid-response-investigation.test.ts", "main/smart-hints-selection-contract.test.ts",
+    "../src/main/services/learning/smart-hints/parsers/javascript.ts"]
+}

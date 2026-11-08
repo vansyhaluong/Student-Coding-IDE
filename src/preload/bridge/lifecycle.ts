@@ -159,7 +159,7 @@ function isLifecycleResult(
     && typeof error.retryable === 'boolean'
 }
 
-function isLifecycleStatus(value: unknown): value is LifecycleStatus {
+export function isLifecycleStatus(value: unknown): value is LifecycleStatus {
   return typeof value === 'object'
     && value !== null
     && 'state' in value

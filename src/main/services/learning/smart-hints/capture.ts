@@ -3,6 +3,7 @@ import type { SmartPrepare, SmartBinding, SmartRunContext, SmartAction, SmartBou
 import { SMART_HINT_POLICY as P } from '../../../../shared/contracts/smart-hints'
 import { smartBytes, smartText, validateSmartPrepare } from '../../../../shared/contracts/smart-hints-validation'
 import { publicRunPackage, sourceFingerprint, type PublicRunReceipt } from './public-run-receipt'
+import type { HintImplementationState } from './hint-context'
 
 export interface SmartCapture {
   action: SmartAction
@@ -11,6 +12,9 @@ export interface SmartCapture {
   /** Trusted package identity, Main-private; never serialized to provider or status. */
   signatureIdentity: { version: number; hash: string }
   runContext: SmartRunContext
+  /** Main-owned starter snapshot and derived Hint state; never accepted over IPC. */
+  hintTemplate?: string
+  hintImplementation?: HintImplementationState
 }
 export function immutableSmartCapture(value: SmartCapture): SmartCapture {
   const copy: SmartCapture = structuredClone(value)
@@ -23,6 +27,7 @@ export function immutableSmartCapture(value: SmartCapture): SmartCapture {
   return copy
 }
 export function bindSmartAction(action: SmartAction): SmartBoundAction {
+  if (action.kind === 'HINT') return { kind: 'HINT' }
   if (action.kind !== 'EXPLAIN' && action.kind !== 'SUGGEST_FIX') return structuredClone(action)
   const { text, ...range } = action.selection
   return { kind: action.kind, selection: { ...range, fingerprint: sourceFingerprint(text) } }
@@ -58,6 +63,7 @@ export async function captureSmartHints(registry: Pick<ExercisePackageRegistry, 
       && receipt.fingerprint === fingerprint && receipt.packageFingerprint === sourceFingerprint(JSON.stringify(pkg))) runContext = structuredClone(receipt.context)
     if (!pkg && ref) runContext = { kind: 'CODE_ONLY', reason: 'DETAIL_LIMIT_EXCEEDED' }
     return immutableSmartCapture({ binding, action: request.action, source: request.source, statement: m.statement, constraints, signature,
-      signatureIdentity: { version: m.signature.version, hash: m.signature.hash }, runContext })
+      signatureIdentity: { version: m.signature.version, hash: m.signature.hash }, runContext,
+      ...(request.action.kind === 'HINT' ? { hintTemplate: lease.data.starters[request.language] } : {}) })
   } finally { await Promise.allSettled([...tasks]); settled = true; lease.release() }
 }

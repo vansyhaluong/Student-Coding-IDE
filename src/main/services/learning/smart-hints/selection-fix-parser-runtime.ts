@@ -14,6 +14,16 @@ import { FIX_PARSER_PROTOCOL, FIX_PARSER_TYPESCRIPT, FIX_PARSER_SDK, FIX_PARSER_
   FIX_PARSER_REASONS, type FixParserInput, type FixParserReason } from './selection-fix-protocol'
 import { SelectionFixCsharpSdkResolver } from './selection-fix-sdk-resolver'
 import type { CsharpSdkResolver, CsharpSdkSelection } from '../runtime/csharp-execution-contracts'
+import { HINT_PARSER_RESULTS, type HintParserInput, type HintParserResult, type HintImplementationState } from './hint-context'
+import { isHintApplyParserEdit, isHintApplyParserFailure, HintApplyParserError, type HintApplyParserInput, type HintApplyParserEdit, type HintApplyParserFailure } from './hint-apply-parser'
+import type { SmartSelection } from '../../../../shared/contracts/smart-hints'
+
+type ParserInput = FixParserInput | HintParserInput | HintApplyParserInput | { probe: true }
+type ParserResult = FixParserReason | HintParserResult | HintApplyParserEdit | HintApplyParserFailure
+const acceptsResult = (input: ParserInput, value: unknown): value is ParserResult => 'hintApply' in input
+  ? isHintApplyParserEdit(input, value) || isHintApplyParserFailure(value) : 'hint' in input
+  ? (input.hint === 'CLASSIFY' ? HINT_PARSER_RESULTS.slice(0, 3) : HINT_PARSER_RESULTS.slice(3)).includes(value as HintParserResult)
+  : FIX_PARSER_REASONS.includes(value as FixParserReason)
 
 const jsFiles = ['selection-fix-js.cjs', 'TYPESCRIPT-LICENSE.txt', 'TYPESCRIPT-NOTICE.txt']
 const csFiles = ['SelectionFixGuard.dll', 'SelectionFixGuard.runtimeconfig.json']
@@ -25,6 +35,9 @@ interface Assets { manifest: string; files: Record<string, { bytes: number; sha2
 export class MainSelectionFixGuard implements SelectionFixGuard {
   private readonly directory: string
   private readonly budget: number
+  // At most two source-free asset identities. Every reuse revalidates bytes/SDK
+  // anchors exactly as an existing Selection Fix lease does; no guard is skipped.
+  private readonly hintAssets = new Map<ExerciseLanguage, Assets>()
   constructor(private readonly options: { assetDirectory?: string; sdkResolver?: CsharpSdkResolver; budgetMs?: number } = {}) {
     this.directory = resolve(options.assetDirectory ?? join(__dirname, 'smart-hints-parser'))
     this.budget = options.budgetMs ?? 2000
@@ -130,7 +143,7 @@ export class MainSelectionFixGuard implements SelectionFixGuard {
       throw unavailable()
     }
   }
-  private async javascript(input: FixParserInput | { probe: true }, scope: SelectionFixScope): Promise<FixParserReason> {
+  private async javascript(input: ParserInput, scope: SelectionFixScope): Promise<ParserResult> {
     this.check(scope)
     const worker = new Worker(join(this.directory, jsFiles[0]), { workerData: input, env: {}, execArgv: [], stdout: true, stderr: true,
       resourceLimits: { maxOldGenerationSizeMb: 192, stackSizeMb: 4 } })
@@ -139,16 +152,16 @@ export class MainSelectionFixGuard implements SelectionFixGuard {
     let reject!: (error: SelectionFixError) => void
     const fail = () => reject(new SelectionFixError('PROVIDER', 'GUARD_RUNTIME', 'INVALID_PROTOCOL'))
     const abort = () => reject(new SelectionFixError('TIMEOUT', 'GUARD_RUNTIME', 'CANCELLED'))
-    let answer: FixParserReason | undefined, failure: unknown
+    let answer: ParserResult | undefined, failure: unknown
     try {
-      answer = await new Promise<FixParserReason>((resolve, bad) => {
+      answer = await new Promise<ParserResult>((resolve, bad) => {
         reject = bad
         scope.signal.addEventListener('abort', abort, { once: true })
         for (const stream of [worker.stdout, worker.stderr]) stream?.on('data', (data: Buffer) => { bytes += data.length; if (bytes > 4096) fail() })
         worker.on('message', value => {
           if (smartFields(value, ['protocol', 'ready', 'version']) && value.protocol === 1 && value.ready === true && value.version === FIX_PARSER_TYPESCRIPT && !ready) { ready = true; return }
-          if (!ready || complete || !smartFields(value, ['protocol', 'reason']) || value.protocol !== 1 || !FIX_PARSER_REASONS.includes(value.reason as FixParserReason)) { fail(); return }
-          complete = true; resolve(value.reason as FixParserReason)
+          if (!ready || complete || !smartFields(value, ['protocol', 'reason']) || value.protocol !== 1 || !acceptsResult(input, value.reason)) { fail(); return }
+          complete = true; resolve(value.reason)
         })
         worker.once('error', () => bad(new SelectionFixError('PROVIDER', 'GUARD_RUNTIME', 'CRASH')))
         worker.once('exit', () => { if (!complete) bad(new SelectionFixError('PROVIDER', 'GUARD_RUNTIME', 'CRASH')) })
@@ -162,7 +175,7 @@ export class MainSelectionFixGuard implements SelectionFixGuard {
     if (!answer) throw new SelectionFixError('PROVIDER', 'GUARD_RUNTIME', 'INVALID_PROTOCOL')
     return answer
   }
-  private async csharp(assets: Assets, input: FixParserInput | { probe: true }, scope: SelectionFixScope): Promise<FixParserReason> {
+  private async csharp(assets: Assets, input: ParserInput, scope: SelectionFixScope): Promise<ParserResult> {
     this.check(scope)
     const sdk = assets.sdk!
     const env = Object.fromEntries(['SystemRoot', 'WINDIR', 'TEMP', 'TMP'].filter(k => process.env[k]).map(k => [k, process.env[k]!]))
@@ -176,11 +189,11 @@ export class MainSelectionFixGuard implements SelectionFixGuard {
     const closed = new Promise<void>(resolve => { child.once('close', () => resolve()) })
     const abort = () => { child.kill('SIGKILL'); reject(new SelectionFixError('TIMEOUT', 'GUARD_RUNTIME', 'CANCELLED')) }
     try {
-      return await new Promise<FixParserReason>((resolve, bad) => {
+      return await new Promise<ParserResult>((resolve, bad) => {
         reject = bad; scope.signal.addEventListener('abort', abort, { once: true })
         const failed = () => { child.kill('SIGKILL'); bad(new SelectionFixError('PROVIDER', 'GUARD_RUNTIME', 'CRASH')) }
         child.on('error', failed); child.stdin.on('error', failed)
-        child.stdout.on('data', (data: Buffer) => { bytes += data.length; if (bytes > 4096) failed(); else raw += data.toString('utf8') })
+        child.stdout.on('data', (data: Buffer) => { bytes += data.length; if (bytes > ('hintApply' in input ? 65536 : 4096)) failed(); else raw += data.toString('utf8') })
         child.stderr.on('data', (data: Buffer) => { bytes += data.length; if (bytes > 4096) failed() })
         child.once('close', code => {
           complete = true
@@ -188,8 +201,8 @@ export class MainSelectionFixGuard implements SelectionFixGuard {
           try {
             const v: unknown = JSON.parse(raw)
             if (!smartFields(v, ['protocol', 'version', 'reason']) || v.protocol !== 1 || v.version !== FIX_PARSER_ROSLYN
-              || !FIX_PARSER_REASONS.includes(v.reason as FixParserReason)) throw unavailable()
-            resolve(v.reason as FixParserReason)
+              || !acceptsResult(input, v.reason)) throw unavailable()
+            resolve(v.reason)
           } catch { bad(new SelectionFixError('PROVIDER', 'GUARD_RUNTIME', 'INVALID_PROTOCOL')) }
         })
         const data = JSON.stringify(input)
@@ -203,8 +216,52 @@ export class MainSelectionFixGuard implements SelectionFixGuard {
       await closed
     }
   }
-  private invoke(language: ExerciseLanguage, assets: Assets, input: FixParserInput | { probe: true }, scope: SelectionFixScope) {
+  private invoke(language: ExerciseLanguage, assets: Assets, input: FixParserInput | { probe: true }, scope: SelectionFixScope): Promise<FixParserReason>
+  private invoke(language: ExerciseLanguage, assets: Assets, input: HintParserInput, scope: SelectionFixScope): Promise<HintParserResult>
+  private invoke(language: ExerciseLanguage, assets: Assets, input: HintApplyParserInput, scope: SelectionFixScope): Promise<ParserResult>
+  private invoke(language: ExerciseLanguage, assets: Assets, input: ParserInput, scope: SelectionFixScope): Promise<ParserResult> {
     return language === 'javascript' ? this.javascript(input, scope) : this.csharp(assets, input, scope)
+  }
+  async prepareHintApply(capture: SmartCapture, code: string, selection: SmartSelection | null, scope: SelectionFixScope): Promise<HintApplyParserEdit> {
+    if (!capture.hintTemplate || !['NO_IMPLEMENTATION', 'HAS_IMPLEMENTATION'].includes(capture.hintImplementation ?? '')) throw unavailable()
+    const input: HintApplyParserInput = { hintApply: true, source: capture.source, starter: capture.hintTemplate, code,
+      signature: capture.signature, implementation: capture.hintImplementation as HintApplyParserInput['implementation'],
+      selection: selection ? { start: selection.startOffset, end: selection.endOffset } : null }
+    const assets = await this.bounded(scope, inner => this.loadHintAssets(capture.binding.language, inner), scope.deadline - scope.clock())
+    const result = await this.bounded(scope, inner => this.invoke(capture.binding.language, assets, input, inner))
+    this.check(scope)
+    if (isHintApplyParserFailure(result)) throw new HintApplyParserError(result)
+    if (!isHintApplyParserEdit(input, result)) throw unavailable()
+    return result
+  }
+  /** Advisory-only use of the same bounded parse processes, independent of Fix admission. */
+  private async loadHintAssets(language: ExerciseLanguage, scope: SelectionFixScope): Promise<Assets> {
+    const assets = await this.load(language, scope, this.hintAssets.get(language))
+    this.check(scope); this.hintAssets.set(language, assets)
+    return assets
+  }
+  async classifyHint(capture: SmartCapture, scope: SelectionFixScope): Promise<HintImplementationState> {
+    if (!smartText(capture.hintTemplate, 65536)) return 'UNCERTAIN'
+    try {
+      const assets = await this.bounded(scope, inner => this.loadHintAssets(capture.binding.language, inner), scope.deadline - scope.clock())
+      return await this.bounded(scope, inner => this.invoke(capture.binding.language, assets, {
+        hint: 'CLASSIFY', source: capture.source, starter: capture.hintTemplate!, signature: capture.signature,
+      }, inner)) as HintImplementationState
+    } catch {
+      // Missing assets/SDK, syntax and unfamiliar templates cannot establish progress.
+      // Recheck the operation: cancellation/staleness must never become an uncertain live result.
+      this.check(scope)
+      return 'UNCERTAIN'
+    }
+  }
+  async validateHintFunction(capture: SmartCapture, code: string, scope: SelectionFixScope): Promise<boolean> {
+    if (!smartText(capture.hintTemplate, 65536)) return false
+    try {
+      const assets = await this.bounded(scope, inner => this.loadHintAssets(capture.binding.language, inner))
+      return await this.bounded(scope, inner => this.invoke(capture.binding.language, assets, {
+        hint: 'VALIDATE', source: code, starter: capture.hintTemplate!, signature: capture.signature,
+      }, inner)) === 'VALID_HINT_CODE'
+    } catch { this.check(scope); return false }
   }
   async availability(language: ExerciseLanguage, scope: SelectionFixScope): Promise<boolean> {
     try {

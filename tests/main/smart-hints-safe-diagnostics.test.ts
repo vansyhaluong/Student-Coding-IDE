@@ -185,7 +185,7 @@ describe('SH4-D1 normal application → Gemini fake transport → SH1 → safe t
     } finally { release() }
   })
   it.each([
-    { action: { kind: 'HINT', level: 1 }, output: { kind: 'HINT', level: 1, paragraphs: [canary], nextQuestion: canary, evidence: [] } },
+    { action: { kind: 'HINT', level: 1 }, output: { kind: 'HINT', thinking: canary, steps: ['Compare the public inputs.'], code: { language: 'javascript', text: 'return x + 1;' }, evidence: [] } },
     { action: { kind: 'ANALYZE' }, output: { kind: 'ANALYSIS', hypotheses: [canary], suggestions: [], evidence: [] } },
     { action: { kind: 'EXPLAIN', selection: { startOffset: 0, endOffset: 8, text: 'function', startLine: 1, startColumn: 1, endLine: 1, endColumn: 9 } },
       output: { kind: 'EXPLANATION', syntax: canary, variables: canary, controlFlow: canary, algorithm: canary, illustrativeExamples: [] } },

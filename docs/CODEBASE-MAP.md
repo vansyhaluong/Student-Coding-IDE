@@ -1,5 +1,219 @@
 # Student Coding IDE Codebase Map
 
+## AI-C4-F2 Hint Apply integration — actual paths, 2026-11-08
+
+- `src/renderer/src/features/learning/practice/use-hint-apply.ts`: new current-Hint
+  lifecycle, frozen target, assistant lease, status, cancel/discard and review.
+- `AssistantCodeBlock.tsx`, `AssistantQuickActions.tsx`, `LearningAssistantPanel.tsx`
+  and `use-assistant-timeline.ts` in the Learning feature: Hint-only toolbar state
+  and dedicated slot; Copy and display-only Chat/history remain separate.
+- `practice/PracticeEditor.tsx`, `smart-hints-selection.ts`: live target capture.
+  `PracticeWorkspace.tsx`, `SmartHintDiffPreview.tsx`, `smart-hint-edits.ts`: readonly
+  Diff, typed consumed proposal, private armed-object check and shared transaction.
+- `src/shared/contracts/smart-hints{,-validation}.ts`, Main `service.ts`,
+  `src/main/ipc/exercise-ipc-service.ts`, `src/preload/bridge/smart-hints.ts`:
+  typed bounded consume/discard gates with final package checks and correlation.
+- `selection-fix-parser-runtime.ts` in Main Smart Hints: source-free Hint asset
+  identity reuse with unchanged manifest/hash/SDK-anchor checks and budgets.
+- Main `parsers/javascript.ts`, `parsers/hint-context-javascript.ts`: shared exact
+  scaffold predicate for NO_IMPLEMENTATION baseline only; candidate and Suggest
+  Fix grammar remain strict. Tests reject NewExpression in both other paths.
+- `tests/renderer/hint-apply-ui.test.tsx`: new Workspace/IPC/real-parser/Monaco tests;
+  existing Main Hint Apply, unified UI, toolbar and scoped TS config extended.
+- `scripts/smoke-learning-assistant-offline.mjs`: C#/JS Hint Apply offline scenarios.
+
+## AI-C4-F1 trusted Hint backend — actual paths, 2026-11-08
+
+- `src/shared/contracts/smart-hints.ts`, `smart-hints-validation.ts`: typed
+  prepareHintApply request and separate provenance proposal with strict validation.
+- `src/main/services/learning/smart-hints/hint-apply-parser.ts`: new Main-private
+  parser protocol and bounded edit-result validation.
+- `parsers/javascript.ts`, `parsers/SelectionFixGuard.cs` in that domain: separate
+  Hint body/selection/insertion parsing; existing Suggest Fix branches unchanged.
+- `selection-fix-parser-runtime.ts`, `service.ts`, `configuration.ts`: bounded
+  parser composition, ephemeral Hint retention, package rechecks, canonical
+  proposal, idempotent preparation and Main-only single-use consumption.
+- `src/main/ipc/exercise-ipc-service.ts`, `src/preload/bridge/smart-hints.ts`:
+  semantic authorized channel and correlated typed bridge. No Renderer wiring.
+- `tests/main/smart-hints-hint-apply.test.ts`: real C#/JS parser, backend, contract,
+  IPC/Preload, ownership/forgery, lifetime and quota checks; scoped TypeScript
+  config includes it. `electron.vite.config.ts`: new protocol in build identity.
+
+## Hint code toolbar — actual paths, 2026-11-08
+
+- `src/renderer/src/features/learning/AssistantCodeBlock.tsx`: opt-in Hint toolbar,
+  browser clipboard feedback and disabled Apply explanation; existing beUI Button.
+- `practice/SmartHintsPanel.tsx` in that feature: shared Advisory enables toolbar
+  only for Hint. `practice/smart-hints.css`, `learning-assistant.css`: header/actions.
+- `tests/renderer/smart-hints-ui.test.tsx`: toolbar, clipboard and unbound fallback
+  cases; included in the existing scoped learning-assistant TypeScript config.
+
+## Context-aware Hint correction — actual paths, 2026-11-07
+
+- `src/main/services/learning/smart-hints/hint-context.ts`: private state/protocol
+  types, parser-input validation and state-specific Hint code policy.
+- `capture.ts`, `service.ts`, `configuration.ts` in that domain: trusted starter
+  capture, immutable pre-consent classification, scoped parser composition and
+  full-function signature checking for unimplemented Hint results.
+- `gemini-provider.ts`, `gemini-schema.ts`, `adapter.ts`: Hint-only state and
+  guidance; existing response DTO and other action payloads remain unchanged.
+- `parsers/hint-context-javascript.ts`, `parsers/javascript.ts`,
+  `parsers/SelectionFixGuard.cs`, `selection-fix-parser-runtime.ts` in that domain:
+  advisory TypeScript/Roslyn branches over the existing bounded parse-only hosts;
+  Selection Fix grammar/admission remains separate and unchanged.
+- `electron.vite.config.ts`: build identity includes the new Hint/parser sources.
+- `tests/main/smart-hints-context.test.ts`: 53 context/parser/fake-HTTP checks;
+  `tests/fixtures/learning/chat-ipc.ts`: optional Main-only Hint parser port;
+  `tests/tsconfig.learning-assistant.json`: scoped typecheck includes those tests.
+
+## AI-C4-E beUI presentation — actual paths, 2026-11-07
+
+- `src/renderer/src/features/learning/{LearningAssistantPanel,AssistantQuickActions}.tsx`,
+  `learning-assistant.css`: beUI transcript/composer, compact action/context area,
+  semantic IDE themes, responsive dock, request states and keyboard/focus behavior.
+- `AssistantMarkdown.tsx`, `AssistantCodeBlock.tsx` in that feature: safe completed
+  Markdown and escaped offline C#/JS tokens, shared with `practice/SmartHintsPanel.tsx`.
+- `src/renderer/src/components/ai/prompt-input.tsx`: optional composition/label
+  slots; existing stock defaults preserved. Source/license notes in its README.
+- `practice/PracticeWorkspace.tsx`: current-operation proposal-card Discard using
+  the existing cancellation pipeline. No Main, Preload or shared contract edits.
+- Existing Renderer integration tests add beUI/Markdown/keyboard/focus/card cases.
+  `scripts/smoke-learning-assistant-offline.mjs` adds actual-Electron beUI visual,
+  theme/width/reader-scroll/reduced-motion and keyboard-consent checks.
+
+## AI-C4-D Unified Hint — actual paths, 2026-11-06
+
+- `src/shared/contracts/smart-hints.ts`, `smart-hints-validation.ts`: complete
+  Hint sections, language-bound advisory code checks and legacy input normalization.
+- `src/main/services/learning/smart-hints/{service,capture,gemini-provider,gemini-schema,adapter,response-failure,validation-diagnostics}.ts`:
+  one Hint, no progression or Hint replay; strict schema and safe diagnostic fields.
+- `src/preload/bridge/smart-hints.ts`: canonical Hint binding without level state.
+- `AssistantQuickActions.tsx`, `practice/{PracticeWorkspace,SmartHintsPanel,use-smart-hints}.tsx/ts`
+  in the learning feature: one button, ordered three-part advisory card with
+  escaped offline tokenization; existing consent/session/Fix ownership retained.
+- `tests/main/smart-hints-unified-hint.test.ts`: new schema/language/legacy,
+  exactly-once reservation and Hint cancellation/timeout/stale regressions.
+  Existing Smart Hints fixtures/runner/UI regressions and scoped tsconfig migrated.
+- `scripts/smoke-learning-assistant-offline.mjs`: C# `hint` and JS `hint-js`
+  modes over actual Electron; fake HTTP only, no live inference.
+
+## AI-C4-C Offline acceptance — actual paths, 2026-11-06
+
+- `scripts/smoke-learning-assistant-offline.mjs`: isolated actual Electron smoke
+  over `out/ai-c4-c` bundles, synthetic HTTP/encryption, real shared coordinator,
+  parser ports, Monaco and Diff. Checks artifact identities, consent/history,
+  actions, stale/manual edits, quota/ownership/timeout and sanitized diagnostics.
+  Writes only build-local screenshots, not a task/acceptance report.
+- `LearningAssistantPanel.tsx`: observes refreshed Main session when releasing
+  the shared UI lease; hides redundant composer during consent review.
+- Chat UI regressions include delayed history ACK and consent layout;
+  `tests/renderer/learning-workspace.test.tsx` measures equivalent scoped queries
+  over real course DOM, independently of actual Electron visual evidence.
+
+## AI-C4-B Unified panel — actual paths, 2026-11-06
+
+- `src/renderer/src/features/learning/AssistantQuickActions.tsx`: four existing
+  actions, capability/selection gating and validated Hint progression.
+- `src/renderer/src/features/learning/use-assistant-timeline.ts`: bounded display
+  ordering/identity and stale pending cards; no provider/history/edit authority.
+- `LearningAssistantPanel.tsx`, `use-learning-assistant.ts`,
+  `learning-assistant.css` in that feature: unified action/Chat surface and local
+  shared admission, retaining typed Chat session lifecycle and backend history.
+- `practice/PracticeWorkspace.tsx`: one entry/panel, existing snapshots and
+  Diff/manual Apply/Discard callbacks. `practice/use-smart-hints.ts`: operation
+  identity, narrow Cancel, late-ACK retirement and completed-Hint ACK handling.
+- `practice/SmartHintsPanel.tsx`: shared advisory/evidence/consent exports; legacy
+  standalone component remains testable but is not mounted by PracticeWorkspace.
+- `src/main/ipc/exercise-ipc-service.ts`: existing Cancel dispatch preserves
+  COMPLETE Hint results atomically; no SH-1 service or parser modification.
+- `tests/renderer/learning-assistant-unified.test.tsx`: real typed bridges,
+  configuration/services/coordinator, fake Gemini and actual Monaco text models.
+  `tests/fixtures/learning/chat-ipc.ts`: optional synthetic parser guard port.
+  Chat/Smart Hints renderer and Main IPC regressions and
+  `tests/tsconfig.learning-assistant.json` cover the changed boundaries.
+
+## AI-C4-A Chat panel — actual paths, 2026-11-06
+
+- `src/renderer/src/features/learning/LearningAssistantPanel.tsx`,
+  `learning-assistant.css`: Cursor-style advisory timeline, composer, context
+  selector, manifest/code review, consent, status, empty state and auto-scroll.
+- `src/renderer/src/features/learning/use-learning-assistant.ts`: typed Chat
+  session/context lifecycle, consent/start/status/cancel and trusted history refresh.
+- `LearningWorkspace.tsx`, `practice/PracticeWorkspace.tsx` in that feature:
+  Learning/Practice entry points and read-only Monaco snapshot binding.
+- `tests/renderer/learning-assistant.test.tsx`: real bridge/IPC/Main/configuration
+  with fake Gemini HTTP; `tests/tsconfig.learning-assistant.json`: scoped typecheck.
+- `tests/renderer/smart-hints-integration.test.tsx`: Chat open/close preserves
+  existing Hint progression and live consent. Other Hint/Fix/Diff tests unchanged.
+
+## AI-C3-B2 Chat IPC/application — actual paths, 2026-11-06
+
+- `src/shared/contracts/learning-chat.ts`, `learning-chat-validation.ts`: eight
+  typed APIs, strict local context/session/update/close requests; `learning.ts`
+  adds the Chat API to the existing Learning namespace.
+- `src/main/ipc/learning-chat-ipc-service.ts`: document/frame owner scopes,
+  catalogue guard port, Main fingerprint construction, bounded result validation,
+  navigation/context/shutdown retirement. `exercise-ipc-service.ts` forwards only
+  its already-authorized Learning context invalidation sender to Chat.
+- `src/main/services/learning/smart-hints/configuration.ts`: composes its ChatService
+  using the same coordinator, credential/transport and sole daily ledger; retires
+  sessions on configuration changes. `chat/service.ts` uses shared readiness/error
+  hooks and supports synchronous shutdown sealing.
+- `src/main/index.ts`: Main catalogue/frame authorization, owner observation,
+  lifecycle and existing context-invalidation composition.
+- `src/preload/bridge/learning-chat.ts`, `learning.ts`: semantic Chat bridge and
+  response correlation; no UI. `electron.vite.config.ts` includes Chat in identity.
+- `tests/main/learning-chat-ipc.test.ts`, `tests/preload/learning-chat.test.ts`,
+  `tests/fixtures/learning/chat-ipc.ts`: fake-HTTP two-turn bridge/IPC/configuration
+  integration and adversarial lifecycle/transport validation. Scoped config includes
+  Main/Preload entrypoints; existing submission IPC regression covers context hook.
+
+## AI-C3-B1 ChatService — actual paths, 2026-11-06
+
+- `src/main/services/learning/chat/service.ts`: Main-only Chat lifecycle and
+  orchestration; mandatory shared coordinator and borrowed provider ports,
+  10s timer, dispatch reservation, valid-pair commit and retirement/cleanup hooks.
+- `conversation-manager.ts`: live execution-to-reference reader; no DTO changes.
+- `tests/main/learning-chat-service.test.ts`: fake-HTTP orchestration, actual
+  SmartHintsService contention and existing configuration daily-ledger integration.
+  Normal application/IPC/Preload wiring is added in C3-B2; UI remains absent.
+
+## AI-C3-A Chat adapter — actual paths, 2026-11-06
+
+- `src/main/services/learning/chat/gemini-chat-adapter.ts`: Main-private advisory
+  multi-turn mapping, frozen capture checks, dedicated instruction/schema,
+  response validation and SharedGeminiTransport consumer. No app wiring.
+- `conversation-manager.ts`: identity-checked Main-only capture reader for adapters.
+- `tests/main/learning-chat-gemini.test.ts`: fake-HTTP adapter tests; included by
+  `tests/tsconfig.learning-chat.json` with existing Chat domain tests.
+
+## AI-C2-B Chat domain — actual paths, 2026-11-06
+
+- `src/shared/contracts/learning-chat.ts`, `learning-chat-validation.ts`: scoped
+  DTOs, exact validation, policy caps, session/message/provenance/consent/status
+  schemas; exported by the shared barrel without public APIs/channels.
+- `src/main/services/learning/chat/conversation-manager.ts`: trusted owner/session,
+  bounded complete-pair history, prepare/consent and opaque execution lifecycle,
+  revision/TTL/purge hooks. No inference or application event wiring.
+- `src/main/services/learning/chat/context-builder.ts`: immutable scoped context,
+  eligible replay, canonical digest/manifest, Main content policy and safe errors.
+- `tests/contracts/learning-chat.test.ts`, `tests/main/learning-chat.test.ts`,
+  `tests/fixtures/learning/chat.ts`, `tests/tsconfig.learning-chat.json`: synthetic
+  domain-only validation and dedicated scoped typecheck. No new acceptance report.
+
+## AI-C2-A2 shared Gemini transport — actual paths, 2026-11-06
+
+- `src/main/services/learning/smart-hints/gemini-transport.ts`:
+  fixed-model bounded HTTP lifetime, metadata readiness, reservation callback,
+  abort/deadline/error handling, diagnostic types and typed contents-array input.
+- `gemini-provider.ts`: unchanged action prompts/schema/content/Fix validation
+  through shared HTTP; compatibility re-exports. `gemini-readiness.ts` imports
+  fixed constants directly, preserving its Settings-only check behavior.
+- `tests/main/smart-hints-gemini-transport.test.ts`: fake HTTP and synthetic
+  consumers, request identity, status/bounds/key handling, cleanup/deadlines and
+  shared external admission/ledger. No Chat Adapter or conversation implementation.
+- `electron.vite.config.ts`: shared transport participates in build identity.
+
 ## AI-C2-A1 shared execution — actual paths, 2026-11-06
 
 - `src/main/services/learning/smart-hints/execution-coordinator.ts`:

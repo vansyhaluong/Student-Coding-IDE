@@ -42,8 +42,7 @@ async function main() {
     const body = await request.json()
     check(body.generationConfig.responseMimeType === 'application/json' && !!body.generationConfig.responseJsonSchema
       && body.generationConfig.maxOutputTokens === 2048 && !body.tools, 'structured output/budget/no tools')
-    return json({ modelVersion: GEMINI_MODEL, candidates: [{ index: 0, finishReason: 'STOP', content: { role: 'model', parts: [{ text: JSON.stringify({ kind: 'HINT', level: 1,
-      paragraphs: ['Compare the return value with the public examples.'], nextQuestion: 'How much should the input change?', evidence: [] }) }] } }], usageMetadata: { candidatesTokenCount: 30, thoughtsTokenCount: 0 } })
+    return json({ modelVersion: GEMINI_MODEL, candidates: [{ index: 0, finishReason: 'STOP', content: { role: 'model', parts: [{ text: JSON.stringify({ kind: 'HINT', thinking: 'Compare the return value with the public examples.', steps: ['Return the required value.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }) }] } }], usageMetadata: { candidatesTokenCount: 30, thoughtsTokenCount: 0 } })
   }
   const evidence = await runGeminiSmoke({ electronMainDevelopment: true, liveApproved: offline || process.env.SH4_GEMINI_LIVE_APPROVED === '1',
     readKey: offline ? () => 'SYNTHETIC-ONLY-GEMINI-OFFLINE' : () => process.env.GEMINI_API_KEY,

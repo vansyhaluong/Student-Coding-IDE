@@ -62,8 +62,7 @@ describe('D6-2 Main selection binding, lease identity and disabled dispatch', ()
     await expect(service.prepare(1, 'doc', q, () => {}, async () => c)).rejects.toThrow()
   })
   it('selection-only cancel preserves Hint progression; newer revision retires old operation/token', async () => {
-    const run = vi.fn(async (c: ReturnType<typeof capture>) => ({ kind: 'HINT', level: c.action.kind === 'HINT' ? c.action.level : 1,
-      paragraphs: [`Level ${c.action.kind === 'HINT' ? c.action.level : 1}`], nextQuestion: 'Why?', evidence: [] }))
+    const run = vi.fn(async (c: ReturnType<typeof capture>) => ({ kind: 'HINT', thinking: 'Compare the public inputs.', steps: ['Use the required operation.'], code: { language: c.binding.language, text: 'return x + 1;' }, evidence: [] }))
     const service = new SmartHintsService({ mode: 'FAKE', run }); services.push(service)
     const base = request({ action: { kind: 'HINT', level: 1 } })
     const prepare = (q: typeof base) => service.prepare(1, 'doc', q, () => {}, async g => capture(q, g))

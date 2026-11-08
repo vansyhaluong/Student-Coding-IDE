@@ -19,6 +19,7 @@ import { MainSelectionFixGuard } from './services/learning/smart-hints/selection
 import { NativeSmartHintsKeyEntry } from './services/learning/smart-hints/native-key'
 import { SmartHintsSettingsIpcService } from './ipc/smart-hints-settings-ipc-service'
 import { captureSmartHints } from './services/learning/smart-hints/capture'
+import { LearningChatIpcService } from './ipc/learning-chat-ipc-service'
 import { EXERCISE_CHANNELS } from '../shared/contracts/exercise'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
@@ -222,7 +223,19 @@ void app.whenReady().then(async () => {
     } }, { service: new SubmissionAnalysisService(), // Fail closed: D4 provisioning is not authorized.
       capture: (binding, check) => captureSavedAnalysis(getSubmissionStore(), exercisePackages, binding, check) },
     { service: smartHintsConfiguration.service,
-      capture: (request, generation, check, receipt) => captureSmartHints(exercisePackages, request, generation, check, receipt) })
+      capture: (request, generation, check, receipt) => captureSmartHints(exercisePackages, request, generation, check, receipt) },
+    owner => chatIpc.invalidateOwner(owner))
+  const chatIpc = new LearningChatIpcService(ipcRegistry, smartHintsConfiguration.chat, authorizePreferencesFrame, context => {
+    if (context.kind === 'PRACTICE') {
+      if (exercisePackages.status().state !== 'AVAILABLE' || !exercisePackages.has(context.exerciseId)
+        || exercisePackages.readiness(context.exerciseId).phase === 'UNAVAILABLE') throw new DomainError({ code: 'INVALID_INPUT',
+        operation: 'learning-chat', message: 'Learning exercise is unavailable.', retryable: false })
+    } else {
+      const course = getBundledCourse().manifest
+      if (context.courseId !== course.courseId || !course.chapters.some(c => c.order === context.chapter)) throw new DomainError({
+        code: 'INVALID_INPUT', operation: 'learning-chat', message: 'Learning chapter is unavailable.', retryable: false })
+    }
+  })
   exerciseIpcReference.current = exerciseIpc
   const practiceIpc = new PracticeIpcService(ipcRegistry, practiceStore, authorizePreferencesFrame,
     (owner, channel, payload) => {
@@ -294,6 +307,7 @@ void app.whenReady().then(async () => {
       aiIpc.observe(window.webContents)
       exerciseService.observe(window.webContents)
       exerciseIpc.observe(window.webContents)
+      chatIpc.observe(window.webContents)
       return window
     },
     openExternal: (url) => shell.openExternal(url),
@@ -496,11 +510,14 @@ void app.whenReady().then(async () => {
     submissionStorage,
     exerciseService,
     exerciseIpc,
+    chatIpc,
     windowManager,
   ], {
-    // Keep the close/retry surface alive until every mandatory service cleanup
-    // has succeeded. Electron performs the final window close afterward.
-    shutdownLast: [windowManager],
+    // Business cleanup (including configuration's Chat drain) precedes the
+    // recovery window. Keep sealed Chat handlers until that window is destroyed
+    // so an already-sent teardown request receives a structured denial.
+    // The final pass reverses service order: windowManager, then chatIpc.
+    shutdownLast: [windowManager, chatIpc],
   })
 
   removeLifecyclePublisher = desktopApplication.subscribe((status) => {
@@ -511,6 +528,7 @@ void app.whenReady().then(async () => {
       practiceIpc.beginShutdown()
       exercisePackages.beginShutdown()
       exerciseIpc.beginShutdown()
+      chatIpc.beginShutdown()
     }
     for (const window of BrowserWindow.getAllWindows()) {
       if (!window.isDestroyed()) {

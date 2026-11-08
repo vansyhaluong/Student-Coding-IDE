@@ -2,7 +2,8 @@
 import { beforeAll, afterEach, expect, it, vi } from 'vitest'
 import { randomUUID, createHash } from 'node:crypto'
 import type { editor } from 'monaco-editor'
-import { applySmartFix, type SmartFix } from '../../src/renderer/src/features/learning/practice/smart-hint-edits'
+import { applySmartFix, createHintSmartFix, type SmartFix } from '../../src/renderer/src/features/learning/practice/smart-hint-edits'
+import type { HintApplyProposal } from '../../src/shared/contracts/smart-hints'
 import { smartCandidate } from '../../src/shared/contracts/smart-hints-validation'
 import { DraftQueue } from '../../src/renderer/src/features/learning/practice/draft-queue'
 import { capturePracticeSelection } from '../../src/renderer/src/features/learning/practice/smart-hints-selection'
@@ -82,6 +83,29 @@ it.each(['blocked', 'revision', 'exercise', 'language', 'source', 'identity', 'v
     if (kind === 'selection' && f.fix.result.binding.action.kind === 'SUGGEST_FIX') f.fix.result.binding.action.selection.startOffset--
     expect(f.apply()).toBe('STALE'); expect(f.ed.executeEdits).not.toHaveBeenCalled(); expect(f.model.getValue()).toBe(f.source)
   })
+it.each(['csharp', 'javascript'] as const)('Hint %s output cannot mint an Apply grant or mutate a real Monaco model', language => {
+  const f = fixture(language)
+  f.fix.result.binding.action = { kind: 'HINT' }
+  f.fix.result.output = { kind: 'HINT', thinking: 'Think', steps: ['Step'], code: { language, text: f.fix.candidate }, evidence: [] }
+  f.fix.result.proposalId = null
+  expect(f.apply()).toBe('STALE')
+  expect(f.ed.executeEdits).not.toHaveBeenCalled()
+  expect(f.model.getValue()).toBe(f.source)
+})
+it('a copied Hint proposal/history object cannot inherit the consumed object identity', async () => {
+  const f = fixture(), r = f.fix.result
+  if (r.output.kind !== 'EDIT_PROPOSAL') throw Error('fixture')
+  const p: HintApplyProposal = { schemaVersion: 1, requestId: randomUUID(), proposalId: randomUUID(),
+    hint: { requestId: r.requestId, operationId: r.operationId }, binding: { ...r.binding, action: { kind: 'HINT' } }, expiresAt: r.expiresAt,
+    target: { kind: 'SELECTION', startOffset: f.edits[0].startOffset, endOffset: f.edits[0].endOffset }, output: r.output }
+  const fix = createHintSmartFix(p, f.source, () => true, async () => ({ ok: true, value: p }))!
+  const apply = (value: typeof fix) => applySmartFix(f.ed, value, f.current, (a, b, c, d) => new monaco.Selection(a, b, c, d))
+  expect(apply(fix)).toBe('STALE'); expect(f.ed.executeEdits).not.toHaveBeenCalled()
+  expect(await fix.authorize()).toBe(true)
+  expect(apply({ ...fix })).toBe('STALE'); expect(f.ed.executeEdits).not.toHaveBeenCalled()
+  expect(apply(fix)).toBe('APPLIED'); expect(apply(fix)).toBe('STALE')
+  expect(f.ed.executeEdits).toHaveBeenCalledOnce()
+})
 it('save failure retains latest code after Apply/Undo/Redo and blocks flush until retry', async () => {
   const f = fixture(), save = vi.fn().mockResolvedValue({ ok: false }), report = vi.fn(), queue = new DraftQueue({ save }, report)
   const sub = f.model.onDidChangeContent(() => queue.enqueue({ exerciseId: 'synthetic', language: 'csharp', code: f.model.getValue() }))

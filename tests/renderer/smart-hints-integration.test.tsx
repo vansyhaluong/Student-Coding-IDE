@@ -65,13 +65,14 @@ function fixture() {
   r.data.metadata.signature.functionName = exercise.functionName; r.data.metadata.signature.parameters = exercise.parameters
   r.data.samples.samples = exercise.samples.map((s, i) => ({ id: `public-${i}`, args: s.args, expected: s.expected }))
   let pending: { resolve(r: Response): void; promise: Promise<Response> } | undefined
+  let hintCount = 0
   const send = vi.fn(async (request: Request) => {
     expect(r.pinned).toBe(false)
     const body = await request.json(), input = JSON.parse(body.messages[1].content)
     expect(JSON.stringify(input)).not.toMatch(/HIDDEN_CANARY|official|comparator|testSetId/)
     if (pending) return pending.promise
     return response(envelope(JSON.stringify(input.action.kind === 'HINT'
-      ? { kind: 'HINT', level: input.action.level, paragraphs: [`Gợi ý đã xác minh ${input.action.level}`], nextQuestion: 'Bạn sẽ kiểm tra gì?', evidence: [] }
+      ? { kind: 'HINT', thinking: `Gợi ý đã xác minh ${++hintCount}`, steps: ['Compare the public inputs.'], code: { language: input.language, text: 'return x + 1;' }, evidence: [] }
       : input.action.kind === 'EXPLAIN' ? { kind: 'EXPLANATION', syntax: 'Giải thích Solution từ fake provider.', variables: 'Biến.', controlFlow: 'Điều kiện.', algorithm: 'Ý tưởng.', illustrativeExamples: [] }
         : { kind: 'ANALYSIS', hypotheses: ['Nhận định từ fake provider.'], suggestions: ['Kiểm tra public input.'], evidence: [] })))
   })
@@ -106,10 +107,25 @@ function fixture() {
     defer() { let resolve!: (value: Response) => void; const promise = new Promise<Response>(r => { resolve = r }); pending = { promise, resolve }; return pending } }
 }
 async function click(name: string | RegExp) { await act(async () => { fireEvent.click(screen.getByRole('button', { name })) }) }
-async function open() { await screen.findByRole('textbox', { name: 'Practice test editor' }); await click('Smart Hints'); await screen.findByText('Chế độ kiểm thử · provider giả') }
+async function open() { await screen.findByRole('textbox', { name: 'Practice test editor' }); await click('Learning Assistant'); await screen.findByText('Chế độ kiểm thử · provider giả') }
 describe('SH-2 workspace → accepted typed bridge → SH-1 Main → fake transport', () => {
+  it('C4-B unified composer and selection preserve Hint progression', async () => {
+    const f = fixture(); await open(); await click('Hint'); await screen.findByRole('dialog')
+    await click('\u0110\u1ed3ng \u00fd g\u1eedi snapshot'); await screen.findByText('G\u1ee3i \u00fd \u0111\u00e3 x\u00e1c minh 1')
+    const before = f.invoke.mock.calls.length
+    fireEvent.change(screen.getByLabelText('C\u00e2u h\u1ecfi'), { target: { value: 'A draft question' } })
+    act(() => { host.selectionChanged?.(true); host.selectionChanged?.(false) })
+    expect(f.invoke).toHaveBeenCalledTimes(before)
+    expect(screen.getAllByRole('complementary', { name: 'Learning Assistant' })).toHaveLength(1)
+    expect(screen.queryByRole('complementary', { name: 'Smart Hints' })).toBeNull()
+    await click('Hint'); await screen.findByRole('dialog')
+    await click('\u0110\u1ed3ng \u00fd g\u1eedi snapshot'); await screen.findByText('G\u1ee3i \u00fd \u0111\u00e3 x\u00e1c minh 2')
+    expect(screen.getByRole('button', { name: 'Hint' })).toBeTruthy()
+    expect(f.invoke.mock.calls.some(([c]) => c === C.cancel || c === C.retireContext)).toBe(false)
+    expect(f.run).not.toHaveBeenCalled(); expect(f.submit).not.toHaveBeenCalled()
+  })
   it('D6-1 readiness changes do not send requests, retire Hint history, or disturb Hint consent/progression', async () => {
-    const f = fixture(); await open(); await click('Get Hint · Level 1'); await screen.findByRole('dialog')
+    const f = fixture(); await open(); await click('Hint'); await screen.findByRole('dialog')
     await click('Đồng ý gửi snapshot'); await screen.findByText('Gợi ý đã xác minh 1')
     const invoked = f.invoke.mock.calls.length
     act(() => { host.selectionChanged?.(true) })
@@ -118,24 +134,24 @@ describe('SH-2 workspace → accepted typed bridge → SH-1 Main → fake transp
     act(() => { host.selectionChanged?.(false) })
     expect(screen.getByLabelText('Chuẩn bị vùng chọn Suggest Fix').textContent).toContain('Bôi đen đoạn code')
     expect(f.invoke).toHaveBeenCalledTimes(invoked); expect(f.send).toHaveBeenCalledOnce()
-    await click('Get Hint · Level 2'); await screen.findByRole('dialog')
+    await click('Hint'); await screen.findByRole('dialog')
     const prepared = f.invoke.mock.calls.length
     act(() => { host.selectionChanged?.(true) })
     expect(screen.getByRole('dialog')).toBeTruthy(); expect(f.invoke).toHaveBeenCalledTimes(prepared)
     await click('Đồng ý gửi snapshot'); await screen.findByText('Gợi ý đã xác minh 2')
-    expect(screen.getByRole('button', { name: 'Get Hint · Level 3' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Hint' })).toBeTruthy()
     expect(f.invoke.mock.calls.some(([channel]) => channel === C.cancel || channel === C.retireContext)).toBe(false)
     expect(f.run).not.toHaveBeenCalled(); expect(f.submit).not.toHaveBeenCalled()
   }, 10000) // Two explicit fake requests with real status polling; no application timeout change.
   it('no auto request; drawer preserves editor mount/source; explicit consent produces exactly one transport call', async () => {
     const f = fixture(), editor = await screen.findByRole('textbox', { name: 'Practice test editor' }), code = (editor as HTMLTextAreaElement).value
     expect(f.invoke).not.toHaveBeenCalled(); await open(); expect(f.send).not.toHaveBeenCalled(); expect(host.mounts).toBe(1)
-    await click('Get Hint · Level 1'); await screen.findByRole('dialog'); expect(f.send).not.toHaveBeenCalled()
+    await click('Hint'); await screen.findByRole('dialog'); expect(f.send).not.toHaveBeenCalled()
     await click('Đồng ý gửi snapshot'); await screen.findByText('Gợi ý đã xác minh 1')
     expect(f.send).toHaveBeenCalledOnce(); expect(host.mounts).toBe(1); expect(host.disposed).toBe(0)
     expect((editor as HTMLTextAreaElement).value).toBe(code)
     expect(f.run).not.toHaveBeenCalled(); expect(f.submit).not.toHaveBeenCalled(); expect(f.restore).not.toHaveBeenCalled(); expect(f.history).not.toHaveBeenCalled(); expect(f.d2.prepare).not.toHaveBeenCalled()
-    await click('Đóng Smart Hints'); expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Smart Hints' })); expect(host.mounts).toBe(1)
+    await click('Đóng Learning Assistant'); expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Learning Assistant' })); expect(host.mounts).toBe(1)
     await click('Run'); await click('Submit'); expect(f.run).toHaveBeenCalledOnce(); expect(f.submit).toHaveBeenCalledOnce()
   })
   it.each(['edit', 'reset', 'restore', 'language', 'leave', 'close'] as const)('%s retires pending operation and never renders late output', async change => {
@@ -146,7 +162,7 @@ describe('SH-2 workspace → accepted typed bridge → SH-1 Main → fake transp
     if (change === 'restore') { f.restore.mockReturnValueOnce(true); act(() => { expect(host.restore?.()).toBe(true) }) }
     if (change === 'language') fireEvent.change(screen.getByRole('combobox', { name: 'Ngôn ngữ bài tập' }), { target: { value: 'javascript' } })
     if (change === 'leave') f.rerender(<f.Harness active={false} />)
-    if (change === 'close') await click('Đóng Smart Hints')
+    if (change === 'close') await click('Đóng Learning Assistant')
     await waitFor(() => expect(f.send.mock.calls[0][0].signal.aborted).toBe(true))
     await act(async () => { gate.resolve(response(envelope(JSON.stringify({ kind: 'ANALYSIS', hypotheses: ['LATE PRIVATE'], suggestions: [], evidence: [] })))) })
     expect(screen.queryByText('LATE PRIVATE')).toBeNull(); expect(f.run).not.toHaveBeenCalled(); expect(f.submit).not.toHaveBeenCalled()

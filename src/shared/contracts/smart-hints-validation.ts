@@ -4,6 +4,67 @@ import { SMART_HINT_POLICY as P, SMART_FAILURES, type SmartPrepare, type SmartRe
   type SmartRetire, type SmartAction, type SmartOrigin, type SmartBinding, type SmartOutput,
   type SmartRunContext, type SmartStatus, type SmartCapabilities, type SmartEdit } from './smart-hints'
 import type { ValidationResult } from './validation'
+import type { PrepareHintApply, HintApplyProposal, ConsumeHintApply, DiscardHintApply } from './smart-hints'
+import { HINT_APPLY_MAX_ATTEMPTS, HINT_APPLY_STAGES } from './smart-hints'
+import type { AppError } from './app-error'
+
+/** Accept only a correlated, bounded Main failure; never treat transport errors as retry permission. */
+export function isHintApplyFailure(error: AppError, q: PrepareHintApply): boolean {
+  const d = error.details
+  return error.operation === 'prepareHintApply' && !!d
+    && fields(d, ['requestId', 'operationId', 'stage', 'reason', 'attempt', 'remaining', 'noGrant'])
+    && d.requestId === q.requestId && d.operationId === q.hint.operationId && d.noGrant === true
+    && HINT_APPLY_STAGES.includes(d.stage as typeof HINT_APPLY_STAGES[number])
+    && ['TARGET_INVALID', 'CANDIDATE_INVALID', 'STALE', 'UNSUPPORTED'].includes(d.reason as string)
+    && smartInteger(d.attempt, 1) && (d.attempt as number) <= HINT_APPLY_MAX_ATTEMPTS
+    && d.remaining === HINT_APPLY_MAX_ATTEMPTS - (d.attempt as number)
+    && error.retryable === ((d.reason === 'TARGET_INVALID' || d.reason === 'CANDIDATE_INVALID') && (d.remaining as number) > 0)
+}
+
+export function validateConsumeHintApply(v: unknown): ValidationResult<ConsumeHintApply> {
+  if (fields(v, ['preparation', 'proposalId']) && smartUuid(v.proposalId)) {
+    const p = validatePrepareHintApply(v.preparation)
+    if (p.ok) return { ok: true, value: { preparation: p.value, proposalId: v.proposalId } }
+  }
+  return { ok: false, issues: [{ path: '$', message: 'Invalid Hint consume request.' }] }
+}
+export function validateDiscardHintApply(v: unknown): ValidationResult<DiscardHintApply> {
+  if (fields(v, ['hint', 'requestId']) && smartUuid(v.requestId) && validateSmartReference(v.hint).ok)
+    return { ok: true, value: structuredClone(v) as unknown as DiscardHintApply }
+  return { ok: false, issues: [{ path: '$', message: 'Invalid Hint discard request.' }] }
+}
+
+export function validatePrepareHintApply(v: unknown): ValidationResult<PrepareHintApply> {
+  const invalid = (): ValidationResult<never> => ({ ok: false, issues: [{ path: '$', message: 'Invalid Hint Apply request.' }] })
+  if (!fields(v, ['requestId', 'hint', 'exerciseId', 'language', 'sourceRevision', 'source', 'packageVersion', 'origin', 'selection'])
+    || !validateSmartReference(v.hint).ok || !smartInteger(v.packageVersion, 1)
+    || !isSmartPrepare({ requestId: v.requestId, clientContextId: v.requestId, exerciseId: v.exerciseId, language: v.language,
+      sourceRevision: v.sourceRevision, source: v.source, origin: v.origin, action: { kind: 'HINT' }, run: null })
+    || !origin(v.origin) || v.origin.kind !== 'PRACTICE') return invalid()
+  const s = v.selection, source = v.source as string
+  if (s !== null) {
+    if (!fields(s, ['startOffset', 'endOffset', 'text', 'startLine', 'startColumn', 'endLine', 'endColumn'])
+      || !smartInteger(s.startOffset) || !smartInteger(s.endOffset) || s.endOffset < s.startOffset || s.endOffset > source.length
+      || !smartBoundary(source, s.startOffset) || !smartBoundary(source, s.endOffset)
+      || !smartText(s.text, P.selectionBytes, true) || s.text !== source.slice(s.startOffset, s.endOffset)) return invalid()
+    const a = smartPosition(source, s.startOffset), b = smartPosition(source, s.endOffset)
+    if (a.line !== s.startLine || a.column !== s.startColumn || b.line !== s.endLine || b.column !== s.endColumn) return invalid()
+  }
+  return { ok: true, value: structuredClone(v) as unknown as PrepareHintApply }
+}
+
+/** Separate proposal envelope: never relax HINT status/output validation. */
+export function isHintApplyProposal(v: unknown): v is HintApplyProposal {
+  if (!fields(v, ['schemaVersion', 'requestId', 'proposalId', 'hint', 'binding', 'expiresAt', 'target', 'output'])
+    || v.schemaVersion !== 1 || !smartUuid(v.requestId) || !smartUuid(v.proposalId) || !validateSmartReference(v.hint).ok
+    || !isSmartBinding(v.binding) || v.binding.action.kind !== 'HINT' || v.binding.origin.kind !== 'PRACTICE'
+    || !smartInteger(v.expiresAt, 1) || !fields(v.target, ['kind', 'startOffset', 'endOffset'])
+    || !['TEMPLATE_BODY', 'SELECTION'].includes(v.target.kind as string)
+    || !smartInteger(v.target.startOffset) || !smartInteger(v.target.endOffset) || v.target.endOffset < v.target.startOffset
+    || !isSmartOutput(v.output) || v.output.kind !== 'EDIT_PROPOSAL' || v.output.edits.length !== 1) return false
+  const edit = v.output.edits[0]
+  return edit.startOffset === v.target.startOffset && edit.endOffset === v.target.endOffset && smartBytes(v) <= P.requestBytes
+}
 
 export { fields as smartFields }
 export const smartBytes = (v: unknown): number => new TextEncoder().encode(JSON.stringify(v)).length
@@ -50,7 +111,7 @@ function origin(v: unknown): v is SmartOrigin {
     || fields(v, ['kind', 'blockId']) && v.kind === 'SOLUTION' && smartUuid(v.blockId)
 }
 function action(v: unknown): v is SmartAction {
-  if (fields(v, ['kind'])) return v.kind === 'ANALYZE'
+  if (fields(v, ['kind'])) return v.kind === 'ANALYZE' || v.kind === 'HINT'
   if (fields(v, ['kind', 'level'])) return v.kind === 'HINT' && [1, 2, 3].includes(v.level as number)
   if (!fields(v, ['kind', 'selection']) || (v.kind !== 'EXPLAIN' && v.kind !== 'SUGGEST_FIX')) return false
   const s = v.selection
@@ -136,11 +197,23 @@ export function smartCandidate(source: string, edits: SmartEdit[], expectedEol?:
   for (const x of sorted.reverse()) result = result.slice(0, x.startOffset) + x.replacementText + result.slice(x.endOffset)
   return smartText(result, P.sourceBytes, true) ? result : undefined
 }
-export function isSmartOutput(v: unknown, a?: { kind: SmartAction['kind']; level?: number }, source?: string, evidence?: string[], expectedEol?: 'LF' | 'CRLF'): v is SmartOutput {
+/** Advisory snippets are not compiled or granted editor authority. Reject foreign
+ * language markers after removing comments/strings; common C#/JS statements are
+ * valid in either language. Binding language is also checked at every boundary. */
+export function isSmartHintCode(v: unknown, expectedLanguage?: string): boolean {
+  if (!fields(v, ['language', 'text']) || !language(v.language) || expectedLanguage !== undefined && v.language !== expectedLanguage
+    || !smartText(v.text, 8192) || v.text.includes('```')) return false
+  const code = v.text.replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/g, ' ')
+  if (!/[;{}()=+*/-]/.test(code) || /^\s*(?:def |from \w+ import |print\s*\()/m.test(code)) return false
+  return v.language === 'csharp'
+    ? !/\bfunction\b|\blet\s|\bconst\s+\w+\s*=|\bconsole\s*\.|===|!==/.test(code)
+    : !/\b(?:public|private|protected|internal|namespace|using)\s|\b(?:int|bool|string|double|float|decimal|void)\s+\w+/.test(code)
+}
+export function isSmartOutput(v: unknown, a?: { kind: SmartAction['kind']; level?: number }, source?: string, evidence?: string[], expectedEol?: 'LF' | 'CRLF', expectedLanguage?: string): v is SmartOutput {
   let valid = false
-  if (fields(v, ['kind', 'level', 'paragraphs', 'nextQuestion', 'evidence'])) valid = v.kind === 'HINT' && [1, 2, 3].includes(v.level as number)
-    && list(v.paragraphs, 4096) && (v.paragraphs as unknown[]).length > 0 && smartText(v.nextQuestion, 2048) && list(v.evidence, 16)
-    && (!a || a.kind === 'HINT' && a.level === v.level)
+  if (fields(v, ['kind', 'thinking', 'steps', 'code', 'evidence'])) valid = v.kind === 'HINT'
+    && smartText(v.thinking, 4096) && list(v.steps, 2048) && v.steps.length > 0 && isSmartHintCode(v.code, expectedLanguage)
+    && list(v.evidence, 16) && (!a || a.kind === 'HINT')
   else if (fields(v, ['kind', 'hypotheses', 'suggestions', 'evidence'])) valid = v.kind === 'ANALYSIS' && list(v.hypotheses) && list(v.suggestions)
     && list(v.evidence, 16) && (!a || a.kind === 'ANALYZE')
   else if (fields(v, ['kind', 'syntax', 'variables', 'controlFlow', 'algorithm', 'illustrativeExamples'])) valid = v.kind === 'EXPLANATION'
@@ -165,7 +238,7 @@ export function isSmartStatus(v: unknown): v is SmartStatus {
     && smartUuid(o.captureToken) && smartInteger(o.expiresAt, 1) && o.consentVersion === 1 && smartInteger(o.statementBytes)
     && o.statementBytes <= P.statementBytes && ['CODE_ONLY', 'RUN_PUBLIC'].includes(o.runContextKind as string)
   if (o.state !== 'COMPLETE' || !fields(o, [...base, 'output', 'runContext', 'expiresAt', 'proposalId']) || !isSmartRunContext(o.runContext)
-    || !isSmartOutput(o.output, o.binding.action, undefined, o.runContext.kind === 'RUN_PUBLIC' ? o.runContext.observations.map(x => x.evidenceId) : [])
+    || !isSmartOutput(o.output, o.binding.action, undefined, o.runContext.kind === 'RUN_PUBLIC' ? o.runContext.observations.map(x => x.evidenceId) : [], undefined, o.binding.language)
     || !smartInteger(o.expiresAt, 1) || (o.output.kind === 'EDIT_PROPOSAL' ? !smartUuid(o.proposalId) : o.proposalId !== null)) return false
   return smartBytes(o) <= P.requestBytes
 }
@@ -173,7 +246,11 @@ function checked<T>(v: unknown, check: (v: unknown) => boolean): ValidationResul
   try { return check(v) ? { ok: true, value: structuredClone(v) as T } : { ok: false, issues: [{ path: '$', message: 'Invalid Smart Hints request.' }] } }
   catch { return { ok: false, issues: [{ path: '$', message: 'Invalid Smart Hints request.' }] } }
 }
-export const validateSmartPrepare = (v: unknown) => checked<SmartPrepare>(v, isSmartPrepare)
+export const validateSmartPrepare = (v: unknown) => {
+  const result = checked<SmartPrepare>(v, isSmartPrepare)
+  if (result.ok && result.value.action.kind === 'HINT') result.value.action = { kind: 'HINT' }
+  return result
+}
 export const validateSmartReference = (v: unknown) => checked<SmartReference>(v, x => fields(x, ['requestId', 'operationId']) && smartUuid(x.requestId) && smartUuid(x.operationId))
 export const validateSmartStart = (v: unknown) => checked<SmartStart>(v, x => fields(x, ['requestId', 'operationId', 'captureToken', 'consentVersion', 'consentGranted'])
   && smartUuid(x.requestId) && smartUuid(x.operationId) && smartUuid(x.captureToken) && x.consentVersion === 1 && x.consentGranted === true)

@@ -3,14 +3,14 @@ import { runGeminiSmoke, type GeminiSmokeOptions } from '../../scripts/sh4-gemin
 import { GEMINI_MODEL, GEMINI_MODEL_URL, GEMINI_GENERATE_URL } from '../../src/main/services/learning/smart-hints/gemini-provider'
 
 const key = 'SYNTHETIC-ONLY-GEMINI-SMOKE-TEST'
-const hint = { kind: 'HINT', level: 1, paragraphs: ['Compare public samples.'], nextQuestion: 'What changes?', evidence: [] }
+const hint = { kind: 'HINT', thinking: 'Compare public samples.', steps: ['Compare the public inputs.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }
 const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { 'content-type': 'application/json' } })
 function fixture(patch: Partial<GeminiSmokeOptions> = {}) {
   const readKey = vi.fn(() => key), reserve = vi.fn(async () => {}), confirm = vi.fn(async () => true)
   const send = vi.fn(async (r: Request) => {
     if (r.method === 'GET') return json({ name: `models/${GEMINI_MODEL}`, supportedGenerationMethods: ['generateContent'], outputTokenLimit: 65536 })
     const body = await r.clone().json(), input = JSON.parse(body.contents[0].parts[0].text)
-    expect(input.action).toEqual({ kind: 'HINT', level: 1 })
+    expect(input.action).toEqual({ kind: 'HINT' })
     expect(input.signature).toEqual({ functionName: 'Solve', parameters: [{ name: 'x', type: 'int32' }], returnType: 'int32' })
     expect(input).not.toHaveProperty('signatureIdentity')
     return json({ modelVersion: GEMINI_MODEL, candidates: [{ finishReason: 'STOP', content: { role: 'model', parts: [{ text: JSON.stringify(hint) }] } }] })

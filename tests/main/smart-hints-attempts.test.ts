@@ -37,8 +37,7 @@ it('two complete North attempts use separate real reservations and results with 
           expect(reservation).toMatchObject({ attemptId, model, delivery: 'UNKNOWN' })
           expect(await request.clone().json()).toMatchObject({ model, provider: { allow_fallbacks: false, max_price: { prompt: 0, completion: 0, request: 0 } }, max_tokens: 2048 })
           posts.push(request)
-          return json({ model, choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify({ kind: 'HINT', level: 1,
-            paragraphs: ['Compare the returned value to the public examples.'], nextQuestion: 'What changes?', evidence: [] }) } }] })
+          return json({ model, choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify({ kind: 'HINT', thinking: 'Compare the returned value to the public examples.', steps: ['Compare the public inputs.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }) } }] })
         } })
       expect(result).toMatchObject({ result: 'PASS', inferenceRequests: 1, schemaValidation: 'PASS' })
       await publishExclusive(attempt.result, { ...attempt.manifestValue, ...result })

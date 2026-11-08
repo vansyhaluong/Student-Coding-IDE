@@ -1,13 +1,16 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { monaco } from '../../editor/monaco'
-import type { SmartFix, ApplyFixResult } from './smart-hint-edits'
+import type { ReviewFix, ApplyFixResult } from './smart-hint-edits'
 
 export function SmartHintDiffPreview({ fix, blocked, onApply, onDiscard, onApplied, onReturnFocus }: {
-  fix: SmartFix; blocked: boolean; onApply(): ApplyFixResult; onDiscard(): void; onApplied?(): void; onReturnFocus(): void
+  fix: ReviewFix; blocked: boolean; onApply(): ApplyFixResult | Promise<ApplyFixResult>; onDiscard(): void; onApplied?(): void; onReturnFocus(): void
 }) {
   const dialog = useRef<HTMLDialogElement>(null), host = useRef<HTMLDivElement>(null), title = useId()
   const [ready, setReady] = useState(false), [error, setError] = useState('')
+  const applying = useRef(false), alive = useRef(true)
+  const [pending, setPending] = useState(false)
   useEffect(() => {
+    alive.current = true
     dialog.current?.showModal()
     dialog.current?.querySelector('button')?.focus()
     const namespace = `smart-hint-preview:///${crypto.randomUUID()}`
@@ -36,6 +39,7 @@ export function SmartHintDiffPreview({ fix, blocked, onApply, onDiscard, onAppli
     })
     resize.observe(host.current!)
     return () => {
+      alive.current = false
       disposed = true; resize.disconnect(); if (frame !== undefined) cancelAnimationFrame(frame)
       updated.dispose(); diff.setModel(null); diff.dispose(); original.dispose(); modified.dispose(); onReturnFocus()
     }
@@ -48,8 +52,12 @@ export function SmartHintDiffPreview({ fix, blocked, onApply, onDiscard, onAppli
       <section key={i}><p>{x.rationale}</p><pre aria-label={`Code cũ ${i + 1}`}>{x.expectedOldText || '(chèn)'}</pre><pre aria-label={`Code mới ${i + 1}`}>{x.replacementText || '(xóa)'}</pre></section>)}</details>
     {error && <p role="alert">{error}</p>}
     <div className="smart-hints-actions"><button type="button" onClick={onDiscard}>Discard</button>
-      <button type="button" disabled={!ready || blocked || !!error || !fix.isCurrent()} onClick={() => {
-        const result = onApply()
+      <button type="button" disabled={!ready || blocked || pending || !!error || !fix.isCurrent()} onClick={async () => {
+        if (applying.current) return
+        applying.current = true; setPending(true)
+        let result: ApplyFixResult
+        try { const reply = onApply(); result = typeof reply === 'string' ? reply : await reply } catch { result = 'STALE' }
+        if (!alive.current) return
         if (result === 'APPLIED') onApplied?.()
         else setError(result === 'STALE' ? 'Source hoặc ngữ cảnh đã thay đổi. Hãy yêu cầu lại.' : 'Không xác nhận được transaction. Apply đã khóa; giữ code hiện tại và kiểm tra Draft.')
       }}>Apply Fix</button></div>

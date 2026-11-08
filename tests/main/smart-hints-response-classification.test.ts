@@ -6,7 +6,7 @@ import { SmartProviderError } from '../../src/main/services/learning/smart-hints
 import { capture, request, start, reference } from '../fixtures/learning/smart-hints'
 
 const key = 'SYNTHETIC-ONLY-CLASSIFICATION-KEY'
-const hint = { kind: 'HINT', level: 1, paragraphs: ['Compare the public examples.'], nextQuestion: 'What changes?', evidence: [] }
+const hint = { kind: 'HINT', thinking: 'Compare the public examples.', steps: ['Compare the public inputs.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }
 const envelope = (content: unknown = JSON.stringify(hint)) => JSON.stringify({ model, choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content } }] })
 const json = (value: unknown) => new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } })
 beforeEach(() => { vi.stubGlobal('fetch', () => { throw Error('REAL_NETWORK_FORBIDDEN') }) })
@@ -38,9 +38,9 @@ describe('HTTP 200 response rejection classification, Main-private only', () => 
     { raw: envelope([{ type: 'text', text: 'PRIVATE-CANARY' }]), code: 'ENVELOPE_INVALID', contentType: 'ARRAY', stage: 'ENVELOPE', invalidFields: [] },
     { raw: envelope({ private: 'PRIVATE-CANARY' }), code: 'ENVELOPE_INVALID', contentType: 'OBJECT', stage: 'ENVELOPE', invalidFields: [] },
     ...['not JSON PRIVATE-CANARY', '```json\n{}\n```', '{"kind":"HINT","kind":"HINT"}'].map(content => ({ raw: envelope(content), code: 'JSON_PARSE_FAILED', contentType: 'STRING', stage: 'CONTENT_JSON', invalidFields: [] })),
-    { raw: envelope(JSON.stringify({ ...hint, level: 2 })), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['level'] },
-    { raw: envelope(JSON.stringify({ ...hint, paragraphs: [], nextQuestion: 123 })), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['paragraphs', 'nextQuestion'] },
-    { raw: envelope(JSON.stringify({ kind: 'HINT', level: 1, paragraphs: hint.paragraphs, evidence: [] })), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['nextQuestion'] },
+    { raw: envelope(JSON.stringify({ ...hint, level: 2 })), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['$'] },
+    { raw: envelope(JSON.stringify({ ...hint, steps: [], thinking: 123 })), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['thinking', 'steps'] },
+    { raw: envelope(JSON.stringify({ kind: 'HINT', thinking: hint.thinking, steps: hint.steps, evidence: [] })), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['code'] },
     { raw: envelope(JSON.stringify({ ...hint, evidence: ['R1'] })), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['evidence'] },
     { raw: envelope(JSON.stringify({ ...hint, 'PRIVATE-CANARY': 'PRIVATE-CANARY' })), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['$'] },
     { raw: envelope(JSON.stringify('PRIVATE-CANARY')), code: 'SCHEMA_VALIDATION_FAILED', contentType: 'STRING', stage: 'SH1_SCHEMA', invalidFields: ['$'] },
@@ -77,8 +77,8 @@ it('diagnostic projection never echoes unknown codes, content types, field names
     invalidFields: ['PRIVATE-CANARY', 'level'], raw: key, source: 'PRIVATE-CANARY' })).toEqual({ code: 'SCHEMA_VALIDATION_FAILED', stage: 'SH1_SCHEMA', contentType: 'UNOBSERVED', invalidFields: ['level'] })
   const getter = vi.fn(() => key), unsafe = Object.defineProperty({}, 'code', { get: getter })
   expect(projectResponseFailure(unsafe)).toBeUndefined(); expect(getter).not.toHaveBeenCalled()
-  const getterOutput = Object.defineProperty({ ...hint }, 'paragraphs', { get: getter, enumerable: true })
-  expect(schemaResponseFailure(getterOutput, { kind: 'HINT', level: 1 }, [])).toMatchObject({ invalidFields: ['paragraphs'] })
+  const getterOutput = Object.defineProperty({ ...hint }, 'steps', { get: getter, enumerable: true })
+  expect(schemaResponseFailure(getterOutput, { kind: 'HINT' }, [])).toMatchObject({ invalidFields: ['steps'] })
   expect(getter).not.toHaveBeenCalled()
 })
 
@@ -90,7 +90,7 @@ it('private classification is not exposed through public status, and a throwing 
     const q = request({ action: { kind: 'HINT', level: 1 } }), prepared = await service.prepare(1, 'doc', q, () => {}, async g => capture(q, g))
     service.start(1, 'doc', start(prepared))
     await vi.waitFor(() => expect(service.status(1, 'doc', reference(prepared))).toMatchObject({ state: 'FAILED', code: 'INVALID_RESPONSE' }))
-    expect(sink).toHaveBeenCalledWith(expect.objectContaining({ code: 'SCHEMA_VALIDATION_FAILED', stage: 'SH1_SCHEMA', contentType: 'STRING', invalidFields: ['level'] }), q.requestId)
+    expect(sink).toHaveBeenCalledWith(expect.objectContaining({ code: 'SCHEMA_VALIDATION_FAILED', stage: 'SH1_SCHEMA', contentType: 'STRING', invalidFields: ['$'] }), q.requestId)
     const status = service.status(1, 'doc', reference(prepared))
     expect(status).not.toHaveProperty('responseFailure'); expect(status).not.toHaveProperty('invalidFields')
     expect(JSON.stringify(status)).not.toMatch(/PRIVATE-CANARY|SCHEMA_VALIDATION_FAILED|SH1_SCHEMA/)

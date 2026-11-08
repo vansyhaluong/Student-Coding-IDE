@@ -5,6 +5,7 @@ import { ArrowUp, Plus, Square } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   type FormEvent,
+  type ComponentPropsWithoutRef,
   type KeyboardEvent,
   type ReactNode,
   type TextareaHTMLAttributes,
@@ -63,6 +64,11 @@ export interface PromptInputProps extends Omit<
   minRows?: number;
   maxRows?: number;
   leadingAction?: ReactNode;
+  /** Local composition slots; defaults retain the stock beUI behavior. */
+  header?: ReactNode;
+  formProps?: Omit<ComponentPropsWithoutRef<"form">, "onSubmit" | "children">;
+  submitLabel?: string;
+  stopLabel?: string;
   className?: string;
 }
 
@@ -82,6 +88,10 @@ export function PromptInput({
   minRows = 2,
   maxRows = 8,
   leadingAction,
+  header,
+  formProps,
+  submitLabel = "Send prompt",
+  stopLabel = "Stop generating",
   className,
   disabled,
   placeholder = "Ask the agent to do something…",
@@ -166,6 +176,7 @@ export function PromptInput({
 
   return (
     <form
+      {...formProps}
       onSubmit={submit}
       className={cn(
         "relative w-full rounded-2xl border border-border/80 bg-background p-2 transition-colors focus-within:border-foreground/25",
@@ -173,6 +184,7 @@ export function PromptInput({
         className,
       )}
     >
+      {header}
       <div
         ref={measurementRef}
         aria-hidden="true"
@@ -301,7 +313,7 @@ export function PromptInput({
           type={loading ? "button" : "submit"}
           size="icon"
           disabled={loading ? !onStop : !canSubmit}
-          aria-label={loading ? "Stop generating" : "Send prompt"}
+          aria-label={loading ? stopLabel : submitLabel}
           onClick={loading ? onStop : undefined}
           className="ml-auto size-8 rounded-full"
         >
