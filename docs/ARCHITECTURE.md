@@ -1,5 +1,371 @@
 # Student Coding IDE Architecture
 
+## Learning Assistant entry scope — 2026-11-08
+
+LearningWorkspace no longer owns a theory Chat trigger, panel or open state.
+PracticeWorkspace retains the existing assistant lifecycle and entry point.
+Main/Preload Chat contracts and context support remain unchanged.
+
+## AI-C4-F3.1 awaited renderer endpoint teardown - 2026-11-08
+
+BrowserWindow.closed is not the endpoint lifetime barrier. WindowManager retains
+its owned WebContents and returns one shared stop promise until 'destroyed'. It
+propagates destroy errors and retains failed cleanup for retry. Mandatory business
+cleanup still precedes the recovery window; configuration drains Chat/Hint and
+shared inference first. The final pass destroys/joins the renderer endpoint,
+then removes the sealed LearningChatIpcService transport. No new admission is
+possible at STOPPING; queued teardown calls receive typed denials while the
+endpoint remains alive. Preload revokes Chat correlations on validated terminal
+lifecycle events and removes its lifecycle/unload subscriptions. This complements
+Main ordering, rather than depending on cross-process event delivery timing.
+No transport tombstone, arbitrary delay, timeout or Hint authority change.
+
+## AI-C4-F3 bounded pre-grant retry - 2026-11-08
+
+The owned operation stores at most three attempt IDs, request digests and fixed
+failures. Exact failed duplicates reuse the error; changed duplicate IDs and
+parallel changed requests are rejected. A new attempt needs a definite retryable
+pre-grant rejection. Once a proposal exists, no other preparation may replace it.
+All original capture/package/source/revision/TTL checks run on each new attempt;
+consume, discard and native Monaco transaction semantics remain unchanged.
+
+Parser results preserve fixed stage/reason enums. The prepare-only IPC exception
+projection rechecks document/frame/epoch and validates correlated no-grant details;
+Preload unlocks only that failure, never an uncertain transport response. UI
+releases the assistant lease without Discard only on this definitive rejection.
+There is no automatic retry or inference. Runtime diagnostics atomically replace
+one source-free last-rejected-Hint-Apply record with stage/reason, attempt, classification,
+language, build identity and observation time, plus a fixed guard reason when
+available. Successful retries preserve the last rejection. No source/candidate/
+offsets or IDs.
+The old manual incident has no retained Hint Apply diagnostic and cannot be
+retrospectively assigned to a parser stage.
+
+## AI-C4-F2 consumed Hint proposal → native transaction — 2026-11-08
+
+PracticeEditor.captureHintApply captures one Monaco selection/caret with exact
+source/model identity/version, EOL and renderer revision. useHintApply accepts
+only the current useSmartHints COMPLETE Practice operation, never timeline text.
+It leases the existing assistant slot as HINT_APPLY while Preparing/Review and
+freezes the target at click time. Cursor movement after capture cannot rebase it.
+The CodeBlock receives presentation callbacks/status only; Copy stays separate.
+
+prepareHintApply accepts an untrusted selection alongside any snapshot. Main
+ignores it only for its own NO_IMPLEMENTATION classification and passes null to
+the unchanged template parser. HAS_IMPLEMENTATION retains parser-confirmed range
+or statement-boundary insertion checks; whole-file candidates remain forbidden.
+The existing F1 proposal and strict HINT status schemas remain separate.
+
+Typed consumeHintApply submits the original preparation and opaque proposal ID.
+Main rejects duplicate/concurrent consumption, mismatched requests, expired or
+revoked grants, and freshly changed package/signature/starter identity. Its
+bounded confirmation gate then reaches the existing single-use primitive.
+Preload validates/correlates the exact prepare/consume envelopes and epochs,
+retains digests rather than source snapshots, and never retries uncertain ACKs.
+Typed discardHintApply revokes a pending or prepared grant, aborts local parser/
+consume work and drops retained capture without converting Hint history to edits.
+
+createHintSmartFix freezes the proposal/candidate. Only an exact Main consume ACK
+arms that object in a private WeakSet. The existing applySmartFix transaction
+accepts this distinct HintSmartFix branch only when armed; raw HINT statuses and
+forged objects remain rejected. Both branches retain canonical old-text/EOL,
+exercise/language/source/revision/model/version/URI/TTL checks, one synchronous
+executeEdits batch and native undo stops. Suggest Fix admission is unchanged.
+Diff Confirm guards in-flight duplicate clicks; Discard/source invalidation during
+an awaited ACK prevents any late transaction, even after Undo restores equal text.
+
+Actual Electron revealed repeated default SDK discovery exhausting the existing
+2s Hint validation budget. MainSelectionFixGuard now retains at most two
+source-free Hint asset identities. Every reuse still rereads manifest/artifact
+bytes and rechecks SDK anchors using the existing load(expected) path. Missing or
+changed assets fail closed; parser grammar and all budgets/timeouts are unchanged.
+No new inference, quota owner, native dependency or Run/Judge/Submit path.
+
+The actual JS starter contains throw-new-Error. Its recognized unimplemented
+scaffold is admitted only in the original Hint baseline after the existing
+NO_IMPLEMENTATION classifier succeeds. Both branches share the exact placeholder
+predicate; the AST is still parsed, bounded and checked. Candidate parsing and
+Suggest Fix use the original strict grammar, with no NewExpression allowance.
+Tests explicitly reject NewExpression in those paths. Only a verified original
+template body can be replaced; no guessed spans or synthesized file baseline.
+
+## AI-C4-F1 Main-owned Hint proposals — 2026-11-08
+
+SmartHintsApi.prepareHintApply uses a dedicated semantic channel and strict
+request/proposal validators. ExerciseIpcService authorizes the sender/frame and
+passes trusted package capture into SmartHintsService. Preload correlates the
+current Hint operation, binding, source digest, canonical edit, target and epochs;
+it does not synthesize proposals. Hint output/status schemas are unchanged.
+
+For eligible COMPLETE Practice Hints, the current owned operation retains a
+detached immutable minimal capture: source/binding, signature/identity, starter
+and classification; statement/constraints/run observations are stripped. No
+history store or extra ledger exists. New Smart operation, cancellation, context
+retirement, document destruction/navigation, provider changes, shutdown and the
+original result TTL clear the capture and proposal. Consume drops the capture.
+
+Preparation compares snapshot assertions with retained authority, recaptures
+package version/signature/starter both before and after parser work, and runs a
+separate private Hint parser protocol in the existing bounded TypeScript/Roslyn
+hosts. NO_IMPLEMENTATION extracts a full-function body's AST span and replaces
+only the original body block. HAS_IMPLEMENTATION verifies requested entry-function
+selection or immediate entry-body statement insertion boundaries. Parse-only
+grammar, exact original header, outside-target AST structure and unchanged SH-1
+canonical limits must all pass. No source-text search, whole-file replacement,
+generic executor or extra inference is used. Local preparation is bounded by
+the existing parser budgets and a 10s outer ceiling, never extending result TTL.
+
+The separate HintApplyProposal has source binding, Hint reference, exact target,
+canonical EDIT_PROPOSAL, independent UUID and original expiry. One memoized
+preparation per current Hint gives duplicate idempotence; altered requests and
+failed-preparation replacement are rejected. Main-private consumeHintApply checks
+owner/scope/reference/expiry and consumes a grant once. No consume IPC exists yet.
+F2 must add final live-model checks and Diff/manual Apply integration separately;
+the existing Suggest Fix/SmartFix/Monaco pipeline is unchanged and continues to
+reject raw HINT statuses. Historical cards cannot create authority.
+
+## Hint code toolbar — 2026-11-08
+
+Shared Advisory opts Hint blocks into AssistantCodeBlock's toolbar. The existing
+vendored beUI Button uses semantic Chat theme tokens. Clipboard writes use the
+browser clipboard API only, preserve exact text, report failure and ignore late
+completion after text/language changes or unmount. Chat blocks do not opt in.
+Hint has no verified edit target or proposalId; Main-private implementation state
+is pedagogical context, not edit authority. Apply is visibly disabled with an
+accessible reason. No conversion to SmartFix, guessed ranges, synthetic grant,
+new IPC or editor mutation path. Existing Selection Fix validation, readonly Diff,
+single-use grant, revision/model checks and native Undo transaction are preserved.
+
+## Main-derived Hint context — 2026-11-07
+
+Public package capture retains only the selected language's trusted starter for
+Hint. SmartHintsService classifies the detached snapshot before consent using
+the existing bounded Main-owned TypeScript/Roslyn parse processes, through a
+separate advisory protocol branch. Exact required entry shape and recognized
+placeholder statements establish NO_IMPLEMENTATION; parsed non-placeholder
+statements establish HAS_IMPLEMENTATION. Unsupported/missing templates, damaged
+syntax, ambiguous structure or unavailable parser assets yield UNCERTAIN.
+This describes observed progress, never correctness or editor authority.
+
+Only the derived state, existing public signature and source reach Gemini, with
+state-specific system/schema guidance. Raw starters stay Main-private. For
+NO_IMPLEMENTATION, Main additionally parses the returned whole function and
+rejects incomplete declarations, changed signatures or a remaining placeholder.
+This is a Hint-only advisory check after existing response validation; it does
+not modify SH-1 or the Selection Fix grammar, Diff/Apply/Undo. Parser work uses
+the existing operation deadline/abort/cleanup and rechecks freshness across awaits.
+
+## AI-C4-E beUI Renderer composition — 2026-11-07
+
+LearningAssistantPanel composes the existing MIT beUI Message/MessageBubble,
+MessageScroller and PromptInput. Small optional PromptInput composition/label
+props preserve its defaults for the existing Local AI consumer. No new package
+or agent workflow is installed. Existing Chat/Smart Hints hooks and timeline
+remain authoritative for UI lifecycle; no Main/Preload/shared changes occur.
+AssistantMarkdown uses installed react-markdown/remark-gfm, drops raw HTML and
+remote images, and renders links as text. AssistantCodeBlock reuses the existing
+offline Monaco tokenizers, creating no model or editor authority. Card Discard
+uses the same current-operation cancel path; Review Diff still checks previewFix.
+
+## AI-C4-D Unified Hint amendment — 2026-11-06
+
+HINT has no progression state. Main validates the complete thinking/steps/code
+result, including the code's bound exercise language, before COMPLETE; Preload
+and Renderer validate it again. Legacy levels are normalized at request ingress.
+Cards retain the existing bounded timeline identity and no Apply authority.
+New Hint output is not supplied as previousHints or trusted Chat history.
+
+## AI-C4-B Unified Chat/action presentation — 2026-11-06
+
+PracticeWorkspace mounts one LearningAssistantPanel and one toolbar entry. It
+reuses useSmartHints and the existing typed Smart Hints bridge; the legacy drawer
+is not mounted in production. Shared Advisory, RunEvidence and SmartHintsConsent
+presentation is exported from SmartHintsPanel, preserving the original consent.
+AssistantQuickActions supplies context/capability-gated controls and Hint levels.
+Theory has no exercise authority and leaves the four action controls disabled.
+
+useAssistantTimeline maintains a bounded 64-row RAM display index using prefixed
+request IDs and Main-correlated operation IDs. Loading/failure/cancel/result update
+the original row in place. Chat text is rendered exclusively from Main session
+messages; action outputs come only from useSmartHints' validated COMPLETE values.
+Action cards are not Chat history and never enter Chat prepare/start payloads.
+No Main replay policy or shared contracts are extended. Historical/stale cards
+remain reference text; Review Diff asks the current hook for previewFix and checks
+the live operation ID and capability. Stored cards cannot mint a SmartFix.
+
+A synchronous Renderer lease prevents Chat/action sends from crossing during
+prepare/consent/inference; Main's existing shared coordinator remains authoritative.
+Operation-only cancellation preserves the Smart Hints source context and levels,
+including cancelling a late prepare ACK without retiring the Hint session.
+Closing still retires the whole source session. Source edits invalidate live
+proposals and turn pending cards into cancelled references. Diff/Apply/Discard
+callbacks and native editor Undo are reused without modifying their transaction.
+
+The existing exercise IPC Cancel route synchronously preserves an already COMPLETE
+Hint. This prevents Main/UI progression divergence if completion beats UI polling.
+An active Hint Cancel waits for its typed ACK and validates/accepts a winning
+COMPLETE through the normal hook path. Other cancellations retain their existing
+dispatch. The guard runs after request/owner/frame validation; SH-1 service,
+provider, parser, quotas and timeout code are untouched.
+
+## AI-C4-A Renderer Learning Assistant — 2026-11-06
+
+LearningAssistantPanel and useLearningAssistant use only the typed learning.chat
+bridge. Main remains the sole history owner: Renderer renders getSession messages,
+never constructs or appends optimistic history. Serialized session transitions,
+local epochs, operation identity/sequence and terminal guards reject stale work.
+Open/get and explicit close cover panel lifetime; context changes cancel the old
+turn, update source bindings or retire/open a different exercise/language/chapter.
+Unmount cancels inference before a fresh get/close, preventing completion from
+advancing the revision between those calls. A bridge-scoped Renderer lifecycle
+queue also orders close/open across separate panel mounts, so old cleanup cannot
+close a rapidly reopened session. This queue stores no history or provider state.
+Main retirement through the existing Submit/navigation context signal is tolerated
+when opening the new context. Practice samples its existing read-only Monaco
+capture every 200ms only while Chat is visible; known draft changes immediately
+disable stale context. Status polling is single-flight at 350ms with cleanup.
+
+All scopes present a prepared manifest before explicit consent/start. Selection
+freshness includes range, source and model/version checks; no code is inferred
+from a question-only request. Timeline text is rendered as inert React text.
+Chat has no storage, editor commands, proposals or Apply/Undo capabilities.
+Smart Hints stays mounted with its independent state and lifecycle. Quick Actions
+remain outside the Chat timeline until C4-B. No provider/quota/timeout changes.
+
+## AI-C3-B2 application/IPC Chat integration — 2026-11-06
+
+SmartHintsConfiguration now composes ChatService with its existing coordinator,
+transport, borrowed credential, known-key content policy, readiness/remote-limit
+callbacks and provider generation. Provider/key restore/removal/toggle and budget
+changes retire Chat state. Configuration shutdown seals admission and joins Chat
+before clearing the key/ledger I/O. Rate/daily budget still has one owner; spending
+the last reserved unit does not invalidate that operation. Failed HTTP updates
+the existing readiness/remote-limit state without erasing the fixed FAILED status.
+
+LearningChatIpcService registers eight semantic routes. Main's existing app
+main-frame authorizer and observed WebContents bind a Main-generated document
+scope; no renderer-supplied owner, history, generation or provider authority is
+accepted. Local context input is checked against the Main course/exercise
+catalogue and Main computes its source fingerprint. No hidden package data,
+solution, course text or public Run evidence is automatically captured. Session
+guards recheck document and catalogue authority across inference awaits.
+
+Main composition observes navigation/process loss/destruction, wires the existing
+Learning context invalidation signal, registers Chat lifecycle and seals it at
+STOPPING. Explicit close/update APIs cover panel/context/source notifications;
+future C4 must invoke them when its UI state changes. These APIs do not grant
+source supplied by Renderer any filesystem/editor authority or prove UI selection
+independently of the renderer-owned Monaco model.
+
+Preload exposes `learning.chat` with strict request/result validation, bounded
+payloads, session/generation/context/revision/operation/binding correlation,
+initial/monotonic sequence and immutable terminal correlation. Local epochs reject
+responses after open/update/close/unload. It retains only transport correlation,
+not conversation history or quota. Application startup/prepare/open do not infer.
+Chat UI, real Gemini/countTokens and installed-artifact acceptance remain later.
+
+## AI-C3-B1 Main Chat orchestration — 2026-11-06
+
+ChatService composes its ContextBuilder/ConversationManager and per-operation
+GeminiChatAdapter/SharedGeminiTransport. A mandatory Main provider port borrows
+the existing configuration's credential/transport/generation and retirement
+subscription; the same existing SharedExecutionCoordinator must be injected.
+There is no default coordinator, quota ledger or independently configured model.
+Readiness describes configuration/key state, not remaining daily/rate budget:
+consuming the final reserved unit must not invalidate its own response.
+
+openSession/getSession/closeSession, prepare/start/status/cancel and updateContext
+delegate owner, consent digest, operation ID, revision, TTL, bounded history and
+status sequence to the conversation domain. Prepare makes no HTTP request.
+Start validates consent before admission, then owns one absolute 10s deadline
+(bounded by session expiry), AbortSignal and task cleanup. Only the transport's
+beforeInference callback can spend the admitted one-attempt daily reservation.
+Valid COMPLETE commits a whole pair; stale/cancelled/failed/late output cannot
+commit. Adapter/transport own no retry, session or admission state.
+
+Provider/key retirement notifications purge sessions and abort owned execution;
+generation checks also fail closed if notification was missed. Context/language
+changes retire through open/update hooks, source changes retain reference history
+but invalidate replay. Main close/navigation callers must call closeSession with
+the matching trusted owner. stop purges all sessions, removes the provider
+subscription and joins Chat tasks; configuration still owns global coordinator
+shutdown/drain, including outstanding ledger I/O. Chat release cannot cancel or
+shut down a different consumer. C3-B2 adds normal application/configuration and
+IPC/Preload wiring; UI and live acceptance remain subsequent work.
+
+## AI-C3-A advisory Gemini Chat adapter — 2026-11-06
+
+GeminiChatAdapter reads immutable prepared input through a Main-only authority
+port bound to ConversationManager.capture (execution WeakMap identity/currentness)
+and validates replies through ContextBuilder.reply (mandatory content policy).
+Historical user/assistant messages become user/model contents in original order;
+the last user content contains only the consented question and explicit attachment.
+No owner, consent token, context binding, grants or private session state enters
+the provider body. A dedicated instruction/schema permits only CHAT_REPLY text.
+
+SharedGeminiTransport retains fixed model/key/readiness, bounded HTTP, external
+reservation callback, abort/deadline and safe diagnostics. The complete wire body
+must fit 64KiB without truncation; response wire is bounded at 96KiB, reply JSON
+at 32KiB and generation at 2048 output tokens. Only STOP, a single model candidate,
+valid text parts and the exact reply DTO are accepted. Unsafe/partial/tool payloads
+fail closed. Execution freshness is checked across awaits and before return.
+
+The adapter does not commit history, own inference admission/quotas, retry, grant
+editor authority or execute code. C3-B1 supplies coordinator admission, the outer
+deadline and trusted authority ports through ChatService; normal application
+composition remains later. Smart Hints is unchanged.
+
+## AI-C2-B conversation and consent domain — 2026-11-06
+
+ConversationManager owns one RAM-only session per trusted Main owner/document
+scope. Public prepare cannot supply owner/history/system instructions/provenance
+or action authority. Context, provider-generation marker, Main check callback,
+one-use consent token and opaque execution identity bind each operation. Session
+TTL is absolute 30 minutes; prepare TTL is 60 seconds. Retire/purge hooks cover
+panel/context/navigation/provider/key/shutdown; production event wiring is later.
+Source/model updates increment revision, cancel active capture and retain only a
+reference timeline; previous context is excluded from replay, including edit+Undo.
+
+Only validated complete user/assistant pairs commit atomically. History is capped
+at 32 messages/48KiB with oldest-whole-pair eviction; replay selects up to 8 eligible
+pairs. Current context/provider generation must match, and source-derived history
+cannot flow into question-only or a different selection. Terminal cancel does not
+relabel a completed reply; no proposal, edit or consume authority is represented.
+
+ContextBuilder freezes question, selected history and an explicitly requested
+source/selection attachment. Selection mode does not copy outside source into the
+provider input. No package solution, hidden tests, Hint progression or Run receipt
+is read. Digest covers payload/provenance, context, revision and provider generation;
+manifest reports exact input/history byte sizes, selected IDs, no public Run and
+tokenCount=null. Input is bounded to 56KiB (8KiB reserved beneath the existing 64KiB
+request cap for a future adapter envelope); old replay pairs may be dropped, never
+the current question/source/selection. Final HTTP and token checks remain later.
+
+A required Main content-policy port rejects known sensitive forms before prepare
+and reply commit; it owns no credentials/provider state and has no permissive
+default. Future composition must supply the real policy and owner/context guards.
+This domain has no transport, inference timer, quota ledger, persistence or IPC.
+
+## AI-C2-A2 shared Gemini HTTP boundary — 2026-11-06
+
+SharedGeminiTransport owns one bounded request lifetime: fixed Gemini model/URLs,
+metadata readiness GET, authenticated JSON POST, response decoding/strict envelope
+JSON, byte limits, HTTP/429 mapping, secret checks, abort/listener/reader cleanup
+and safe diagnostics. It has no rate window, ledger, conversation or action state.
+Reservation remains the injected C2-A1/configuration callback immediately before
+POST; normal calls retain the outer Main deadline, with no second timer. Direct
+legacy callers retain their existing bounded timer. One lifetime allows at most
+one generation, with no retry/fallback; body is detached before reservation I/O.
+
+GeminiSmartHintsAdapter builds the unchanged action-specific instruction/schema/
+input, validates candidate/finish/content/usage, parses action JSON, validates Fix
+replacement-only wire and projects action diagnostics. SmartHintsService retains
+canonical construction, SH-1, guards and publication. Compatibility re-exports
+preserve existing imports. Settings' explicit source-free connection check keeps
+its original HTTP/error semantics and imports the fixed constants from transport.
+The Main-private transport request accepts user/model text contents arrays for a
+future adapter, but does not create chat history/session or public capabilities.
+
 ## AI-C2-A1 shared execution ownership — 2026-11-06
 
 Normal SmartHintsConfiguration owns one SharedExecutionCoordinator and injects

@@ -144,22 +144,21 @@ describe('SH-1 operation lifecycle, fake integration and no mutation authority',
     expect(JSON.stringify(f.service.status(1, 'document', reference(s)))).not.toContain('"text":"abc"')
     expect(f.run.mock.calls[0][0].source).toBe(''); expect(f.run.mock.calls[1][0].binding.origin.kind).toBe('SOLUTION')
   })
-  it('progressive levels require earlier success; reset source starts L1, duplicate hint fails', async () => {
+  it('legacy levels normalize without unlock, repeated Hint completes without replay or dedup state', async () => {
     const f = fixture(), base = request({ action: { kind: 'HINT', level: 1 } })
-    const hint = (level: 1 | 2 | 3, text: string) => ({ kind: 'HINT', level, paragraphs: [text], nextQuestion: 'Bạn nghĩ sao?', evidence: [] })
-    expect(() => f.service.prepare(1, 'document', { ...base, action: { kind: 'HINT', level: 3 } }, () => {}, async g => capture(base, g))).toThrow()
-    for (const level of [1, 2, 3] as const) {
+    const hint = { kind: 'HINT', thinking: 'Compare inputs.', steps: ['Return the required value.'], code: { language: 'javascript', text: 'return x + 1;' }, evidence: [] }
+    for (const level of [3, 1, 2] as const) {
       const q = { ...base, requestId: randomUUID(), action: { kind: 'HINT' as const, level } }
-      f.run.mockResolvedValueOnce(hint(level, `Cấp ${level}`))
+      f.run.mockResolvedValueOnce(hint)
       const p = await f.service.prepare(1, 'document', q, () => {}, async g => capture(q, g)); f.service.start(1, 'document', start(p))
       await vi.waitFor(() => expect(f.service.status(1, 'document', reference(p)).state).toBe('COMPLETE'))
     }
-    expect(f.run.mock.calls[2][1]).toEqual(['Cấp 1', 'Cấp 2'])
+    expect(f.run.mock.calls.every(([c, history]) => JSON.stringify(c.action) === '{"kind":"HINT"}' && history.length === 0)).toBe(true)
     const q = { ...base, requestId: randomUUID(), action: { kind: 'HINT' as const, level: 3 as const } }
-    f.run.mockResolvedValueOnce(hint(3, 'Cấp 3'))
+    f.run.mockResolvedValueOnce(hint)
     const p = await f.service.prepare(1, 'document', q, () => {}, async g => capture(q, g)); f.service.start(1, 'document', start(p))
-    await vi.waitFor(() => expect(f.service.status(1, 'document', reference(p))).toMatchObject({ state: 'FAILED', code: 'DUPLICATE_HINT' }))
-    expect(() => f.service.prepare(1, 'document', { ...q, requestId: randomUUID(), sourceRevision: 2 }, () => {}, async g => capture(q, g))).toThrow()
+    await vi.waitFor(() => expect(f.service.status(1, 'document', reference(p))).toMatchObject({ state: 'COMPLETE', output: hint }))
+    expect(f.run).toHaveBeenCalledTimes(4)
   })
   it.each([{ ...output, private: 'HIDDEN_CANARY' }, { ...output, evidence: ['R9'] }, { kind: 'EDIT_PROPOSAL', edits: [], rationale: 'x', evidence: [] }])('invalid provider output %# cannot publish', async result => {
     const f = fixture(); f.run.mockResolvedValueOnce(result)

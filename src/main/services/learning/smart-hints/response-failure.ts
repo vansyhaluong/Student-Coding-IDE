@@ -1,6 +1,6 @@
 import { projectEnvelopeDiagnostics, type EnvelopeDiagnostics } from './envelope-diagnostics'
 import type { SmartAction } from '../../../../shared/contracts/smart-hints'
-import { smartText } from '../../../../shared/contracts/smart-hints-validation'
+import { smartText, isSmartHintCode } from '../../../../shared/contracts/smart-hints-validation'
 import { classifySmartOutput, VALIDATION_REASONS, VALIDATION_FIELDS, type SmartValidationDiagnostic } from './validation-diagnostics'
 
 export const PROVIDER_FAILURE_SOURCES = ['HTTP_ERROR', 'MODEL_METADATA_ERROR', 'RESERVATION_IO_ERROR', 'PERSISTENCE_IO_ERROR', 'UNEXPECTED_ERROR'] as const
@@ -9,7 +9,7 @@ export type ProviderFailureSource = typeof PROVIDER_FAILURE_SOURCES[number]
 // Main-private diagnostics only. Never a public status, IPC field or raw provider value.
 export type ResponseFailureCode = 'ENVELOPE_INVALID' | 'CONTENT_MISSING' | 'JSON_PARSE_FAILED' | 'SCHEMA_VALIDATION_FAILED'
 export type ResponseContentType = 'UNOBSERVED' | 'MISSING' | 'NULL' | 'STRING' | 'ARRAY' | 'OBJECT' | 'NUMBER' | 'BOOLEAN' | 'OTHER'
-const fields = ['$', 'kind', 'level', 'paragraphs', 'nextQuestion', 'evidence', 'hypotheses', 'suggestions',
+const fields = ['$', 'kind', 'level', 'paragraphs', 'nextQuestion', 'thinking', 'steps', 'code', 'evidence', 'hypotheses', 'suggestions',
   'syntax', 'variables', 'controlFlow', 'algorithm', 'illustrativeExamples', 'edits', 'rationale', 'reason', 'advice'] as const
 type SchemaField = typeof fields[number]
 export interface SmartResponseFailure {
@@ -82,7 +82,7 @@ function schemaFieldsFailure(value: unknown, action: { kind: SmartAction['kind']
     return d?.enumerable && Object.hasOwn(d, 'value') ? d.value : undefined
   }
   const kind = get('kind')
-  const expected: SchemaField[] = action.kind === 'HINT' ? ['kind', 'level', 'paragraphs', 'nextQuestion', 'evidence']
+  const expected: SchemaField[] = action.kind === 'HINT' ? ['kind', 'thinking', 'steps', 'code', 'evidence']
     : action.kind === 'ANALYZE' ? ['kind', 'hypotheses', 'suggestions', 'evidence']
       : action.kind === 'EXPLAIN' ? ['kind', 'syntax', 'variables', 'controlFlow', 'algorithm', 'illustrativeExamples']
         : kind === 'NO_FIX' ? ['kind', 'reason', 'advice'] : ['kind', 'edits', 'rationale', 'evidence']
@@ -91,7 +91,7 @@ function schemaFieldsFailure(value: unknown, action: { kind: SmartAction['kind']
   if (Reflect.ownKeys(value).some(key => typeof key !== 'string' || !expected.includes(key as SchemaField))) invalid.add('$')
   const expectedKind = action.kind === 'HINT' ? 'HINT' : action.kind === 'ANALYZE' ? 'ANALYSIS' : action.kind === 'EXPLAIN' ? 'EXPLANATION' : kind === 'NO_FIX' ? 'NO_FIX' : 'EDIT_PROPOSAL'
   if (kind !== expectedKind) invalid.add('kind')
-  if (action.kind === 'HINT' && get('level') !== action.level) invalid.add('level')
+  if (action.kind === 'HINT' && !isSmartHintCode(get('code'))) invalid.add('code')
   const list = (v: unknown, cap: number, minimum = 0): v is string[] => {
     if (!Array.isArray(v) || v.length < minimum || v.length > 8 || Object.getPrototypeOf(v) !== Array.prototype
       || Reflect.ownKeys(v).length !== v.length + 1) return false
@@ -100,9 +100,9 @@ function schemaFieldsFailure(value: unknown, action: { kind: SmartAction['kind']
   }
   for (const field of expected) {
     const v = get(field)
-    if (['paragraphs', 'hypotheses', 'suggestions', 'illustrativeExamples'].includes(field)
-      && !list(v, field === 'paragraphs' ? 4096 : 2048, field === 'paragraphs' ? 1 : 0)) invalid.add(field)
-    if (['nextQuestion', 'syntax', 'variables', 'controlFlow', 'algorithm', 'rationale', 'advice'].includes(field)
+    if (['paragraphs', 'steps', 'hypotheses', 'suggestions', 'illustrativeExamples'].includes(field)
+      && !list(v, field === 'paragraphs' ? 4096 : 2048, field === 'paragraphs' || field === 'steps' ? 1 : 0)) invalid.add(field)
+    if (['thinking', 'nextQuestion', 'syntax', 'variables', 'controlFlow', 'algorithm', 'rationale', 'advice'].includes(field)
       && !smartText(v, field === 'nextQuestion' ? 2048 : 4096)) invalid.add(field)
     if (field === 'evidence' && (!list(v, 16) || v.some(ref => !/^R[1-9][0-9]?$/.test(ref) || !evidence.includes(ref)))) invalid.add(field)
     if (field === 'reason' && !['INSUFFICIENT_CONTEXT', 'LOCATION_UNKNOWN', 'NO_FOCUSED_CHANGE'].includes(v as string)) invalid.add(field)

@@ -1,5 +1,192 @@
 # REQUIREMENT.md
 
+## Learning Assistant Practice-only entry — authorized 2026-11-08
+
+Remove the Learning Assistant trigger and panel from course introduction and
+Tài liệu/theory pages. Practice retains its existing assistant entry and behavior.
+This supersedes the theory Chat entry in AI-C4-A/B only; backend Chat contexts,
+consent, Smart Hints and Apply contracts remain unchanged.
+
+## AI-C4-F3 controlled Hint preparation retry - 2026-11-08
+
+Supersedes the F1/F2 failed-preparation lock only. Permit at most three explicit manual
+preparation attempts per trusted Hint, retaining its original
+source/model/revision/package/owner binding and TTL. Main permits another request only
+after a definite pre-grant TARGET_INVALID or CANDIDATE_INVALID failure. Duplicate
+attempt IDs are idempotent; altered, parallel, stale, expired, consumed, discarded,
+unsupported or uncertain transport outcomes fail closed. One successful proposal closes
+preparation permanently. No inference or quota reservation on retry. Expose a correlated
+fixed-enum stage/reason and remaining attempts; Copy stays independent. Persist only the
+latest source-free fixed-field Apply diagnostic. No grammar, SH-1, signature,
+model/schema/timeout or transaction change.
+
+## AI-C4-F2 Hint Apply UI / Diff — authorized 2026-11-08
+
+Enable Apply beside the independent Copy icon in each current eligible Practice
+Hint code block; preserve the top-left language and Thinking/Steps/Code-last.
+Capture the live Monaco source/model/version/revision and exactly one selection
+or caret, then request F1 preparation using the owned Hint reference, never the
+card's code/candidate. Main ignores the proposed selection for NO_IMPLEMENTATION
+and determines the template body itself. HAS_IMPLEMENTATION still requires the
+parser-confirmed explicit target. An entire-source selection is only an untrusted
+Hint target request, never canonical authority or permission for a whole-file edit.
+
+Valid preparation opens the existing readonly Diff. Confirm must consume the
+owned grant through a typed Main gate with a fresh package identity check before
+arming one local transaction; immediately recheck live model/source/revision/TTL
+and blocked state before the synchronous batch. Keep native Undo/Redo. Discard,
+cancellation, source/context changes or late replies revoke local authority and
+pending/prepared Main work. Duplicate clicks and confirmations cannot create
+additional edits. Chat/history cannot create or resurrect authority.
+
+Expose Preparing, Review, Applied, Failed/Stale and Discarded states. Copy remains
+independent. Preserve F1 one preparation per Hint, including parsed failure: report
+the lock and request a new Hint only by explicit student action. No automatic
+retry/rebase/inference. A future separately approved adjustment could allow one
+explicit target reselection only when Main proves no grant was issued; it is not
+implemented in F2. No Hint schema/model/quota/timeout or Run/Judge/Submit changes.
+
+## AI-C4-F1 trusted Hint Apply backend — authorized 2026-11-08
+
+Supersedes only the earlier prohibition on adding a Hint target-resolution
+backend. Hint wire schema/model, consent, inference quota and timeouts remain
+unchanged; no extra Gemini call. F1 adds typed prepareHintApply with strict input
+validation and a separate proposal response, not an EDIT_PROPOSAL Hint status.
+Renderer sends an operation reference, current snapshot assertions and optional
+selection; it cannot submit Hint text, replacement/candidate, grants or trusted
+offsets. Main looks up its owned verified COMPLETE Hint, verifies source/model/
+revision/TTL and recaptures package/signature/starter identity before and after
+parsing. Retain only bounded private material for the current operation, and
+revoke it with its source/document/session/provider lifecycle or original TTL.
+
+NO_IMPLEMENTATION requires a physically present parseable template function:
+extract a matching full-function/method body with the parser and replace only
+the original body block, preserving the original header. Missing functions,
+bare signatures, unsupported expression bodies and uncertain context fail closed.
+HAS_IMPLEMENTATION requires explicit selection or a parser-confirmed immediate
+entry-body statement insertion boundary. Only the required entry function is
+eligible; offsets are untrusted requests until the parser establishes them.
+Candidate must pass existing canonical SH-1 limits plus parser syntax/signature/
+outside-target structural checks. Never widen Suggest Fix or replace a whole file.
+
+Main mints one separate Hint-provenance proposal/grant per current Hint, with
+the original result TTL. Exact duplicate preparation is idempotent; changed
+requests cannot replace the preparation or mint another grant. A failed parsed
+preparation stays failed for that Hint. Consume is Main-only and single-use in
+F1; no Renderer consumption or editor mutation API is introduced. Hint cards,
+Copy/Apply placement and disabled Apply UI stay unchanged pending F2 approval.
+
+## Hint Code Block Copy / Apply — authorized 2026-11-08
+
+Each Hint code block keeps its language at the top left and shows an icon-only
+Copy and icon-plus-label Apply at the top right, using the existing beUI Button
+and Chat theme tokens. Copy preserves the exact code with success/error feedback.
+Thinking, Steps and Code retain their order; Code stays last. Chat blocks are
+unchanged. This supersedes the earlier display-only presentation restriction,
+but does not grant editor authority to a Hint response.
+
+Apply requires a separately validated, trustworthy target binding: the exact
+template function when unimplemented, or a focused insertion/replacement when
+implementation exists. Never infer offsets from response text or use Hint output
+as an Apply grant. Require validation, readonly Diff, explicit manual confirmation,
+source/revision/model freshness checks and native Undo. The current Hint DTO has
+no target binding or proposal grant, and its private progress classification
+does not establish either. Therefore Apply is disabled for all current Hint code
+blocks, with a visible accessible explanation and guidance to select code and use
+Suggest Fix / Review Diff / Apply Fix. Unknown, stale or invalid code cannot
+bypass existing guards. No new target-resolution backend is introduced here.
+
+## Context-aware Unified Hint — authorized 2026-11-07
+
+Keep one advisory Hint with thinking, steps and code last. Main derives
+NO_IMPLEMENTATION / HAS_IMPLEMENTATION / UNCERTAIN from the trusted exercise
+starter and captured source, never a Renderer progress claim. Empty scaffolding
+requires a complete function preserving the required signature; existing logic
+requires a focused next/corrected fragment preserving the student's approach.
+Apparently complete code calls for edge checks or justified improvements, never
+invented defects. Uncertain syntax/template/structure permits observed-code
+guidance only, with no claim of completion. No editor mutation or Fix authority.
+Existing consent, quota, timeout, one-inference and cancellation policies apply.
+
+## AI-C4-E beUI Assistant presentation — authorized 2026-11-06
+
+Renderer uses free/open-source beUI conversation and prompt primitives for the
+Learning Assistant: compact header, reader-aware transcript, right-aligned user
+bubbles, left-aligned AI responses, theme-aware composer with four Quick Actions
+and explicit context chip/consent. Completed responses support safe Markdown and
+offline C#/JavaScript code highlighting. Unified Hint keeps code last; proposal
+cards expose Review Diff/Discard only through the existing current operation.
+No streaming/tool/thinking simulation, backend, quota or ownership changes.
+
+## AI-C4-D Unified Hint — authorized 2026-11-06
+
+Supersedes the earlier three-level Hint progression requirement. One Hint action
+returns one card: thinking, implementation steps, then practical language-bound
+code last. All sections are required and nonempty. One explicit consent permits
+at most one inference/reservation; no retries, unlock levels or editor authority.
+Legacy request levels normalize to the single action; old incomplete response
+shapes fail closed. New cards are display-only, not approved Gemini replay data.
+
+## Learning Assistant docked layout — authorized 2026-11-06
+
+The original AI icon opens the unified Practice assistant as the third body
+column, after description and editor, with no overlay on the editor. Opening AI
+collapses the expanded learning roadmap. Closing AI restores two body columns
+and keeps the editor instance/Undo state and the collapsed sidebar.
+
+## AI-C4-B Unified Learning Assistant — authorized 2026-11-06
+
+Learning Assistant is the single Chat/Smart Hints surface. Practice exposes Hint,
+Analyze, Explain and Suggest Fix near the composer, with ordered request cards
+and the existing per-action consent. Theory Chat shows these actions unavailable
+until an exercise context exists. Main-owned Chat history remains separate from
+display-only action cards: Renderer cannot submit action outputs for replay or
+derive editor authority from any timeline entry.
+
+Within the same source/model context, Chat, cursor movement, unrelated actions
+and operation-only Cancel must preserve completed Hint levels. Source/context
+changes and panel closure retire owned work; stale proposals have no Apply
+authority. Review Diff/manual Apply/Discard/native Undo use the existing pipeline.
+Analyze borrows public Run evidence and never starts Run. Shared Main admission,
+quota/model/timeout and SH-1/parser behavior remain unchanged. No streaming,
+persistence, automatic retry or new Quick Action backend is authorized.
+
+## AI-C4-A Learning Assistant Chat UI — authorized 2026-11-06
+
+Learning and Practice expose an advisory Gemini Chat panel with a Main-owned,
+RAM-only timeline. Each turn requires prepare, a review of the scope/attachment
+manifest and explicit consent before start; question-only never attaches code.
+Selection/source require a current Monaco capture and a code preview. Closing,
+navigation and context replacement retire the session; source revisions invalidate
+operations/replay and retain Main reference history. No editor mutation authority,
+streaming, persistence or multiple conversations. Existing Smart Hints and its
+four actions remain independent; action-to-timeline integration awaits C4-B.
+This supersedes the earlier no-Chat-UI scope restriction for C4-A only.
+
+## AI Learning Assistant backend IPC — authorized AI-C3-B2, 2026-11-06
+
+Learning Chat is exposed through typed `studentIde.learning.chat` session,
+context, prepare/start/status/cancel APIs, without a Chat Panel rollout. Main
+owns document identity and validates catalogue contexts; Monaco snapshot data
+is local input, not trusted identity or consent to provider upload. Existing
+Smart Hints configuration/key, fixed transport and coordinator/daily ledger are
+shared. Explicit start consent remains mandatory. Provider/configuration,
+document, context and shutdown retirement purge the ephemeral session. Chat
+cannot issue editor commands, proposals or grants. C4 UI and live acceptance
+remain separately authorized work; no automatic inference is introduced.
+
+## AI Learning Assistant Chat domain — authorized AI-C2-B, 2026-11-06
+
+Learning Chat V1 adds a bounded, ephemeral Main-owned conversation domain alongside
+existing Smart Hints and Local AI Chat. This authorization covers contracts,
+session/history and explicit question-only/selection/source context preparation
+only. No automatic source/Run/hidden-test/solution upload, unlocked-level bypass,
+editor action authority, new quota/provider state, database, adapter or UI rollout.
+Source revision changes retain reference messages but invalidate old replay and
+operations; panel/context/document/provider/key retirement must purge the session.
+Actual event/credential/transport integration and precise token counting require
+the subsequent approved steps. Existing Run/Judge/Submit/Apply/Undo are unchanged.
+
 ## Selection Fix syntax errors — authorized 2026-11-06
 
 Suggest Fix supports logic errors and safely isolated syntax errors in C#/JS

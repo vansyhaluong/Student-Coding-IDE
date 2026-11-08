@@ -135,7 +135,7 @@ export async function runOpenRouterSmoke(options: SmokeOptions): Promise<SmokeEv
         || body.provider?.allow_fallbacks !== false || body.provider?.max_price?.prompt !== 0
         || body.provider?.max_price?.completion !== 0 || body.provider?.max_price?.request !== 0
         || body.response_format !== undefined || body.models !== undefined || body.tools !== undefined
-        || input.action?.kind !== 'HINT' || input.action?.level !== 1 || input.source !== SMOKE_SOURCE
+        || input.action?.kind !== 'HINT' || Object.keys(input.action).length !== 1 || input.source !== SMOKE_SOURCE
         || input.language !== 'csharp' || input.publicStatement !== SMOKE_STATEMENT || evidence.inferenceRequests !== 0
         || !evidence.freeRouteVerified || !evidence.accountVerified) throw new SmartProviderError('INVALID_INPUT')
       try { await options.reserve() } catch {
@@ -258,7 +258,7 @@ export async function runOpenRouterSmoke(options: SmokeOptions): Promise<SmokeEv
     service = createService(catalogue, endpoints)
     const q: SmartPrepare = { requestId: randomUUID(), clientContextId: randomUUID(), exerciseId: 'sh4-synthetic', language: 'csharp',
       sourceRevision: 1, source: SMOKE_SOURCE, origin: { kind: 'PRACTICE', modelId: randomUUID(), modelVersion: 1, eol: 'LF' },
-      action: { kind: 'HINT', level: 1 }, run: null }
+      action: { kind: 'HINT' }, run: null }
     stage = 'PREPARE_FAILED'
     // Trusted Main-only synthetic fixture, not a Renderer/public catalogue claim.
     const prepared = await service.prepare(1, 'manual-smoke', q, () => {}, async generation => {
@@ -274,13 +274,13 @@ export async function runOpenRouterSmoke(options: SmokeOptions): Promise<SmokeEv
     })
     if (prepared.state !== 'PREPARED') throw new Error('PREPARE')
     stage = 'CONSENT_CANCELLED'
-    if (!await consent('SNAPSHOT', `${SMOKE_SOURCE}\nSelected model: ${selectedModel}.\nTask: ${SMOKE_STATEMENT}\nConstraint: 0 <= x <= 100. Signature: Solve(int32) -> int32.\nC# / Practice / Hint L1 / no Run evidence / no previous hints / packageVersion 1.\nSend this public synthetic snapshot to OpenRouter and its selected free provider? Their data policies vary. Exactly one inference attempt; no retry or paid fallback. 30s / 2048 output tokens. Consent expires after 60s. No Run, Submit or Apply.`)) return { ...evidence, code: stage }
+    if (!await consent('SNAPSHOT', `${SMOKE_SOURCE}\nSelected model: ${selectedModel}.\nTask: ${SMOKE_STATEMENT}\nConstraint: 0 <= x <= 100. Signature: Solve(int32) -> int32.\nC# / Practice / Unified Hint / no Run evidence / no previous hints / packageVersion 1.\nSend this public synthetic snapshot to OpenRouter and its selected free provider? Their data policies vary. Exactly one inference attempt; no retry or paid fallback. 30s / 2048 output tokens. Consent expires after 60s. No Run, Submit or Apply.`)) return { ...evidence, code: stage }
     stage = 'SERVICE_FAILED'
     const ref = { requestId: prepared.requestId, operationId: prepared.operationId }
     service.start(1, 'manual-smoke', { ...ref, captureToken: prepared.captureToken, consentVersion: 1, consentGranted: true })
     let status = service.status(1, 'manual-smoke', ref)
     while (status.state === 'RUNNING') { await pause(25); status = service.status(1, 'manual-smoke', ref) }
-    if (status.state === 'COMPLETE' && status.output.kind === 'HINT' && status.output.level === 1) {
+    if (status.state === 'COMPLETE' && status.output.kind === 'HINT') {
       evidence.inferenceStage = 'COMPLETE'; evidence.result = 'PASS'; evidence.code = 'COMPLETE'; evidence.schemaValidation = 'PASS'; evidence.hint = status.output
     } else {
       evidence.result = evidence.inferenceRequests ? 'FAIL' : 'STOP'

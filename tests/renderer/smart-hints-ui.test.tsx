@@ -8,26 +8,82 @@ import { isSmartStatus, validateSmartPrepare } from '../../src/shared/contracts/
 import type { ExerciseLanguage } from '../../src/shared/contracts/practice'
 import { useSmartHints } from '../../src/renderer/src/features/learning/practice/use-smart-hints'
 import { SmartHintsPanel } from '../../src/renderer/src/features/learning/practice/SmartHintsPanel'
+import { Advisory } from '../../src/renderer/src/features/learning/practice/SmartHintsPanel'
+import { AssistantCodeBlock } from '../../src/renderer/src/features/learning/AssistantCodeBlock'
 import { selectedRange, type SmartSourceSnapshot } from '../../src/renderer/src/features/learning/practice/smart-hints-selection'
 import { capture, request, fixAction } from '../fixtures/learning/smart-hints'
 
 const ok = <T,>(value: T) => ({ ok: true as const, value })
+describe('Hint code toolbar', () => {
+  it.each(['csharp', 'javascript'] as const)('%s copies exact code including Unicode, CRLF and whitespace', async language => {
+    const text = '  // 🐟 tiếng Việt\r\nreturn "<b>";\r\n'
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    const view = render(<AssistantCodeBlock text={text} language={language} hintActions />)
+    const header = view.container.querySelector('.assistant-code-header')!
+    expect(header.firstElementChild?.textContent).toBe(language === 'csharp' ? 'C#' : 'JavaScript')
+    expect(header.lastElementChild?.getAttribute('role')).toBe('group')
+    const copy = within(header as HTMLElement).getByRole('button', { name: 'Copy code' })
+    expect(copy.textContent).toBe(''); expect(copy.querySelector('svg')).toBeTruthy()
+    const apply = within(header as HTMLElement).getByRole('button', { name: 'Apply' })
+    expect(apply.querySelector('svg')).toBeTruthy(); expect(apply.hasAttribute('disabled')).toBe(true)
+    expect(document.getElementById(apply.getAttribute('aria-describedby')!)?.textContent).toContain('binding vùng sửa')
+    fireEvent.click(copy)
+    await screen.findByText('Đã sao chép code.')
+    expect(writeText).toHaveBeenCalledExactlyOnceWith(text)
+  })
+  it('reports denied clipboard access and permits retry', async () => {
+    const writeText = vi.fn().mockRejectedValueOnce(Error('denied')).mockResolvedValueOnce(undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    render(<AssistantCodeBlock text="return 1;" hintActions />)
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }))
+    await screen.findByText(/Không thể sao chép/)
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }))
+    await screen.findByText('Đã sao chép code.')
+  })
+  it('ignores a late copy completion after source changes', async () => {
+    const pending = gate<void>()
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: () => pending.promise } })
+    const view = render(<AssistantCodeBlock text="old" hintActions />)
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }))
+    view.rerender(<AssistantCodeBlock text="new" hintActions />)
+    await act(async () => { pending.resolve() })
+    expect(screen.queryByText('Đã sao chép code.')).toBeNull()
+  })
+  it.each(['function solve(x) { }', 'function solve(x) { return x;', 'unknown', 'invalid }', 'stale source'])('unbound Hint cannot edit baseline %s and keeps code last', source => {
+    const before = source
+    const view = render(<Advisory source={source} output={{ kind: 'HINT', thinking: 'Think', steps: ['Step'], code: { language: 'javascript', text: 'return x + 1;' }, evidence: [] }} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+    expect(source).toBe(before); expect(screen.queryByRole('dialog')).toBeNull()
+    expect(view.container.firstElementChild?.lastElementChild?.textContent).toContain('return x + 1;')
+    expect(screen.getByRole('button', { name: 'Apply' }).hasAttribute('disabled')).toBe(true)
+  })
+  it('leaves Chat markdown code blocks without Hint actions', () => {
+    render(<AssistantCodeBlock text="return 1;" language="javascript" />)
+    expect(screen.queryByRole('button')).toBeNull()
+  })
+})
 const broken = { ok: false as const, error: { code: 'INVALID_INPUT' as const, message: 'PRIVATE_RAW key /private/path', retryable: false } }
 const codeOnly: SmartRunContext = { kind: 'CODE_ONLY', reason: 'NO_MATCHING_PUBLIC_RUN' }
 const analysis: SmartOutput = { kind: 'ANALYSIS', hypotheses: ['Có thể cần kiểm tra biên.'], suggestions: ['Đối chiếu điều kiện.'], evidence: [] }
 function gate<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(r => { resolve = r }); return { promise, resolve } }
 beforeEach(() => {
   vi.stubGlobal('crypto', webcrypto)
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }))
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value() { this.setAttribute('open', '') } })
   Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value() { this.removeAttribute('open') } })
 })
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 function fixture(options: { language?: ExerciseLanguage; source?: string; context?: SmartRunContext; disabled?: boolean; strict?: boolean; openrouter?: boolean; gemini?: boolean } = {}) {
   let current: SmartStatus, q: SmartPrepare
+  let hintCount = 0
   const data = { source: options.source ?? 'function solve(x) { return x; }', language: options.language ?? 'javascript' as ExerciseLanguage,
     revision: 1, modelVersion: 1, modelId: randomUUID(), active: true, exerciseId: 'synthetic' }
   const context = options.context ?? codeOnly
   const api = {
+    prepareHintApply: vi.fn<SmartHintsApi['prepareHintApply']>(async () => { throw Error('F1 is not connected to UI') }),
+    consumeHintApply: vi.fn<SmartHintsApi['consumeHintApply']>(async () => { throw Error('No Hint Apply in drawer fixture') }),
+    discardHintApply: vi.fn<SmartHintsApi['discardHintApply']>(async () => ok(null)),
     capabilities: vi.fn<SmartHintsApi['capabilities']>(async () => ok({ enabled: !options.disabled, providerMode: options.disabled ? 'DISABLED' : options.gemini ? 'GEMINI_FREE' : options.openrouter ? 'OPENROUTER_FREE' : 'FAKE', applyEnabled: false, consentVersion: 1, suggestFixMode: 'DISABLED', suggestFixLanguages: [] })),
     prepare: vi.fn<SmartHintsApi['prepare']>(async value => {
       q = value; current = { schemaVersion: 1, requestId: q.requestId, operationId: randomUUID(), sequence: 0, binding: capture(q).binding,
@@ -36,8 +92,7 @@ function fixture(options: { language?: ExerciseLanguage; source?: string; contex
     }),
     start: vi.fn<SmartHintsApi['start']>(async () => {
       if (q.action.kind === 'SUGGEST_FIX') throw Error('Disabled Fix must not start in the fixture')
-      const output: SmartOutput = q.action.kind === 'HINT' ? { kind: 'HINT', level: q.action.level,
-        paragraphs: [`Gợi ý cấp ${q.action.level}`], nextQuestion: 'Bạn sẽ kiểm tra điều gì?', evidence: [] }
+      const output: SmartOutput = q.action.kind === 'HINT' ? { kind: 'HINT', thinking: `Gợi ý ${++hintCount}`, steps: ['Compare the public inputs.'], code: { language: q.language, text: 'return x + 1;' }, evidence: [] }
         : q.action.kind === 'EXPLAIN' ? { kind: 'EXPLANATION', syntax: 'Cú pháp đã chọn.', variables: 'Vai trò biến.', controlFlow: 'Luồng chạy.', algorithm: 'Ý nghĩa thuật toán.', illustrativeExamples: ['Ví dụ minh họa: 🐟'] }
           : analysis
       current = { schemaVersion: 1, requestId: current.requestId, operationId: current.operationId, binding: current.binding,
@@ -61,8 +116,7 @@ function fixture(options: { language?: ExerciseLanguage; source?: string; contex
     hints.setRun(context.kind === 'RUN_PUBLIC' ? { sessionId: 'exercise_12345678-1234-4234-8234-123456789abc', generation: 1, sequence: 9 } : null)
     const begin = (kind: 'HINT' | 'ANALYZE' | 'SUGGEST_FIX') => {
       if (kind === 'SUGGEST_FIX') return // This harness follows the disabled normal-app entry point.
-      const level = Math.min(3, Math.max(0, ...hints.view.hints.flatMap(h => h.output.kind === 'HINT' ? [h.output.level] : [])) + 1) as 1 | 2 | 3
-      void hints.begin(kind === 'HINT' ? { kind, level } : { kind }, snapshot())
+      void hints.begin({ kind }, snapshot())
     }
     return <><button onClick={hints.show}>Smart Hints</button>{hints.open && data.active && <SmartHintsPanel hints={hints} onClose={hints.close}
       onAction={begin} onExplain={() => { const s = snapshot(); if (s.selection) void hints.begin({ kind: 'EXPLAIN', selection: s.selection }, s) }} />}</>
@@ -163,20 +217,20 @@ describe('SH-2 drawer, per-action consent, progressive hints and advisory result
     const f = fixture({ openrouter: true }); await f.open()
     const dialog = await prepare('Analyze Code & Run')
     expect(within(dialog).getByText(/OpenRouter và nhà cung cấp mô hình miễn phí được chọn/)).toBeTruthy()
-    expect(within(dialog).getByText(/tối đa hai tóm tắt Hint/)).toBeTruthy()
+    expect(within(dialog).getByText(/Không gửi lại Hint trước/)).toBeTruthy()
     expect(within(dialog).getByText(/Chính sách lưu và sử dụng dữ liệu/)).toBeTruthy()
     expect(f.api.start).not.toHaveBeenCalled()
     await consent(); await screen.findByText('Có thể cần kiểm tra biên.')
     expect(f.api.start).toHaveBeenCalledOnce()
   })
   it('disabled selection Fix does not reset an existing Hint context or issue a proposal grant', async () => {
-    const f = fixture(); await f.open(); await prepare('Get Hint · Level 1'); await consent(); await screen.findByText('Gợi ý cấp 1')
+    const f = fixture(); await f.open(); await prepare('Hint'); await consent(); await screen.findByText('Gợi ý 1')
     const context = f.q.clientContextId, at = f.data.source.indexOf('return x;')
     await act(async () => { await f.controller.begin(fixAction(f.data.source, at, at + 9), f.snapshot()) })
     expect(f.api.prepare).toHaveBeenCalledOnce(); expect(f.api.start).toHaveBeenCalledOnce()
     expect(f.api.retireContext).not.toHaveBeenCalled(); expect(f.controller.previewFix()).toBeUndefined()
-    await prepare('Get Hint · Level 2'); expect(f.q.clientContextId).toBe(context)
-    await consent(); await screen.findByText('Gợi ý cấp 2')
+    await prepare('Hint'); expect(f.q.clientContextId).toBe(context)
+    await consent(); await screen.findByText('Gợi ý 2')
   })
   it.each(['revision', 'source', 'model', 'exercise', 'language', 'leave', 'expiry'])(
     'disabled Fix cannot manufacture a grant after %s changes', async kind => {
@@ -191,17 +245,21 @@ describe('SH-2 drawer, per-action consent, progressive hints and advisory result
         expect(f.controller.previewFix()).toBeUndefined(); expect(f.api.prepare).not.toHaveBeenCalled(); expect(f.api.start).not.toHaveBeenCalled()
       } finally { clock?.mockRestore() }
     })
-  it.each(['csharp', 'javascript'] as const)('%s L1 → L2 → L3, one consent each, no automatic start', async language => {
+  it.each(['csharp', 'javascript'] as const)('%s unified Hint always has three ordered sections and requires one consent', async language => {
     const f = fixture({ language, strict: true }); expect(f.api.capabilities).not.toHaveBeenCalled(); expect(f.api.prepare).not.toHaveBeenCalled()
     await f.open(); expect(f.api.prepare).not.toHaveBeenCalled()
     for (const level of [1, 2, 3]) {
-      const d = await prepare(`Get Hint · Level ${level}`)
-      expect(f.api.start).toHaveBeenCalledTimes(level - 1); expect(within(d).getByText(new RegExp(`Hint Level ${level}`))).toBeTruthy()
-      await consent(); await screen.findByText(`Gợi ý cấp ${level}`)
+      const d = await prepare(`Hint`)
+      expect(f.api.start).toHaveBeenCalledTimes(level - 1); expect(within(d).getByText(/^Hint ·/)).toBeTruthy()
+      await consent(); await screen.findByText(`Gợi ý ${level}`)
       expect(f.q.language).toBe(language)
+      const card = screen.getByRole('region', { name: 'Hint' })
+      expect(within(card).getAllByRole('heading').map(h => h.textContent)).toEqual(['Gợi ý tư duy', 'Hướng dẫn thực hiện', 'Gợi ý code'])
+      expect(card.lastElementChild?.querySelector(`code.language-${language}`)?.textContent).toBe('return x + 1;')
     }
     expect(f.api.prepare).toHaveBeenCalledTimes(3); expect(f.api.start).toHaveBeenCalledTimes(3)
-    expect(screen.getByRole('button', { name: 'Get Hint · Level 3' }).hasAttribute('disabled')).toBe(true)
+    expect(screen.getByRole('button', { name: 'Hint' }).hasAttribute('disabled')).toBe(false)
+    expect(screen.queryByText(/Level [123]/)).toBeNull()
     expect(f.api.prepare.mock.calls.map(x => x[0].clientContextId)).toEqual([f.q.clientContextId, f.q.clientContextId, f.q.clientContextId])
   })
   it.each(['', 'function unfinished('])('analyzes empty/incomplete code %j without Run prerequisite', async source => {
@@ -226,7 +284,7 @@ describe('SH-2 drawer, per-action consent, progressive hints and advisory result
   it('no provider configuration leaves all AI actions disabled and sends no snapshot', async () => {
     const f = fixture({ disabled: true }); fireEvent.click(screen.getByRole('button', { name: 'Smart Hints', exact: true } as never))
     await screen.findByText(/AI chưa được cấu hình hoặc chưa sẵn sàng/)
-    expect(screen.getByRole('button', { name: /Get Hint/ }).hasAttribute('disabled')).toBe(true)
+    expect(screen.getByRole('button', { name: /^Hint$/ }).hasAttribute('disabled')).toBe(true)
     expect(f.api.prepare).not.toHaveBeenCalled(); expect(f.api.start).not.toHaveBeenCalled()
   })
   it('Explain captures the exact multiline Unicode selection with no code mutation', async () => {
@@ -259,15 +317,15 @@ describe('SH-2 drawer, per-action consent, progressive hints and advisory result
   })
   it('double clicks have one prepare and one consented start', async () => {
     const f = fixture(); await f.open()
-    const b = screen.getByRole('button', { name: /Get Hint/ }); fireEvent.click(b); fireEvent.click(b)
+    const b = screen.getByRole('button', { name: /^Hint$/ }); fireEvent.click(b); fireEvent.click(b)
     await screen.findByRole('dialog'); expect(f.api.prepare).toHaveBeenCalledOnce()
     const confirm = screen.getByRole('button', { name: 'Đồng ý gửi snapshot' }); fireEvent.click(confirm); fireEvent.click(confirm)
-    await screen.findByText('Gợi ý cấp 1'); expect(f.api.start).toHaveBeenCalledOnce()
+    await screen.findByText('Gợi ý 1'); expect(f.api.start).toHaveBeenCalledOnce()
   })
-  it('Cancel before consent retires the snapshot and resets hint progression', async () => {
-    const f = fixture(); await f.open(); await prepare(/Get Hint/); await click('Hủy')
-    expect(f.api.start).not.toHaveBeenCalled(); expect(f.api.retireContext).toHaveBeenCalledOnce(); expect(screen.queryByRole('dialog')).toBeNull()
-    await prepare('Get Hint · Level 1'); expect(f.api.prepare.mock.calls[1][0].clientContextId).not.toBe(f.api.prepare.mock.calls[0][0].clientContextId)
+  it('Cancel before consent cancels only the operation and preserves the Hint session', async () => {
+    const f = fixture(); await f.open(); await prepare(/^Hint$/); await click('Hủy')
+    expect(f.api.start).not.toHaveBeenCalled(); expect(f.api.retireContext).not.toHaveBeenCalled(); expect(f.api.cancel).toHaveBeenCalledOnce(); expect(screen.queryByRole('dialog')).toBeNull()
+    await prepare('Hint'); expect(f.api.prepare.mock.calls[1][0].clientContextId).toBe(f.api.prepare.mock.calls[0][0].clientContextId)
   })
   it('unknown start ACK recovers status without replaying start', async () => {
     const f = fixture(); await f.open(); await prepare('Analyze Code & Run')
@@ -334,7 +392,7 @@ describe('SH-2 drawer, per-action consent, progressive hints and advisory result
     expect(screen.queryByRole('dialog')).toBeNull(); expect(screen.getAllByText('Có thể cần kiểm tra biên.')).toHaveLength(1)
   })
   it('native dialog cancel never sends consent, and Escape closes the non-modal drawer', async () => {
-    const f = fixture(); await f.open(); const dialog = await prepare(/Get Hint/)
+    const f = fixture(); await f.open(); const dialog = await prepare(/^Hint$/)
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Hủy' }))
     fireEvent(dialog, new Event('cancel', { bubbles: true, cancelable: true }))
     expect(f.api.start).not.toHaveBeenCalled(); expect(screen.queryByRole('dialog')).toBeNull()
@@ -361,7 +419,7 @@ describe('SH-2 drawer, per-action consent, progressive hints and advisory result
     expect(screen.queryByText('Có thể cần kiểm tra biên.')).toBeNull(); expect(f.api.retireContext).toHaveBeenCalled()
   })
   it('source edit while consent is open removes the dialog and never sends start', async () => {
-    const f = fixture(); await f.open(); await prepare(/Get Hint/)
+    const f = fixture(); await f.open(); await prepare(/^Hint$/)
     f.rerenderData({ source: '// new', revision: 2, modelVersion: 2 })
     expect(screen.queryByRole('dialog')).toBeNull(); expect(f.api.start).not.toHaveBeenCalled()
   })
@@ -393,12 +451,12 @@ describe('SH-2 drawer, per-action consent, progressive hints and advisory result
     await consent(); await screen.findByRole('alert'); expect(screen.queryByText('Có thể cần kiểm tra biên.')).toBeNull(); expect(document.body.textContent).not.toContain('PRIVATE_RAW')
   })
   it('expired results disappear before a delayed timer callback and restart with a fresh context', async () => {
-    const f = fixture(); await f.open(); await prepare(/Get Hint/); await consent(); await screen.findByText('Gợi ý cấp 1')
+    const f = fixture(); await f.open(); await prepare(/^Hint$/); await consent(); await screen.findByText('Gợi ý 1')
     const old = f.q.clientContextId, clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 300001)
     try {
       f.rerenderData({})
-      expect(screen.queryByText('Gợi ý cấp 1')).toBeNull()
-      await prepare('Get Hint · Level 1'); expect(f.q.clientContextId).not.toBe(old); expect(f.api.retireContext).toHaveBeenCalled()
+      expect(screen.queryByText('Gợi ý 1')).toBeNull()
+      await prepare('Hint'); expect(f.q.clientContextId).not.toBe(old); expect(f.api.retireContext).toHaveBeenCalled()
     } finally { clock.mockRestore() }
   })
 })

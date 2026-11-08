@@ -1,5 +1,78 @@
 # Architecture Decision Log
 
+## AI-C4-F3.1 Chat shutdown transport lifetime - authorized 2026-11-08
+
+Evidence: sealed Chat business state is drained before window destruction, but
+LearningChatIpcService currently removes its handlers while that window is alive.
+An already-sent Renderer close can then hit a missing handler; a STOPPING listener
+alone cannot recall an in-flight IPC packet. Keep admission sealing at STOPPING
+and business drain in SmartHintsConfiguration, but defer Chat transport teardown
+until after WindowManager destroys the window. In the existing shutdown-last
+pass, stop WindowManager before LearningChatIpcService. Retain the recovery window
+until all mandatory business cleanup succeeds. All Chat methods stay sealed;
+this does not extend any session, model, quota or editor authority. No sleeps,
+exception suppression or timeout adjustment. This changes only the transport
+teardown ordering authorized by the F3.1 lifecycle task.
+
+Further trace: BrowserWindow closed occurs before WebContents destroyed, even
+after the JavaScript exit event in the old path. WindowManager.stop must await
+the owned WebContents destroyed event, sharing concurrent stop ownership and
+retaining cleanup on failure. Only then may the sealed Chat transport be removed
+and final Electron quit proceed. No time-based drain or native workaround.
+
+## AI-C4-F3 retry amendment ? authorized - 2026-11-08
+
+User explicitly authorizes bounded retries before any proposal/grant exists. Retain
+failed attempt ID/digest/error records (maximum three) within the same owned operation;
+repeat failures do not spend another attempt. Only Main-correlated no-grant errors may
+unlock Preload/UI. Success, discard, consumption or uncertainty cannot be retried; no
+automatic retry. Preserve all original binding, parser, package and SH-1 gates. Earlier
+F1/F2 single-preparation statements are historical and superseded only for these
+definite pre-grant failures.
+
+## AI-C4-F2 Hint consume and manual Diff — authorized 2026-11-08
+
+F2 acceptance exposed two F1 defects: repeated default SDK discovery exhausted
+the unchanged 2s validation budget, and the real JS template's recognized
+throw-new-Error placeholder was rejected by the reused baseline grammar. Reuse
+only verified source-free asset identities with full byte/anchor revalidation.
+For the separately classified NO_IMPLEMENTATION baseline only, share the exact
+existing placeholder predicate. Never accept NewExpression in candidates or
+Suggest Fix, skip AST parsing, infer offsets or increase budgets. Reopen F1
+correctively and reverify its original scoped gates; no new work package starts.
+
+User authorizes typed consume/discard IPC and Renderer integration of F1 proposals.
+Consume revalidates the original preparation, owned grant and fresh trusted package
+before arming one local synchronous Monaco transaction. Discard revokes pending
+or prepared work. Main ignores snapshot selection for NO_IMPLEMENTATION and still
+passes null to the unchanged template parser; HAS_IMPLEMENTATION requires its
+verified explicit selection/caret. This avoids exposing private classification
+or adding inference. F1's single preparation, including parsed failure, remains:
+no automatic retry/rebase and no widened SH-1/Suggest Fix/parser grammar.
+
+## AI-C4-F1 trusted Hint proposal amendment — authorized 2026-11-08
+
+User authorizes a separate typed prepareHintApply backend, superseding the earlier
+absence of Hint proposal authority, not the Hint wire schema. Main alone retains
+bounded verified COMPLETE Hint context until expiry/invalidation, looks up the
+owned operation and recaptures trusted package identity. Renderer cannot supply
+Hint text, replacement/candidate or grants. A separate parser branch identifies
+the exact template body or validates explicit selection/insertion in the entry
+function; canonical SH-1 and signature/outside-target checks remain mandatory.
+Separate proposals carry Hint provenance and a single-use Main grant. Existing
+Suggest Fix guards are unchanged; no whole-file edits, inference, quota/timeout
+change or Renderer integration. F2 requires separate authorization.
+
+## AI-C4-D Hint progression amendment — accepted 2026-11-06
+
+User explicitly authorizes replacing sequential Hint L1/L2/L3 with a single
+three-part Hint. Retaining unlock or orchestrating three calls is rejected: one
+request uses the existing coordinator, consent and single reservation path.
+Normalize legacy level-bearing inputs; reject old output rather than fabricate
+missing sections. Remove level/dedup summary state; new Hint content is not
+approved for replay to Chat or later actions. Advisory language checks do not
+grant compiler or editor authority; SH-1 and Fix guards remain unchanged.
+
 ## Selection Fix syntax recovery amendment — authorized 2026-11-06
 
 The user authorizes superseding G0's blanket rejection of invalid baseline syntax

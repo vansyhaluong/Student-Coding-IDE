@@ -1,6 +1,9 @@
 import ts from 'typescript'
 import { parentPort, workerData } from 'node:worker_threads'
 import { FIX_PARSER_PROTOCOL, FIX_PARSER_TYPESCRIPT, isFixParserInput, type FixParserInput, type FixParserReason } from '../selection-fix-protocol'
+import { isHintParserInput } from '../hint-context'
+import { javascriptHintContext, isJavascriptHintPlaceholder } from './hint-context-javascript'
+import { isHintApplyParserInput, type HintApplyParserInput, type HintApplyParserEdit, type HintApplyParserFailure } from '../hint-apply-parser'
 
 // Parse-only, one bounded job per owned worker. No program/emit/eval/project APIs.
 const allowed = new Set<ts.SyntaxKind>([
@@ -31,7 +34,7 @@ function tokens(node: ts.Node, tree: ts.SourceFile): ts.Node[] {
   const children = node.getChildren(tree)
   return children.length ? children.flatMap(n => tokens(n, tree)) : node.end > node.getStart(tree) ? [node] : []
 }
-function parse(source: string, input: FixParserInput, recover = false) {
+function parse(source: string, input: FixParserInput, recover = false, hintTemplateBaseline = false) {
   const tree = ts.createSourceFile('selection.js', source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.JS)
   const diagnostics = (tree as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics
   if (!Array.isArray(diagnostics)) bad('SYNTAX')
@@ -68,7 +71,12 @@ function parse(source: string, input: FixParserInput, recover = false) {
     }
     if (node.kind === ts.SyntaxKind.ThisKeyword || node.kind === ts.SyntaxKind.SuperKeyword
       || node.kind === ts.SyntaxKind.RegularExpressionLiteral) bad('UNSUPPORTED_GRAMMAR')
-    if (node.kind > ts.SyntaxKind.LastToken && !allowed.has(node.kind)) bad('UNSUPPORTED_GRAMMAR')
+    // Only the old body of a separately classified NO_IMPLEMENTATION Hint may
+    // contain its exact recognized scaffold. Candidate and Suggest Fix grammar
+    // keep the default false and are never widened to NewExpression.
+    const scaffold = hintTemplateBaseline && ts.isNewExpression(node) && ts.isThrowStatement(node.parent)
+      && node.parent.expression === node && isJavascriptHintPlaceholder(node.parent)
+    if (node.kind > ts.SyntaxKind.LastToken && !allowed.has(node.kind) && !scaffold) bad('UNSUPPORTED_GRAMMAR')
     if (ts.isFunctionDeclaration(node) && (node.parent !== tree || !node.name || !node.body || node.asteriskToken || node.modifiers?.length
       || node.type || node.typeParameters?.length || node.parameters.some(p => !ts.isIdentifier(p.name) || p.initializer || p.dotDotDotToken
         || p.type || p.questionToken || p.modifiers?.length))) bad('UNSUPPORTED_GRAMMAR')
@@ -169,10 +177,62 @@ function check(input: FixParserInput): FixParserReason {
   } catch (reason) { return FIX_REASONS.has(reason) ? reason as FixParserReason : 'INTERNAL' }
 }
 const FIX_REASONS = new Set<unknown>(['SYNTAX', 'SIGNATURE', 'TARGET', 'WHOLE_FILE', 'STRUCTURE', 'UNSUPPORTED_GRAMMAR'])
+/** Separate admission: never alters selection-fix check/grammar. */
+function hintApply(input: HintApplyParserInput): HintApplyParserEdit | HintApplyParserFailure {
+  let stage: HintApplyParserFailure['stage'] = 'CLASSIFICATION'
+  const fail = (reason: HintApplyParserFailure['reason'] = stage === 'TARGET' ? 'TARGET_INVALID' : stage === 'CLASSIFICATION' || stage === 'SOURCE_PARSE' ? 'UNSUPPORTED' : 'CANDIDATE_INVALID'): HintApplyParserFailure => ({ stage, reason })
+  try {
+    if (javascriptHintContext({ hint: 'CLASSIFY', source: input.source, starter: input.starter, signature: input.signature }) !== input.implementation) return fail()
+    const base: FixParserInput = { protocol: 1, phase: 'PREFLIGHT', source: input.source, candidate: null, start: 0, end: 1, signature: input.signature }
+    stage = 'SOURCE_PARSE'
+    const before = parse(input.source, base, false, input.implementation === 'NO_IMPLEMENTATION'), entry = before.entry
+    let start: number, end: number, replacementText = input.code
+    if (input.implementation === 'NO_IMPLEMENTATION') {
+      stage = 'EXTRACTION'
+      if (input.selection !== null) return fail('TARGET_INVALID')
+      const code = parse(input.code, { ...base, source: input.code })
+      stage = 'SIGNATURE'
+      if (header(entry, before.tree) !== header(code.entry, code.tree)) return fail()
+      stage = 'EXTRACTION'
+      if (javascriptHintContext({ hint: 'VALIDATE', source: input.code, starter: input.starter, signature: input.signature }) !== 'VALID_HINT_CODE') return fail()
+      start = entry.body!.getStart(before.tree); end = entry.body!.end
+      replacementText = input.code.slice(code.entry.body!.getStart(code.tree), code.entry.body!.end)
+    } else {
+      stage = 'TARGET'
+      if (!input.selection) return fail()
+      ;({ start, end } = input.selection)
+      if (start === end) {
+        // Only an immediate entry-body statement boundary, never an arbitrary cursor.
+        const body = entry.body!, points = [body.getStart(before.tree) + 1, body.end - 1,
+          ...body.statements.flatMap(s => [s.getStart(before.tree), s.end])]
+        if (!points.includes(start)) return fail()
+      } else {
+        const selected = target(before, input.source, start, end)
+        if (!selected || selected.owner !== entry || selected.kind === 'FUNCTION') return fail()
+      }
+    }
+    if (start === 0 && end === input.source.length) return fail()
+    const candidate = input.source.slice(0, start) + replacementText + input.source.slice(end)
+    stage = 'CANDIDATE'
+    const after = parse(candidate, { ...base, source: candidate }), nextEnd = start + replacementText.length
+    stage = 'SIGNATURE'
+    if (header(entry, before.tree) !== header(after.entry, after.tree)) return fail()
+    stage = 'STRUCTURE'
+    if (input.implementation === 'HAS_IMPLEMENTATION') {
+      const selected = target(after, candidate, start, nextEnd)
+      if (!selected || selected.owner !== after.entry || selected.kind === 'FUNCTION') return fail()
+    } else if (after.entry.body!.getStart(after.tree) !== start || after.entry.body!.end !== nextEnd) return fail()
+    if (JSON.stringify(shape(before.tree, before.tree, start, end)) !== JSON.stringify(shape(after.tree, after.tree, start, nextEnd))) return fail()
+    return { start, end, replacementText }
+  } catch (reason) {
+    if (reason === 'SIGNATURE' && stage !== 'SOURCE_PARSE') stage = 'SIGNATURE'
+    return fail(reason === 'UNSUPPORTED_GRAMMAR' ? 'UNSUPPORTED' : undefined)
+  }
+}
 if (parentPort) {
   parentPort.postMessage({ protocol: FIX_PARSER_PROTOCOL, ready: true, version: ts.version })
   const reason = ts.version !== FIX_PARSER_TYPESCRIPT ? 'INTERNAL' : workerData?.probe === true ? 'ACCEPT'
-    : isFixParserInput(workerData) ? check(workerData) : 'INTERNAL'
+    : isHintApplyParserInput(workerData) ? hintApply(workerData) : isHintParserInput(workerData) ? javascriptHintContext(workerData) : isFixParserInput(workerData) ? check(workerData) : 'INTERNAL'
   parentPort.postMessage({ protocol: FIX_PARSER_PROTOCOL, reason })
   parentPort.close()
 }

@@ -2,7 +2,7 @@ import Editor from '@monaco-editor/react'
 import { useCallback, useEffect, useRef } from 'react'
 import type { editor } from 'monaco-editor'
 import { monaco } from '../../editor/monaco'
-import { capturePracticeSelection, createPracticeFixSelectionBinding, type PracticeHintEditor, type SmartSourceSnapshot, type PracticeFixReadiness } from './smart-hints-selection'
+import { capturePracticeSelection, capturePracticeHintApply, createPracticeFixSelectionBinding, type PracticeHintEditor, type SmartSourceSnapshot, type PracticeFixReadiness } from './smart-hints-selection'
 import type { Exercise, ExerciseLanguage } from '../../../../../shared/contracts/practice'
 import type { PracticeSourceReplacement } from './use-practice'
 import { applySmartFix } from './smart-hint-edits'
@@ -82,7 +82,13 @@ export function PracticeEditor({ exercise, language, code, readOnly, onChange, s
     }, value => latest.current.onFixSelectionReadiness?.(value))
     fixSelection.current = localFix
     let failed = false
-    latest.current.onHintEditor?.({ capture, captureFix: localFix.capture, focus: () => ed.focus(), applyFix: fix => {
+    latest.current.onHintEditor?.({ capture, captureFix: localFix.capture,
+      captureHintApply: () => {
+        capture() // Refresh model identity without changing selection.
+        const now = latest.current
+        return capturePracticeHintApply(ed, { exerciseId: now.exerciseId, language: now.language, source: now.code,
+          sourceRevision: now.sourceRevision, modelId: modelIdentity.current?.id ?? '' })
+      }, focus: () => ed.focus(), applyFix: fix => {
       const now = latest.current
       try {
         const result = applySmartFix(ed, fix, { exerciseId: now.exerciseId, language: now.language,

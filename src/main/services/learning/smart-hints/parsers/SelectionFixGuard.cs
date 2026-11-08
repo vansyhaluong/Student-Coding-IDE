@@ -198,6 +198,70 @@ static class Guard
         catch (InvalidOperationException e) when (Reasons.Contains(e.Message)) { return e.Message; }
         catch { return "INTERNAL"; }
     }
+    // Separate Hint admission; the Selection Fix entry point above is unchanged.
+    static object HintApply(JsonElement input)
+    {
+        string stage = "CLASSIFICATION";
+        object Fail(string? reason = null) => new { stage, reason = reason ?? (stage == "TARGET" ? "TARGET_INVALID" : stage == "CLASSIFICATION" || stage == "SOURCE_PARSE" ? "UNSUPPORTED" : "CANDIDATE_INVALID") };
+        try {
+            string source = Text(input, "source"), code = Text(input, "code"), implementation = Text(input, "implementation");
+            var signature = input.GetProperty("signature"); string starter = Text(input, "starter");
+            string Context(string mode, string text) {
+                using var doc = JsonDocument.Parse(JsonSerializer.Serialize(new { hint = mode, source = text, starter, signature }));
+                return HintContext.Check(doc.RootElement);
+            }
+            if (Context("CLASSIFY", source) != implementation) return Fail();
+            stage = "SOURCE_PARSE";
+            var before = Parse(source); var methods = Methods(before, signature);
+            var entry = methods.Single(m => m.Identifier.ValueText == Text(signature, "functionName"));
+            int start, end; string replacementText = code;
+            if (implementation == "NO_IMPLEMENTATION") {
+                stage = "EXTRACTION";
+                if (input.GetProperty("selection").ValueKind != JsonValueKind.Null) return Fail("TARGET_INVALID");
+                CompilationUnitSyntax parsed;
+                try { parsed = Parse(code); }
+                catch (Exception e) when (e.Message == "SYNTAX") { code = "public class Solution {\n" + code + "\n}"; parsed = Parse(code); }
+                stage = "SIGNATURE";
+                var codeEntry = Methods(parsed, signature).Single(m => m.Identifier.ValueText == Text(signature, "functionName"));
+                if (Header(entry) != Header(codeEntry)) return Fail();
+                stage = "EXTRACTION";
+                if (Context("VALIDATE", code) != "VALID_HINT_CODE") return Fail();
+                start = entry.Body!.SpanStart; end = entry.Body.Span.End;
+                replacementText = code[codeEntry.Body!.SpanStart..codeEntry.Body.Span.End];
+            } else if (implementation == "HAS_IMPLEMENTATION") {
+                stage = "TARGET";
+                var selection = input.GetProperty("selection");
+                if (selection.ValueKind != JsonValueKind.Object) return Fail();
+                start = selection.GetProperty("start").GetInt32(); end = selection.GetProperty("end").GetInt32();
+                if (start < 0 || end < start || end > source.Length || !Boundary(source, start) || !Boundary(source, end)) return Fail();
+                if (start == end) {
+                    var points = entry.Body!.Statements.SelectMany(s => new[] { s.SpanStart, s.Span.End })
+                        .Concat(new[] { entry.Body.OpenBraceToken.Span.End, entry.Body.CloseBraceToken.SpanStart });
+                    if (!points.Contains(start)) return Fail();
+                } else {
+                    var selected = Select(before, methods, source, start, end);
+                    if (selected == null || selected.Owner != entry || selected.Kind == "FUNCTION") return Fail();
+                }
+            } else return Fail();
+            if (start == 0 && end == source.Length) return Fail();
+            string candidate = source[..start] + replacementText + source[end..]; int nextEnd = start + replacementText.Length;
+            stage = "CANDIDATE";
+            var after = Parse(candidate); var nextMethods = Methods(after, signature);
+            var nextEntry = nextMethods.Single(m => m.Identifier.ValueText == Text(signature, "functionName"));
+            stage = "SIGNATURE";
+            if (Header(entry) != Header(nextEntry)) return Fail();
+            stage = "STRUCTURE";
+            if (implementation == "HAS_IMPLEMENTATION") {
+                var next = Select(after, nextMethods, candidate, start, nextEnd);
+                if (next == null || next.Owner != nextEntry || next.Kind == "FUNCTION") return Fail();
+            } else if (nextEntry.Body!.SpanStart != start || nextEntry.Body.Span.End != nextEnd) return Fail();
+            if (JsonSerializer.Serialize(Shape(before, start, end)) != JsonSerializer.Serialize(Shape(after, start, nextEnd))) return Fail();
+            return new { start, end, replacementText };
+        } catch (Exception e) {
+            if (e.Message == "SIGNATURE" && stage != "SOURCE_PARSE") stage = "SIGNATURE";
+            return Fail(e.Message == "UNSUPPORTED_GRAMMAR" ? "UNSUPPORTED" : null);
+        }
+    }
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static int Run()
     {
@@ -206,8 +270,90 @@ static class Guard
         using var memory = new MemoryStream(); using var stdin = Console.OpenStandardInput(); var block = new byte[4096]; int read;
         while ((read = stdin.Read(block, 0, block.Length)) > 0) { if (memory.Length + read > 262144) return 2; memory.Write(block, 0, read); }
         using var document = JsonDocument.Parse(memory.ToArray(), new JsonDocumentOptions { MaxDepth = 16 });
-        string reason = document.RootElement.TryGetProperty("probe", out var probe) && probe.ValueKind == JsonValueKind.True ? "ACCEPT" : Check(document.RootElement);
+        object reason = document.RootElement.TryGetProperty("probe", out var probe) && probe.ValueKind == JsonValueKind.True ? "ACCEPT"
+            : document.RootElement.TryGetProperty("hintApply", out var apply) && apply.ValueKind == JsonValueKind.True ? HintApply(document.RootElement)
+            : document.RootElement.TryGetProperty("hint", out _) ? HintContext.Check(document.RootElement) : Check(document.RootElement);
         Console.WriteLine(JsonSerializer.Serialize(new { protocol = 1, version = "5.0.0.0", reason }));
         return 0;
+    }
+}
+
+// Separate advisory-only branch. Selection Fix grammar and validation above are unchanged.
+static class HintContext
+{
+    static string Text(JsonElement e, string field) => e.GetProperty(field).GetString()!;
+    static string TypeName(string type) => type switch {
+        "int32" => "int", "boolean" => "bool", "string" => "string", "int32[]" => "int[]",
+        "string[]" => "string[]", "int32[][]" => "int[][]", _ => "?" };
+    static string Tokens(SyntaxNode n) => string.Join("|", n.DescendantTokens().Select(t => t.Text));
+    static string? Lex(string text)
+    {
+        var tokens = SyntaxFactory.ParseTokens(text).ToArray();
+        if (tokens.Any(t => t.ContainsDiagnostics || t.LeadingTrivia.Concat(t.TrailingTrivia).Any(v => v.IsDirective))) return null;
+        return string.Join("|", tokens.Where(t => !t.IsKind(SyntaxKind.EndOfFileToken)).Select(t => t.RawKind + ":" + t.Text));
+    }
+    static CompilationUnitSyntax Parse(string source) => CSharpSyntaxTree.ParseText(source,
+        new CSharpParseOptions(LanguageVersion.CSharp14)).GetCompilationUnitRoot();
+    static MethodDeclarationSyntax? Entry(CompilationUnitSyntax root, JsonElement signature)
+    {
+        if (root.ContainsDiagnostics || root.ContainsDirectives || root.Usings.Count != 0 || root.Externs.Count != 0 || root.AttributeLists.Count != 0 || root.Members.Count != 1
+            || root.Members[0] is not ClassDeclarationSyntax c || c.Identifier.ValueText != "Solution"
+            || c.Modifiers.ToString() != "public" || c.AttributeLists.Count != 0 || c.TypeParameterList != null || c.ParameterList != null || c.BaseList != null
+            || c.Members.Count != 1 || c.Members[0] is not MethodDeclarationSyntax m
+            || m.Modifiers.ToString() != "public" || m.AttributeLists.Count != 0 || m.TypeParameterList != null
+            || m.Identifier.ValueText != Text(signature, "functionName")
+            || string.Concat(m.ReturnType.DescendantTokens().Select(t => t.Text)) != TypeName(Text(signature, "returnType"))) return null;
+        var parameters = signature.GetProperty("parameters").EnumerateArray().ToArray();
+        if (m.ParameterList.Parameters.Count != parameters.Length || m.ParameterList.Parameters.Where((p, i) =>
+            p.Identifier.ValueText != Text(parameters[i], "name") || p.Type == null
+            || string.Concat(p.Type.DescendantTokens().Select(t => t.Text)) != TypeName(Text(parameters[i], "type"))
+            || p.Default != null || p.Modifiers.Count != 0 || p.AttributeLists.Count != 0).Any()) return null;
+        return m;
+    }
+    static bool PlaceholderThrow(ExpressionSyntax? expression) => expression is ObjectCreationExpressionSyntax o
+            && (o.Type.ToString() == "System.NotImplementedException" || o.Type.ToString() == "NotImplementedException")
+            && o.ArgumentList != null && o.ArgumentList.Arguments.Count <= 1
+            && o.ArgumentList.Arguments.All(a => a.Expression is LiteralExpressionSyntax l && l.IsKind(SyntaxKind.StringLiteralExpression))
+            && o.Initializer == null;
+    static bool Placeholder(StatementSyntax s) => s is EmptyStatementSyntax || s is BlockSyntax b && b.Statements.All(Placeholder)
+        || s is ThrowStatementSyntax t && PlaceholderThrow(t.Expression);
+    public static string Check(JsonElement input)
+    {
+        bool validate = false;
+        try
+        {
+            validate = Text(input, "hint") == "VALIDATE";
+            if (!validate && Text(input, "hint") != "CLASSIFY") return "UNCERTAIN";
+            var signature = input.GetProperty("signature");
+            var starter = Entry(Parse(Text(input, "starter")), signature);
+            if (starter?.Body == null || !starter.Body.Statements.All(Placeholder)) return validate ? "INVALID_HINT_CODE" : "UNCERTAIN";
+            var source = Text(input, "source"); var root = Parse(source);
+            if (!validate) {
+                var header = starter.ToString()[..(starter.Body.OpenBraceToken.SpanStart - starter.SpanStart)];
+                if (Lex(source) == Lex(header) || Lex(source) == Lex(header + ";")) return "NO_IMPLEMENTATION";
+                if (!root.ContainsDiagnostics && !root.ContainsDirectives && root.Usings.Count == 0 && root.Members.Count == 1
+                    && root.Members[0] is ClassDeclarationSyntax empty && empty.Identifier.ValueText == "Solution"
+                    && empty.Modifiers.ToString() == "public" && empty.Members.Count == 0 && empty.AttributeLists.Count == 0
+                    && empty.TypeParameterList == null && empty.BaseList == null) return "NO_IMPLEMENTATION";
+            }
+            if (!validate && !root.ContainsDiagnostics && !root.ContainsDirectives && root.Members.Count == 0 && root.Usings.Count == 0)
+                return "NO_IMPLEMENTATION";
+            var current = Entry(root, signature);
+            // Provider may return the complete required method without its class wrapper.
+            if (validate && current == null) current = Entry(Parse("public class Solution {\n" + source + "\n}"), signature);
+            if (current == null) return validate ? "INVALID_HINT_CODE" : "UNCERTAIN";
+            if (current.Body == null) {
+                bool implemented = current.ExpressionBody != null
+                    && !(current.ExpressionBody.Expression is ThrowExpressionSyntax t && PlaceholderThrow(t.Expression));
+                return implemented ? (validate ? "VALID_HINT_CODE" : "HAS_IMPLEMENTATION")
+                    : (validate ? "INVALID_HINT_CODE" : "NO_IMPLEMENTATION");
+            }
+            if (validate) return current.Body!.Statements.Any(s => !Placeholder(s))
+                && !current.Body.DescendantNodes().Any(n => n is ThrowStatementSyntax t && PlaceholderThrow(t.Expression)
+                    || n is ThrowExpressionSyntax e && PlaceholderThrow(e.Expression)) ? "VALID_HINT_CODE" : "INVALID_HINT_CODE";
+            return Tokens(current.Body!) == Tokens(starter.Body!) || current.Body!.Statements.All(Placeholder)
+                ? "NO_IMPLEMENTATION" : "HAS_IMPLEMENTATION";
+        }
+        catch { return validate ? "INVALID_HINT_CODE" : "UNCERTAIN"; }
     }
 }

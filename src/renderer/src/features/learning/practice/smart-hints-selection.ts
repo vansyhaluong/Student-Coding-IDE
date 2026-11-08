@@ -3,7 +3,7 @@ import type { ExerciseLanguage } from '../../../../../shared/contracts/practice'
 import type { SmartOrigin, SmartSelection } from '../../../../../shared/contracts/smart-hints'
 import { SMART_HINT_POLICY as P } from '../../../../../shared/contracts/smart-hints'
 import { smartBoundary, smartPosition, smartText, smartInteger, smartUuid } from '../../../../../shared/contracts/smart-hints-validation'
-import type { SmartFix, ApplyFixResult } from './smart-hint-edits'
+import type { ReviewFix, ApplyFixResult } from './smart-hint-edits'
 
 /** Renderer-local source evidence; no Preload or disk authority. */
 export interface SmartSourceSnapshot {
@@ -11,12 +11,30 @@ export interface SmartSourceSnapshot {
   isCurrent(): boolean
 }
 export interface PracticeHintEditor {
-  capture(): SmartSourceSnapshot | undefined; focus(): void; applyFix?(fix: SmartFix): ApplyFixResult
+  capture(): SmartSourceSnapshot | undefined; focus(): void; applyFix?(fix: ReviewFix): ApplyFixResult
+  captureHintApply?(): HintApplySnapshot | undefined
   /** Fix-only capture; selection freshness freezes only at explicit consent. */
   captureFix?(): PracticeFixSnapshot | undefined
 }
 export interface PracticeFixContext {
   exerciseId: string; language: ExerciseLanguage; source: string; sourceRevision: number; modelId: string
+}
+export interface HintApplySnapshot extends SmartSourceSnapshot {
+  sourceRevision: number; origin: Extract<SmartOrigin, { kind: 'PRACTICE' }>
+}
+/** Freeze the one explicit target at click time; later cursor movement cannot rebase it. */
+export function capturePracticeHintApply(ed: editor.IStandaloneCodeEditor, c: PracticeFixContext): HintApplySnapshot | undefined {
+  const snapshot = capturePracticeSelection(ed, c.exerciseId, c.language, c.modelId), model = ed.getModel(), ranges = ed.getSelections?.()
+  if (!snapshot || !model || snapshot.source !== c.source || !snapshot.isCurrent() || ranges?.length !== 1
+    || model.getLanguageId() !== c.language || !smartUuid(c.modelId) || !smartInteger(c.sourceRevision)) return
+  const a = ranges[0].getStartPosition(), b = ranges[0].getEndPosition(), source = snapshot.source
+  const startOffset = model.getOffsetAt(a), endOffset = model.getOffsetAt(b)
+  if (!smartBoundary(source, startOffset) || !smartBoundary(source, endOffset) || startOffset > endOffset
+    || !smartText(source.slice(startOffset, endOffset), P.selectionBytes, true)) return
+  const selection: SmartSelection = { startOffset, endOffset, text: source.slice(startOffset, endOffset),
+    startLine: a.lineNumber, startColumn: a.column, endLine: b.lineNumber, endColumn: b.column }
+  if (snapshot.origin.kind !== 'PRACTICE') return
+  return { ...snapshot, origin: snapshot.origin, selection, sourceRevision: c.sourceRevision }
 }
 export type PracticeFixReadiness = Readonly<{
   exerciseId: string; language: ExerciseLanguage; sourceRevision: number

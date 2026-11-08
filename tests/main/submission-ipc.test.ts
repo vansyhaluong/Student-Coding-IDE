@@ -73,18 +73,26 @@ async function fixture(real = false) {
   const frame = { processId: 10, frameToken: 'current', detached: false, isDestroyed: () => false }; let currentFrame = frame
   const event = { sender: { id: 1 }, senderFrame: frame }
   const ports = { store: () => store.store, send: (_c: IpcRequestContext, s: SubmissionStatus) => { sends.push(s) } }
+  const invalidateChat = vi.fn()
   const ipc = new ExerciseIpcService(registry, service, (ctx: IpcRequestContext) => {
     if (![1, 2].includes(ctx.senderId) || ctx.senderFrame?.frameToken !== currentFrame.frameToken || ctx.senderFrame.processId !== currentFrame.processId) throw denied()
-  }, () => {}, ports)
+  }, () => {}, ports, undefined, undefined, invalidateChat)
   ipc.observe(owner); ipc.observe(other); ipc.start()
   const invoke = (channel: string, payload: unknown, e = event) => handlers.get(channel)!(e, payload)
   dispose.push(async () => { finished.resolve(); ipc.stop(); if (real) await service.stop(); await packages?.stop(); await store.dispose() })
-  return { store, owner, other, service, fake, submit, ipc, handlers, invoke, event, sends, finished, ports,
+  return { store, owner, other, service, fake, submit, ipc, handlers, invoke, event, sends, finished, ports, invalidateChat,
     finish() { final = true; finished.resolve() }, replaceFrame() { currentFrame = { ...frame, frameToken: 'new' }; return { sender: { id: 1 }, senderFrame: currentFrame } },
     replaceOwner() { owner.dead = true; owner.emit('destroyed'); const next = new Owner(1); entries.set(1, {}); epochs.set(1, 0); ipc.observe(next); return next } }
 }
 
 describe('S6 Main Submit/status authorization and lifecycle', () => {
+  it('existing Learning context invalidation retires Chat using trusted sender only', async () => {
+    const f = await fixture()
+    expect(await f.invoke(C.context, { reason: 'LEARNING_LEFT', owner: 2 })).toMatchObject({ ok: false })
+    expect(f.invalidateChat).not.toHaveBeenCalled()
+    expect(await f.invoke(C.context, { reason: 'LEARNING_LEFT' })).toEqual({ ok: true, value: null })
+    expect(f.invalidateChat).toHaveBeenCalledExactlyOnceWith(1)
+  })
   it('registers only semantic channels and refuses forged input before domain dispatch', async () => {
     const f = await fixture()
     expect(f.handlers.size).toBe(11)

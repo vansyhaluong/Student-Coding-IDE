@@ -59,7 +59,7 @@ describe('SH-4 OpenRouter Free: exclusively injected fake transport', () => {
     s.beginShutdown(); expect(s.capabilities().enabled).toBe(false)
   })
   const actions: [SmartAction, SmartOutput][] = [
-    ...([1, 2, 3] as const).map(level => [{ kind: 'HINT', level }, { kind: 'HINT', level, paragraphs: [`Hint ${level}`], nextQuestion: 'Why?', evidence: [] }] as [SmartAction, SmartOutput]),
+    [{ kind: 'HINT' }, { kind: 'HINT', thinking: 'Compare inputs.', steps: ['Return the value.'], code: { language: 'javascript', text: 'return x + 1;' }, evidence: [] }],
     [{ kind: 'ANALYZE' }, output],
     [{ kind: 'EXPLAIN', selection: { startOffset: 0, endOffset: 8, text: 'function', startLine: 1, startColumn: 1, endLine: 1, endColumn: 9 } },
       { kind: 'EXPLANATION', syntax: 'syntax', variables: 'variables', controlFlow: 'flow', algorithm: 'algorithm', illustrativeExamples: [] }],
@@ -75,7 +75,7 @@ describe('SH-4 OpenRouter Free: exclusively injected fake transport', () => {
     expect(await new OpenRouterSmartHintsAdapter({ send }, credential()).run(capture(request({ action })), ['prior synthetic hint'], signal())).toEqual(result)
     expect(send).toHaveBeenCalledOnce()
   })
-  it.each(actions.filter(([action]) => action.kind !== 'HINT' || action.level === 1))('service validates and publishes %j without exposing route metadata', async (action, result) => {
+  it.each(actions)('service validates and publishes %j without exposing route metadata', async (action, result) => {
     const send = vi.fn(async () => response(envelope(JSON.stringify(result)))), s = service(send)
     const p = await prepare(s, request({ action })); s.start(1, 'doc', start(p))
     if (action.kind === 'SUGGEST_FIX') {
@@ -86,19 +86,17 @@ describe('SH-4 OpenRouter Free: exclusively injected fake transport', () => {
     expect(JSON.stringify(s.status(1, 'doc', reference(p)))).not.toContain('synthetic/free-model')
     expect(send).toHaveBeenCalledOnce()
   })
-  it('progressive L1-L3 uses only consented source and prior summaries', async () => {
-    let level = 0
+  it('repeated unified Hint uses consented source without replaying prior cards', async () => {
     const q = request({ action: { kind: 'HINT', level: 1 } }), send = vi.fn(async (r: Request) => {
       const body = await r.json(), input = JSON.parse(body.messages[1].content)
       expect(input.source).toBe(q.source)
-      expect(input.previousHints).toEqual(Array.from({ length: level }, (_, i) => `Hint ${i + 1}`))
-      level++
-      return response(envelope(JSON.stringify({ kind: 'HINT', level, paragraphs: [`Hint ${level}`], nextQuestion: 'Why?', evidence: [] })))
+      expect(input.previousHints).toEqual([])
+      return response(envelope(JSON.stringify({ kind: 'HINT', thinking: 'Compare inputs.', steps: ['Return the value.'], code: { language: 'javascript', text: 'return x + 1;' }, evidence: [] })))
     }), s = service(send)
     for (const n of [1, 2, 3] as const) {
       const p = await prepare(s, { ...q, requestId: request().requestId, action: { kind: 'HINT', level: n } })
       s.start(1, 'doc', start(p))
-      await vi.waitFor(() => expect(s.status(1, 'doc', reference(p))).toMatchObject({ state: 'COMPLETE', output: { kind: 'HINT', level: n } }))
+      await vi.waitFor(() => expect(s.status(1, 'doc', reference(p))).toMatchObject({ state: 'COMPLETE', output: { kind: 'HINT' } }))
     }
     expect(send).toHaveBeenCalledTimes(3)
   })

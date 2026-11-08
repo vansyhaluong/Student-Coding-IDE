@@ -32,7 +32,7 @@ async function fixture(wallClock = false) {
     if (mode === 'safety') return Response.json({ candidates: [{ finishReason: 'SAFETY' }] })
     if (mode === 'missing-json') return Response.json({ candidates: [{ finishReason: 'STOP', content: { role: 'model', parts: [{ text: '' }] } }] })
     let output: SmartOutput
-    if (a.kind === 'HINT') output = { kind: 'HINT', level: a.level, paragraphs: [`Direction level ${a.level}`], nextQuestion: 'Compare public examples?', evidence: [] }
+    if (a.kind === 'HINT') output = { kind: 'HINT', thinking: 'Compare the input and output.', steps: ['Compare the public inputs.'], code: { language: input.language, text: 'return x + 1;' }, evidence: [] }
     else if (a.kind === 'EXPLAIN') output = { kind: 'EXPLANATION', syntax: 'Return statement.', variables: 'x is input.', controlFlow: 'Returns.', algorithm: 'Identity.', illustrativeExamples: ['Illustrative only: 2 becomes 2.'] }
     else if (a.kind === 'SUGGEST_FIX') {
       const offset = input.source.indexOf('x;')

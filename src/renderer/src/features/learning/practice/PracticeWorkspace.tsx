@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Play, RotateCcw } from 'lucide-react'
 import type { Exercise, ExerciseLanguage, ExerciseDraft, ExerciseSummary } from '../../../../../shared/contracts/practice'
 import { PracticeDescription } from './PracticeDescription'
@@ -9,9 +9,13 @@ import type { useSubmission } from './use-submission'
 import type { RestoreSubmissionSource } from './SubmissionDetails'
 import { RunErrorAlert } from './RunErrorAlert'
 import { useSmartHints } from './use-smart-hints'
-import { SmartHintsPanel } from './SmartHintsPanel'
+import type { AssistantLease } from '../use-assistant-timeline'
+import type { SmartAction } from '../../../../../shared/contracts/smart-hints'
 import type { PracticeHintEditor, SmartSourceSnapshot, PracticeFixReadiness } from './smart-hints-selection'
-import type { SmartFix } from './smart-hint-edits'
+import type { ReviewFix } from './smart-hint-edits'
+import { useHintApply } from './use-hint-apply'
+import { LearningAssistantPanel } from '../LearningAssistantPanel'
+import type { ChatContextInput } from '../../../../../shared/contracts/learning-chat'
 const PracticeEditor = lazy(async () => ({ default: (await import('./PracticeEditor')).PracticeEditor }))
 const SmartHintDiffPreview = lazy(async () => ({ default: (await import('./SmartHintDiffPreview')).SmartHintDiffPreview }))
 
@@ -21,32 +25,63 @@ interface Props {
   execution: ExerciseRunView; onRun(): void
   submission: ReturnType<typeof useSubmission>
   active?: boolean
+  onAssistantOpen?(): void
   sourceRevision: number; onRestore(request: RestoreSubmissionSource): boolean
   sourceReplacement?: PracticeSourceReplacement
   onOpen(exercise?: ExerciseSummary): void; onLanguage(language: ExerciseLanguage): void; onEdit(code: string): void; onReplace(code: string): void
 }
-export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, execution, submission, active = true, sourceRevision, onRestore, onRun, onOpen, onLanguage, onEdit, onReplace, sourceReplacement }: Props) {
+export function PracticeWorkspace({ exercises, chapter, drafts, exercise, language, code, ready, locked, execution, submission, active = true, sourceRevision, onRestore, onRun, onOpen, onLanguage, onEdit, onReplace, sourceReplacement, onAssistantOpen }: Props) {
   const [reset, setReset] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatContext, setChatContext] = useState<ChatContextInput>()
+  const chatTrigger = useRef<HTMLButtonElement>(null)
   const [tab, setTab] = useState<'tests' | 'result'>('tests')
   const [selectedCase, setSelectedCase] = useState(0)
   const [panelSize, setPanelSize] = useState<TestPanelSize>('open')
   const [panelDock, setPanelDock] = useState<TestPanelDock>('editor')
   const [runRequest, setRunRequest] = useState(0)
-  const editor = useRef<PracticeHintEditor | undefined>(undefined), aiTrigger = useRef<HTMLButtonElement>(null)
-  const hintPanelId = useId()
+  const editor = useRef<PracticeHintEditor | undefined>(undefined)
   const hints = useSmartHints({ active: active && ready && !!exercise, locked, exerciseId: exercise?.id, language, source: code, sourceRevision })
+  const panelOpen = chatOpen || hints.open
+  const assistantVisible = panelOpen && active && !locked && ready && !!exercise
+  useEffect(() => { if (assistantVisible) onAssistantOpen?.() }, [assistantVisible, onAssistantOpen])
+  const slot = useRef<AssistantLease | undefined>(undefined)
+  useEffect(() => {
+    if (!panelOpen || !active || locked || !ready || !exercise) return
+    const refresh = () => {
+      const snapshot = editor.current?.capture()
+      const next: ChatContextInput | undefined = snapshot?.origin.kind === 'PRACTICE' && snapshot.isCurrent()
+        && snapshot.exerciseId === exercise.id && snapshot.language === language && snapshot.source === code
+        ? { kind: 'PRACTICE', exerciseId: exercise.id, language, sourceRevision, source: code,
+          modelId: snapshot.origin.modelId, modelVersion: snapshot.origin.modelVersion, eol: snapshot.origin.eol } : undefined
+      setChatContext(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next)
+    }
+    refresh()
+    const timer = setInterval(refresh, 200)
+    return () => clearInterval(timer)
+  }, [panelOpen, active, locked, ready, exercise, language, code, sourceRevision])
   const setHintEditor = useCallback((value: PracticeHintEditor | undefined) => { editor.current = value }, [])
   const [fixReadiness, setFixReadiness] = useState<PracticeFixReadiness>()
   const onFixReadiness = useCallback((value: PracticeFixReadiness) => {
     setFixReadiness(value); hints.selectionChanged()
   }, [hints.selectionChanged])
-  const explain = useCallback((snapshot: SmartSourceSnapshot) => { if (snapshot.selection) void hints.begin({ kind: 'EXPLAIN', selection: snapshot.selection }, snapshot) }, [hints.begin])
+  const beginSmart = useCallback(async (action: SmartAction, snapshot: SmartSourceSnapshot) => {
+    if (slot.current || hints.isBusy()) return
+    const lease = { kind: 'SMART' as const, id: Symbol() }
+    slot.current = lease; setChatOpen(true)
+    try { await hints.begin(action, snapshot) }
+    finally { if (slot.current === lease && !hints.isBusy()) slot.current = undefined }
+  }, [hints.begin])
+  const explain = useCallback((snapshot: SmartSourceSnapshot) => { if (snapshot.selection) void beginSmart({ kind: 'EXPLAIN', selection: snapshot.selection }, snapshot) }, [beginSmart])
   const [hintNotice, setHintNotice] = useState('')
-  const [fix, setFix] = useState<SmartFix>()
+  const [fix, setFix] = useState<ReviewFix>()
   const applyBlocked = !active || !ready || locked || execution.busy || submission.view.busy || reset || hints.capabilities?.applyEnabled !== true
+  const hintApply = useHintApply({ hints, slot, active: assistantVisible, blocked: applyBlocked,
+    capture: () => editor.current?.captureHintApply?.(), onReview: setFix })
   useEffect(() => {
     if (fix && (!hints.open || !active || !fix.isCurrent())) setFix(undefined)
   }, [fix, hints.open, hints.view, active, sourceRevision, code])
+  const closeAssistant = () => { hintApply.discard(); hints.close(); slot.current = undefined; setChatOpen(false); setFix(undefined); setHintNotice(''); chatTrigger.current?.focus() }
   const capture = () => {
     const snapshot = editor.current?.capture()
     if (!snapshot || snapshot.exerciseId !== exercise?.id || snapshot.language !== language || snapshot.source !== code) { setHintNotice('Code Editor chưa sẵn sàng hoặc snapshot đã thay đổi. Hãy thử lại.'); return undefined }
@@ -69,13 +104,37 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
         </button>)}
     </section>)}
   </section>
+  const quick = { hints, slot, hintApply, notice: hintNotice,
+    onDiscard: (operationId: string) => {
+      if (hints.view.result?.operationId !== operationId || !hints.previewFix()) return
+      setFix(undefined); hints.cancel(); setHintNotice('Đã bỏ đề xuất. Code giữ nguyên.'); editor.current?.focus()
+    },
+    readiness: fixReadiness?.exerciseId === exercise.id && fixReadiness.language === language && fixReadiness.sourceRevision === sourceRevision ? fixReadiness : undefined,
+    onPreview: (operationId: string) => {
+      if (hints.capabilities?.applyEnabled !== true || hints.view.result?.operationId !== operationId) return
+      const proposal = hints.previewFix(); if (proposal) setFix(proposal)
+    },
+    onExplain: () => { const snapshot = capture(); if (snapshot?.selection) explain(snapshot); else setHintNotice('Hãy chọn một hoặc nhiều dòng trong Code Editor rồi yêu cầu giải thích.') },
+    onAction: (kind: 'HINT' | 'ANALYZE' | 'SUGGEST_FIX') => {
+        if (kind === 'SUGGEST_FIX') {
+          if (hints.capabilities?.suggestFixMode !== 'SELECTION_V1' || !hints.capabilities.suggestFixLanguages.includes(language)) return
+          const snapshot = editor.current?.captureFix?.()
+          if (!snapshot || snapshot.exerciseId !== exercise.id || snapshot.language !== language || snapshot.source !== code
+            || snapshot.sourceRevision !== sourceRevision || !snapshot.isCurrent()) { setHintNotice('Bôi đen đoạn code cần sửa trong Code Editor rồi yêu cầu Suggest Fix.'); return }
+          setHintNotice(''); void beginSmart({ kind, selection: snapshot.selection }, snapshot); return
+        }
+        const snapshot = capture(); if (!snapshot) return
+        void beginSmart({ kind }, snapshot)
+      }
+  }
   const testPanel = <PracticeTestPanel exercise={exercise} language={language} tab={tab} onTab={setTab} selectedCase={selectedCase} onCase={setSelectedCase}
     size={panelSize} onSize={setPanelSize} dock={panelDock} onDock={setPanelDock} execution={execution} />
   return <div className="practice-workspace">
     <header className="practice-heading"><button type="button" className="practice-icon-button" aria-label="Về danh sách bài tập" title="Về danh sách bài tập"
       disabled={locked} onClick={() => { hints.invalidate('EXERCISE'); setReset(false); onOpen() }}><ArrowLeft aria-hidden="true" /></button>
       <span>Chương {chapter} / {exercise.title}</span><span className="practice-difficulty" data-level={exercise.difficulty}>{exercise.difficulty}</span>
-      <button ref={aiTrigger} type="button" className="practice-smart-hints" aria-label="Smart Hints" title="Smart Hints" disabled={locked || !active} aria-expanded={hints.open} aria-controls={hintPanelId} onClick={hints.show}>
+      <button ref={chatTrigger} type="button" className="practice-smart-hints" aria-label="Learning Assistant" title="Learning Assistant" disabled={locked || !active} aria-expanded={panelOpen}
+        onClick={() => { if (panelOpen) closeAssistant(); else { setChatOpen(true); hints.show() } }}>
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="m9 6 2.5 5.5L17 14l-5.5 2.5L9 22l-2.5-5.5L1 14l5.5-2.5L9 6Zm9-5 1.5 3.5L23 6l-3.5 1.5L18 11l-1.5-3.5L13 6l3.5-1.5L18 1Zm2 16 1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2Z" />
         </svg>
@@ -90,6 +149,7 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
         }}>Submit</button>
     </header>
     {submission.disabledReason && !submission.view.busy && <p id="practice-submit-availability" className="practice-submit-availability">{submission.disabledReason}</p>}
+    <div className="practice-body" data-assistant-open={assistantVisible}>
     <div className="practice-split" data-panel-dock={panelDock} data-panel-size={panelSize}>
       <PracticeDescription key={exercise.id} exercise={exercise} language={language} locked={locked} active={active && !locked}
         hidden={panelDock === 'bottom' && panelSize === 'expanded'} submission={submission} sourceRevision={sourceRevision} draftCode={code}
@@ -117,32 +177,30 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
       </div>
       {panelDock === 'bottom' && testPanel}
     </div>
+    {assistantVisible && <LearningAssistantPanel key={`${exercise.id}/${language}`} quick={quick}
+      context={chatContext?.kind === 'PRACTICE' && chatContext.exerciseId === exercise.id && chatContext.language === language
+        && chatContext.source === code && chatContext.sourceRevision === sourceRevision ? chatContext : undefined}
+      capture={() => editor.current?.capture()} onClose={closeAssistant} />}
+    </div>
     {fix && fix.isCurrent() && hints.open && active && !locked && <Suspense fallback={<p role="status">Đang tải Diff Preview…</p>}><SmartHintDiffPreview fix={fix} blocked={applyBlocked}
       onReturnFocus={() => editor.current?.focus()}
-      onDiscard={() => { setFix(undefined); hints.cancel(); setHintNotice('Đã bỏ đề xuất. Code giữ nguyên.'); editor.current?.focus() }}
+      onDiscard={() => { setFix(undefined); if ('kind' in fix && fix.kind === 'HINT_APPLY') hintApply.discard(); else hints.cancel(); setHintNotice('Đã bỏ đề xuất. Code giữ nguyên.'); editor.current?.focus() }}
       onApplied={() => { setFix(undefined); setHintNotice('Đã áp dụng bản sửa. Dùng Undo/Redo trong Code Editor để kiểm tra lại.'); editor.current?.focus() }}
       onApply={() => {
+        if ('kind' in fix && fix.kind === 'HINT_APPLY') return (async () => {
+          if (applyBlocked || !await fix.authorize()) { hintApply.failed(); return 'STALE' as const }
+          // Final model/source/revision/blocked checks and one native batch are synchronous.
+          const result = editor.current?.applyFix?.(fix) ?? 'STALE'
+          if (result === 'APPLIED') {
+            hintApply.applied(); setFix(undefined); setHintNotice('Đã áp dụng Hint. Dùng Undo/Redo trong Code Editor.'); editor.current?.focus()
+          } else hintApply.failed(result === 'TRANSACTION_FAILED')
+          return result
+        })()
         const result = applyBlocked ? 'STALE' : editor.current?.applyFix?.(fix) ?? 'STALE'
         if (result !== 'APPLIED') setHintNotice(result === 'STALE' ? 'Source hoặc ngữ cảnh đã thay đổi. Hãy yêu cầu lại.'
           : 'Không xác nhận được transaction. Apply đã khóa; giữ code hiện tại và kiểm tra Draft.')
         return result
       }} /></Suspense>}
-    {hints.open && active && !locked && <SmartHintsPanel id={hintPanelId} hints={hints} notice={hintNotice}
-      selectionFixReadiness={fixReadiness?.exerciseId === exercise.id && fixReadiness.language === language && fixReadiness.sourceRevision === sourceRevision ? fixReadiness : undefined}
-      onClose={() => { hints.close(); setFix(undefined); setHintNotice(''); aiTrigger.current?.focus() }}
-      onPreview={hints.capabilities?.applyEnabled === true ? () => { const proposal = hints.previewFix(); if (proposal) setFix(proposal) } : undefined}
-      onExplain={() => { const snapshot = capture(); if (snapshot?.selection) explain(snapshot); else setHintNotice('Hãy chọn một hoặc nhiều dòng trong Code Editor rồi yêu cầu giải thích.') }}
-      onAction={kind => {
-        if (kind === 'SUGGEST_FIX') {
-          if (hints.capabilities?.suggestFixMode !== 'SELECTION_V1' || !hints.capabilities.suggestFixLanguages.includes(language)) return
-          const snapshot = editor.current?.captureFix?.()
-          if (!snapshot || snapshot.exerciseId !== exercise.id || snapshot.language !== language || snapshot.source !== code
-            || snapshot.sourceRevision !== sourceRevision || !snapshot.isCurrent()) { setHintNotice('Bôi đen đoạn code cần sửa trong Code Editor rồi yêu cầu Suggest Fix.'); return }
-          setHintNotice(''); void hints.begin({ kind, selection: snapshot.selection }, snapshot); return
-        }
-        const snapshot = capture(); if (!snapshot) return
-        const levels = hints.view.hints.flatMap(h => h.output.kind === 'HINT' ? [h.output.level] : [])
-        void hints.begin(kind === 'HINT' ? { kind, level: Math.min(3, Math.max(0, ...levels) + 1) as 1 | 2 | 3 } : { kind }, snapshot)
-      }} />}
+
   </div>
 }

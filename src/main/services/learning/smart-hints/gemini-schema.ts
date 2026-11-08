@@ -1,5 +1,6 @@
 import { SMART_HINT_POLICY as P } from '../../../../shared/contracts/smart-hints'
 import type { SmartCapture } from './capture'
+import { hintCodePolicy } from './hint-context'
 
 type Schema = Record<string, unknown>
 const text = { type: 'string' }
@@ -15,8 +16,11 @@ export function geminiResponseSchema(capture: SmartCapture): Schema {
   const ids = capture.runContext.kind === 'RUN_PUBLIC' ? capture.runContext.observations.map(o => o.evidenceId) : []
   const evidence = list(ids.length ? { type: 'string', enum: ids } : text, ids.length)
   switch (capture.action.kind) {
-    case 'HINT': return object({ kind: literal('HINT'), level: { type: 'integer', enum: [capture.action.level] },
-      paragraphs: list(text, 8, 1), nextQuestion: text, evidence })
+    case 'HINT': return object({ kind: literal('HINT'),
+      thinking: describe({ type: 'string', minLength: 1, maxLength: 4096 }, 'First: nonempty Vietnamese approach to this public exercise.'),
+      steps: describe(list({ type: 'string', minLength: 1, maxLength: 2048 }, 8, 1), 'Second: concrete ordered implementation steps.'),
+      code: describe(object({ language: literal(capture.binding.language), text: { type: 'string', minLength: 1, maxLength: 8192 } }),
+        'Last: practical code in the exercise language. No Markdown fences or pseudocode. ' + hintCodePolicy(capture.hintImplementation)), evidence })
     case 'ANALYZE': return object({ kind: literal('ANALYSIS'), hypotheses: list(), suggestions: list(), evidence })
     case 'EXPLAIN': return object({ kind: literal('EXPLANATION'), syntax: text, variables: text,
       controlFlow: text, algorithm: text, illustrativeExamples: list() })

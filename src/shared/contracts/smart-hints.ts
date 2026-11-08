@@ -4,6 +4,8 @@ import type { ExerciseLanguage, ExerciseValue, ExerciseType } from './practice'
 export const SMART_HINT_CHANNELS = {
   capabilities: 'smart-hints:capabilities', prepare: 'smart-hints:prepare', start: 'smart-hints:start',
   status: 'smart-hints:status', cancel: 'smart-hints:cancel', retireContext: 'smart-hints:retire-context',
+  prepareHintApply: 'smart-hints:prepare-hint-apply',
+  consumeHintApply: 'smart-hints:consume-hint-apply', discardHintApply: 'smart-hints:discard-hint-apply',
 } as const
 export const SMART_HINT_POLICY = Object.freeze({ sourceBytes: 16384, statementBytes: 8192,
   taskBytes: 8192, selectionBytes: 8192, runBytes: 8192, requestBytes: 65536, wireBytes: 98304,
@@ -16,7 +18,8 @@ export interface SmartSelection {
   startOffset: number; endOffset: number; text: string
   startLine: number; startColumn: number; endLine: number; endColumn: number
 }
-export type SmartAction = { kind: 'HINT'; level: 1 | 2 | 3 } | { kind: 'ANALYZE' }
+// Legacy level is accepted only as input compatibility and normalized away.
+export type SmartAction = { kind: 'HINT'; level?: 1 | 2 | 3 } | { kind: 'ANALYZE' }
   | { kind: 'EXPLAIN'; selection: SmartSelection } | { kind: 'SUGGEST_FIX'; selection: SmartSelection }
 export type SmartOrigin = { kind: 'PRACTICE'; modelId: string; modelVersion: number; eol: 'LF' | 'CRLF' }
   | { kind: 'SOLUTION'; blockId: string }
@@ -28,6 +31,26 @@ export interface SmartPrepare {
   sourceRevision: number; source: string; origin: SmartOrigin; action: SmartAction; run: SmartRunReference | null
 }
 export interface SmartReference { requestId: string; operationId: string }
+/** Snapshot/selection are untrusted assertions, never edits or authority. */
+/** Bounded manual retries only after Main proves preparation issued no grant. */
+export const HINT_APPLY_MAX_ATTEMPTS = 3
+export const HINT_APPLY_STAGES = ['BINDING', 'CLASSIFICATION', 'SOURCE_PARSE', 'TARGET', 'EXTRACTION', 'SIGNATURE', 'CANDIDATE', 'STRUCTURE', 'SH1', 'PARSER_RUNTIME'] as const
+export type HintApplyStage = typeof HINT_APPLY_STAGES[number]
+export type HintApplyReason = 'TARGET_INVALID' | 'CANDIDATE_INVALID' | 'STALE' | 'UNSUPPORTED'
+
+export interface PrepareHintApply {
+  requestId: string; hint: SmartReference; exerciseId: string; language: ExerciseLanguage
+  sourceRevision: number; source: string; packageVersion: number
+  origin: Extract<SmartOrigin, { kind: 'PRACTICE' }>; selection: SmartSelection | null
+}
+export interface HintApplyProposal {
+  schemaVersion: 1; requestId: string; proposalId: string; hint: SmartReference
+  binding: SmartBinding; expiresAt: number
+  target: { kind: 'TEMPLATE_BODY' | 'SELECTION'; startOffset: number; endOffset: number }
+  output: Extract<SmartOutput, { kind: 'EDIT_PROPOSAL' }>
+}
+export interface ConsumeHintApply { preparation: PrepareHintApply; proposalId: string }
+export interface DiscardHintApply { hint: SmartReference; requestId: string }
 export interface SmartStart extends SmartReference { captureToken: string; consentVersion: 1; consentGranted: true }
 export interface SmartRetire { clientContextId: string; reason: 'EDIT' | 'RESET' | 'RESTORE' | 'EXERCISE' | 'LANGUAGE' | 'LEARNING_LEFT' }
 export interface SmartBinding {
@@ -37,7 +60,7 @@ export interface SmartBinding {
 }
 export interface SmartEdit { startOffset: number; endOffset: number; expectedOldText: string; replacementText: string; rationale: string }
 export type SmartOutput =
-  | { kind: 'HINT'; level: 1 | 2 | 3; paragraphs: string[]; nextQuestion: string; evidence: string[] }
+  | { kind: 'HINT'; thinking: string; steps: string[]; code: { language: ExerciseLanguage; text: string }; evidence: string[] }
   | { kind: 'ANALYSIS'; hypotheses: string[]; suggestions: string[]; evidence: string[] }
   | { kind: 'EXPLANATION'; syntax: string; variables: string; controlFlow: string; algorithm: string; illustrativeExamples: string[] }
   | { kind: 'EDIT_PROPOSAL'; edits: SmartEdit[]; rationale: string; evidence: string[] }
@@ -64,6 +87,9 @@ export interface SmartCapabilities {
   suggestFixMode: 'DISABLED' | 'SELECTION_V1'; suggestFixLanguages: ExerciseLanguage[]
 }
 export interface SmartHintsApi {
+  prepareHintApply(request: PrepareHintApply): Promise<AppResult<HintApplyProposal>>
+  consumeHintApply(request: ConsumeHintApply): Promise<AppResult<HintApplyProposal>>
+  discardHintApply(request: DiscardHintApply): Promise<AppResult<null>>
   capabilities(): Promise<AppResult<SmartCapabilities>>
   prepare(request: SmartPrepare): Promise<AppResult<SmartStatus>>
   start(request: SmartStart): Promise<AppResult<SmartStatus>>

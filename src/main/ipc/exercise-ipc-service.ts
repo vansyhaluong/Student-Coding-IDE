@@ -16,16 +16,24 @@ import { validateAnalysisPrepare, validateAnalysisStart, validateAnalysisReferen
 import type { SubmissionAnalysisService } from '../services/learning/analysis/service'
 import type { SavedAnalysisCapture, AnalysisSubmissionBinding } from '../services/learning/analysis/capture'
 import { SMART_HINT_CHANNELS as H } from '../../shared/contracts/smart-hints'
+import { validatePrepareHintApply, isHintApplyProposal, validateConsumeHintApply, validateDiscardHintApply, isHintApplyFailure } from '../../shared/contracts/smart-hints-validation'
 import { validateSmartPrepare, validateSmartReference, validateSmartStart, validateSmartRetire, isSmartStatus, isSmartCapabilities } from '../../shared/contracts/smart-hints-validation'
 import { validateEmptyObject } from '../../shared/contracts/validation'
 import type { SmartHintsService } from '../services/learning/smart-hints/service'
 import type { SmartCapture } from '../services/learning/smart-hints/capture'
-import type { SmartPrepare } from '../../shared/contracts/smart-hints'
+import type { SmartPrepare, SmartReference, PrepareHintApply } from '../../shared/contracts/smart-hints'
 import type { PublicRunReceipt } from '../services/learning/smart-hints/public-run-receipt'
 
 export interface SmartHintsIpcPorts {
   service: SmartHintsService
   capture(request: SmartPrepare, generation: number, check: () => void, receipt?: PublicRunReceipt): Promise<SmartCapture>
+}
+
+/** Synchronous IPC dispatch: do not erase an already committed Hint when its
+ * Cancel races the renderer's status poll. SH-1 and progression stay unchanged. */
+export function cancelSmartHintsOperation(service: Pick<SmartHintsService, 'status' | 'cancel'>, owner: number, scope: string, request: SmartReference) {
+  const status = service.status(owner, scope, request)
+  return status.state === 'COMPLETE' && status.binding.action.kind === 'HINT' ? status : service.cancel(owner, scope, request)
 }
 
 export interface AnalysisIpcPorts {
@@ -56,7 +64,8 @@ export class ExerciseIpcService {
     private readonly send: (context: IpcRequestContext, snapshot: ExerciseSnapshot) => void,
     private readonly submissions?: SubmissionIpcPorts,
     private readonly analysis?: AnalysisIpcPorts,
-    private readonly smartHints?: SmartHintsIpcPorts) {}
+    private readonly smartHints?: SmartHintsIpcPorts,
+    private readonly invalidateChat?: (owner: number) => void) {}
   observe(owner: ExerciseOwner): void {
     if (this.sealed || owner.isDestroyed() || this.owners.has(owner.id)) return
     const invalidate = () => {
@@ -106,7 +115,8 @@ export class ExerciseIpcService {
     if (this.smartHints) this.startSmartHints()
   }
   /** Document authority only: SH source edits never invalidate Run/Submit/D2 generations. */
-  private async smartBoundary<T>(context: IpcRequestContext, action: (scope: string, check: () => void) => T | Promise<T>): Promise<T> {
+  private async smartBoundary<T>(context: IpcRequestContext, action: (scope: string, check: () => void) => T | Promise<T>, hintPreparation?: PrepareHintApply): Promise<T> {
+    let verify: (() => void) | undefined
     try {
       this.assertContext(context)
       const entry = this.owners.get(context.senderId)!, epoch = entry.epoch, frame = context.senderFrame
@@ -114,13 +124,38 @@ export class ExerciseIpcService {
         this.assertContext(context)
         if (this.owners.get(context.senderId) !== entry || entry.epoch !== epoch || !sameFrame(frame, entry.frame)) throw this.denied()
       }
+      verify = check
       const value = await action(entry.scope, check)
       check(); return value
-    } catch { throw new DomainError({ code: 'INVALID_INPUT', operation: 'smart-hints', message: 'The Smart Hints request could not be completed.', retryable: false }) }
+    } catch (error) {
+      // Preserve only the strict fixed-field Hint failure, after rechecking the
+      // same document epoch/frame. Other domains keep their existing redaction.
+      if (hintPreparation && error instanceof DomainError && isHintApplyFailure(error, hintPreparation)) {
+        let current = false
+        try { verify?.(); current = !!verify } catch { /* Retired document. */ }
+        if (current) throw new DomainError({ code: error.code, operation: 'prepareHintApply', message: 'Hint Apply preparation rejected.',
+          retryable: error.retryable, details: structuredClone(error.details) })
+      }
+      throw new DomainError({ code: 'INVALID_INPUT', operation: 'smart-hints', message: 'The Smart Hints request could not be completed.', retryable: false })
+    }
   }
   private startSmartHints(): void {
     const ports = this.smartHints!, safe = (value: unknown) => { if (!isSmartStatus(value)) throw this.denied(); return value }
     this.removers.push(
+      this.registry.register({ channel: H.consumeHintApply, validate: validateConsumeHintApply,
+        handle: (request, context) => this.smartBoundary(context, scope => ports.service.consumePreparedHintApply(context.senderId, scope, request,
+          (q, generation, check) => ports.capture(q, generation, check)).then(proposal => {
+          if (!isHintApplyProposal(proposal)) throw this.denied()
+          return proposal
+        })) }),
+      this.registry.register({ channel: H.discardHintApply, validate: validateDiscardHintApply,
+        handle: (request, context) => this.smartBoundary(context, scope => { ports.service.discardHintApply(context.senderId, scope, request); return null }) }),
+      this.registry.register({ channel: H.prepareHintApply, validate: validatePrepareHintApply,
+        handle: (request, context) => this.smartBoundary(context, scope => ports.service.prepareHintApply(context.senderId, scope, request,
+          (q, generation, check) => ports.capture(q, generation, check)).then(proposal => {
+          if (!isHintApplyProposal(proposal)) throw this.denied()
+          return proposal
+        }), request) }),
       this.registry.register({ channel: H.capabilities, validate: validateEmptyObject,
         handle: (_, context) => this.smartBoundary(context, async () => {
           const value = await ports.service.probeCapabilities()
@@ -139,7 +174,7 @@ export class ExerciseIpcService {
       this.registry.register({ channel: H.status, validate: validateSmartReference,
         handle: (request, context) => this.smartBoundary(context, scope => safe(ports.service.status(context.senderId, scope, request))) }),
       this.registry.register({ channel: H.cancel, validate: validateSmartReference,
-        handle: (request, context) => this.smartBoundary(context, scope => safe(ports.service.cancel(context.senderId, scope, request))) }),
+        handle: (request, context) => this.smartBoundary(context, scope => safe(cancelSmartHintsOperation(ports.service, context.senderId, scope, request))) }),
       this.registry.register({ channel: H.retireContext, validate: validateSmartRetire,
         handle: (request, context) => this.smartBoundary(context, scope => {
           if (ports.service.retireContext(context.senderId, scope, request)) this.service.retirePublicRunReceipt(context.senderId)
@@ -205,6 +240,7 @@ export class ExerciseIpcService {
           return this.projection.source(await this.committedStore().source(binding), request.reference, binding)
         }) }),
       this.registry.register({ channel: S.context, validate: validateSubmissionContext, handle: (request, context) => this.submissionBoundary(S.context, context, () => {
+        this.invalidateChat?.(context.senderId)
         this.service.invalidate(context.senderId, request.reason)
         this.analysis?.service.invalidate(context.senderId)
         const entry = this.owners.get(context.senderId)!; entry.epoch = {}; entry.scope = randomUUID()

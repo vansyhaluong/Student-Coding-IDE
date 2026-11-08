@@ -22,11 +22,14 @@ export default defineConfig({
     // dependencies. No Git/host/path/credential identity or runtime I/O.
     define: { __SMART_HINTS_BUILD_ID__: JSON.stringify(createHash('sha256').update([
       'package.json', 'electron.vite.config.ts', 'src/shared/contracts/smart-hints.ts', 'src/shared/contracts/smart-hints-validation.ts',
-      ...['adapter', 'service', 'configuration', 'execution-coordinator', 'gemini-provider', 'gemini-schema', 'response-failure', 'validation-diagnostics',
+      ...['adapter', 'capture', 'hint-context', 'hint-apply-parser', 'service', 'configuration', 'execution-coordinator', 'gemini-transport', 'gemini-provider', 'gemini-schema', 'response-failure', 'validation-diagnostics',
         'selection-fix', 'selection-fix-diagnostics', 'selection-fix-guard', 'selection-fix-parser-runtime', 'selection-fix-protocol', 'selection-fix-sdk-resolver']
         .map(name => `src/main/services/learning/smart-hints/${name}.ts`),
-      'src/main/services/learning/smart-hints/parsers/javascript.ts', 'src/main/services/learning/smart-hints/parsers/SelectionFixGuard.cs',
+      'src/main/services/learning/smart-hints/parsers/javascript.ts', 'src/main/services/learning/smart-hints/parsers/hint-context-javascript.ts', 'src/main/services/learning/smart-hints/parsers/SelectionFixGuard.cs',
       'scripts/build-smart-hints-parser-assets.mjs',
+      ...['service', 'conversation-manager', 'context-builder', 'gemini-chat-adapter'].map(name => `src/main/services/learning/chat/${name}.ts`),
+      'src/main/ipc/learning-chat-ipc-service.ts', 'src/shared/contracts/learning-chat.ts', 'src/shared/contracts/learning-chat-validation.ts',
+      'src/preload/bridge/learning-chat.ts',
     ].map(path => readFileSync(resolve(path), 'utf8')).join('\0')).digest('hex')) },
     // Shared Main chunks must retain the entry's native/ relative binding path.
     build: { rollupOptions: { output: { chunkFileNames: '[name]-[hash].js' }, input: {

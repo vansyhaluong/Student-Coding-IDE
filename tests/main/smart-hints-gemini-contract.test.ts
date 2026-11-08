@@ -168,8 +168,6 @@ describe('D6-3 private Gemini replacement-only wire; normal Selection Fix stays 
 describe('D6-3 unchanged Hint/Analyze/Explain request, schema and canonical output', () => {
   const text = { type: 'string' }, evidence = list(text, 0)
   it.each([
-    { action: { kind: 'HINT', level: 1 }, output: { kind: 'HINT', level: 1, paragraphs: ['Hướng đi.'], nextQuestion: 'Vì sao?', evidence: [] },
-      schema: object({ kind: literal('HINT'), level: { type: 'integer', enum: [1] }, paragraphs: list(text, 8, 1), nextQuestion: text, evidence }) },
     { action: { kind: 'ANALYZE' }, output: { kind: 'ANALYSIS', hypotheses: [], suggestions: [], evidence: [] },
       schema: object({ kind: literal('ANALYSIS'), hypotheses: list(), suggestions: list(), evidence }) },
     { action: { kind: 'EXPLAIN', selection: { startOffset: 0, endOffset: 8, text: 'function', startLine: 1, startColumn: 1, endLine: 1, endColumn: 9 } },

@@ -1,3 +1,5 @@
+import { HINT_APPLY_MAX_ATTEMPTS, type HintApplyStage, type HintApplyReason } from '../../../../shared/contracts/smart-hints'
+import { HintApplyParserError } from './hint-apply-parser'
 import { randomUUID } from 'node:crypto'
 import { DomainError } from '../../../errors/app-error'
 import { SMART_HINT_POLICY as P, type SmartPrepare, type SmartReference, type SmartStart, type SmartRetire,
@@ -14,6 +16,9 @@ import { SelectionFixError, projectSelectionFixDiagnostic, type SelectionFixDiag
 import type { SelectionFixGuard, SelectionFixGuardLease, SelectionFixScope } from './selection-fix-guard'
 import type { ExerciseLanguage } from '../../../../shared/contracts/practice'
 import { SharedExecutionCoordinator } from './execution-coordinator'
+import { MainSelectionFixGuard } from './selection-fix-parser-runtime'
+import type { PrepareHintApply, HintApplyProposal, ConsumeHintApply, DiscardHintApply } from '../../../../shared/contracts/smart-hints'
+import { validatePrepareHintApply, isHintApplyProposal, validateConsumeHintApply, validateDiscardHintApply } from '../../../../shared/contracts/smart-hints-validation'
 
 export interface SmartExecutionEvent {
   requestId: string; action: SmartPrepare['action']['kind']; state: 'STARTED' | 'COMPLETE' | 'FAILED' | 'CANCELLED' | 'EXPIRED'
@@ -22,6 +27,11 @@ export interface SmartExecutionEvent {
   output?: SmartOutputDiagnostic
   providerFailureSource?: ProviderFailureSource
   selectionFix?: SelectionFixDiagnostic
+}
+export interface HintApplyDiagnostic {
+  stage: HintApplyStage; reason: HintApplyReason | 'ACCEPT'; attempt: number
+  language: ExerciseLanguage; implementation: 'NO_IMPLEMENTATION' | 'HAS_IMPLEMENTATION' | 'UNCERTAIN'
+  guardReason?: SelectionFixDiagnostic['reason']
 }
 
 interface Operation {
@@ -34,11 +44,15 @@ interface Operation {
   providerFailureSource?: ProviderFailureSource
   selectionFix?: SelectionFixDiagnostic
   guard?: SelectionFixGuardLease
+  hintCapture?: SmartCapture
+  hintClassification?: SmartCapture['hintImplementation']
+  hintAttempts?: Map<string, { digest: string; error?: DomainError }>
+  hintApply?: { failure?: DomainError; requestId: string; digest: string; task: Promise<HintApplyProposal>; proposal?: HintApplyProposal; consumed: boolean; consuming?: boolean; abort?(): void; consumeAbort?(): void }
 }
 interface Session {
   timer?: ReturnType<typeof setTimeout>
   scope: string; generation: number; context?: string; sourceKey?: string; started: number
-  seen: Map<string, string>; retired: Set<string>; hints: { digest: string; summary: string }[]; level: number
+  seen: Map<string, string>; retired: Set<string>
 }
 const denied = () => new DomainError({ code: 'INVALID_INPUT', operation: 'smart-hints', message: 'Invalid or stale Smart Hints request.', retryable: false })
 /** Main-owned, ephemeral, independent from Run/Submit/D2 generations. */
@@ -53,9 +67,12 @@ export class SmartHintsService {
     private readonly onResponseFailure?: (diagnostic: SmartResponseFailure, requestId: string) => void,
     private readonly execution: { timeoutMs: number; timeoutForAction?(kind: SmartPrepare['action']['kind']): number;
       onExecution?(event: SmartExecutionEvent): void; onTimeout?(): void;
-      onSelectionFix?(diagnostic: SelectionFixDiagnostic): void } = { timeoutMs: P.timeoutMs },
+      onSelectionFix?(diagnostic: SelectionFixDiagnostic): void;
+      onHintApply?(diagnostic: HintApplyDiagnostic): void } = { timeoutMs: P.timeoutMs },
     private readonly selectionFixGuard?: SelectionFixGuard,
-    private readonly coordinator = new SharedExecutionCoordinator(clock, async () => {})) {
+    private readonly coordinator = new SharedExecutionCoordinator(clock, async () => {}),
+    private readonly hintParser: Pick<MainSelectionFixGuard, 'classifyHint' | 'validateHintFunction'>
+      & Partial<Pick<MainSelectionFixGuard, 'prepareHintApply'>> = new MainSelectionFixGuard()) {
     if (!Number.isSafeInteger(execution.timeoutMs) || execution.timeoutMs < 1 || execution.timeoutMs > 30000) throw denied()
   }
   // Main composition alone provisions a provider. Unconfigured production fails closed.
@@ -110,7 +127,9 @@ export class SmartHintsService {
     if (value.state === 'FAILED' && value.code === 'TIMEOUT') {
       try { this.execution.onTimeout?.() } catch { /* Diagnostics cannot alter cleanup. */ }
     }
-    op.spent = true; op.capture = undefined; op.abort.abort(); clearTimeout(op.timer); clearInterval(op.monitor)
+    op.hintApply?.abort?.(); op.hintApply?.consumeAbort?.()
+    op.spent = true; op.capture = undefined; op.hintCapture = undefined; op.hintApply = undefined; op.hintAttempts = undefined; op.hintClassification = undefined
+    op.abort.abort(); clearTimeout(op.timer); clearInterval(op.monitor)
     const guard = op.guard; op.guard = undefined
     if (guard) this.track(Promise.resolve().then(() => guard.dispose()))
     if (op.status) {
@@ -150,7 +169,7 @@ export class SmartHintsService {
     check(); const request = valid.value, digest = sourceFingerprint(JSON.stringify(request)), now = this.clock()
     let session = this.sessions.get(owner)
     if (!session || session.scope !== scope) {
-      this.invalidate(owner); session = { scope, generation: 0, started: now, seen: new Map(), retired: new Set(), hints: [], level: 0 }
+      this.invalidate(owner); session = { scope, generation: 0, started: now, seen: new Map(), retired: new Set() }
       this.sessions.set(owner, session)
     }
     const previous = this.operations.get(owner)
@@ -161,18 +180,17 @@ export class SmartHintsService {
     if (session.retired.has(request.clientContextId) || session.seen.size >= 128 || session.retired.size >= 128) throw denied()
     const sourceKey = sourceFingerprint(JSON.stringify([request.clientContextId, request.exerciseId, request.language, request.sourceRevision, request.source, request.origin]))
     if (session.sourceKey !== sourceKey || now - session.started >= P.sessionMs) {
-      session.hints = []; session.level = 0; session.started = now; session.generation++
+      session.started = now; session.generation++
       session.sourceKey = sourceKey; session.context = request.clientContextId
       clearTimeout(session.timer)
       const window = session
       session.timer = setTimeout(() => {
         if (this.sessions.get(owner) !== window) return
-        window.hints = []; window.level = 0; window.sourceKey = undefined
+        window.sourceKey = undefined
         const current = this.operations.get(owner)
         if (current) this.finish(current, { state: 'EXPIRED' })
       }, P.sessionMs)
     }
-    if (request.action.kind === 'HINT' && request.action.level > session.level + 1) throw denied()
     if (previous && (!previous.status || ['PREPARED', 'RUNNING'].includes(previous.status.state))
       && previous.digest === sourceFingerprint(JSON.stringify({ ...request, requestId: previous.request.requestId }))) throw denied()
     if (previous) this.finish(previous, { state: 'CANCELLED' })
@@ -196,7 +214,10 @@ export class SmartHintsService {
           || JSON.stringify(result.binding.action) !== JSON.stringify(bindSmartAction(request.action)) || JSON.stringify(result.binding.origin) !== JSON.stringify(request.origin)
           || result.binding.contextGeneration !== session!.generation
           || JSON.stringify(result.action) !== JSON.stringify(request.action)) throw denied()
-        op.capture = immutableSmartCapture(result)
+        const detached = immutableSmartCapture(result)
+        const hintImplementation = request.action.kind === 'HINT' ? await this.hintParser.classifyHint(detached, this.guardScope(op)) : undefined
+        this.live(op)
+        op.capture = immutableSmartCapture({ ...detached, ...(hintImplementation ? { hintImplementation } : {}) })
         if (op.capture.action.kind === 'SUGGEST_FIX') {
           assertSelectionFixBinding(op.capture)
           if (this.selectionFixGuard?.availability && !this.fixLanguages.includes(op.capture.binding.language)) throw denied()
@@ -245,7 +266,9 @@ export class SmartHintsService {
     const captured = op.capture; op.capture = undefined; clearTimeout(op.timer)
     op.status = { schemaVersion: 1, requestId: value.requestId, operationId: op.operationId, sequence: op.status!.sequence + 1,
       binding: captured.binding, state: 'RUNNING' }
-    const session = this.sessions.get(owner)!, history = session.hints.slice(-2).map(s => s.summary)
+    // Unified Hint cards have no approved replay policy; never send their text/code
+    // to subsequent actions or to Chat. The provider port remains compatible.
+    const session = this.sessions.get(owner)!, history: string[] = []
     op.startedAt = now; op.expiresAt = Math.min(now + timeoutMs, session.started + P.sessionMs)
     op.execution = { requestId: value.requestId, deadline: op.expiresAt, timeoutMs, clock: this.clock,
       reserveInference: admitted.admission.reserveInference }
@@ -263,7 +286,7 @@ export class SmartHintsService {
         if (this.clock() >= op.expiresAt) { this.finish(op, { state: 'FAILED', code: 'TIMEOUT' }); return }
         const evidence = captured.runContext.kind === 'RUN_PUBLIC' ? captured.runContext.observations.map(x => x.evidenceId) : []
         const validOutput = isSmartOutput(output, captured.binding.action, captured.source, evidence,
-          captured.binding.origin.kind === 'PRACTICE' ? captured.binding.origin.eol : undefined)
+          captured.binding.origin.kind === 'PRACTICE' ? captured.binding.origin.eol : undefined, captured.binding.language)
         op.schemaValidation = validOutput ? 'PASS' : 'FAIL'
         if (!validOutput) {
           if (captured.action.kind === 'SUGGEST_FIX') throw new SelectionFixError('INVALID_RESPONSE', 'SH1', 'SH1_REJECTED')
@@ -273,6 +296,13 @@ export class SmartHintsService {
             captured.binding.origin.kind === 'PRACTICE' ? captured.binding.origin.eol : undefined) } catch { /* Keep INVALID_RESPONSE. */ }
           throw new SmartProviderError('INVALID_RESPONSE', detail)
         }
+        if (captured.action.kind === 'HINT' && captured.hintImplementation === 'NO_IMPLEMENTATION' && output.kind === 'HINT') {
+          if (!await this.hintParser.validateHintFunction(captured, output.code.text, this.guardScope(op))) {
+            op.schemaValidation = 'FAIL'
+            throw new SmartProviderError('INVALID_RESPONSE')
+          }
+          this.live(op)
+        }
         if (captured.action.kind === 'SUGGEST_FIX' && output.kind === 'EDIT_PROPOSAL') {
           const candidate = smartCandidate(captured.source, output.edits, captured.binding.origin.kind === 'PRACTICE' ? captured.binding.origin.eol : undefined)
           if (candidate === undefined || !op.guard) throw new SelectionFixError('PROVIDER', 'CONSTRUCTION', 'BINDING_MISMATCH')
@@ -281,20 +311,18 @@ export class SmartHintsService {
         const guard = op.guard; op.guard = undefined
         if (guard) { await guard.dispose(); this.live(op) }
         if (smartBytes({ output, runContext: captured.runContext, binding: captured.binding }) > P.requestBytes) throw new SmartProviderError('LIMIT_EXCEEDED')
-        if (output.kind === 'HINT') {
-          const summary = output.paragraphs.join(' ').normalize('NFC').replace(/\s+/g, ' ').trim()
-          const digest = sourceFingerprint(summary)
-          if (session.hints.some(x => x.digest === digest)) { this.finish(op, { state: 'FAILED', code: 'DUPLICATE_HINT' }); return }
-          session.hints = [...session.hints, { digest, summary: Array.from(summary).slice(0, P.summaryBytes / 4).join('') }].slice(-3)
-          session.level = Math.max(session.level, output.level)
-        }
         if (this.clock() >= op.expiresAt) { this.finish(op, { state: 'FAILED', code: 'TIMEOUT' }); return }
         clearTimeout(op.timer); op.expiresAt = Math.min(this.clock() + P.resultMs, session.started + P.sessionMs)
         op.status = { ...op.status!, state: 'COMPLETE', sequence: op.status!.sequence + 1,
           output: structuredClone(output as SmartOutput), runContext: structuredClone(captured.runContext), expiresAt: op.expiresAt,
           proposalId: output.kind === 'EDIT_PROPOSAL' ? randomUUID() : null }
         this.reportExecution(op, 'COMPLETE')
-        // Keep monitoring document authority through result TTL; never preserve source in operation state.
+        if (captured.action.kind === 'HINT') op.hintClassification = captured.hintImplementation
+        // Retain only the private Hint material needed for local proposal validation.
+        if (captured.action.kind === 'HINT' && output.kind === 'HINT' && captured.binding.origin.kind === 'PRACTICE'
+          && ['NO_IMPLEMENTATION', 'HAS_IMPLEMENTATION'].includes(captured.hintImplementation ?? ''))
+          op.hintCapture = immutableSmartCapture({ ...captured, statement: '', constraints: [], runContext: { kind: 'CODE_ONLY', reason: 'NO_MATCHING_PUBLIC_RUN' } })
+        // Ordinary request source is still dropped. Hint material expires with the operation.
         op.request = { ...op.request, source: '', action: { kind: 'ANALYZE' } }
         op.timer = setTimeout(() => this.finish(op, { state: 'EXPIRED' }), Math.max(0, op.expiresAt - this.clock()))
       } catch (error) {
@@ -318,6 +346,162 @@ export class SmartHintsService {
     }))
     return structuredClone(op.status)
   }
+  /** Local parse-only proposal preparation; never dispatches/reserves inference. */
+  prepareHintApply(owner: number, scope: string, value: PrepareHintApply,
+    recapture: (request: SmartPrepare, generation: number, check: () => void) => Promise<SmartCapture>): Promise<HintApplyProposal> {
+    const checked = validatePrepareHintApply(value)
+    if (!checked.ok) throw denied()
+    const q = checked.value, op = this.get(owner, scope, q.hint), c = op.hintCapture, status = op.status
+    const attempts = op.hintAttempts ??= new Map()
+    const failure = (stage: HintApplyStage, reason: HintApplyReason, attempt: number) => new DomainError({
+      code: reason === 'UNSUPPORTED' ? 'UNSUPPORTED' : 'INVALID_INPUT', operation: 'prepareHintApply',
+      message: `Hint Apply: ${reason} (${stage}).`,
+      retryable: (reason === 'TARGET_INVALID' || reason === 'CANDIDATE_INVALID') && attempt < HINT_APPLY_MAX_ATTEMPTS,
+      details: { requestId: q.requestId, operationId: q.hint.operationId, stage, reason, attempt,
+        remaining: HINT_APPLY_MAX_ATTEMPTS - attempt, noGrant: true } })
+    if (status?.state === 'COMPLETE' && status.output.kind === 'HINT' && op.hintClassification === 'UNCERTAIN') {
+      try { this.execution.onHintApply?.({ stage: 'CLASSIFICATION', reason: 'UNSUPPORTED', attempt: 1,
+        language: status.binding.language, implementation: 'UNCERTAIN' }) } catch { /* Never authority. */ }
+      throw failure('CLASSIFICATION', 'UNSUPPORTED', 1)
+    }
+    if (!c || status?.state !== 'COMPLETE' || status.output.kind !== 'HINT' || !this.hintParser.prepareHintApply
+      || c.binding.origin.kind !== 'PRACTICE' || c.binding.exerciseId !== q.exerciseId || c.binding.language !== q.language
+      || c.binding.sourceRevision !== q.sourceRevision || c.binding.packageVersion !== q.packageVersion
+      || JSON.stringify(c.binding.origin) !== JSON.stringify(q.origin) || c.source !== q.source
+      || c.binding.fingerprint !== sourceFingerprint(q.source) || op.expiresAt <= this.clock()
+      || !['NO_IMPLEMENTATION', 'HAS_IMPLEMENTATION'].includes(c.hintImplementation ?? ''))
+      { if (op.hintApply?.proposal || op.hintApply?.consumed) throw denied()
+        throw failure('BINDING', 'STALE', Math.max(1, attempts.size)) }
+    const digest = sourceFingerprint(JSON.stringify(q)), seen = attempts.get(q.requestId)
+    if (op.hintApply?.consumed || op.hintApply?.proposal && op.hintApply.requestId !== q.requestId) throw denied()
+    if (seen) {
+      if (seen.digest !== digest) throw denied()
+      if (seen.error) return Promise.reject(seen.error)
+    }
+    if (op.hintApply) {
+      const previous = op.hintApply
+      if (previous.consumed) throw denied()
+      if (previous.requestId === q.requestId && previous.digest === digest) return previous.task.then(proposal => {
+        this.live(op)
+        if (op.hintApply !== previous || previous.consumed || proposal.expiresAt <= this.clock()) throw denied()
+        return structuredClone(proposal)
+      })
+      if (previous.proposal || !previous.failure?.retryable) throw denied()
+    }
+    if (attempts.size >= HINT_APPLY_MAX_ATTEMPTS) throw denied()
+    const record: { digest: string; error?: DomainError } = { digest }
+    attempts.set(q.requestId, record)
+    const attempt = attempts.size
+    const diagnose = (stage: HintApplyStage, reason: HintApplyDiagnostic['reason'], guardReason?: SelectionFixDiagnostic['reason']) => {
+      try { this.execution.onHintApply?.({ stage, reason, attempt, language: c.binding.language,
+        implementation: c.hintImplementation as HintApplyDiagnostic['implementation'], ...(guardReason ? { guardReason } : {}) }) } catch { /* Never authority. */ }
+    }
+    const controller = new AbortController(), deadline = Math.min(op.expiresAt, this.clock() + P.timeoutMs)
+    const abort = () => controller.abort()
+    op.abort.signal.addEventListener('abort', abort, { once: true })
+    const timer = setTimeout(abort, Math.max(0, deadline - this.clock()))
+    const check = () => { this.live(op); if (controller.signal.aborted || this.clock() >= deadline) throw denied() }
+    const preparation: NonNullable<Operation['hintApply']> = { requestId: q.requestId, digest, consumed: false, task: undefined!, abort }
+    op.hintApply = preparation
+    const task = Promise.resolve().then(async () => {
+      let stage: HintApplyStage = 'BINDING'
+      try {
+        check()
+        const captureRequest: SmartPrepare = { requestId: status.requestId, clientContextId: c.binding.clientContextId,
+          exerciseId: c.binding.exerciseId, language: c.binding.language, sourceRevision: c.binding.sourceRevision,
+          source: c.source, origin: c.binding.origin, action: { kind: 'HINT' }, run: null }
+        const verifyPackage = async () => {
+          const captured = await recapture(captureRequest, c.binding.contextGeneration, check)
+          check()
+          if (JSON.stringify(captured.binding) !== JSON.stringify(c.binding) || captured.source !== c.source
+            || JSON.stringify(captured.signatureIdentity) !== JSON.stringify(c.signatureIdentity)
+            || JSON.stringify(captured.signature) !== JSON.stringify(c.signature) || captured.hintTemplate !== c.hintTemplate) throw denied()
+        }
+        await verifyPackage()
+        const code = status.output.kind === 'HINT' ? status.output.code.text : ''
+        const normalized = code.replace(/\r\n|\n/g, c.binding.origin.kind === 'PRACTICE' && c.binding.origin.eol === 'CRLF' ? '\r\n' : '\n')
+        stage = 'PARSER_RUNTIME'
+        const parsed = await this.hintParser.prepareHintApply!(c, normalized, c.hintImplementation === 'NO_IMPLEMENTATION' ? null : q.selection, { signal: controller.signal, deadline, clock: this.clock, check })
+        stage = 'BINDING'
+        check(); await verifyPackage()
+        const output: Extract<SmartOutput, { kind: 'EDIT_PROPOSAL' }> = { kind: 'EDIT_PROPOSAL', rationale: 'Áp dụng code từ Hint đã xác thực.', evidence: [],
+          edits: [{ startOffset: parsed.start, endOffset: parsed.end, expectedOldText: c.source.slice(parsed.start, parsed.end), replacementText: parsed.replacementText,
+            rationale: 'Target đã được parser xác minh trên snapshot gốc.' }] }
+        stage = 'SH1'
+        if (!isSmartOutput(output, undefined, c.source, [], c.binding.origin.kind === 'PRACTICE' ? c.binding.origin.eol : undefined)
+          || smartCandidate(c.source, output.edits, c.binding.origin.kind === 'PRACTICE' ? c.binding.origin.eol : undefined) === undefined) throw denied()
+        const proposal: HintApplyProposal = { schemaVersion: 1, requestId: q.requestId, proposalId: randomUUID(), hint: q.hint,
+          binding: c.binding, expiresAt: op.expiresAt, target: { kind: c.hintImplementation === 'NO_IMPLEMENTATION' ? 'TEMPLATE_BODY' : 'SELECTION',
+            startOffset: parsed.start, endOffset: parsed.end }, output }
+        if (!isHintApplyProposal(proposal)) throw denied()
+        check(); preparation.proposal = structuredClone(proposal)
+        diagnose('SH1', 'ACCEPT')
+        return structuredClone(proposal)
+      } catch (error) {
+        let reason: HintApplyReason = stage === 'BINDING' ? 'STALE' : stage === 'SH1' ? 'CANDIDATE_INVALID' : 'UNSUPPORTED'
+        if (error instanceof HintApplyParserError) { stage = error.failure.stage; reason = error.failure.reason }
+        try { check(); if (preparation.consumed || op.hintCapture !== c) throw denied() }
+        catch { stage = 'BINDING'; reason = 'STALE' }
+        const rejected = failure(stage, reason, attempt)
+        preparation.failure = rejected; record.error = rejected
+        diagnose(stage, reason, error instanceof SelectionFixError ? error.selectionFix.reason : undefined)
+        throw rejected
+      }
+      finally { clearTimeout(timer); op.abort.signal.removeEventListener('abort', abort) }
+    })
+    preparation.task = task; this.track(task)
+    return task.then(proposal => {
+      this.live(op)
+      if (op.hintApply !== preparation || preparation.consumed || proposal.expiresAt <= this.clock()) throw denied()
+      return structuredClone(proposal)
+    })
+  }
+  /** Final public consume gate: no candidate or grant body supplied by Renderer. */
+  async consumePreparedHintApply(owner: number, scope: string, value: ConsumeHintApply,
+    recapture: (request: SmartPrepare, generation: number, check: () => void) => Promise<SmartCapture>): Promise<HintApplyProposal> {
+    const checked = validateConsumeHintApply(value)
+    if (!checked.ok) throw denied()
+    const { preparation: q, proposalId } = checked.value, op = this.get(owner, scope, q.hint), p = op.hintApply, c = op.hintCapture
+    if (!p || p.consuming || p.consumed || !p.proposal || !c || p.proposal.proposalId !== proposalId
+      || p.digest !== sourceFingerprint(JSON.stringify(q)) || p.proposal.expiresAt <= this.clock()) throw denied()
+    p.consuming = true
+    const controller = new AbortController(), deadline = Math.min(op.expiresAt, this.clock() + P.timeoutMs)
+    const abort = () => controller.abort(); p.consumeAbort = abort
+    op.abort.signal.addEventListener('abort', abort, { once: true })
+    const timer = setTimeout(abort, Math.max(0, deadline - this.clock()))
+    const check = () => {
+      this.live(op)
+      if (controller.signal.aborted || this.clock() >= deadline || op.hintApply !== p || p.consumed || op.hintCapture !== c) throw denied()
+    }
+    try {
+      check()
+      const captured = await recapture({ requestId: q.hint.requestId, clientContextId: c.binding.clientContextId,
+        exerciseId: c.binding.exerciseId, language: c.binding.language, sourceRevision: c.binding.sourceRevision,
+        source: c.source, origin: c.binding.origin, action: { kind: 'HINT' }, run: null }, c.binding.contextGeneration, check)
+      check()
+      if (JSON.stringify(captured.binding) !== JSON.stringify(c.binding) || captured.source !== c.source
+        || JSON.stringify(captured.signatureIdentity) !== JSON.stringify(c.signatureIdentity)
+        || JSON.stringify(captured.signature) !== JSON.stringify(c.signature) || captured.hintTemplate !== c.hintTemplate) throw denied()
+      return this.consumeHintApply(owner, scope, q.hint, proposalId)
+    } catch { p.consumed = true; op.hintCapture = undefined; throw denied() }
+    finally { clearTimeout(timer); p.consumeAbort = undefined; op.abort.signal.removeEventListener('abort', abort) }
+  }
+  discardHintApply(owner: number, scope: string, value: DiscardHintApply): void {
+    const checked = validateDiscardHintApply(value)
+    if (!checked.ok) throw denied()
+    const op = this.get(owner, scope, checked.value.hint), p = op.hintApply
+    if (p && p.requestId !== checked.value.requestId) throw denied()
+    // Even a discard racing prepare's acknowledgement revokes its future authority.
+    if (p) { p.consumed = true; p.abort?.(); p.consumeAbort?.() }
+    op.hintCapture = undefined
+  }
+  /** Main-only single-use primitive, reached publicly only through the final gate above. */
+  consumeHintApply(owner: number, scope: string, hint: SmartReference, proposalId: string): HintApplyProposal {
+    const op = this.get(owner, scope, hint), p = op.hintApply
+    if (!p || p.consumed || !p.proposal || p.proposal.proposalId !== proposalId || p.proposal.expiresAt <= this.clock()) throw denied()
+    p.consumed = true; op.hintCapture = undefined
+    return structuredClone(p.proposal)
+  }
   cancel(owner: number, scope: string, reference: SmartReference): SmartStatus {
     const op = this.get(owner, scope, reference)
     if (op.status!.state !== 'CANCELLED') this.finish(op, { state: 'CANCELLED' })
@@ -331,7 +515,7 @@ export class SmartHintsService {
     session.retired.add(value.clientContextId)
     const op = this.operations.get(owner)
     if (op?.request.clientContextId === value.clientContextId) this.finish(op, { state: 'CANCELLED' })
-    if (session.context === value.clientContextId) { session.hints = []; session.level = 0; session.sourceKey = undefined; return true }
+    if (session.context === value.clientContextId) { session.sourceKey = undefined; return true }
     return false
   }
   invalidate(owner: number, expected?: Operation): void {

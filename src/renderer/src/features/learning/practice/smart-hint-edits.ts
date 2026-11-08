@@ -1,6 +1,7 @@
 import type { editor, Selection } from 'monaco-editor'
-import type { SmartStatus, SmartBinding, SmartOutput } from '../../../../../shared/contracts/smart-hints'
-import { smartCandidate } from '../../../../../shared/contracts/smart-hints-validation'
+import type { SmartStatus, SmartBinding, SmartOutput, HintApplyProposal } from '../../../../../shared/contracts/smart-hints'
+import { smartCandidate, isHintApplyProposal } from '../../../../../shared/contracts/smart-hints-validation'
+import type { AppResult } from '../../../../../shared/contracts/app-error'
 
 /** Local, single-use authority minted only from a verified COMPLETE operation. */
 export interface SmartFix {
@@ -9,6 +10,36 @@ export interface SmartFix {
   readonly candidate: string
   isCurrent(): boolean
   consume(): boolean
+}
+export interface HintSmartFix extends Omit<SmartFix, 'result'> {
+  readonly kind: 'HINT_APPLY'; readonly result: HintApplyProposal
+  authorize(): Promise<boolean>
+}
+export type ReviewFix = SmartFix | HintSmartFix
+const armedHintFixes = new WeakSet<HintSmartFix>()
+/** Only a matching Main consume ACK arms a Hint transaction; a card never does. */
+export function createHintSmartFix(proposal: HintApplyProposal, source: string, current: () => boolean,
+  consume: () => Promise<AppResult<HintApplyProposal>>): HintSmartFix | undefined {
+  if (!isHintApplyProposal(proposal) || proposal.binding.origin.kind !== 'PRACTICE') return
+  const result = structuredClone(proposal), candidate = smartCandidate(source, result.output.edits, proposal.binding.origin.eol)
+  if (candidate === undefined) return
+  const freeze = (value: object) => { Object.values(value).forEach(v => { if (v && typeof v === 'object') freeze(v) }); Object.freeze(value) }
+  freeze(result)
+  let used = false, attempted = false
+  const isCurrent = () => !used && current() && result.expiresAt > Date.now()
+  const fix: HintSmartFix = Object.freeze({ kind: 'HINT_APPLY', result, source, candidate, isCurrent,
+    authorize: async () => {
+      if (attempted || !isCurrent()) return false
+      attempted = true
+      try {
+        const reply = await consume()
+        if (!reply.ok || !isCurrent() || !isHintApplyProposal(reply.value) || JSON.stringify(reply.value) !== JSON.stringify(result)) return false
+        armedHintFixes.add(fix); return true
+      } catch { return false }
+    },
+    consume: () => { if (!armedHintFixes.has(fix) || !isCurrent()) return false; armedHintFixes.delete(fix); used = true; return true },
+  })
+  return fix
 }
 export type ApplyFixResult = 'APPLIED' | 'STALE' | 'TRANSACTION_FAILED'
 
@@ -20,14 +51,16 @@ export function isCanonicalSelectionFix(source: string, binding: SmartBinding, o
     && edit.expectedOldText === source.slice(target.startOffset, target.endOffset)
 }
 
-export function applySmartFix(ed: editor.IStandaloneCodeEditor, fix: SmartFix,
+export function applySmartFix(ed: editor.IStandaloneCodeEditor, fix: ReviewFix,
   current: { exerciseId: string; language: string; sourceRevision: number; source: string; modelId: string; blocked: boolean },
   selection: (sl: number, sc: number, el: number, ec: number) => Selection): ApplyFixResult {
   const model = ed.getModel(), { binding, output } = fix.result, origin = binding.origin
+  const hint = 'kind' in fix && fix.kind === 'HINT_APPLY'
   if (current.blocked || !model || model.isDisposed() || !fix.isCurrent() || fix.result.expiresAt <= Date.now()
     || origin.kind !== 'PRACTICE' || output.kind !== 'EDIT_PROPOSAL' || !fix.result.proposalId
-    || binding.action.kind !== 'SUGGEST_FIX' || binding.exerciseId !== current.exerciseId || binding.language !== current.language
-    || !isCanonicalSelectionFix(fix.source, binding, output)
+    || binding.exerciseId !== current.exerciseId || binding.language !== current.language
+    || (hint ? !armedHintFixes.has(fix) || !isHintApplyProposal(fix.result) || binding.action.kind !== 'HINT'
+      : !isCanonicalSelectionFix(fix.source, binding, output))
     || binding.sourceRevision !== current.sourceRevision || current.source !== fix.source || model.getValue() !== fix.source
     || origin.modelId !== current.modelId || origin.modelVersion !== model.getVersionId()
     || model.uri.scheme !== 'practice' || model.uri.path !== `/${current.exerciseId}/solution.${current.language === 'csharp' ? 'cs' : 'js'}`

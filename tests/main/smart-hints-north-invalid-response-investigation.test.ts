@@ -7,7 +7,7 @@ import { capture, request } from '../fixtures/learning/smart-hints'
 
 // Synthetic counterexamples, NOT captured North responses or a reproduced live root cause.
 const key = 'SYNTHETIC-ONLY-NORTH-INVESTIGATION'
-const hint = { kind: 'HINT', level: 1, paragraphs: ['Compare the returned value with the public examples.'], nextQuestion: 'What changes?', evidence: [] }
+const hint = { kind: 'HINT', thinking: 'Compare the returned value with the public examples.', steps: ['Compare the public inputs.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }
 const usage = { prompt_tokens: 280, completion_tokens: 426, total_tokens: 706, cost: 0 }
 const envelope = (content: unknown = JSON.stringify(hint), patch: Record<string, unknown> = {}) => JSON.stringify({ model, usage,
   choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content } }], ...patch })
@@ -70,7 +70,7 @@ describe('North HTTP 200 INVALID_RESPONSE: safe stages now distinguish the forme
 
   it('synthetic schema/action failures pass adapter parsing but fail unchanged SH-1 validation', async () => {
     for (const output of [{ ...hint, level: 2 }, { ...hint, paragraphs: [] }, { ...hint, level: '1' },
-      { ...hint, synthetic_extra_field: true }, { kind: 'HINT', level: 1, paragraphs: hint.paragraphs, nextQuestion: hint.nextQuestion },
+      { ...hint, synthetic_extra_field: true }, { kind: 'HINT', thinking: hint.thinking, steps: hint.steps, code: hint.code },
       { ...hint, evidence: ['R1'] }, JSON.stringify(hint)]) {
       const adapter = new OpenRouterSmartHintsAdapter({ send: async () => new Response(envelope(JSON.stringify(output)), { headers: { 'content-type': 'application/json' } }) },
         { authorization: () => `Bearer ${key}`, clear: () => {} }, model)

@@ -13,11 +13,12 @@ interface Props {
   selectedChapterId: ChapterId
   sidebarCollapsed: boolean
   onSelectChapter(id: ChapterId): void
+  onCollapseSidebar?(): void
   active?: boolean
   exitGuard?: { current: () => Promise<boolean> }
 }
 
-export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelectChapter, active = true, exitGuard }: Props) {
+export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelectChapter, onCollapseSidebar, active = true, exitGuard }: Props) {
   const introduction = useRef<HTMLElement>(null)
   const mounted = useRef(false)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
@@ -130,7 +131,7 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
         aria-labelledby={selectedChapterId !== 1 ? `${sectionId}-practice-tab` : undefined}>
       {practicing && <PracticeWorkspace key={selectedChapterId} chapter={selectedChapterId} exercises={practice.summaries}
         exercise={exercise} drafts={practice.state.drafts} language={language} code={exercise ? practice.codeFor(exercise, language) : ''}
-        ready={practice.ready} locked={practice.closing} active={active} sourceRevision={practice.sourceRevision}
+        ready={practice.ready} locked={practice.closing} active={active} sourceRevision={practice.sourceRevision} onAssistantOpen={onCollapseSidebar}
         execution={runtime.view} submission={submission} sourceReplacement={practice.sourceReplacement}
         onRestore={request => {
           if (!exercise || exercise.id !== request.exerciseId || !active || practice.closing || !practice.ready

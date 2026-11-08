@@ -21,7 +21,7 @@ export function request(patch: Partial<SmartPrepare> = {}): SmartPrepare {
 }
 export const output: SmartOutput = { kind: 'ANALYSIS', hypotheses: ['Có thể cần kiểm tra phép tính.'], suggestions: ['Đối chiếu public sample.'], evidence: [] }
 export function capture(q: SmartPrepare, generation = 1): SmartCapture {
-  return { action: structuredClone(q.action), binding: { clientContextId: q.clientContextId, contextGeneration: generation, exerciseId: q.exerciseId,
+  return { action: q.action.kind === 'HINT' ? { kind: 'HINT' } : structuredClone(q.action), binding: { clientContextId: q.clientContextId, contextGeneration: generation, exerciseId: q.exerciseId,
     language: q.language, packageVersion: 1, sourceRevision: q.sourceRevision, fingerprint: sourceFingerprint(q.source),
     sourceBytes: Buffer.byteLength(q.source), origin: structuredClone(q.origin), action: bindSmartAction(q.action) }, source: q.source,
   statement: 'Trả về x + 1.', constraints: ['x là int32'], signature: { functionName: 'solve', parameters: [{ name: 'x', type: 'int32' }], returnType: 'int32' },

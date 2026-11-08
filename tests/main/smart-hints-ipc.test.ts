@@ -8,7 +8,7 @@ import { SmartHintsService } from '../../src/main/services/learning/smart-hints/
 import { FakeDeepSeekAdapter } from '../../src/main/services/learning/smart-hints/adapter'
 import { captureSmartHints } from '../../src/main/services/learning/smart-hints/capture'
 import { SMART_HINT_CHANNELS as C, type SmartStatus } from '../../src/shared/contracts/smart-hints'
-import { request, registry, response, reference, start, fixAction } from '../fixtures/learning/smart-hints'
+import { request, registry, response, reference, start, fixAction, envelope } from '../fixtures/learning/smart-hints'
 class Owner extends EventEmitter { dead = false; constructor(readonly id: number) { super() } isDestroyed() { return this.dead } }
 const closers: (() => Promise<void>)[] = []
 afterEach(async () => { for (const close of closers.splice(0)) await close() })
@@ -32,6 +32,16 @@ function fixture() {
     replaceFrame() { allowedFrame = { ...frame, frameToken: 'replacement' }; return { sender: { id: 1 }, senderFrame: allowedFrame } } }
 }
 describe('SH-1 semantic Main IPC integration', () => {
+  it('C4-B Cancel returns an already COMPLETE Hint without erasing its validated result', async () => {
+    const f = fixture(), q = { ...f.q, action: { kind: 'HINT' as const, level: 1 as const } }
+    f.send.mockImplementation(async () => response(envelope(JSON.stringify({ kind: 'HINT', thinking: 'Completed Hint', steps: ['Compare the public inputs.'], code: { language: 'javascript', text: 'return x + 1;' }, evidence: [] }))))
+    const p = await f.invoke(C.prepare, q); await f.invoke(C.start, start(p.value))
+    let completed!: SmartStatus
+    await vi.waitFor(async () => { completed = (await f.invoke(C.status, reference(p.value))).value; expect(completed.state).toBe('COMPLETE') })
+    const cancelled = await f.invoke(C.cancel, reference(p.value))
+    expect(cancelled.value).toEqual(completed)
+    expect(f.runService.invalidate).not.toHaveBeenCalled(); expect(f.runService.run).not.toHaveBeenCalled()
+  })
   it('D6-2 validates selection before lease; binds target but blocks all Fix dispatch while capability is disabled', async () => {
     const f = fixture(), q = { ...f.q, action: fixAction() }
     for (const action of [{ kind: 'SUGGEST_FIX' }, { ...q.action, selection: { ...q.action.selection, text: 'wrong' } },

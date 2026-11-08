@@ -44,8 +44,7 @@ async function main() {
         if (request.url.endsWith('/models')) return json({ data: [{ id: selectedModel, pricing: { prompt: '0', completion: '0' }, supported_parameters: ['max_tokens'] }] })
         if (request.url.endsWith('/endpoints')) return json({ data: { id: selectedModel, endpoints: [{ status: 0, pricing: { prompt: '0', completion: '0' }, supported_parameters: ['max_tokens'] }] } })
         if (request.method !== 'POST' || request.url !== 'https://openrouter.ai/api/v1/chat/completions') throw new Error('OFFLINE_ROUTE_DENIED')
-        return json({ model: modelProfile === 'NORTH_MINI_CODE_FREE' ? selectedModel : 'synthetic/offline:free', choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify({ kind: 'HINT', level: 1,
-          paragraphs: ['Compare the return value with the public examples.'], nextQuestion: 'What should change?', evidence: [] }) } }] })
+        return json({ model: modelProfile === 'NORTH_MINI_CODE_FREE' ? selectedModel : 'synthetic/offline:free', choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify({ kind: 'HINT', thinking: 'Compare the return value with the public examples.', steps: ['Return the required value.'], code: { language: 'csharp', text: 'return x + 1;' }, evidence: [] }) } }] })
       }, reserve: async () => { reserved++; check(`${name}: at most one synthetic reservation`, reserved === 1); await reserveInference(attempt!) },
       confirm: (stage, details, signal) => showRunnerConsent({ stage, details, signal, offline: true, onShown: async state => {
         check(`${name}/${stage}: selected model disclosed`, details.includes(selectedModel))

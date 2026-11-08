@@ -14,6 +14,7 @@ import { smartOutputDiagnostic, type SmartOutputDiagnostic, type SmartValidation
 import { projectSelectionFixDiagnostic, type SelectionFixDiagnostic } from './selection-fix-diagnostics'
 import type { SelectionFixGuard } from './selection-fix-guard'
 import { SharedExecutionCoordinator } from './execution-coordinator'
+import { ChatService } from '../chat/service'
 
 declare const __SMART_HINTS_BUILD_ID__: string
 const buildIdentity = typeof __SMART_HINTS_BUILD_ID__ === 'undefined' ? 'UNBUNDLED' : __SMART_HINTS_BUILD_ID__
@@ -32,6 +33,8 @@ export interface KeyEncryption {
 }
 export interface SmartHintsConfigurationOptions {
   selectionFixGuard?: SelectionFixGuard
+  hintContextParser?: Pick<import('./selection-fix-parser-runtime').MainSelectionFixGuard, 'classifyHint' | 'validateHintFunction'>
+    & Partial<Pick<import('./selection-fix-parser-runtime').MainSelectionFixGuard, 'prepareHintApply'>>
   file: string; encryption: KeyEncryption; transport: ProviderTransport
   promptKey(signal: AbortSignal): Promise<string | null>
   confirm(kind: 'ENABLE' | 'BUDGET' | 'REMOVE_KEY', count: number): Promise<boolean>
@@ -48,6 +51,9 @@ export class SmartHintsConfiguration {
   readonly service: SmartHintsService
   /** Inject this same instance into future Main consumers; never create another ledger. */
   readonly coordinator: SharedExecutionCoordinator
+  readonly chat: ChatService
+  private providerGeneration = 1
+  private readonly chatRetirement = new Set<(reason: 'PROVIDER_CHANGED' | 'KEY_CHANGED') => void>()
   private document: Document = { version: 2, enabled: false, encryptedKey: null, usedRequests: 0, dailyLimit: 20, needsLimitReview: false, providerLimit: null }
   private reservations: number[] = []
   private get remoteLimit(): ProviderLimit | null { return this.document.providerLimit }
@@ -64,6 +70,15 @@ export class SmartHintsConfiguration {
   constructor(private readonly options: SmartHintsConfigurationOptions) {
     this.clock = options.clock ?? Date.now
     this.coordinator = new SharedExecutionCoordinator(this.clock, signal => this.reserveDaily(signal))
+    this.chat = new ChatService({ coordinator: this.coordinator, clock: this.clock,
+      contentPolicy: { allows: text => !this.key || ![this.key, Buffer.from(this.key).toString('base64')].some(key => text.includes(key)) },
+      provider: { current: () => ({ generation: this.providerGeneration, available: !this.stopped && !this.busy
+          && this.document.enabled && !!this.key && this.state === 'READY' && !this.document.needsLimitReview }),
+        transport: options.transport, credential: { value: () => this.key },
+        onRetire: listener => { this.chatRetirement.add(listener); return () => { this.chatRetirement.delete(listener) } },
+        failed: error => this.failed(error), succeeded: async () => {
+          if (this.remoteLimit) { this.document.providerLimit = null; await this.persist() }
+        } } })
     this.service = new SmartHintsService(undefined, this.clock, (failure, requestId) => {
       const trace = this.traces.get(requestId)
       if (trace) trace.failure = failure // Already projected by Main service; never a public status.
@@ -87,7 +102,18 @@ export class SmartHintsConfiguration {
         this.saveDiagnostic(diagnostic)
         try { this.options.onDiagnostic?.(diagnostic) }
         catch { /* Fixed-field diagnostics cannot affect execution or cleanup. */ }
-      } }, options.selectionFixGuard, this.coordinator)
+      }, onHintApply: diagnostic => {
+        // Keep the last rejection even after a successful retry. One fixed-enum
+        // record; no source, candidate, offsets, IDs or exception text.
+        if (diagnostic.reason === 'ACCEPT') return
+        const data = JSON.stringify({ ...diagnostic, buildIdentity, diagnosticsVersion: 1, observedAt: this.clock() })
+        this.diagnosticWriteTail = this.diagnosticWriteTail.then(async () => {
+          const target = join(dirname(this.options.file), 'smart-hints-last-hint-apply.json'), temporary = `${target}.${randomUUID()}.tmp`
+          await mkdir(dirname(target), { recursive: true })
+          try { await writeFile(temporary, data, { flag: 'wx', mode: 0o600 }); await rename(temporary, target) }
+          finally { await unlink(temporary).catch(() => {}) }
+        }).catch(() => { try { this.options.onDiagnosticStoreError?.() } catch { /* Best effort only. */ } })
+      } }, options.selectionFixGuard, this.coordinator, options.hintContextParser)
   }
   private saveDiagnostic(diagnostic: NormalSmartHintsDiagnostic): void {
     if (diagnostic.action !== 'SUGGEST_FIX') return
@@ -174,6 +200,8 @@ export class SmartHintsConfiguration {
       && (!this.remoteLimit?.retryAt || this.clock() >= this.remoteLimit.retryAt)
   }
   private async retireProvider(): Promise<void> {
+    this.providerGeneration++
+    for (const listener of this.chatRetirement) listener('PROVIDER_CHANGED')
     const drained = this.coordinator.cancelActive()
     await this.service.configureProvider()
     await drained
@@ -287,6 +315,8 @@ export class SmartHintsConfiguration {
       if (!Number.isSafeInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 300) throw denied('Choose between 1 and 300 requests per UTC day.')
       if (!await this.options.confirm('BUDGET', dailyLimit)) return
       check(); this.document.dailyLimit = dailyLimit; this.document.needsLimitReview = false
+      this.providerGeneration++
+      for (const listener of this.chatRetirement) listener('PROVIDER_CHANGED')
       await this.persist()
     }, check)
   }
@@ -302,7 +332,7 @@ export class SmartHintsConfiguration {
   cancel(): void { this.operation?.abort(); this.options.cancelPrompt?.() }
   async stop(): Promise<void> {
     this.stopped = true; this.cancel(); this.coordinator.beginShutdown()
-    await this.service.stop(); await this.coordinator.drain()
+    await this.chat.stop(); await this.service.stop(); await this.coordinator.drain()
     this.traces.clear(); this.key = ''; await this.writeTail; await this.diagnosticWriteTail
   }
 }

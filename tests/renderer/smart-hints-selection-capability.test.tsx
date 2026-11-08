@@ -31,7 +31,7 @@ it('D6-2 Fix stays disabled independently from Hint/Analyze/Explain; direct hook
   await waitFor(() => expect(f.result.current.capabilities?.enabled).toBe(true))
   render(<SmartHintsPanel hints={f.result.current} onClose={() => {}} onAction={() => {}} onExplain={() => {}} />)
   expect((screen.getByRole('button', { name: 'Suggest Fix' }) as HTMLButtonElement).disabled).toBe(true)
-  for (const name of ['Get Hint · Level 1', 'Analyze Code & Run', 'Explain Selected Code (Practice)'])
+  for (const name of ['Hint', 'Analyze Code & Run', 'Explain Selected Code (Practice)'])
     expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(false)
   await act(async () => { await f.result.current.begin(f.q.action, { exerciseId: f.q.exerciseId, language: f.q.language,
     source: f.q.source, origin: f.q.origin, isCurrent: () => true }) })

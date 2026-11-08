@@ -54,6 +54,7 @@ export default function App() {
   const practiceExitGuard = useRef<() => Promise<boolean>>(async () => true)
   const [selectedChapterId, setSelectedChapterId] = useState<ChapterId>(1)
   const [learningSidebarCollapsed, setLearningSidebarCollapsed] = useState(false)
+  const collapseLearningSidebar = useCallback(() => setLearningSidebarCollapsed(true), [])
   const learning = workspaceMode === 'learning'
   const workspaceModeRef = useRef(workspaceMode)
   workspaceModeRef.current = workspaceMode
@@ -521,7 +522,7 @@ export default function App() {
       <div id="learning-workspace" className="learning-workspace" hidden={!learning} inert={!learning}>
         <div className="learning-workspace-content" inert={aiOpen} aria-hidden={aiOpen || undefined}>
           <LearningWorkspace active={learning} exitGuard={practiceExitGuard} selectedChapterId={selectedChapterId} sidebarCollapsed={learningSidebarCollapsed}
-            onSelectChapter={setSelectedChapterId} />
+            onSelectChapter={setSelectedChapterId} onCollapseSidebar={collapseLearningSidebar} />
         </div>
         {learning && aiOpen && <div className="learning-ai-overlay"><AiChatPanel onClose={() => setAiOpen(false)} /></div>}
       </div>

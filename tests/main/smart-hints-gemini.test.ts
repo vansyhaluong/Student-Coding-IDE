@@ -100,7 +100,7 @@ describe('Gemini direct REST via injected fake transport only', () => {
     expect(JSON.stringify(s.status(1, 'doc', reference(p)))).not.toMatch(/SYNTHETIC-ONLY-GEMINI-TEST-CREDENTIAL|gemini-3.1-flash-lite|responseId/)
   })
   const actions: [SmartAction, SmartOutput | SelectionFixWire][] = [
-    ...([1, 2, 3] as const).map(level => [{ kind: 'HINT', level }, { kind: 'HINT', level, paragraphs: [`Hint ${level}`], nextQuestion: 'Why?', evidence: [] }] as [SmartAction, SmartOutput]),
+    [{ kind: 'HINT' }, { kind: 'HINT', thinking: 'Compare inputs.', steps: ['Return the value.'], code: { language: 'javascript', text: 'return x + 1;' }, evidence: [] }],
     [{ kind: 'ANALYZE' }, output],
     [{ kind: 'EXPLAIN', selection: { startOffset: 0, endOffset: 8, text: 'function', startLine: 1, startColumn: 1, endLine: 1, endColumn: 9 } },
       { kind: 'EXPLANATION', syntax: 'Function.', variables: 'Input.', controlFlow: 'Return.', algorithm: 'Identity.', illustrativeExamples: [] }],
@@ -113,10 +113,10 @@ describe('Gemini direct REST via injected fake transport only', () => {
     expect(await new GeminiSmartHintsAdapter({ send }, credential()).run(c, ['prior hint'], signal())).toEqual(result)
     const body = await send.mock.calls[1][0].json()
     expect(body.generationConfig.responseJsonSchema).toEqual(geminiResponseSchema(c))
-    if (action.kind === 'HINT') expect(body.generationConfig.responseJsonSchema.properties.level.enum).toEqual([action.level])
+    if (action.kind === 'HINT') expect(body.generationConfig.responseJsonSchema.properties.code.properties.language.enum).toEqual(['javascript'])
     if (action.kind === 'SUGGEST_FIX') expect(body.generationConfig.responseJsonSchema.anyOf).toHaveLength(2)
     expect(JSON.parse(body.contents[0].parts[0].text).previousHints).toEqual(['prior hint'])
-    if (action.kind !== 'HINT' || action.level === 1) {
+    {
       const serviceSend = sendFor(envelope(result)), s = service(serviceSend), p = await prepare(s, request({ action }))
       s.start(1, 'doc', start(p))
       if (action.kind === 'SUGGEST_FIX') {

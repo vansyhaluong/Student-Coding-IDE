@@ -5,7 +5,7 @@ import { isSmartOutput, smartFields, smartText, smartInteger, smartBoundary, sma
 export const VALIDATION_REASONS = ['WRONG_SHAPE', 'MISSING_FIELD', 'INVALID_FIELD', 'INVALID_RANGE',
   'OLD_TEXT_MISMATCH', 'INVALID_EOL', 'OVERLAPPING_EDITS', 'FULL_SOURCE_REWRITE', 'SIZE_LIMIT_EXCEEDED',
   'INVALID_EVIDENCE', 'OTHER_VALIDATION_FAILURE'] as const
-export const VALIDATION_FIELDS = ['$', 'kind', 'level', 'paragraphs', 'nextQuestion', 'evidence', 'hypotheses', 'suggestions',
+export const VALIDATION_FIELDS = ['$', 'kind', 'level', 'paragraphs', 'nextQuestion', 'thinking', 'steps', 'code', 'evidence', 'hypotheses', 'suggestions',
   'syntax', 'variables', 'controlFlow', 'algorithm', 'illustrativeExamples', 'edits', 'rationale', 'reason', 'advice',
   'startOffset', 'endOffset', 'expectedOldText', 'replacementText'] as const
 export interface SmartValidationDiagnostic {
@@ -48,7 +48,7 @@ export function classifySmartOutput(value: unknown, action: { kind: SmartAction[
   try {
     if (isSmartOutput(value, action, source, evidence, expectedEol)) return undefined
     const kind = own(value, 'kind')
-    const keys = action.kind === 'HINT' ? ['kind', 'level', 'paragraphs', 'nextQuestion', 'evidence']
+    const keys = action.kind === 'HINT' ? ['kind', 'thinking', 'steps', 'code', 'evidence']
       : action.kind === 'ANALYZE' ? ['kind', 'hypotheses', 'suggestions', 'evidence']
         : action.kind === 'EXPLAIN' ? ['kind', 'syntax', 'variables', 'controlFlow', 'algorithm', 'illustrativeExamples']
           : kind === 'NO_FIX' ? ['kind', 'reason', 'advice'] : ['kind', 'edits', 'rationale', 'evidence']
