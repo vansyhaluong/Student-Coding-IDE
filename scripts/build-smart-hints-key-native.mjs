@@ -20,7 +20,7 @@ const text = execFileSync(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c',
   `""${join(vs, 'VC/Auxiliary/Build/vcvars64.bat')}" >nul && set"`], { encoding: 'utf8', windowsHide: true, windowsVerbatimArguments: true })
 const env = { ...process.env }
 for (const line of text.split(/\r?\n/)) { const at = line.indexOf('='); if (at > 0) env[line.slice(0, at)] = line.slice(at + 1) }
-const output = join(root, 'out/main/native'); mkdirSync(output, { recursive: true })
+const output = process.env.STUDENT_IDE_BUILD_ROOT ? join(process.env.STUDENT_IDE_BUILD_ROOT, 'main/native') : join(root, 'out/main/native'); mkdirSync(output, { recursive: true })
 const result = spawnSync('cl.exe', ['/nologo', '/std:c++17', '/EHsc', '/W4', '/WX', '/MD', '/LD',
   '/D_WIN32_WINNT=0x0A00', '/DNAPI_VERSION=8', '/DNODE_GYP_MODULE_NAME=smart_hints_key', '/DHOST_BINARY="node.exe"',
   `/I${join(headers, 'include/node')}`, join(root, 'src/main/services/learning/smart-hints/native/key-entry.cpp'), hook,

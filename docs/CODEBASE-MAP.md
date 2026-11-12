@@ -1,5 +1,179 @@
 # Student Coding IDE Codebase Map
 
+## Practice Problem Description typography — actual paths, 2026-11-12
+
+- `src/renderer/src/features/learning/practice/ProblemDescriptionContent.tsx`:
+  read-only exercise article; safe Markdown/GFM rendering using existing packages.
+  `PracticeDescription.tsx` retains tab/submission ownership and mounts the article.
+- `src/renderer/src/features/learning/learning.css`: description-only Geist,
+  headings, prose, inline/fenced code, examples, lists and table containment.
+- `tests/renderer/problem-description.test.tsx`,
+  `tests/renderer/problem-description-layout.test.tsx` and
+  `tests/fixtures/learning/problem-description.ts`: focused content regressions and
+  hidden local Electron DOM/font/contrast/resize checks; no app preload or capture.
+- `tests/tsconfig.problem-description.json`: scoped test/component typecheck.
+
+## F6 — scoped session consent, actual paths, 2026-11-12
+
+- `src/main/services/learning/smart-hints/consent.ts`: RAM-only owner/document/
+  exercise/language/origin/provider grants, category-subset coverage, bounded expiry
+  and idempotent targeted revoke. Retains no source, selection text, Run content or key.
+- `smart-hints/service.ts` integrates fresh captured scopes and start-time approval;
+  `src/main/ipc/exercise-ipc-service.ts` authenticates the narrow revoke route.
+- `src/shared/contracts/smart-hints.ts`, `smart-hints-validation.ts` and
+  `src/preload/bridge/smart-hints.ts`: strict optional prepared/decision metadata,
+  explicit once/session/reuse modes and scoped revoke. Existing explicit version1
+  single-request starts do not create remembered grants.
+- `src/renderer/src/features/learning/practice/use-smart-hints.ts`: Main-verified
+  reuse, fresh capture/selection freeze, scope changes, learning cleanup and
+  fail-closed uncertain revoke. Source/model-version retirement preserves permission.
+- `practice/SmartHintsPanel.tsx`, `practice/smart-hints.css` and
+  `LearningAssistantPanel.tsx`: brief themed dialog, default-on remember checkbox,
+  collapsed technical details and header revoke control; Quick Actions unchanged.
+- `tests/fixtures/learning/smart-consent.ts`, `tests/main/smart-hints-consent.test.ts`,
+  `tests/renderer/smart-hints-consent.test.tsx`, `tests/tsconfig.smart-consent.json`:
+  focused fake-provider tests through real Main/registry/Preload/hook/dialog paths.
+  Existing F4 test adds consent-revoke/local-grant independence; old UI consent
+  fixture includes the new API and title. Build identity includes the consent module.
+
+## AI-SUGGEST-FIX-F5 — actual paths, 2026-11-11
+
+- src/shared/contracts/smart-hints.ts / smart-hints-validation.ts: separate
+  DETECT_ISSUES/DETECTION DTOs and action/output binding; new smart-detection.ts
+  validates issue fields, limits, evidence and exact UTF-16 quote/range.
+- src/main/services/learning/smart-hints/detection.ts (new): canonical Main issue
+  IDs, fixed suspected-AI provenance, unique exact-quote resolution for inaccurate
+  offsets with boundary/ambiguity checks and unlocated fallback; service.ts dispatches
+  it without an edit parser/proposal. gemini-schema.ts / gemini-provider.ts add
+  only detection schema/instructions; adapter.ts has the unsupported legacy
+  schema entry; validation-diagnostics.ts adds the source-free result enum.
+- src/renderer/src/features/learning/practice/practice-diagnostics.ts (new):
+  independent Monaco marker owner and editor-owned light-red line decorations,
+  snapshot checks, marker tooltips/list navigation and synchronous cleanup.
+  DetectionIssues.tsx (new) renders the readonly issue list; bottom Error Details
+  was removed per the 2026-11-12 user clarification.
+- PracticeEditor.tsx / PracticeWorkspace.tsx wire exact current model/revision,
+  no-selection routing and marker lifecycle; smart-hints-selection.ts
+  exposes renderer-local revealIssue only. SmartHintsPanel.tsx,
+  ../AssistantQuickActions.tsx and ../LearningAssistantPanel.tsx render detection
+  consent/cards and current-only issue actions. smart-hints.css styles light-red
+  error lines directly in the editor without a bottom details area.
+- tests/main/smart-detection.test.ts and tests/renderer/smart-detection-ui.test.tsx
+  (new): provider/schema/receipt/consent/lifecycle plus real Monaco markers and
+  readonly navigation/marker-tooltip tests. scripts/smoke-learning-assistant-offline.mjs
+  adds detect-f5/detect-f5-js using actual Electron bundles/IPC/Monaco and fake HTTP.
+- electron.vite.config.ts includes the new Main detection dependencies in the
+  build identity. No F5 Preload implementation, parser, Hint Apply, Run/Judge,
+  compiler or production dependency change; their existing dirty work is retained.
+
+## AG-02 — actual prototype files, 2026-11-11
+
+All under prototypes/ag02-opencode-v2 (repository already ignores prototypes/;
+these files are locally reviewable and have not been Git-added): package.json /
+package-lock.json (client2.2.7 only, no install scripts), pins.json (exact registry
+and binary identities), inspect-payload.py (SRI/PE/extract-only), broker.mjs
+(project-scoped read/search/proposal, no write), gateway.mjs (fake-loopback-only),
+fake-v2.mjs (explicit protocol fixture), client-probe.mjs / client-contract.ts
+(real V2 client runtime/type probes), run-electron.mjs (isolated Main bundle),
+prototype.test.mjs, isolation.mjs (unconditional no-bypass Engine launch gate),
+tsconfig.json and eslint.config.mjs (prototype-only checks).
+
+Downloaded tarball/extracted and static-relocated EXE are under
+out/ag02-opencode-assets; independent npm cache, test fixtures and Electron
+bundle/profile are under out/ag02-*. None are release or production assets.
+No Engine launcher, production AgentService, MCP integration or Gemini provider
+was implemented. Engine execution is BLOCKED by missing proven confinement;
+fake fixture tests must never be presented as real Engine acceptance.
+
+## AG-01 — Project Agent seams, design only, 2026-11-11
+
+Actual existing Local AI: renderer features/ai/AiChatPanel.tsx -> preload
+bridge/ai.ts -> shared/contracts/ai.ts channels -> main/ipc/ai-ipc-service.ts ->
+main/services/ai/ollama-service.ts; main/index.ts composes it and App.tsx mounts
+the panel in Project and a Learning overlay. No project tool authority exists.
+Proposed Project replacement must not activate tools in that Learning overlay.
+
+| Path relative to src/ | Current seam / proposed use | Exists? |
+| --- | --- | --- |
+| main/services/project/project-service.ts | Active-project authorization, transition guards/epochs | Yes; Agent integration planned |
+| main/services/filesystem/filesystem-service.ts | Scoped disk reads and normal Save owner; additional Agent secret/link/race policy needed | Yes |
+| main/services/search/search-service.ts | Bounded traversal concepts; existing exclusions do not enforce Agent secrets policy | Yes |
+| renderer/src/features/editor/models/editor-model-manager.ts | Model identity, snapshots, dirty state and native transactions | Yes; Agent capture/edit seam planned |
+| renderer/src/features/editor/use-editor-workspace.ts and auto-save.ts | Save/conflict owner; scoped Agent auto-save suppression needed | Yes; not modified by AG-01 |
+| main/services/learning/smart-hints/configuration.ts and native-key.ts | Existing encrypted key/native input; private key has no reuse API | Yes; proposed narrow Main credential port only |
+| main/ipc/ipc-handler-registry.ts and app/desktop-application.ts | Typed validation, authorization and owned shutdown composition | Yes |
+| shared/contracts/agent.ts and agent-validation.ts | Proposed capability DTOs, limits and exact validators | No; planned |
+| preload/bridge/agent.ts and main/ipc/agent-ipc-service.ts | Proposed validated agent namespace and owner routing | No; planned |
+| main/services/ai/agent/agent-service.ts | Proposed session/turn orchestration, scope, cancellation | No; planned |
+| main/services/ai/agent/engine-adapter.ts and engine-process.ts | Proposed pinned V2 client mapping, app-owned process/runtime | No; planned |
+| main/services/ai/agent/project-tools.ts and proposal-service.ts | Proposed Main-only read/search/propose policy and one-use grants | No; planned |
+| main/services/ai/agent/gemini-gateway.ts | Proposed bounded Gemini proxy; no Learning provider schema reuse | No; planned |
+| main/services/ai/gemini-credential-broker.ts | Proposed Main-only key dispatch leases; migration gated separately | No; planned |
+| renderer/src/features/ai/AgentPanel.tsx and use-agent-session.ts | Proposed Project-only adapter using existing presentation | No; planned |
+
+Future packaging seams: electron.vite.config.ts (Main client closure only),
+electron-builder.config.cjs and scripts/package-windows.mjs (verified
+resources/agent-engine closure, isolated candidate output), planned scoped
+agent tests/offline smoke. These paths are design inventory, not created modules
+or dependency approval. See ARCHITECTURE and IMPLEMENTATION-PLAN AG-01.
+
+## AI-HINT-APPLY-F4 — actual paths, 2026-11-11
+
+- Existing `smart-hints/parsers/SelectionFixGuard.cs` and `parsers/javascript.ts`:
+  Hint-only nested gap/adjacent statement/unique lexical empty-block resolution;
+  existing shared grammar and Selection Fix entry unchanged.
+- `src/shared/contracts/smart-hints{,-validation}.ts`, Main SmartHintsService and
+  `src/preload/bridge/smart-hints.ts`: correlated PARSER_RESOLVED proposal kind.
+- `practice/use-hint-apply.ts`: classification-specific safe denial and target guidance.
+- `tests/main/hint-apply-f4.test.ts`: exact SumToN/Sum C#/JS real-parser matrix;
+  existing `tests/renderer/hint-apply-ui.test.tsx` adds real Preload/IPC/Monaco cases.
+- `scripts/smoke-learning-assistant-offline.mjs hint-f4` / `hint-f4-js`: existing harness
+  expanded for real parser/Monaco/Diff/retry/Discard/syntax-uncertainty checks.
+- `scripts/package-windows.mjs --package-output <new out/directory>`: isolated
+  directory packaging only, refuses existing output or NSIS. F4 candidate is at
+  `out/hint-apply-f4-packaged/win-unpacked`; P2 release files are untouched.
+
+## WINDOWS-PACKAGING-P2 — actual paths, 2026-11-11
+
+- `scripts/prepare-csharp-ls.py`: developer-only pinned SHA-256 and NuGet signature
+  verification, private tool-path deployment and upstream dependency notices;
+  retains preparation inputs under `out/csharp-ls-prepare-*`.
+- `resources/csharp-ls/`: generated/ignored full relative tool-shim and .store
+  deployment, licenses and `deployment.json`; no global tool dependency.
+- `scripts/csharp-ls-payload.cjs`: packaging-hook verifier for identity, closure,
+  byte hashes and relative launcher. Used before/after staging and packaging.
+- `src/main/index.ts`: separate selection-fix and Hint context parser instances
+  both receive packaged external assetDirectory; app-owned provider path unchanged.
+- `tests/main/csharp-packaging.test.ts`: deployment integrity and installer gate.
+- `scripts/smoke-packaged-windows.mjs --p2`: copied/relocated executable, foreign
+  cwd, C# Monaco completion/diagnostics, JavaScript Project Run and JS/C# Learning Run.
+- `scripts/smoke-learning-assistant-offline.mjs`: optional
+  `C4C_PACKAGED_RESOURCES` validates exact production ASAR bytes and exercises
+  packaged paths with existing isolated fake HTTP/encryption, no live Gemini.
+- `scripts/package-windows.mjs --nsis`: retains APP_64, verifies its verbatim
+  embedding and extracted payload parity, writes Setup.exe SHA-256 checksum.
+- `release/Student Coding IDE Setup.exe` and `.exe.sha256`: generated/ignored
+  final P2 installer and checksum; retained contents audit under
+  `out/windows-packaging-E3oeAN/installer-contents`.
+
+## Windows packaging — actual paths, 2026-11-09
+
+- `electron-builder.config.cjs`: Windows x64/assisted NSIS, ASAR/native unpacking,
+  external Learning/parser assets, missing app-owned provider installer gate.
+- `scripts/package-windows.mjs`: isolated production/staging builds, minimal Main
+  dependency closure, patched Electron node-pty ABI verification and private-file/
+  credential-signature audits; retained outputs under `out/windows-packaging-*`.
+- `scripts/smoke-packaged-windows.mjs`: actual packaged executable, foreign cwd,
+  isolated temporary userData, real parsers/Run/Judge/storage, Monaco and native
+  Windows close/exit; no real Gemini request or production test hook.
+- `electron.vite.config.ts` and three native build scripts accept the build-only
+  `STUDENT_IDE_BUILD_ROOT` output override; normal development paths stay intact.
+- `src/main/index.ts`: packaged parser and private csharp-ls candidates use
+  `process.resourcesPath`; mutable user settings remain in Electron userData.
+- Generated executable: `release/win-unpacked/Student Coding IDE.exe` (ignored).
+  P1 provider input: `resources/csharp-ls/csharp-ls.exe` with its complete
+  deployment closure, pinned to 0.27.0; absent at P1, now supplied by P2 above.
+
 ## AI-C4-F2 Hint Apply integration — actual paths, 2026-11-08
 
 - `src/renderer/src/features/learning/practice/use-hint-apply.ts`: new current-Hint
@@ -1323,7 +1497,7 @@ There is no Orca source tree, submodule, runtime dependency, or copied Orca modu
 | Source Control | Git UI | `src/renderer/src/features/git/SourceControl.tsx` | Project-session Git status, selected-row stage/unstage, commit draft, local branch switch, bounded history, unavailable/unknown/applied recovery | Implemented 5E |
 | Settings | SettingsService | `src/main/services/settings/settings-service.ts`, `src/main/ipc/settings-ipc-service.ts`, `src/shared/contracts/settings.ts`, `src/preload/bridge/settings.ts` | Exact schema/default/update, trusted-frame IPC, Node/Git dependency guidance | 6 actual |
 | Persistence | PersistenceService | `src/main/services/persistence/persistence-service.ts` | Serialized atomic updates, v1-to-v2 app metadata migration, backup/corruption recovery | 2/6 actual |
-| Settings UI | Settings UI | `src/renderer/src/features/settings/` | Light/Dark/System, editor preferences, fixed shortcuts, dependency guidance and Recent Projects management | 6 actual |
+| Settings UI | Settings UI | `src/renderer/src/features/settings/` | Light/Dark/System, editor preferences, fixed shortcuts, dependency guidance and Recent Projects management; App shares the same dialog with the LearningWorkspace footer, themed through learning.css | 6 actual; Learning entry actual 2026-11-12 |
 | Test support | Service/IPC fixtures | `tests/` or colocated `*.test.ts` | Critical unit and integration gates | 2–7 |
 
 ## Phase 5E actual UI and verification paths

@@ -177,6 +177,76 @@ function check(input: FixParserInput): FixParserReason {
   } catch (reason) { return FIX_REASONS.has(reason) ? reason as FixParserReason : 'INTERNAL' }
 }
 const FIX_REASONS = new Set<unknown>(['SYNTAX', 'SIGNATURE', 'TARGET', 'WHOLE_FILE', 'STRUCTURE', 'UNSUPPORTED_GRAMMAR'])
+// Hint-only resolution. Shared grammar, signature and outside-target guards above
+// remain unchanged; offsets below always come from the physical parsed tree.
+function hintBlocks(entry: ts.FunctionDeclaration): ts.Block[] {
+  const blocks: ts.Block[] = []
+  const visit = (node: ts.Node) => { if (ts.isBlock(node)) blocks.push(node); ts.forEachChild(node, visit) }
+  visit(entry.body!); return blocks
+}
+function hintGap(blocks: ts.Block[], p: Parsed, source: string, point: number): ts.Block | undefined {
+  for (const block of blocks) {
+    let left = block.getStart(p.tree) + 1
+    for (const right of [...block.statements.map(s => s.getStart(p.tree)), block.end - 1]) {
+      if (point >= left && point <= right && trivia(source.slice(left, point)) && trivia(source.slice(point, right))) return block
+      const statement = block.statements.find(s => s.getStart(p.tree) === right)
+      if (statement) left = statement.end
+    }
+  }
+  return undefined
+}
+function assignmentName(statement: ts.Statement): string | undefined {
+  if (!ts.isExpressionStatement(statement) || !ts.isBinaryExpression(statement.expression)) return
+  const e = statement.expression
+  return e.operatorToken.kind >= ts.SyntaxKind.FirstAssignment && e.operatorToken.kind <= ts.SyntaxKind.LastAssignment
+    && ts.isIdentifier(e.left) ? e.left.text : undefined
+}
+function hintBound(block: ts.Block, point: number, fragment: readonly ts.Statement[], entry: ts.FunctionDeclaration): boolean {
+  if (!fragment.length || fragment.some(s => !assignmentName(s))) return false
+  const names = new Set(entry.parameters.map(p => p.name.getText()))
+  for (let owner: ts.Node | undefined = block; owner; owner = owner.parent) {
+    if (ts.isBlock(owner)) for (const s of owner.statements) {
+      if (s.end <= point && ts.isVariableStatement(s)) for (const d of s.declarationList.declarations) if (ts.isIdentifier(d.name)) names.add(d.name.text)
+    }
+    if ((ts.isForStatement(owner) || ts.isForOfStatement(owner) || ts.isForInStatement(owner))
+      && owner.initializer && ts.isVariableDeclarationList(owner.initializer)) {
+      for (const d of owner.initializer.declarations) if (ts.isIdentifier(d.name)) names.add(d.name.text)
+    }
+    if (owner === entry) break
+  }
+  let bound = true
+  const visit = (node: ts.Node) => { if (ts.isIdentifier(node) && !names.has(node.text)) bound = false; ts.forEachChild(node, visit) }
+  fragment.forEach(visit); return bound
+}
+function hintCaret(p: Parsed, source: string, code: string, base: FixParserInput, point: number | undefined) {
+  const blocks = hintBlocks(p.entry)
+  const gap = point === undefined ? undefined : hintGap(blocks, p, source, point)
+  if (point !== undefined && !gap && point !== 0 && point !== source.length) bad('TARGET')
+  const a = p.entry.body!.getStart(p.tree) + 1, b = p.entry.body!.end - 1
+  const fragmentSource = source.slice(0, a) + code + source.slice(b)
+  const fragment = parse(fragmentSource, { ...base, source: fragmentSource }).entry.body!.statements
+  if (!fragment.length) bad('SYNTAX')
+  if (gap) {
+    if (fragment.length === 1) {
+      const next = fragment[0], assignment = assignmentName(next)
+      const adjacent = gap.statements.filter(s => (s.end <= point! && trivia(source.slice(s.end, point))
+        || s.getStart(p.tree) >= point! && trivia(source.slice(point, s.getStart(p.tree))))
+        && (ts.isReturnStatement(next) && ts.isReturnStatement(s)
+          || assignment && assignmentName(s) === assignment && hintBound(gap, point!, fragment, p.entry)))
+      if (adjacent.length > 1) bad('TARGET')
+      if (adjacent.length === 1) return { start: adjacent[0].getStart(p.tree), end: adjacent[0].end }
+    }
+    if (fragment.some(s => !assignmentName(s)) || hintBound(gap, point!, fragment, p.entry)) return { start: point!, end: point! }
+  }
+  // Inference is conservative: no ranking, text search, declarations or control-
+  // flow fragments. All identifiers must be bound at one and only one empty block.
+  if (blocks.length > 128) bad('TARGET')
+  const inferred = blocks.filter(block => !block.statements.length
+    && hintBound(block, block.getStart(p.tree) + 1, fragment, p.entry))
+  if (inferred.length !== 1) bad('TARGET')
+  const start = inferred[0].getStart(p.tree) + 1
+  return { start, end: start }
+}
 /** Separate admission: never alters selection-fix check/grammar. */
 function hintApply(input: HintApplyParserInput): HintApplyParserEdit | HintApplyParserFailure {
   let stage: HintApplyParserFailure['stage'] = 'CLASSIFICATION'
@@ -199,16 +269,22 @@ function hintApply(input: HintApplyParserInput): HintApplyParserEdit | HintApply
       replacementText = input.code.slice(code.entry.body!.getStart(code.tree), code.entry.body!.end)
     } else {
       stage = 'TARGET'
-      if (!input.selection) return fail()
-      ;({ start, end } = input.selection)
-      if (start === end) {
-        // Only an immediate entry-body statement boundary, never an arbitrary cursor.
-        const body = entry.body!, points = [body.getStart(before.tree) + 1, body.end - 1,
-          ...body.statements.flatMap(s => [s.getStart(before.tree), s.end])]
-        if (!points.includes(start)) return fail()
+      if (!input.selection || input.selection.start === input.selection.end) {
+        try { ({ start, end } = hintCaret(before, input.source, input.code, base, input.selection?.start)) }
+        catch (reason) { if (reason !== 'TARGET') stage = 'CANDIDATE'; throw reason }
       } else {
+        ;({ start, end } = input.selection)
         const selected = target(before, input.source, start, end)
         if (!selected || selected.owner !== entry || selected.kind === 'FUNCTION') return fail()
+        let control = false
+        const visit = (node: ts.Node) => {
+          if (node.getStart(before.tree) >= start && node.end <= end
+            && (ts.isBlock(node) || ts.isIfStatement(node) || ts.isForStatement(node) || ts.isForOfStatement(node)
+              || ts.isForInStatement(node) || ts.isWhileStatement(node) || ts.isDoStatement(node) || ts.isTryStatement(node) || ts.isSwitchStatement(node))) control = true
+          ts.forEachChild(node, visit)
+        }
+        visit(entry.body!)
+        if (control) return fail()
       }
     }
     if (start === 0 && end === input.source.length) return fail()
@@ -226,7 +302,7 @@ function hintApply(input: HintApplyParserInput): HintApplyParserEdit | HintApply
     return { start, end, replacementText }
   } catch (reason) {
     if (reason === 'SIGNATURE' && stage !== 'SOURCE_PARSE') stage = 'SIGNATURE'
-    return fail(reason === 'UNSUPPORTED_GRAMMAR' ? 'UNSUPPORTED' : undefined)
+    return fail(reason === 'UNSUPPORTED_GRAMMAR' && stage === 'SOURCE_PARSE' ? 'UNSUPPORTED' : undefined)
   }
 }
 if (parentPort) {

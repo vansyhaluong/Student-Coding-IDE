@@ -6,6 +6,7 @@ export const SMART_HINT_CHANNELS = {
   status: 'smart-hints:status', cancel: 'smart-hints:cancel', retireContext: 'smart-hints:retire-context',
   prepareHintApply: 'smart-hints:prepare-hint-apply',
   consumeHintApply: 'smart-hints:consume-hint-apply', discardHintApply: 'smart-hints:discard-hint-apply',
+  revokeConsent: 'smart-hints:revoke-consent',
 } as const
 export const SMART_HINT_POLICY = Object.freeze({ sourceBytes: 16384, statementBytes: 8192,
   taskBytes: 8192, selectionBytes: 8192, runBytes: 8192, requestBytes: 65536, wireBytes: 98304,
@@ -13,13 +14,13 @@ export const SMART_HINT_POLICY = Object.freeze({ sourceBytes: 16384, statementBy
   resultMs: 300000, sessionMs: 1800000, edits: 4, editBytes: 16384, editLines: 200,
   perMinute: 6, perHour: 30, summaryBytes: 1024 })
 /** Normal Gemini action policy; other providers and shared defaults stay unchanged. */
-export const geminiActionTimeoutMs = (kind: SmartAction['kind']): number => kind === 'SUGGEST_FIX' ? 30000 : SMART_HINT_POLICY.timeoutMs
+export const geminiActionTimeoutMs = (kind: SmartAction['kind']): number => kind === 'SUGGEST_FIX' || kind === 'DETECT_ISSUES' ? 30000 : SMART_HINT_POLICY.timeoutMs
 export interface SmartSelection {
   startOffset: number; endOffset: number; text: string
   startLine: number; startColumn: number; endLine: number; endColumn: number
 }
 // Legacy level is accepted only as input compatibility and normalized away.
-export type SmartAction = { kind: 'HINT'; level?: 1 | 2 | 3 } | { kind: 'ANALYZE' }
+export type SmartAction = { kind: 'HINT'; level?: 1 | 2 | 3 } | { kind: 'ANALYZE' } | { kind: 'DETECT_ISSUES' }
   | { kind: 'EXPLAIN'; selection: SmartSelection } | { kind: 'SUGGEST_FIX'; selection: SmartSelection }
 export type SmartOrigin = { kind: 'PRACTICE'; modelId: string; modelVersion: number; eol: 'LF' | 'CRLF' }
   | { kind: 'SOLUTION'; blockId: string }
@@ -46,12 +47,23 @@ export interface PrepareHintApply {
 export interface HintApplyProposal {
   schemaVersion: 1; requestId: string; proposalId: string; hint: SmartReference
   binding: SmartBinding; expiresAt: number
-  target: { kind: 'TEMPLATE_BODY' | 'SELECTION'; startOffset: number; endOffset: number }
+  target: { kind: 'TEMPLATE_BODY' | 'SELECTION' | 'PARSER_RESOLVED'; startOffset: number; endOffset: number }
   output: Extract<SmartOutput, { kind: 'EDIT_PROPOSAL' }>
 }
 export interface ConsumeHintApply { preparation: PrepareHintApply; proposalId: string }
 export interface DiscardHintApply { hint: SmartReference; requestId: string }
-export interface SmartStart extends SmartReference { captureToken: string; consentVersion: 1; consentGranted: true }
+export interface SmartConsentScope { source: true; selection: boolean; runEvidence: boolean }
+export interface SmartConsentContext {
+  sessionId: string; expiresAt: number; providerMode: SmartCapabilities['providerMode']
+  scope: SmartConsentScope; reusable: boolean
+}
+export interface SmartConsentDecision { sessionId: string; mode: 'ONCE' | 'SESSION' | 'REUSE' }
+export interface SmartConsentReference { sessionId: string }
+export interface SmartStart extends SmartReference {
+  captureToken: string; consentVersion: 1; consentGranted: true
+  /** Omission retains explicit single-request consent for existing clients. */
+  consent?: SmartConsentDecision
+}
 export interface SmartRetire { clientContextId: string; reason: 'EDIT' | 'RESET' | 'RESTORE' | 'EXERCISE' | 'LANGUAGE' | 'LEARNING_LEFT' }
 export interface SmartBinding {
   clientContextId: string; contextGeneration: number; exerciseId: string; language: ExerciseLanguage
@@ -60,11 +72,19 @@ export interface SmartBinding {
 }
 export interface SmartEdit { startOffset: number; endOffset: number; expectedOldText: string; replacementText: string; rationale: string }
 export type SmartOutput =
+  | { kind: 'DETECTION'; issues: SmartIssue[] }
   | { kind: 'HINT'; thinking: string; steps: string[]; code: { language: ExerciseLanguage; text: string }; evidence: string[] }
   | { kind: 'ANALYSIS'; hypotheses: string[]; suggestions: string[]; evidence: string[] }
   | { kind: 'EXPLANATION'; syntax: string; variables: string; controlFlow: string; algorithm: string; illustrativeExamples: string[] }
   | { kind: 'EDIT_PROPOSAL'; edits: SmartEdit[]; rationale: string; evidence: string[] }
   | { kind: 'NO_FIX'; reason: 'INSUFFICIENT_CONTEXT' | 'LOCATION_UNKNOWN' | 'NO_FOCUSED_CHANGE'; advice: string }
+export interface SmartIssue {
+  id: string; type: 'syntax' | 'logic' | 'runtime' | 'other'; severity: 'error' | 'warning' | 'info'
+  message: string; explanation: string; reason: string; impact: string; guidance: string; evidence: string[]
+  range: { startOffset: number; endOffset: number; quote: string } | null
+  locationStatus: 'LOCATED' | 'UNLOCATED' | 'INVALID_AI_RANGE'
+  provenance: 'AI_INFERENCE'; verification: 'SUSPECTED'
+}
 export interface SmartRunObservation {
   evidenceId: string; sampleOrdinal: number; input: ExerciseValue[]; expected: ExerciseValue; actual: ExerciseValue
 }
@@ -79,7 +99,7 @@ interface StatusBase extends SmartReference { schemaVersion: 1; sequence: number
 export type SmartStatus = StatusBase & (
   { state: 'PREPARING' | 'RUNNING' | 'CANCELLED' | 'EXPIRED' }
   | { state: 'PREPARED'; captureToken: string; expiresAt: number; consentVersion: 1;
-    statementBytes: number; runContextKind: SmartRunContext['kind'] }
+    statementBytes: number; runContextKind: SmartRunContext['kind']; consent?: SmartConsentContext }
   | { state: 'FAILED'; code: SmartFailure }
   | { state: 'COMPLETE'; output: SmartOutput; runContext: SmartRunContext; expiresAt: number; proposalId: string | null })
 export interface SmartCapabilities {
@@ -87,6 +107,7 @@ export interface SmartCapabilities {
   suggestFixMode: 'DISABLED' | 'SELECTION_V1'; suggestFixLanguages: ExerciseLanguage[]
 }
 export interface SmartHintsApi {
+  revokeConsent(request: SmartConsentReference): Promise<AppResult<null>>
   prepareHintApply(request: PrepareHintApply): Promise<AppResult<HintApplyProposal>>
   consumeHintApply(request: ConsumeHintApply): Promise<AppResult<HintApplyProposal>>
   discardHintApply(request: DiscardHintApply): Promise<AppResult<null>>

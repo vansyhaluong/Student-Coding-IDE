@@ -3,10 +3,12 @@ import { isExerciseId, matchesExerciseType, type ExerciseType } from './practice
 import { SMART_HINT_POLICY as P, SMART_FAILURES, type SmartPrepare, type SmartReference, type SmartStart,
   type SmartRetire, type SmartAction, type SmartOrigin, type SmartBinding, type SmartOutput,
   type SmartRunContext, type SmartStatus, type SmartCapabilities, type SmartEdit } from './smart-hints'
+import type { SmartConsentContext, SmartConsentReference } from './smart-hints'
 import type { ValidationResult } from './validation'
 import type { PrepareHintApply, HintApplyProposal, ConsumeHintApply, DiscardHintApply } from './smart-hints'
 import { HINT_APPLY_MAX_ATTEMPTS, HINT_APPLY_STAGES } from './smart-hints'
 import type { AppError } from './app-error'
+import { isDetection } from './smart-detection'
 
 /** Accept only a correlated, bounded Main failure; never treat transport errors as retry permission. */
 export function isHintApplyFailure(error: AppError, q: PrepareHintApply): boolean {
@@ -59,7 +61,7 @@ export function isHintApplyProposal(v: unknown): v is HintApplyProposal {
     || v.schemaVersion !== 1 || !smartUuid(v.requestId) || !smartUuid(v.proposalId) || !validateSmartReference(v.hint).ok
     || !isSmartBinding(v.binding) || v.binding.action.kind !== 'HINT' || v.binding.origin.kind !== 'PRACTICE'
     || !smartInteger(v.expiresAt, 1) || !fields(v.target, ['kind', 'startOffset', 'endOffset'])
-    || !['TEMPLATE_BODY', 'SELECTION'].includes(v.target.kind as string)
+    || !['TEMPLATE_BODY', 'SELECTION', 'PARSER_RESOLVED'].includes(v.target.kind as string)
     || !smartInteger(v.target.startOffset) || !smartInteger(v.target.endOffset) || v.target.endOffset < v.target.startOffset
     || !isSmartOutput(v.output) || v.output.kind !== 'EDIT_PROPOSAL' || v.output.edits.length !== 1) return false
   const edit = v.output.edits[0]
@@ -111,7 +113,7 @@ function origin(v: unknown): v is SmartOrigin {
     || fields(v, ['kind', 'blockId']) && v.kind === 'SOLUTION' && smartUuid(v.blockId)
 }
 function action(v: unknown): v is SmartAction {
-  if (fields(v, ['kind'])) return v.kind === 'ANALYZE' || v.kind === 'HINT'
+  if (fields(v, ['kind'])) return v.kind === 'ANALYZE' || v.kind === 'HINT' || v.kind === 'DETECT_ISSUES'
   if (fields(v, ['kind', 'level'])) return v.kind === 'HINT' && [1, 2, 3].includes(v.level as number)
   if (!fields(v, ['kind', 'selection']) || (v.kind !== 'EXPLAIN' && v.kind !== 'SUGGEST_FIX')) return false
   const s = v.selection
@@ -211,6 +213,7 @@ export function isSmartHintCode(v: unknown, expectedLanguage?: string): boolean 
 }
 export function isSmartOutput(v: unknown, a?: { kind: SmartAction['kind']; level?: number }, source?: string, evidence?: string[], expectedEol?: 'LF' | 'CRLF', expectedLanguage?: string): v is SmartOutput {
   let valid = false
+  if (isDetection(v, source, evidence)) return (!a || a.kind === 'DETECT_ISSUES') && smartBytes(v) <= P.resultBytes
   if (fields(v, ['kind', 'thinking', 'steps', 'code', 'evidence'])) valid = v.kind === 'HINT'
     && smartText(v.thinking, 4096) && list(v.steps, 2048) && v.steps.length > 0 && isSmartHintCode(v.code, expectedLanguage)
     && list(v.evidence, 16) && (!a || a.kind === 'HINT')
@@ -234,9 +237,10 @@ export function isSmartStatus(v: unknown): v is SmartStatus {
   if (o.schemaVersion !== 1 || !smartUuid(o.requestId) || !smartUuid(o.operationId) || !smartInteger(o.sequence) || !isSmartBinding(o.binding)) return false
   if (['PREPARING', 'RUNNING', 'CANCELLED', 'EXPIRED'].includes(o.state as string)) return fields(o, base)
   if (o.state === 'FAILED') return fields(o, [...base, 'code']) && SMART_FAILURES.includes(o.code as never)
-  if (o.state === 'PREPARED') return fields(o, [...base, 'captureToken', 'expiresAt', 'consentVersion', 'statementBytes', 'runContextKind'])
+  if (o.state === 'PREPARED') return fields(o, [...base, 'captureToken', 'expiresAt', 'consentVersion', 'statementBytes', 'runContextKind', ...(Object.hasOwn(o, 'consent') ? ['consent'] : [])])
     && smartUuid(o.captureToken) && smartInteger(o.expiresAt, 1) && o.consentVersion === 1 && smartInteger(o.statementBytes)
     && o.statementBytes <= P.statementBytes && ['CODE_ONLY', 'RUN_PUBLIC'].includes(o.runContextKind as string)
+    && (!Object.hasOwn(o, 'consent') || isSmartConsentContext(o.consent))
   if (o.state !== 'COMPLETE' || !fields(o, [...base, 'output', 'runContext', 'expiresAt', 'proposalId']) || !isSmartRunContext(o.runContext)
     || !isSmartOutput(o.output, o.binding.action, undefined, o.runContext.kind === 'RUN_PUBLIC' ? o.runContext.observations.map(x => x.evidenceId) : [], undefined, o.binding.language)
     || !smartInteger(o.expiresAt, 1) || (o.output.kind === 'EDIT_PROPOSAL' ? !smartUuid(o.proposalId) : o.proposalId !== null)) return false
@@ -252,8 +256,20 @@ export const validateSmartPrepare = (v: unknown) => {
   return result
 }
 export const validateSmartReference = (v: unknown) => checked<SmartReference>(v, x => fields(x, ['requestId', 'operationId']) && smartUuid(x.requestId) && smartUuid(x.operationId))
-export const validateSmartStart = (v: unknown) => checked<SmartStart>(v, x => fields(x, ['requestId', 'operationId', 'captureToken', 'consentVersion', 'consentGranted'])
-  && smartUuid(x.requestId) && smartUuid(x.operationId) && smartUuid(x.captureToken) && x.consentVersion === 1 && x.consentGranted === true)
+export function isSmartConsentContext(v: unknown): v is SmartConsentContext {
+  return fields(v, ['sessionId', 'expiresAt', 'providerMode', 'scope', 'reusable']) && smartUuid(v.sessionId)
+    && smartInteger(v.expiresAt, 1) && ['DISABLED', 'FAKE', 'GEMINI_FREE', 'OPENROUTER_FREE'].includes(v.providerMode as string)
+    && typeof v.reusable === 'boolean' && fields(v.scope, ['source', 'selection', 'runEvidence']) && v.scope.source === true
+    && typeof v.scope.selection === 'boolean' && typeof v.scope.runEvidence === 'boolean'
+}
+export const validateSmartConsentReference = (v: unknown) => checked<SmartConsentReference>(v,
+  x => fields(x, ['sessionId']) && smartUuid(x.sessionId))
+export const validateSmartStart = (v: unknown) => checked<SmartStart>(v, x => {
+  const hasConsent = !!x && typeof x === 'object' && Object.hasOwn(x, 'consent')
+  return fields(x, ['requestId', 'operationId', 'captureToken', 'consentVersion', 'consentGranted', ...(hasConsent ? ['consent'] : [])])
+    && smartUuid(x.requestId) && smartUuid(x.operationId) && smartUuid(x.captureToken) && x.consentVersion === 1 && x.consentGranted === true
+    && (!hasConsent || fields(x.consent, ['sessionId', 'mode']) && smartUuid(x.consent.sessionId) && ['ONCE', 'SESSION', 'REUSE'].includes(x.consent.mode as string))
+})
 export const validateSmartRetire = (v: unknown) => checked<SmartRetire>(v, x => fields(x, ['clientContextId', 'reason']) && smartUuid(x.clientContextId)
   && ['EDIT', 'RESET', 'RESTORE', 'EXERCISE', 'LANGUAGE', 'LEARNING_LEFT'].includes(x.reason as string))
 export function isSmartCapabilities(v: unknown): v is SmartCapabilities {

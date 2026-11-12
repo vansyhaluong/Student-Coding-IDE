@@ -75,6 +75,9 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
   const explain = useCallback((snapshot: SmartSourceSnapshot) => { if (snapshot.selection) void beginSmart({ kind: 'EXPLAIN', selection: snapshot.selection }, snapshot) }, [beginSmart])
   const [hintNotice, setHintNotice] = useState('')
   const [fix, setFix] = useState<ReviewFix>()
+  const detectionResult = assistantVisible && hints.view.result?.output.kind === 'DETECTION' ? hints.view.result : undefined
+  const detection = detectionResult?.output.kind === 'DETECTION' && hints.capturedSource === code
+    ? { source: code, binding: detectionResult.binding, issues: detectionResult.output.issues } : undefined
   const applyBlocked = !active || !ready || locked || execution.busy || submission.view.busy || reset || hints.capabilities?.applyEnabled !== true
   const hintApply = useHintApply({ hints, slot, active: assistantVisible, blocked: applyBlocked,
     capture: () => editor.current?.captureHintApply?.(), onReview: setFix })
@@ -105,6 +108,7 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
     </section>)}
   </section>
   const quick = { hints, slot, hintApply, notice: hintNotice,
+    onIssue: (id: string) => { editor.current?.revealIssue?.(id) },
     onDiscard: (operationId: string) => {
       if (hints.view.result?.operationId !== operationId || !hints.previewFix()) return
       setFix(undefined); hints.cancel(); setHintNotice('Đã bỏ đề xuất. Code giữ nguyên.'); editor.current?.focus()
@@ -117,6 +121,12 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
     onExplain: () => { const snapshot = capture(); if (snapshot?.selection) explain(snapshot); else setHintNotice('Hãy chọn một hoặc nhiều dòng trong Code Editor rồi yêu cầu giải thích.') },
     onAction: (kind: 'HINT' | 'ANALYZE' | 'SUGGEST_FIX') => {
         if (kind === 'SUGGEST_FIX') {
+          if (fixReadiness?.state === 'UNAVAILABLE' && fixReadiness.reason === 'NO_SELECTION') {
+            const whole = capture()
+            if (whole && !whole.selection && ['GEMINI_FREE', 'FAKE'].includes(hints.capabilities?.providerMode ?? ''))
+              void beginSmart({ kind: 'DETECT_ISSUES' }, whole)
+            return
+          }
           if (hints.capabilities?.suggestFixMode !== 'SELECTION_V1' || !hints.capabilities.suggestFixLanguages.includes(language)) return
           const snapshot = editor.current?.captureFix?.()
           if (!snapshot || snapshot.exerciseId !== exercise.id || snapshot.language !== language || snapshot.source !== code
@@ -170,6 +180,7 @@ export function PracticeWorkspace({ exercises, chapter, drafts, exercise, langua
         </div>}
         <div className="practice-editor" aria-label="Code Editor" hidden={panelDock === 'editor' && panelSize === 'expanded'}><Suspense fallback={<p>Đang tải Code Editor…</p>}><PracticeEditor key={`${exercise.id}/${language}`} exercise={exercise} language={language} code={code} sourceReplacement={sourceReplacement} readOnly={locked}
           sourceRevision={sourceRevision} applyBlocked={applyBlocked}
+          detection={detection}
           onHintEditor={setHintEditor} onFixSelectionReadiness={onFixReadiness} onExplain={explain} onHintInvalidated={hints.invalidate} onChange={value => { hints.invalidate('EDIT'); onEdit(value) }} /></Suspense></div>
         <RunErrorAlert key={`${exercise.id}/${language}/${runRequest}`} exercise={exercise} language={language} execution={execution}
           hidden={panelDock === 'editor' && panelSize === 'expanded'} />

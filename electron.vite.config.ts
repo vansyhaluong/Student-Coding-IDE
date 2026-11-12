@@ -6,6 +6,7 @@ import { resolve } from 'node:path'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import type { Plugin } from 'vite'
+const productionRoot = process.env.STUDENT_IDE_BUILD_ROOT
 import { exercisePackageAssetsPlugin, exercisePackageRendererBoundary } from './src/main/services/learning/content/exercise-package-build'
 
 function smartHintsParserAssetsPlugin(): Plugin {
@@ -21,8 +22,8 @@ export default defineConfig({
     // Reproducible identity of the diagnostics implementation and its acceptance
     // dependencies. No Git/host/path/credential identity or runtime I/O.
     define: { __SMART_HINTS_BUILD_ID__: JSON.stringify(createHash('sha256').update([
-      'package.json', 'electron.vite.config.ts', 'src/shared/contracts/smart-hints.ts', 'src/shared/contracts/smart-hints-validation.ts',
-      ...['adapter', 'capture', 'hint-context', 'hint-apply-parser', 'service', 'configuration', 'execution-coordinator', 'gemini-transport', 'gemini-provider', 'gemini-schema', 'response-failure', 'validation-diagnostics',
+      'package.json', 'electron.vite.config.ts', 'src/shared/contracts/smart-hints.ts', 'src/shared/contracts/smart-hints-validation.ts', 'src/shared/contracts/smart-detection.ts',
+      ...['adapter', 'capture', 'consent', 'detection', 'hint-context', 'hint-apply-parser', 'service', 'configuration', 'execution-coordinator', 'gemini-transport', 'gemini-provider', 'gemini-schema', 'response-failure', 'validation-diagnostics',
         'selection-fix', 'selection-fix-diagnostics', 'selection-fix-guard', 'selection-fix-parser-runtime', 'selection-fix-protocol', 'selection-fix-sdk-resolver']
         .map(name => `src/main/services/learning/smart-hints/${name}.ts`),
       'src/main/services/learning/smart-hints/parsers/javascript.ts', 'src/main/services/learning/smart-hints/parsers/hint-context-javascript.ts', 'src/main/services/learning/smart-hints/parsers/SelectionFixGuard.cs',
@@ -32,7 +33,7 @@ export default defineConfig({
       'src/preload/bridge/learning-chat.ts',
     ].map(path => readFileSync(resolve(path), 'utf8')).join('\0')).digest('hex')) },
     // Shared Main chunks must retain the entry's native/ relative binding path.
-    build: { rollupOptions: { output: { chunkFileNames: '[name]-[hash].js' }, input: {
+    build: { ...(productionRoot ? { outDir: resolve(productionRoot, 'main') } : {}), rollupOptions: { output: { chunkFileNames: '[name]-[hash].js' }, input: {
       index: resolve('src/main/index.ts'),
       'run-runtime': resolve('src/main/services/run/run-runtime.ts'),
       'language-runtime': resolve('src/main/services/language/language-service-manager.ts'),
@@ -57,9 +58,10 @@ export default defineConfig({
     } }],
   },
 
-  preload: {},
+  preload: { build: productionRoot ? { outDir: resolve(productionRoot, 'preload') } : {} },
 
   renderer: {
+    build: productionRoot ? { outDir: resolve(productionRoot, 'renderer') } : {},
     worker: {
       // TypeScript's binder has required side effects despite upstream pure annotations.
       rollupOptions: { treeshake: { annotations: false } },

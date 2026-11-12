@@ -22,7 +22,7 @@ const environment = { ...process.env }
 for (const line of environmentText.split(/\r?\n/)) {
   const split = line.indexOf('='); if (split > 0) environment[line.slice(0, split)] = line.slice(split + 1)
 }
-const output = join(root, 'out/main/native/learning')
+const output = process.env.STUDENT_IDE_BUILD_ROOT ? join(process.env.STUDENT_IDE_BUILD_ROOT, 'main/native/learning') : join(root, 'out/main/native/learning')
 mkdirSync(output, { recursive: true })
 function compile(args) {
   const result = spawnSync('cl.exe', args, { cwd: output, env: environment, encoding: 'utf8', windowsHide: true })

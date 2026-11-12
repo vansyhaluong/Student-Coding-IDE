@@ -16,6 +16,14 @@ export function geminiResponseSchema(capture: SmartCapture): Schema {
   const ids = capture.runContext.kind === 'RUN_PUBLIC' ? capture.runContext.observations.map(o => o.evidenceId) : []
   const evidence = list(ids.length ? { type: 'string', enum: ids } : text, ids.length)
   switch (capture.action.kind) {
+    case 'DETECT_ISSUES': return object({ kind: literal('DETECTION'), issues: list(object({
+      type: { type: 'string', enum: ['syntax', 'logic', 'runtime', 'other'] },
+      severity: { type: 'string', enum: ['error', 'warning', 'info'] },
+      message: { type: 'string', minLength: 1, maxLength: 256 },
+      explanation: text, reason: text, impact: text, guidance: text, evidence,
+      range: { anyOf: [{ type: 'null' }, object({ startOffset: { type: 'integer', minimum: 0 },
+        endOffset: { type: 'integer', minimum: 1 }, quote: { type: 'string', minLength: 1, maxLength: 1024 } })] },
+    }), 8) })
     case 'HINT': return object({ kind: literal('HINT'),
       thinking: describe({ type: 'string', minLength: 1, maxLength: 4096 }, 'First: nonempty Vietnamese approach to this public exercise.'),
       steps: describe(list({ type: 'string', minLength: 1, maxLength: 2048 }, 8, 1), 'Second: concrete ordered implementation steps.'),

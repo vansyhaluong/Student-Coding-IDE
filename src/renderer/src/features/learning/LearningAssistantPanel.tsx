@@ -56,11 +56,12 @@ export function LearningAssistantPanel({ context, capture, onClose, quick }: {
     if (event.key === 'Escape' && !prepared && quick?.hints.view.phase !== 'consent' && !event.defaultPrevented) { event.preventDefault(); onClose() }
   }}>
     <header className="assistant-header"><div><Sparkles aria-hidden="true" /><h2>AI Learning Assistant</h2></div>
-      <button type="button" className="assistant-icon-button" aria-label="Đóng Learning Assistant" title="Đóng (Esc)" onClick={onClose}><X aria-hidden="true" /></button></header>
+      <div>{quick?.hints.canRevokeConsent && <button type="button" className="assistant-icon-button" aria-label="Thu hồi quyền AI trong phiên học" title="Thu hồi quyền AI trong phiên học" onClick={() => { void quick.hints.revokeConsent() }}><ShieldCheck aria-hidden="true" /></button>}
+        <button type="button" className="assistant-icon-button" aria-label="Đóng Learning Assistant" title="Đóng (Esc)" onClick={onClose}><X aria-hidden="true" /></button></div></header>
     <MessageScroller label="Hội thoại" viewportRef={viewport} className="assistant-scroller" viewportClassName="learning-assistant-timeline" smooth={false}
       contentProps={{ 'aria-label': 'Hội thoại' }}>
       {!rows.length && <div className="learning-assistant-empty"><span className="assistant-empty-icon"><Sparkles aria-hidden="true" /></span>
-        <h3>Cùng tìm hướng giải.</h3><p>Hỏi về bài học, giải thích code hoặc bắt đầu bằng một gợi ý.</p><small>Bạn xem xét và quyết định mọi thay đổi.</small></div>}
+        <h3>Cùng tìm hướng giải.</h3><p>Hỏi về bài học, giải thích code hoặc bắt đầu bằng một gợi ý.</p></div>}
       {rows.map(row => row.kind === 'CHAT' ? <div key={row.id} data-timeline-id={row.id}>
         {chat.session?.messages.filter(m => m.operationId === row.operationId).map(message => <Message key={message.messageId} from={message.role} data-message-id={message.messageId} data-role={message.role}>
           <MessageContent><MessageBubble variant={message.role === 'user' ? 'soft' : 'ghost'}><MessageBubbleContent>
@@ -81,7 +82,8 @@ export function LearningAssistantPanel({ context, capture, onClose, quick }: {
             <span role="status">{['preparing', 'starting', 'running'].includes(row.phase) && <MessageTyping label="Đang chờ phản hồi" />}{row.phase === 'result' ? 'Complete' : row.phase}</span></div>
           {row.message && <p role={row.phase === 'error' ? 'alert' : 'status'}>{row.message}</p>}
           {row.result && <><details className="assistant-evidence"><summary>Ngữ cảnh & bằng chứng</summary><RunEvidence context={row.result.runContext} /></details>
-            <Advisory output={row.result.output} source={row.source} markdown hintApply={row.operationId ? quick?.hintApply?.control(row.operationId) : undefined} />
+            <Advisory output={row.result.output} source={row.source} markdown hintApply={row.operationId ? quick?.hintApply?.control(row.operationId) : undefined}
+              onIssue={row.result.output.kind === 'DETECTION' && quick?.hints.view.result?.operationId === row.operationId ? quick?.onIssue : undefined} />
             {(context?.kind !== 'PRACTICE' || row.result.binding.exerciseId !== context.exerciseId || row.result.binding.language !== context.language
               || row.sourceRevision !== context.sourceRevision || row.result.expiresAt <= Date.now()) && <small className="assistant-provenance">Snapshot trước · chỉ tham khảo</small>}
             {row.result.output.kind === 'EDIT_PROPOSAL' && (quick && quick.hints.capabilities?.applyEnabled && quick.onPreview && quick.hints.view.result?.operationId === row.operationId && quick.hints.previewFix()
@@ -93,7 +95,7 @@ export function LearningAssistantPanel({ context, capture, onClose, quick }: {
       </Message>)}
     </MessageScroller>
     <div className="assistant-composer-area">
-      <div className="assistant-status-bar"><span className="learning-assistant-state" role="status">{quick?.hints.busy ? 'Busy · Quick Action' : chat.phase}{chat.status?.state === 'FAILED' ? ` · ${chat.status.code}` : ''}</span>
+      <div className="assistant-status-bar"><span className="learning-assistant-state sr-only" role="status">{quick?.hints.busy ? 'Busy · Quick Action' : chat.phase}{chat.status?.state === 'FAILED' ? ` · ${chat.status.code}` : ''}</span>
         <button type="button" className="assistant-icon-button" aria-label="Tin nhắn mới nhất" title="Tin nhắn mới nhất" onClick={toEnd}><ArrowDown aria-hidden="true" /></button></div>
       {chat.error && <p role="alert">{chat.error}</p>}
       {prepared && <section className="learning-assistant-consent" aria-label="Xác nhận gửi Gemini">
@@ -110,18 +112,17 @@ export function LearningAssistantPanel({ context, capture, onClose, quick }: {
         disabled={!chat.canSend || !!quick?.hints.busy || !!quick?.slot.current} loading={!!cancel} onStop={cancel} submitLabel="Send" stopLabel={quick?.hints.busy ? 'Hủy yêu cầu AI' : 'Cancel'} onSubmit={send}
         header={<>{quick ? <AssistantQuickActions quick={quick} blocked={busy || !!quick.slot.current} /> : <section className="learning-assistant-actions" aria-label="Quick Actions">
           <div className="smart-hints-actions">{['Hint', 'Analyze', 'Explain', 'Suggest Fix'].map(label => <button type="button" key={label} disabled>{label}</button>)}</div>
-          <small>Chọn bài tập trong Practice để dùng Quick Actions.</small></section>}</>}
+          </section>}</>}
         leadingAction={<label className="assistant-context-chip" title={scopeName}>{chat.scope === 'QUESTION_ONLY' ? <MessageSquare aria-hidden="true" /> : <FileCode2 aria-hidden="true" />}
           <select aria-label="Ngữ cảnh Chat" value={chat.scope} disabled={busy} onChange={e => chat.setScope(e.target.value as ChatScope)}>
             <option value="QUESTION_ONLY">Chỉ câu hỏi</option><option value="QUESTION_WITH_SELECTION" disabled={context?.kind !== 'PRACTICE'}>Code đã chọn</option>
             <option value="QUESTION_WITH_SOURCE" disabled={context?.kind !== 'PRACTICE'}>Toàn bộ source</option>
           </select></label>} />
-      {!prepared && <small className="assistant-consent-note">{chat.scope === 'QUESTION_ONLY' ? 'Không đính kèm code.' : 'Bạn sẽ xem code và xác nhận trước khi gửi.'}</small>}
       {quick?.hints.view.canCheck && <button type="button" onClick={quick.hints.check}>Kiểm tra trạng thái AI</button>}
-      <footer>Chỉ giữ hội thoại trong phiên này. Đóng panel để xóa.</footer>
+      {quick?.hints.consentError && <p role="alert">{quick.hints.consentError}</p>}
     </div>
     {quick?.hints.view.phase === 'consent' && quick.hints.view.prepared && <SmartHintsConsent prepared={quick.hints.view.prepared}
       gemini={quick.hints.capabilities?.providerMode === 'GEMINI_FREE'} openrouter={quick.hints.capabilities?.providerMode === 'OPENROUTER_FREE'}
-      onConfirm={() => { if (quick.slot.current?.kind !== 'CHAT') void quick.hints.consent() }} onCancel={quick.hints.cancel} />}
+      onConfirm={remember => { if (quick.slot.current?.kind !== 'CHAT') void quick.hints.consent(remember) }} onCancel={quick.hints.cancel} />}
   </aside>
 }

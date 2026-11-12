@@ -6,11 +6,13 @@ import { capturePracticeSelection, capturePracticeHintApply, createPracticeFixSe
 import type { Exercise, ExerciseLanguage } from '../../../../../shared/contracts/practice'
 import type { PracticeSourceReplacement } from './use-practice'
 import { applySmartFix } from './smart-hint-edits'
+import { attachDetection, type DetectionSnapshot } from './practice-diagnostics'
 
 const editorOptions = { automaticLayout: true, minimap: { enabled: false }, fontSize: 13, tabSize: 4,
   scrollBeyondLastLine: false, padding: { top: 16 } }
 
-export function PracticeEditor({ exercise, language, code, readOnly, onChange, sourceReplacement, onHintEditor, onExplain, onHintInvalidated, onFixSelectionReadiness, sourceRevision = 0, applyBlocked = true }: {
+export function PracticeEditor({ exercise, language, code, readOnly, onChange, sourceReplacement, onHintEditor, onExplain, onHintInvalidated, onFixSelectionReadiness, sourceRevision = 0, applyBlocked = true, detection }: {
+  detection?: DetectionSnapshot
   exercise: Exercise; language: ExerciseLanguage; code: string; readOnly: boolean; onChange(code: string): void
   sourceReplacement?: PracticeSourceReplacement
   onHintEditor?(value: PracticeHintEditor | undefined): void; onExplain?(snapshot: SmartSourceSnapshot): void
@@ -20,8 +22,18 @@ export function PracticeEditor({ exercise, language, code, readOnly, onChange, s
 }) {
   const initialCode = useRef(code)
   const instance = useRef<editor.IStandaloneCodeEditor | undefined>(undefined)
-  const latest = useRef({ onChange, sourceReplacement, exerciseId: exercise.id, language, onHintEditor, onExplain, onHintInvalidated, onFixSelectionReadiness, code, sourceRevision, applyBlocked, readOnly })
-  latest.current = { onChange, sourceReplacement, exerciseId: exercise.id, language, onHintEditor, onExplain, onHintInvalidated, onFixSelectionReadiness, code, sourceRevision, applyBlocked, readOnly }
+  const latest = useRef({ onChange, sourceReplacement, exerciseId: exercise.id, language, onHintEditor, onExplain, onHintInvalidated, onFixSelectionReadiness, code, sourceRevision, applyBlocked, readOnly, detection })
+  latest.current = { onChange, sourceReplacement, exerciseId: exercise.id, language, onHintEditor, onExplain, onHintInvalidated, onFixSelectionReadiness, code, sourceRevision, applyBlocked, readOnly, detection }
+  const diagnostic = useRef<ReturnType<typeof attachDetection> | undefined>(undefined)
+  const updateDetection = useCallback(() => {
+    diagnostic.current?.dispose(); diagnostic.current = undefined
+    const now = latest.current
+    if (instance.current && now.detection && now.detection.binding.sourceRevision === now.sourceRevision
+      && now.detection.binding.origin.kind === 'PRACTICE' && now.detection.binding.origin.modelId === modelIdentity.current?.id)
+      diagnostic.current = attachDetection(instance.current, monaco.editor, now.detection)
+  }, [])
+  useEffect(updateDetection, [detection, updateDetection])
+  useEffect(() => () => diagnostic.current?.dispose(), [])
   const action = useRef<{ dispose(): void } | undefined>(undefined)
   const modelIdentity = useRef<{ model: editor.ITextModel; id: string } | undefined>(undefined)
   const observers = useRef<{ dispose(): void }[]>([])
@@ -82,7 +94,8 @@ export function PracticeEditor({ exercise, language, code, readOnly, onChange, s
     }, value => latest.current.onFixSelectionReadiness?.(value))
     fixSelection.current = localFix
     let failed = false
-    latest.current.onHintEditor?.({ capture, captureFix: localFix.capture,
+    updateDetection()
+    latest.current.onHintEditor?.({ capture, captureFix: localFix.capture, revealIssue: id => diagnostic.current?.reveal(id) ?? false,
       captureHintApply: () => {
         capture() // Refresh model identity without changing selection.
         const now = latest.current
@@ -103,7 +116,7 @@ export function PracticeEditor({ exercise, language, code, readOnly, onChange, s
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyE],
       run: () => { const snapshot = capture(); if (snapshot?.selection) latest.current.onExplain?.(snapshot) },
     })
-  }, [replace])
+  }, [replace, updateDetection])
   const changed = useCallback((value: string | undefined) => { if (value !== undefined && !replacing.current) latest.current.onChange(value) }, [])
   return <Editor key={`${exercise.id}/${language}`} height="100%" theme="vs"
     path={`practice:///${exercise.id}/solution.${language === 'csharp' ? 'cs' : 'js'}`}

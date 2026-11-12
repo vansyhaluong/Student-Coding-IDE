@@ -81,6 +81,7 @@ function fixture(options: { language?: ExerciseLanguage; source?: string; contex
     revision: 1, modelVersion: 1, modelId: randomUUID(), active: true, exerciseId: 'synthetic' }
   const context = options.context ?? codeOnly
   const api = {
+    revokeConsent: vi.fn<SmartHintsApi['revokeConsent']>(async () => ok(null)),
     prepareHintApply: vi.fn<SmartHintsApi['prepareHintApply']>(async () => { throw Error('F1 is not connected to UI') }),
     consumeHintApply: vi.fn<SmartHintsApi['consumeHintApply']>(async () => { throw Error('No Hint Apply in drawer fixture') }),
     discardHintApply: vi.fn<SmartHintsApi['discardHintApply']>(async () => ok(null)),
@@ -146,7 +147,7 @@ function renderAdvisory(output: SmartOutput, source = 'function solve(x) { retur
   return f
 }
 async function click(name: string | RegExp) { await act(async () => { fireEvent.click(screen.getByRole('button', { name })) }) }
-async function prepare(name: string | RegExp) { await click(name); return screen.findByRole('dialog', { name: 'Cho phép gửi snapshot này?' }) }
+async function prepare(name: string | RegExp) { await click(name); return screen.findByRole('dialog', { name: 'Cho phép AI hỗ trợ bài này?' }) }
 async function consent() { await click('Đồng ý gửi snapshot') }
 
 describe('SH-2 drawer, per-action consent, progressive hints and advisory results', () => {

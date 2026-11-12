@@ -1,13 +1,14 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { AssistantCodeBlock } from '../AssistantCodeBlock'
 import { AssistantMarkdown } from '../AssistantMarkdown'
 import { Sparkles, X } from 'lucide-react'
 import type { SmartAction, SmartOutput, SmartRunContext, SmartStatus } from '../../../../../shared/contracts/smart-hints'
-import { geminiActionTimeoutMs } from '../../../../../shared/contracts/smart-hints'
+import { geminiActionTimeoutMs, SMART_HINT_POLICY } from '../../../../../shared/contracts/smart-hints'
 import { smartPosition } from '../../../../../shared/contracts/smart-hints-validation'
 import type { useSmartHints } from './use-smart-hints'
 import type { PracticeFixReadiness } from './smart-hints-selection'
 import type { HintCodeActions } from './use-hint-apply'
+import { DetectionIssues } from './DetectionIssues'
 
 type Controller = ReturnType<typeof useSmartHints>
 const actionLabel = (a: SmartAction | SmartStatus['binding']['action']) => a.kind === 'HINT' ? 'Hint'
@@ -25,7 +26,8 @@ export function RunEvidence({ context }: { context: SmartRunContext }) {
     </details>)}
   </section>
 }
-export function Advisory({ output, source, markdown = false, hintApply }: { output: SmartOutput; source?: string; markdown?: boolean; hintApply?: HintCodeActions }) {
+export function Advisory({ output, source, markdown = false, hintApply, onIssue }: { output: SmartOutput; source?: string; markdown?: boolean; hintApply?: HintCodeActions; onIssue?(id: string): void }) {
+  if (output.kind === 'DETECTION') return <DetectionIssues issues={output.issues} onIssue={onIssue} />
   const paragraph = (text: string) => markdown ? <AssistantMarkdown>{text}</AssistantMarkdown> : <p>{text}</p>
   if (output.kind === 'HINT') return <section aria-label="Hint">
     <section><h3>Gợi ý tư duy</h3>{paragraph(output.thinking)}</section>
@@ -47,8 +49,11 @@ export function Advisory({ output, source, markdown = false, hintApply }: { outp
         <p>{edit.rationale}</p><h4>Code cũ</h4><pre>{edit.expectedOldText || '(vị trí chèn)'}</pre><h4>Code đề xuất</h4><pre>{edit.replacementText || '(xóa đoạn code)'}</pre></section>
     })}<p className="smart-hints-muted">Đề xuất chỉ để đọc và tự kiểm chứng.</p></section>
 }
-export function SmartHintsConsent({ prepared, openrouter, gemini, onConfirm, onCancel }: { prepared: Extract<SmartStatus, { state: 'PREPARED' }>; openrouter: boolean; gemini: boolean; onConfirm(): void; onCancel(): void }) {
+export function SmartHintsConsent({ prepared, openrouter, gemini, onConfirm, onCancel }: { prepared: Extract<SmartStatus, { state: 'PREPARED' }>; openrouter: boolean; gemini: boolean; onConfirm(remember: boolean): void; onCancel(): void }) {
   const ref = useRef<HTMLDialogElement>(null), title = useId()
+  const [remember, setRemember] = useState(true)
+  const recipient = gemini ? 'Google Gemini' : openrouter ? 'OpenRouter' : 'dịch vụ AI đã cấu hình'
+  const selection = prepared.binding.action.kind === 'EXPLAIN' || prepared.binding.action.kind === 'SUGGEST_FIX'
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null, dialog = ref.current
     if (dialog?.showModal) dialog.showModal(); else dialog?.setAttribute('open', '')
@@ -56,17 +61,22 @@ export function SmartHintsConsent({ prepared, openrouter, gemini, onConfirm, onC
     return () => { dialog?.close?.(); if (previous?.isConnected) previous.focus() }
   }, [])
   return <dialog ref={ref} className="smart-hints-consent" aria-labelledby={title} aria-modal="true" onCancel={event => { event.preventDefault(); onCancel() }}>
-    <h2 id={title}>Cho phép gửi snapshot này?</h2><p>{actionLabel(prepared.binding.action)} · {prepared.binding.language === 'csharp' ? 'C#' : 'JavaScript'}
-      {prepared.binding.origin.kind === 'SOLUTION' ? ' · Solution, chỉ đọc' : ' · Practice'}</p>
-    <p>Source ({prepared.binding.sourceBytes} bytes), đề bài, constraints và signature công khai sẽ được gửi tới {gemini ? 'Google Gemini API' : openrouter ? 'OpenRouter và nhà cung cấp mô hình miễn phí được chọn' : 'DeepSeek'} cho yêu cầu này.</p>
-    {prepared.binding.action.kind === 'SUGGEST_FIX' && <p>Gemini nhận toàn bộ source và vùng chọn: dòng {prepared.binding.action.selection.startLine}:{prepared.binding.action.selection.startColumn} → {prepared.binding.action.selection.endLine}:{prepared.binding.action.selection.endColumn}. Chỉ vùng chọn đã xác nhận được đề xuất sửa; chưa Apply code.</p>}
-    {gemini && <><p>Google Gemini · gemini-3.1-flash-lite. Có kèm đoạn chọn khi Explain/Suggest Fix. Không gửi lại Hint trước. Chỉ gửi code bạn có quyền chia sẻ, không chứa secrets.</p><p>Ứng dụng không xác minh Free Tier hoặc billing. Có thể phát sinh phí và giới hạn theo project; nội dung có thể được Google xử lý/lưu theo chính sách tài khoản của bạn. Không tự retry hoặc chuyển mô hình. AI không thay thế việc tự kiểm chứng.</p></>}
-    {gemini && <p>Thời gian xử lý tối đa {geminiActionTimeoutMs(prepared.binding.action.kind) / 1000} giây cho yêu cầu này; bạn có thể hủy khi đang chờ.</p>}
-    {openrouter && <><p>Có kèm đoạn chọn khi Explain. Không gửi lại Hint trước. Chỉ gửi code bạn có quyền chia sẻ, không chứa secrets.</p>
-      <p>openrouter/free chỉ định tuyến mô hình miễn phí, phụ thuộc hạn mức và khả dụng; không tự retry. Chính sách lưu và sử dụng dữ liệu của OpenRouter và nhà cung cấp được chọn có thể khác nhau. AI không thay thế việc tự kiểm chứng.</p></>}
-    <p>{prepared.runContextKind === 'RUN_PUBLIC' ? 'Có kèm bằng chứng Run public đã được xác minh cho cùng snapshot.' : 'Không kèm kết quả Run khác snapshot.'}</p>
-    <p>Không gửi hidden tests. AI có thể nhận định sai; hãy kiểm chứng nội dung trả về.</p>
-    <div className="smart-hints-actions"><button type="button" onClick={onCancel}>Hủy</button><button type="button" onClick={onConfirm}>Đồng ý gửi snapshot</button></div>
+    <h2 id={title}>Cho phép AI hỗ trợ bài này?</h2>
+    <p>Gửi toàn bộ mã nguồn hiện tại và đề bài công khai tới {recipient} để hỗ trợ bài tập.
+      {selection && ' Có kèm vùng code bạn chọn.'}{prepared.runContextKind === 'RUN_PUBLIC' && ' Có kèm kết quả Run public phù hợp với code hiện tại.'}</p>
+    <label className="smart-consent-remember"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />Ghi nhớ trong phiên học này</label>
+    <p className="smart-hints-muted">Quyền chỉ áp dụng cho bài này và loại dữ liệu nêu trên. Gửi thêm loại dữ liệu sẽ hỏi lại; bạn có thể thu hồi quyền ở đầu panel AI.</p>
+    <details><summary>Chi tiết</summary>
+      <p>{actionLabel(prepared.binding.action)} · {prepared.binding.language === 'csharp' ? 'C#' : 'JavaScript'} · {prepared.binding.origin.kind === 'SOLUTION' ? 'Solution, chỉ đọc' : 'Practice'}</p>
+      <p>Source: {prepared.binding.sourceBytes} bytes; đề bài, constraints và signature công khai: {prepared.statementBytes} bytes.</p>
+      <p>Quyền ghi nhớ chỉ giữ trong RAM, tối đa {SMART_HINT_POLICY.sessionMs / 60000} phút; hết hiệu lực khi rời phiên học hoặc đổi bài/ngôn ngữ/provider.</p>
+      {selection && (prepared.binding.action.kind === 'EXPLAIN' || prepared.binding.action.kind === 'SUGGEST_FIX') && <p>Vùng chọn: dòng {prepared.binding.action.selection.startLine}:{prepared.binding.action.selection.startColumn} → {prepared.binding.action.selection.endLine}:{prepared.binding.action.selection.endColumn}.</p>}
+      {gemini && <><p>Google Gemini · gemini-3.1-flash-lite. Thời gian xử lý tối đa {geminiActionTimeoutMs(prepared.binding.action.kind) / 1000} giây; bạn có thể hủy khi đang chờ.</p>
+        <p>Có thể phát sinh phí và giới hạn theo tài khoản; Google có thể xử lý/lưu dữ liệu theo chính sách tài khoản của bạn. Ứng dụng không xác minh Free Tier hoặc billing.</p></>}
+      {openrouter && <p>OpenRouter · openrouter/free và nhà cung cấp được chọn có chính sách xử lý/lưu dữ liệu riêng.</p>}
+      <p>Không gửi hidden tests hoặc lịch sử Hint/Chat. Chỉ gửi code bạn có quyền chia sẻ, không chứa secrets. Không tự retry, chuyển mô hình hay sửa code; AI có thể nhận định sai.</p>
+    </details>
+    <div className="smart-hints-actions"><button type="button" onClick={onCancel}>Hủy</button><button type="button" onClick={() => onConfirm(remember)}>Đồng ý gửi snapshot</button></div>
   </dialog>
 }
 export function SmartHintsPanel({ hints, onAction, onExplain, onClose, notice, id, onPreview, selectionFixReadiness }: { hints: Controller; onAction(action: 'HINT' | 'ANALYZE' | 'SUGGEST_FIX'): void; onExplain(): void; onClose(): void; notice?: string; id?: string; onPreview?(): void; selectionFixReadiness?: PracticeFixReadiness }) {
@@ -74,6 +84,8 @@ export function SmartHintsPanel({ hints, onAction, onExplain, onClose, notice, i
   const enabled = capabilities?.enabled === true, result = view.result
   const fixEnabled = enabled && capabilities?.suggestFixMode === 'SELECTION_V1'
     && capabilities.suggestFixLanguages.includes(hints.language)
+  const detectEnabled = enabled && ['GEMINI_FREE', 'FAKE'].includes(capabilities?.providerMode ?? '')
+    && selectionFixReadiness?.state === 'UNAVAILABLE' && selectionFixReadiness.reason === 'NO_SELECTION'
   const range = hints.frozenSelection ?? (selectionFixReadiness?.state === 'READY' ? selectionFixReadiness.range : undefined)
   return <aside id={id} className="smart-hints-drawer" aria-labelledby={title} onKeyDown={event => {
     if (event.key === 'Escape' && view.phase !== 'consent') { event.preventDefault(); event.stopPropagation(); onClose() }
@@ -91,11 +103,11 @@ export function SmartHintsPanel({ hints, onAction, onExplain, onClose, notice, i
       <div className="smart-hints-actions"><button type="button" disabled={!enabled || hints.busy} onClick={() => onAction('HINT')}>Hint</button>
         <button type="button" disabled={!enabled || hints.busy} onClick={() => onAction('ANALYZE')}>Analyze Code & Run</button>
         <button type="button" disabled={!enabled || hints.busy} onClick={onExplain}>Explain Selected Code (Practice)</button>
-        <button type="button" disabled={!fixEnabled || hints.busy || selectionFixReadiness?.state !== 'READY'} onClick={() => onAction('SUGGEST_FIX')}>Suggest Fix</button></div>
+        <button type="button" disabled={hints.busy || !(detectEnabled || fixEnabled && selectionFixReadiness?.state === 'READY')} onClick={() => onAction('SUGGEST_FIX')}>Suggest Fix</button></div>
       <p className="smart-hints-muted" aria-label="Chuẩn bị vùng chọn Suggest Fix">
         {!fixEnabled && 'Sửa theo vùng chọn chưa bật cho ngôn ngữ này. '}{range
           ? `Vùng chọn${hints.frozenSelection ? ' đã chụp' : ''}: dòng ${range.startLine}:${range.startColumn} → ${range.endLine}:${range.endColumn}.`
-          : 'Bôi đen đoạn code cần sửa trước khi sử dụng Suggest Fix.'}
+          : 'Không có vùng chọn: kiểm tra toàn bài, không sửa code. Chọn code để đề xuất sửa vùng chọn.'}
         {fixEnabled && ' Chọn một biểu thức, các câu lệnh trong cùng hàm hoặc toàn bộ hàm; không chọn toàn bộ file.'}
       </p>
       {['preparing', 'starting', 'running'].includes(view.phase) && <p role="status">{view.phase === 'preparing' ? 'Đang chụp và xác minh snapshot…' : 'Đang chờ AI cho snapshot đã xác nhận…'}</p>}
@@ -111,6 +123,8 @@ export function SmartHintsPanel({ hints, onAction, onExplain, onClose, notice, i
         {result.binding.origin.kind === 'PRACTICE' && <RunEvidence context={result.runContext} />}<Advisory output={result.output} source={hints.capturedSource} />
         {result.output.kind === 'EDIT_PROPOSAL' && result.binding.origin.kind === 'PRACTICE' && onPreview && <button type="button" onClick={onPreview}>Diff Preview</button>}</>}
     </div>
-    {view.phase === 'consent' && view.prepared && <SmartHintsConsent prepared={view.prepared} openrouter={capabilities?.providerMode === 'OPENROUTER_FREE'} gemini={capabilities?.providerMode === 'GEMINI_FREE'} onConfirm={() => { void hints.consent() }} onCancel={hints.cancel} />}
+    {hints.canRevokeConsent && <button type="button" onClick={() => { void hints.revokeConsent() }}>Thu hồi quyền AI trong phiên học</button>}
+    {hints.consentError && <p role="alert">{hints.consentError}</p>}
+    {view.phase === 'consent' && view.prepared && <SmartHintsConsent prepared={view.prepared} openrouter={capabilities?.providerMode === 'OPENROUTER_FREE'} gemini={capabilities?.providerMode === 'GEMINI_FREE'} onConfirm={remember => { void hints.consent(remember) }} onCancel={hints.cancel} />}
   </aside>
 }

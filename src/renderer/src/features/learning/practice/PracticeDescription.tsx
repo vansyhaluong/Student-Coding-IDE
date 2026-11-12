@@ -11,6 +11,7 @@ import { PracticeSolution } from './PracticeSolution'
 import { WrongAnswerPanel } from './WrongAnswerPanel'
 import { isSubmissionStatus } from '../../../../../shared/contracts/submission-validation'
 import type { SmartSourceSnapshot } from './smart-hints-selection'
+import { ProblemDescriptionContent } from './ProblemDescriptionContent'
 
 /** Only the description pane owns these tabs; the editor and operation observers stay mounted. */
 export function PracticeDescription({ exercise, language, locked, active, hidden, submission, sourceRevision, draftCode, restoreBlocked, onRestore, onExplain, onRetireHintSource }: {
@@ -59,14 +60,7 @@ export function PracticeDescription({ exercise, language, locked, active, hidden
         {wrongAnswer && <TabsTrigger value="wrong-answer" icon={<CircleAlert className="practice-pane-icon practice-pane-icon-wa" />}>Wrong Answer</TabsTrigger>}
       </TabsList>
       <TabsContent value="description" className="practice-description-content">
-        <article className="practice-description" aria-label="Description"><h1>{exercise.title}</h1>
-          <p>{exercise.description}</p><h2>Input</h2>
-          <ul>{exercise.parameters.map(p => <li key={p.name}><code>{p.name}: {p.type}</code></li>)}</ul>
-          <h2>Output</h2><p>Trả về <code>{exercise.returnType}</code>.</p>
-          <h2>Ví dụ Input / Output</h2>{exercise.samples.map((sample, i) => <pre key={i}>Input: {JSON.stringify(sample.args)}{'\n'}Output: {JSON.stringify(sample.expected)}</pre>)}
-          <h2>Constraints</h2><ul>{exercise.constraints.map(c => <li key={c}>{c}</li>)}</ul>
-          <details><summary>Nguồn tham khảo · {exercise.source.publisher}</summary><p className="practice-source">{exercise.source.url}</p><p>{exercise.source.usage}</p></details>
-        </article>
+        <ProblemDescriptionContent exercise={exercise} />
       </TabsContent>
       <TabsContent value="solution" className="practice-description-content">
         {tab === 'solution' && <PracticeSolution key={exercise.id} exercise={exercise} editorLanguage={language} onExplain={onExplain} onRetire={onRetireHintSource} />}

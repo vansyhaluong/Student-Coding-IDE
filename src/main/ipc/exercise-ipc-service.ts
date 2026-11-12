@@ -17,7 +17,7 @@ import type { SubmissionAnalysisService } from '../services/learning/analysis/se
 import type { SavedAnalysisCapture, AnalysisSubmissionBinding } from '../services/learning/analysis/capture'
 import { SMART_HINT_CHANNELS as H } from '../../shared/contracts/smart-hints'
 import { validatePrepareHintApply, isHintApplyProposal, validateConsumeHintApply, validateDiscardHintApply, isHintApplyFailure } from '../../shared/contracts/smart-hints-validation'
-import { validateSmartPrepare, validateSmartReference, validateSmartStart, validateSmartRetire, isSmartStatus, isSmartCapabilities } from '../../shared/contracts/smart-hints-validation'
+import { validateSmartPrepare, validateSmartReference, validateSmartStart, validateSmartRetire, validateSmartConsentReference, isSmartStatus, isSmartCapabilities } from '../../shared/contracts/smart-hints-validation'
 import { validateEmptyObject } from '../../shared/contracts/validation'
 import type { SmartHintsService } from '../services/learning/smart-hints/service'
 import type { SmartCapture } from '../services/learning/smart-hints/capture'
@@ -142,6 +142,8 @@ export class ExerciseIpcService {
   private startSmartHints(): void {
     const ports = this.smartHints!, safe = (value: unknown) => { if (!isSmartStatus(value)) throw this.denied(); return value }
     this.removers.push(
+      this.registry.register({ channel: H.revokeConsent, validate: validateSmartConsentReference,
+        handle: (request, context) => this.smartBoundary(context, scope => { ports.service.revokeConsent(context.senderId, scope, request); return null }) }),
       this.registry.register({ channel: H.consumeHintApply, validate: validateConsumeHintApply,
         handle: (request, context) => this.smartBoundary(context, scope => ports.service.consumePreparedHintApply(context.senderId, scope, request,
           (q, generation, check) => ports.capture(q, generation, check)).then(proposal => {

@@ -1,12 +1,14 @@
 /** @vitest-environment jsdom */
-import { useState } from 'react'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { useCallback, useState } from 'react'
+import { cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { getBundledCourse } from '../../src/main/services/learning/content/course'
-import type { StudentIdeApi } from '../../src/shared/contracts'
+import { defaultSettings, type StudentIdeApi } from '../../src/shared/contracts'
 import { LearningWorkspace } from '../../src/renderer/src/features/learning/LearningWorkspace'
 import { LearningSidebarHeader } from '../../src/renderer/src/features/learning/LearningSidebarHeader'
 import { learningChapters, type ChapterId } from '../../src/renderer/src/features/learning/chapters'
+import { SettingsDialog } from '../../src/renderer/src/features/settings/SettingsDialog'
+import { useSettings } from '../../src/renderer/src/features/settings/use-settings'
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 vi.mock('../../src/renderer/src/features/learning/highlight-csharp', () => ({
@@ -24,6 +26,60 @@ function Workspace() {
     <LearningWorkspace selectedChapterId={chapter} onSelectChapter={select} sidebarCollapsed={collapsed} onCollapseSidebar={() => collapse(true)} />
   </>
 }
+
+function SettingsWorkspace({ collapsed = false, disabled = false }: { collapsed?: boolean; disabled?: boolean }) {
+  const preferences = useSettings(), [open, setOpen] = useState(false)
+  const close = useCallback(() => setOpen(false), [])
+  return <main className="ide-shell" data-workspace-mode="learning">
+    <LearningWorkspace selectedChapterId={1} sidebarCollapsed={collapsed} onSelectChapter={() => {}}
+      onOpenSettings={() => setOpen(true)} settingsDisabled={disabled || preferences.loading} />
+    {open && <SettingsDialog value={preferences.settings} recovered={preferences.recovered} error={preferences.error}
+      onSave={preferences.update} onClose={close} />}
+  </main>
+}
+
+it.each([false, true])('Learning Settings footer reuses shared save/cancel and restores focus (collapsed=%s)', async collapsed => {
+  const update = vi.fn<StudentIdeApi['settings']['update']>(async settings => ({ ok: true, value: { settings, recovered: false } }))
+  window.studentIde.settings = {
+    get: async () => ({ ok: true, value: { settings: defaultSettings(), recovered: false } }), update,
+    dependencies: async () => ({ ok: true, value: { node: 'AVAILABLE', git: 'AVAILABLE' } }),
+  } as StudentIdeApi['settings']
+  const view = render(<SettingsWorkspace collapsed={collapsed} />)
+  const sidebar = within(view.container.querySelector<HTMLElement>('.learning-sidebar')!)
+  const gear = sidebar.getByRole<HTMLButtonElement>('button', { name: 'Settings' })
+  await waitFor(() => expect(gear.disabled).toBe(false))
+  expect(view.container.querySelector('.learning-sidebar-note')).toBeNull()
+  expect(sidebar.queryByText('8 chương · Một hành trình')).toBeNull()
+  expect(gear.closest('footer')?.className).toBe('learning-sidebar-footer')
+  gear.focus(); fireEvent.click(gear)
+  const dialog = await waitFor(() => {
+    const element = view.container.querySelector<HTMLElement>('[role="dialog"]')
+    if (!element) throw Error('Settings dialog not open')
+    return element
+  })
+  const controls = within(dialog)
+  expect(dialog.closest('[data-workspace-mode]')?.getAttribute('data-workspace-mode')).toBe('learning')
+  expect(controls.getByLabelText('Theme')).toBeTruthy()
+  fireEvent.change(controls.getByLabelText('Editor font size (px)'), { target: { value: '20' } })
+  fireEvent.click(controls.getByRole('button', { name: 'Save settings' }))
+  await waitFor(() => expect(view.container.querySelector('[role="dialog"]')).toBeNull())
+  expect(update).toHaveBeenCalledWith({ ...defaultSettings(), fontSize: 20 })
+  expect(document.activeElement).toBe(gear)
+  fireEvent.click(gear)
+  const reopened = within(view.container.querySelector<HTMLElement>('[role="dialog"]')!)
+  expect((reopened.getByLabelText('Editor font size (px)') as HTMLInputElement).value).toBe('20')
+  fireEvent.change(reopened.getByLabelText('Editor font size (px)'), { target: { value: '28' } })
+  fireEvent.click(reopened.getByRole('button', { name: 'Cancel' }))
+  expect(update).toHaveBeenCalledOnce(); expect(view.container.querySelector('[role="dialog"]')).toBeNull()
+  expect(document.activeElement).toBe(gear)
+})
+
+it('Learning Settings footer respects the existing settings interaction lock', async () => {
+  const open = vi.fn()
+  render(<LearningWorkspace selectedChapterId={1} sidebarCollapsed onSelectChapter={() => {}} onOpenSettings={open} settingsDisabled />)
+  const gear = screen.getByRole<HTMLButtonElement>('button', { name: 'Settings' })
+  expect(gear.disabled).toBe(true); fireEvent.click(gear); expect(open).not.toHaveBeenCalled()
+})
 
 it('keeps Learning Assistant out of course introduction and theory pages', async () => {
   const view = render(<Workspace />)

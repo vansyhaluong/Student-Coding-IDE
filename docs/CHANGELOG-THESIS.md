@@ -1,5 +1,228 @@
 # Student Coding IDE Thesis Changelog
 
+## 2026-11-12 — Practice Problem Description typography
+
+Scoped the exercise article to installed Geist: 21px/600 title, 15px/400 body at
+1.7 line height, 16px/600 section headings, 13.5px monospace code and 14px paragraph
+spacing. Examples use a subtle Learning-token background and wrap; fenced code
+and tables can scroll locally. Reused Markdown/GFM for prose/constraints, preserving
+exercise fields, JSON examples, Vietnamese, source details and Learning palettes.
+The stateful description tab now mounts a read-only presenter; no editor/runtime/AI
+behavior or adjacent panel style changed.
+
+Five focused tests PASS, including eight hidden local Electron theme/resize checks
+for loaded fonts, metrics, contrast, complete content and no outer overflow. Scoped
+typecheck/ESLint, isolated Renderer build and diff check PASS. Existing build chunk/
+Monaco import warnings remain. No desktop capture, live Gemini, full suite/system
+smoke, dependency addition, release/Setup edits or Git publication. Stopped here.
+
+## 2026-11-12 — Learning Settings footer and matching dialog colors
+
+Replaced the two decorative bottom-left sidebar lines with the existing Settings
+gear in expanded/collapsed Learning Roadmap. The footer stays visible while chapter
+navigation scrolls. It opens the App-owned SettingsDialog and shared preferences
+save/cancel path; Learning-only semantic color overrides match the dialog and
+inputs to the Learning canvas. Project settings behavior and palette remain intact.
+
+21 distinct targeted Learning/Settings cases verified after fixing overly broad
+queries in two new timed-out test cases; final three footer tests PASS. Renderer/
+scoped test typechecks, changed-file lint, isolated full build and diff check PASS.
+Known global Node-check CSS/Explorer fixture and1312 lint errors remain. No app/UI
+capture or live Gemini; no backend, dependency, release/Setup or Git publication.
+
+## 2026-11-12 — F6 scoped learning-session AI consent
+
+Added Main-owned RAM-only Quick Action permission bound to learning owner/document,
+exercise, language/origin, provider and actual captured source/selection/Run categories.
+Remembered equal/narrower scopes survive code/model-version changes; expanded scopes
+require explicit approval. Unchecked remember applies once, Cancel sends nothing,
+and revoke/end/provider/document/expiry retirement prevents future reuse. Completed
+local F4 preparation/consume keeps its independent source/grant guards. Chat unchanged.
+
+Shortened the consent dialog, defaulted the remember checkbox on, moved technical
+information under “Chi tiết” and added header revocation without changing Quick
+Actions. Strict contracts/IPC/Preload verify opaque references; uncertain revoke
+blocks starts pending acknowledgement. No persisted permissions or extra inference.
+
+30 targeted cases PASS (25 F6 +2 F4 +2 F5 +1 Chat), scoped TypeScript/ESLint,
+affected Main/Preload bundles, final Renderer build and diff check PASS. No full
+suite/system smoke, UI capture, actual-app visual/live Gemini or installer claim.
+No new report, dependency/SDK, release/Setup change or Git publication. STOP after F6.
+
+## 2026-11-12 — Fix missing highlights from inaccurate AI offsets
+
+Inspected the running app's completed Suggest Fix cards: both reported invalid
+source locations and therefore had no editor markers. Earlier offline fixtures
+only exercised correct locations. Recorded the F5 localization decision amendment
+and added Main-only unique exact-quote resolution with final UTF-16/CRLF boundary
+validation. Existing valid offsets retain priority; ambiguous/missing quotes stay
+unlocated. No fuzzy matching/source normalization, edits, grants or extra inference.
+Provider instructions prefer short exact unique single-line source quotations.
+
+145 distinct focused cases verified after an isolated rerun of one initial5s
+unified-test timeout; latest Main detection35/35 includes missing operands, duplicate
+quotes and Unicode/EOL boundaries. Scoped TypeScript/ESLint, full isolated build
+and C#/JS offline Electron detection using deliberately wrong provider offsets PASS.
+Both mark the correct light-red source line, preserve cleanup/no-bottom layout and
+exit cleanly with owned resources zero. Existing full-repository check failures
+remain. Updated generated non-native output; the running Main and old invalid
+cards require restart/fresh user-consented request. No real Gemini or user draft
+change, full suite or packaged-host acceptance claim.
+
+## 2026-11-12 — Suggest Fix inline red error lines, bottom details removed
+
+Applied the user's presentation clarification: removed the bottom Error Details
+component/state/click handler and its layout styles. Detection now immediately
+highlights affected Code Editor lines light red with a red margin, including
+warning-classified AI findings while preserving their actual marker severity.
+Explanations stay in native editor marker tooltips. Current-only list navigation,
+exact range validation, consent, edit cleanup and selection Fix remain unchanged.
+
+113 focused detection/editor/selection/unified tests, scoped TypeScript/ESLint,
+full isolated build and both C#/JS offline Electron smokes PASS. Verified actual
+computed red color before clicking, no bottom details after all native click
+targets, marker/decorations cleanup and clean OS exits with drained owned resources.
+Both screenshots visually reviewed. Existing repository typecheck/lint failures
+remain; no live Gemini, full suite or packaged-host acceptance claim.
+
+## 2026-11-12 — Suggest Fix error-line interaction correction
+
+Preserved the existing no-selection whole-source detection action and added
+severity-colored editor line/margin decorations. Clicking affected text, trailing
+whitespace, line numbers or margins opens current Error Details; exact diagnostic
+ranges and unlocated results retain their original meaning. Owned decorations
+clear with markers on edits/model changes/disposal. Selection Fix/Diff/Apply and
+native Undo remain on the existing path. No backend/dependency/ADR changes.
+
+182 targeted tests, scoped TypeScript/ESLint, full isolated production build and
+final offline Electron C#/JS detection plus C# selection regression PASS. Actual
+mouse clicks and screenshots verified. Existing repository-wide typecheck/lint
+failures remain. Default output build hit a loaded native-file lock; the isolated
+build passed and generated non-native outputs were restored. An initial JS smoke
+had an OS shutdown invalid-handle failure after functional success; the identical
+artifact rerun exited cleanly, without claiming that intermittent issue fixed.
+No real Gemini/provider accuracy, full suite or packaged-host acceptance claim.
+
+## 2026-11-11 — AI-SUGGEST-FIX-F5 whole-submission detection
+
+Implemented no-selection Suggest Fix as a separate consented DETECT_ISSUES action
+with no edit/grant/Diff authority. Main validates bounded issue fields/evidence,
+mints IDs and fixes AI provenance to suspected; exact source-quote/UTF-16 range
+matching controls localization. Invalid/unknown locations stay unmarked. Existing
+verified public Run evidence is displayed separately. Own Monaco markers and
+readonly Error Details support real marker/list clicks, navigation and immediate
+stale/model/session cleanup, preserving language-provider owners. Selection
+Suggest Fix parser/Diff/Confirm/Undo and F4 remain unchanged.
+
+325 unique targeted tests PASS across two batches, including35 new F5 tests and
+real-parser F4/selection regressions. Scoped tsc/lint, isolated production build,
+final renderer build and diff checks PASS. Root typecheck remains blocked by
+untouched Explorer fixture/CSS declarations; initial stale-test expectation and
+unused-import failures corrected and retained in plan evidence. Final C#/JS
+detection and C# selection offline Electron smokes PASS with actual bundles/
+Monaco/parsers, fake Gemini only, clean OS exit0 and zero owned resources.
+AI accuracy, comprehensive compiler ingestion and packaged acceptance are not
+claimed. P2 Setup/release and unrelated work preserved; no live API, full suite,
+new dependency, separate report or Git publication. F5 COMPLETE scoped,
+PASS_WITH_LIMITATIONS; STOP.
+
+## 2026-11-11 — AG-02 isolated component prototype, Engine gate NO-GO
+
+Pinned official npm client/Windows x64 binary package2.2.7 only in a separate
+prototype. Verified binary archive SRI and PE AMD64 without executing it. Built
+synthetic project read/search/propose-only broker and fake-loopback Gemini
+gateway, with actual V2 client type/runtime probes. Final37 prototype tests and
+118 focused existing Ollama/Learning regressions PASS; initial one fake session
+envelope failure corrected from the pinned client contract. Scoped tsc/lint,
+Python syntax and isolated Electron Main bundle PASS; Electron44/Node24.18.1/
+ABI149 probe against fake V2 server exit0, no stderr. No real provider/key.
+
+Private-cwd/proxy canary reproduced outside-file access and unapproved loopback
+access by an ordinary Node fixture. No proven Windows confinement backend is
+available; Engine gate refuses launch without override. Zero Engine executions:
+effective config/tools, Engine lifecycle/routing and target-host/runtime/license
+closure remain unverified, not passed by component tests. AG-02 BLOCKED/NO-GO;
+no production integration/AG-03/new installer. Existing release/P2 preserved.
+Evidence and alternatives are recorded in existing architecture/decision/plan
+documents; no separate report file created.
+
+## 2026-11-11 — AI-HINT-APPLY-F4 scoped fix, PASS_WITH_LIMITATIONS
+
+Real-parser baseline reproduced 6 failures in 10 cases: nested/no-selection
+HAS_IMPLEMENTATION targets rejected and boundary return fragments inserted beside
+the original return. Explicit statement selection already worked. Hint-only
+C#/JavaScript parser resolution now admits verified nested gaps, infers only a
+unique lexically bound empty-block assignment target and replaces a uniquely
+adjacent matching statement. Parser-resolved proposal ranges are correlated by
+Main/Preload; nonempty selections stay exact. Whole functions/control constructs,
+ambiguous targets, stale/forged authority and invalid candidates remain denied.
+Grammar, signature, SH-1, consent and F3 three-preparation authority unchanged.
+
+151 unique targeted cases passed across serial/focused retries (not a clean
+single batch); scoped typecheck/lint, production build and diff checks passed.
+Exact new packaged assets passed C#/JS F4 and NO_IMPLEMENTATION offline Electron
+smokes with real parsers/fake Gemini, Monaco Diff/Confirm/Undo/Redo and retry.
+Isolated actual EXE passed foreign-cwd Run/Learning/Practice/Judge/native/workers
+and OS exit 0. One prior functional JS smoke had native OS exit 0x80000003;
+isolated retry passed exit 0. Native shutdown reliability remains unresolved.
+Syntax-invalid Hint source stays UNCERTAIN with explicit safe refusal. No live
+Gemini/full suite/new installer/publication. New artifacts only under out/;
+P2 release and Setup checksum unchanged. Implementation plan records details.
+
+## 2026-11-11 — WINDOWS-PACKAGING-P2 verified, NSIS created
+
+Provisioned official NuGet csharp-ls 0.27.0 with pinned package hash/repository
+signature, relocatable x64 private tool shim, full deployment closure, manifest
+and upstream dependency notices. Packaging verifies the provider before/after
+staging and output. No global student tool install or provider-version change.
+Packaged Hint regression exposed P1's default Hint parser searching inside ASAR;
+Main now supplies resourcesPath assets to both parser instances. No Hint policy
+or feature changes. Final relocated EXE passed C# Monaco completion/diagnostics,
+JS Project Run, JS/C# Learning Run/Judge/storage, workers and shutdown exit0.
+Exact-ASAR C#/JS Hint Apply regressions passed with fake HTTP/encryption, no real
+HTTP and clean child/parent exit. Scoped typecheck/lint and targeted 136 unique
+tests across the recorded fixture correction/isolated retry passed.
+
+Created release/Student Coding IDE Setup.exe (147,702,859 bytes); SHA256
+29aac3320d2f65db932fc061a4c307fa66dade0c99194536d0248ee5e58cfd9b.
+Verbatim embedded APP_64 archive, extracted 746-file parity, provider manifest,
+ASAR/private-file/credential audits PASS. Retained all earlier build/test and
+unrelated work. PASS_WITH_LIMITATIONS: external Node/.NET/VC++ prerequisites,
+unsigned/default icon, clean-machine install/uninstall/Windows10/live Gemini
+unverified. No publication, separate report, full suite, commit/push/merge or
+Phase7/9G closure. STOP after P2.
+
+## 2026-11-11 — Windows packaging resumed and revalidated
+
+Restricted staging explicitly to production Main/Preload/Renderer directories
+and anchored electron-builder projectDir to the repository. Fresh production
+build and final unpacked packaging PASS; ASAR audit 234 entries and seven worker
+bundles. Scoped resource/Node/C# SDK/local-key tests: 134 PASS/2 SKIP. Packaged
+offline native ABI, parsers, Learning/Practice, JS/C# sample Run, Judge/storage,
+six Monaco worker labels, AI disabled/no key and clean Windows close/exit PASS.
+Retained all prior build/test artifacts and unrelated working-tree changes.
+Full typecheck/lint retain existing failures; missing app-owned csharp-ls blocks
+NSIS. No installer, real Gemini, separate report, full suite or Git publication.
+
+## 2026-11-09 — Windows packaging configuration and unpacked verification
+
+Added electron-builder 26.18.0 Windows x64 assisted-NSIS configuration and isolated
+production/staging pipeline, preserving existing build/test artifacts and prior
+working-tree changes. Only production Main/Preload/Renderer, four Main dependency
+packages and required external Learning/parser/native assets are selected;
+ASAR/private-file/credential-signature audits PASS. Main uses resourcesPath for
+packaged parser/provider assets and userData for local encrypted key settings.
+No key, environment configuration or userData is copied into the application.
+
+Produced `release/win-unpacked/Student Coding IDE.exe` with correct product metadata.
+Build and changed-file lint PASS; scoped tests 83 PASS/1 SKIP. Patched node-pty
+Electron ABI and actual packaged offline JS/C# parser, sample Run, Judge Accepted,
+saved storage, Learning, Monaco worker and native close/exit checks PASS. No real
+Gemini call, installer, Git publication or separate report. Global typecheck/lint
+retain existing unrelated errors. App-owned csharp-ls 0.27.0 is absent and blocks
+NSIS. External Node/.NET/VC++ Runtime and clean-machine/installed acceptance remain
+release prerequisites; no Phase 7/9G completion or runtime-distribution decision.
+
 ## 2026-11-08 - AI-C4-F3.1 scoped exit gate PASS_WITH_LIMITATIONS
 
 Fixed Main shutdown returning before owned WebContents destruction: asynchronous

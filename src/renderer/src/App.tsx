@@ -522,7 +522,8 @@ export default function App() {
       <div id="learning-workspace" className="learning-workspace" hidden={!learning} inert={!learning}>
         <div className="learning-workspace-content" inert={aiOpen} aria-hidden={aiOpen || undefined}>
           <LearningWorkspace active={learning} exitGuard={practiceExitGuard} selectedChapterId={selectedChapterId} sidebarCollapsed={learningSidebarCollapsed}
-            onSelectChapter={setSelectedChapterId} onCollapseSidebar={collapseLearningSidebar} />
+            onSelectChapter={setSelectedChapterId} onCollapseSidebar={collapseLearningSidebar}
+            onOpenSettings={() => setSettingsOpen(true)} settingsDisabled={preferences.loading || editor.interactionLocked} />
         </div>
         {learning && aiOpen && <div className="learning-ai-overlay"><AiChatPanel onClose={() => setAiOpen(false)} /></div>}
       </div>

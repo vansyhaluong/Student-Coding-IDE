@@ -20,7 +20,9 @@
     "smoke:monaco-workers": "electron scripts/smoke-monaco-workers.mjs",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "package:win": "node scripts/package-windows.mjs",
+    "dist:win": "node scripts/package-windows.mjs --nsis"
   },
   "keywords": [],
   "author": "",
@@ -55,6 +57,7 @@
     "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "^5.2.0",
     "electron": "^44.0.0",
+    "electron-builder": "26.18.0",
     "electron-vite": "^5.0.0",
     "eslint": "^10.9.1",
     "globals": "^17.11.0",

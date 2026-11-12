@@ -12,7 +12,7 @@ export interface SmartValidationDiagnostic {
   reason: typeof VALIDATION_REASONS[number]
   field: typeof VALIDATION_FIELDS[number]
 }
-const kinds = ['HINT', 'ANALYSIS', 'EXPLANATION', 'EDIT_PROPOSAL', 'NO_FIX'] as const
+const kinds = ['HINT', 'ANALYSIS', 'EXPLANATION', 'EDIT_PROPOSAL', 'NO_FIX', 'DETECTION'] as const
 export interface SmartOutputDiagnostic { outputKind: typeof kinds[number] | 'UNRECOGNIZED' | 'UNOBSERVED'; editCount: number | null }
 const own = (v: unknown, key: string): unknown => {
   if (!v || typeof v !== 'object') return undefined

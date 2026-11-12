@@ -8,10 +8,13 @@ import { readFile, writeFile, mkdir, access } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { spawn } from 'node:child_process'
 
-const require = createRequire(import.meta.url), root = resolve(process.env.C4C_ARTIFACT_ROOT ?? 'out/ai-c4-c')
+const require = createRequire(import.meta.url)
+const sourceRoot = resolve(process.env.C4C_ARTIFACT_ROOT ?? 'out/ai-c4-c')
+const packagedResources = process.env.C4C_PACKAGED_RESOURCES && resolve(process.env.C4C_PACKAGED_RESOURCES)
+const root = process.versions.electron && packagedResources ? join(packagedResources, 'app.asar/out') : sourceRoot
 const scenario = process.argv[2] ?? 'chat', heldWindow = process.argv.includes('--hold')
 const traceServices = process.argv.includes('--trace-services'), pipeStdio = process.argv.includes('--pipe-stdio')
-assert.ok(['chat', 'javascript', 'csharp', 'safety', 'layout', 'hint', 'hint-js', 'hint-apply', 'hint-apply-js', 'beui'].includes(scenario))
+assert.ok(['chat', 'javascript', 'csharp', 'safety', 'layout', 'hint', 'hint-js', 'hint-apply', 'hint-apply-js', 'hint-f4', 'hint-f4-js', 'beui', 'detect-f5', 'detect-f5-js'].includes(scenario))
 const hash = value => createHash('sha256').update(value).digest('hex')
 const exitTrace = (stage, extra = {}) => console.log(JSON.stringify({ exitTrace: stage, pid: process.pid, ...extra }))
 if (!process.versions.electron) {
@@ -28,6 +31,13 @@ if (!process.versions.electron) {
   const html = await readFile(join(root, 'renderer/index.html'), 'utf8')
   const rendererPath = html.match(/src="([^"]+\.js)"/)[1]
   const renderer = await readFile(resolve(root, 'renderer', rendererPath.replace(/^\.\//, '')))
+  if (packagedResources) {
+    const { extractFile } = require('@electron/asar'), archive = join(packagedResources, 'app.asar')
+    for (const [name, bytes] of [['main/index.js', entry], ['preload/index.js', preload],
+      ['renderer/' + rendererPath.replace(/^\.\//, ''), renderer]]) {
+      assert.equal(hash(extractFile(archive, join('out', name))), hash(bytes), 'Packaged regression must use the exact production bytes')
+    }
+  }
   assert.ok(renderer.includes(Buffer.from('learning-assistant-timeline')))
   const parser = JSON.parse(await readFile(join(root, 'main/smart-hints-parser/manifest.json'), 'utf8'))
   for (const [file, record] of Object.entries(parser.artifacts)) {
@@ -58,6 +68,12 @@ if (!process.versions.electron) {
 
 async function smoke() {
   const { app, BrowserWindow, ipcMain, session } = await import('electron')
+  if (packagedResources) {
+    // Test-only composition: exercise the exact ASAR assets and packaged resource
+    // paths with the existing HTTP/encryption fixtures, never a real Gemini call.
+    Object.defineProperty(app, 'isPackaged', { value: true })
+    Object.defineProperty(process, 'resourcesPath', { value: packagedResources })
+  }
   exitTrace('electron-start', { parentPid: process.ppid, scenario, versions: { electron: process.versions.electron, node: process.versions.node, uv: process.versions.uv } })
   process.once('exit', code => exitTrace('electron-process-exit', { code }))
   let rendererDestroyed = false
@@ -94,15 +110,17 @@ async function smoke() {
       for (const [name, value] of Object.entries(remaining)) assert.equal(value, name === 'inferenceActive' ? false : 0, `${name} drained`)
     }
   })
-  const directory = join(root, `${scenario}-${Date.now()}`), userData = join(directory, 'user-data')
+  const directory = join(sourceRoot, `${scenario}-${Date.now()}`), userData = join(directory, 'user-data')
   await mkdir(userData, { recursive: true }); app.setPath('userData', userData)
   delete process.env.ELECTRON_RENDERER_URL
   const key = 'AQ.C4C_SYNTHETIC_OFFLINE_CREDENTIAL'
   const privateMarkers = [key, 'C4C_SOURCE_CANARY', 'C4C_QUESTION_CANARY', 'C4D_HINT']
   const checks = [], diagnostics = [], consoleErrors = [], requests = [], events = []
   let window, configuration, stage = 'bootstrap', mode = 'ok', pending = [], postCount = 0, aborts = 0, lateBodiesCancelled = 0, blockedNetwork = 0, diagnosticsLeak = false
+  let f4Code = 'sum += i;'
   const guards = { preflight: 0, verify: 0, hintPrepare: 0, hintValidate: 0, languages: [], errors: [] }, timing = {}, pause = ms => new Promise(r => setTimeout(r, ms))
-  const check = (condition, label) => { assert.ok(condition, label); checks.push(label) }
+  let activeCheck
+  const check = (condition, label) => { activeCheck = label; assert.ok(condition, label); checks.push(label) }
   const scan = value => { const text = typeof value === 'string' ? value : JSON.stringify(value); if (privateMarkers.some(m => text.includes(m))) diagnosticsLeak = true }
   const until = async (test, label, budget = 30000) => {
     const due = Date.now() + budget
@@ -126,8 +144,11 @@ async function smoke() {
     const a = input.action, out = !a ? { kind: 'CHAT_REPLY', text: scenario === 'beui'
       ? '## C4E Markdown\n\n**Use both inputs** and compare the public examples.\n\n```csharp\nreturn a + b;\n```\n\n' + Array.from({length:12},(_,i)=>`Step ${i+1}: read the inputs, check the expression, and explain the result before editing.`).join('\n\n')
       : `C4C_CHAT_${postCount}: advisory only.` }
+      : a.kind === 'DETECT_ISSUES' ? { kind: 'DETECTION', issues: mode === 'detect-empty' ? [] : [{ type: 'logic', severity: 'warning', message: 'F5_MISSING_B',
+        explanation: 'Only a is used.', reason: 'The public problem requests a plus b.', impact: 'Nonzero b can give the wrong result.', guidance: 'Compare the return expression with both parameters.', evidence: [],
+        range: { startOffset: 0, endOffset: 1, quote: 'return a + 0;' } }] }
       : a.kind === 'HINT' ? { kind: 'HINT', thinking: 'C4D_HINT: compare the two public inputs.', steps: ['Use a and b from the public signature.', 'Return their sum.'], code: { language: input.language,
-        text: scenario.startsWith('hint-apply') && input.implementationState === 'NO_IMPLEMENTATION'
+        text: scenario.startsWith('hint-f4') ? f4Code : scenario.startsWith('hint-apply') && input.implementationState === 'NO_IMPLEMENTATION'
           ? input.language === 'javascript' ? 'function Sum(a, b) {\nreturn a + b;\n}' : 'public class Solution { public int Sum(int a, int b) {\nreturn a + b;\n} }'
           : 'return a + b;' }, evidence: [] }
         : a.kind === 'ANALYZE' ? { kind: 'ANALYSIS', hypotheses: ['C4C_ANALYZE: inspect the public Run evidence.'], suggestions: ['Compare the two inputs.'], evidence: input.runContext.observations?.map(o => o.evidenceId).slice(0, 1) ?? [] }
@@ -267,15 +288,18 @@ async function smoke() {
     timing.openLearningMs = Date.now() - start
     exitTrace('renderer-ready', { rendererPid: window.webContents.getOSProcessId() })
     await evaluate(`globalThis.c4cFrames={last:performance.now(),gaps:[]};const tick=t=>{c4cFrames.gaps.push(t-c4cFrames.last);c4cFrames.last=t;if(c4cFrames.gaps.length<5000)requestAnimationFrame(tick)};requestAnimationFrame(tick)`)
-    const nav = Date.now(); await click('#learning-chapters button:nth-child(2)'); await wait(`document.querySelector('#learning-chapters button:nth-child(2)').getAttribute('aria-current')==='page'`)
+    const chapter = scenario.startsWith('hint-f4') ? 4 : 2
+    const nav = Date.now(); await click(`#learning-chapters button:nth-child(${chapter})`); await wait(`document.querySelector('#learning-chapters button:nth-child(${chapter})').getAttribute('aria-current')==='page'`)
     timing.chapterNavigationMs = Date.now() - nav
     await click('.learning-section-nav [data-tabs-value="practice"]'); await click('.practice-row'); await connect()
-    if (scenario === 'javascript' || scenario === 'hint-js' || scenario === 'hint-apply-js') { await select('[aria-label="Ngôn ngữ bài tập"]', 'javascript'); await pause(250); await connect() }
+    if (scenario === 'javascript' || scenario === 'hint-js' || scenario === 'hint-apply-js' || scenario === 'hint-f4-js' || scenario === 'detect-f5-js') { await select('[aria-label="Ngôn ngữ bài tập"]', 'javascript'); await pause(250); await connect() }
     const language = await evaluate('probe.model.getLanguageId()')
     const originalSource = await evaluate('probe.model.getValue()')
-    const source = scenario.startsWith('hint-apply') ? originalSource : language === 'javascript' ? 'function Sum(a, b) {\n  // C4C_SOURCE_CANARY\n  return a + 0;\n}\n'
+    const f4Loop = `${language === 'csharp' ? 'int' : 'let'} sum = 0;\nfor (${language === 'csharp' ? 'int' : 'let'} i = 1; i <= n; i++) {\n// missing\n}\nreturn sum;`
+    const f4Wrap = body => language === 'csharp' ? `public class Solution { public int SumToN(int n) {\n${body}\n} }` : `function SumToN(n) {\n${body}\n}`
+    const source = scenario.startsWith('hint-f4') ? f4Wrap(f4Loop) : scenario.startsWith('hint-apply') ? originalSource : language === 'javascript' ? 'function Sum(a, b) {\n  // C4C_SOURCE_CANARY\n  return a + 0;\n}\n'
       : originalSource.replace('throw new System.NotImplementedException();', '// C4C_SOURCE_CANARY\n        return a + 0;')
-    await edit(source); if (!scenario.startsWith('hint-apply')) await selected(source); await open()
+    await edit(source); if (!scenario.startsWith('hint-apply') && !scenario.startsWith('hint-f4') && !scenario.startsWith('detect-f5')) await selected(source); await open()
     await snap('empty')
     if (scenario === 'beui') {
       stage = 'beui-visual-and-Markdown'
@@ -321,10 +345,95 @@ async function smoke() {
       await snap('keyboard-consent'); await button('Cancel')
       check(await evaluate('probe.model.getValue()')===source,'keyboard-composer-keeps-Monaco-source')
       check(postCount===5,'beui-no-extra-inference-or-tools')
+    } else if (scenario.startsWith('detect-f5')) {
+      stage = 'F5-whole-submission-detection'
+      await evaluate(`probe.ed.setSelection({startLineNumber:1,startColumn:1,endLineNumber:1,endColumn:1})`)
+      const before = postCount
+      await button('Suggest Fix'); await wait(`!!document.querySelector('.smart-hints-consent')`)
+      check(postCount === before, 'F5-consent-before-inference')
+      await button('Đồng ý gửi snapshot'); await text('F5_MISSING_B')
+      await wait(`probe.api.getModelMarkers({owner:'student-ide.ai-detection',resource:probe.model.uri}).length===1`, 'F5-Monaco-marker')
+      check(await evaluate(`(()=>{const line=probe.model.getPositionAt(${source.indexOf('return')}).lineNumber;return probe.model.getAllDecorations().some(d=>d.options.className==='smart-detection-line'&&d.options.isWholeLine&&d.range.startLineNumber===line)})()`), 'F5-immediate-whole-error-line-highlight')
+      await wait(`!!document.querySelector('.monaco-editor .smart-detection-line')`)
+      check(await evaluate(`getComputedStyle(document.querySelector('.monaco-editor .smart-detection-line')).backgroundColor==='rgba(220, 38, 38, 0.12)'`), 'F5-light-red-error-line')
+      check(!(await evaluate(`!!document.querySelector('[aria-label="Error Details"],.smart-detection-details')`)), 'F5-no-bottom-details-after-detection')
+      await snap('F5-inline-error')
+      check(await evaluate(`probe.model.getValue()` ) === source, 'F5-no-source-mutation')
+      check(!(await evaluate(`!!document.querySelector('.smart-hint-diff')||[...document.querySelectorAll('button')].some(b=>['Review Diff','Confirm'].includes(b.textContent.trim()))`)), 'F5-no-Diff-or-Confirm')
+      await evaluate(`[...document.querySelectorAll('[aria-label="Phát hiện lỗi toàn bài"] button')].find(b=>b.textContent.includes('F5_MISSING_B')).click()`)
+      check(!(await evaluate(`!!document.querySelector('[aria-label="Error Details"]')`)), 'F5-issue-navigation-without-bottom-details')
+      check(await evaluate(`probe.ed.getPosition().lineNumber===probe.model.getPositionAt(${source.indexOf('return')}).lineNumber`), 'F5-issue-navigates-to-source')
+      const markerPoint = await evaluate(`(()=>{const p=probe.ed.getScrolledVisiblePosition(probe.model.getPositionAt(${source.indexOf('return') + 2}));const r=probe.ed.getDomNode().getBoundingClientRect();return {x:r.left+p.left+1,y:r.top+p.top+p.height/2}})()`)
+      await window.webContents.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', buttons: 1, clickCount: 1, ...markerPoint })
+      await window.webContents.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', buttons: 0, clickCount: 1, ...markerPoint })
+      check(!(await evaluate(`!!document.querySelector('[aria-label="Error Details"]')`)), 'F5-marker-click-without-bottom-details')
+      check(await evaluate(`probe.model.getAllDecorations().some(d=>d.options.linesDecorationsClassName==='smart-detection-margin')`), 'F5-visible-error-line-decoration')
+      for (const target of ['whitespace', 'line-number', 'line-margin']) {
+        const point = await evaluate(`(()=>{
+          const line=probe.model.getPositionAt(${source.indexOf('return')}).lineNumber;
+          const p=probe.ed.getScrolledVisiblePosition({lineNumber:line,column:probe.model.getLineMaxColumn(line)});
+          const r=probe.ed.getDomNode().getBoundingClientRect(), l=probe.ed.getLayoutInfo();
+          const x=${JSON.stringify(target)}==='whitespace'?p.left+12:${JSON.stringify(target)}==='line-number'?l.lineNumbersLeft+l.lineNumbersWidth/2:l.decorationsLeft+l.decorationsWidth/2;
+          return {x:r.left+x,y:r.top+p.top+p.height/2};
+        })()`)
+        await window.webContents.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', buttons: 1, clickCount: 1, ...point })
+        await window.webContents.debugger.sendCommand('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', buttons: 0, clickCount: 1, ...point })
+        check(!(await evaluate(`!!document.querySelector('[aria-label="Error Details"]')`)), `F5-native-${target}-click-without-bottom-details`)
+      }
+      await snap('F5-no-bottom-details')
+      await edit(source + '\n')
+      await wait(`probe.api.getModelMarkers({owner:'student-ide.ai-detection',resource:probe.model.uri}).length===0&&!document.querySelector('[aria-label="Error Details"]')`)
+      check(await evaluate(`!probe.model.getAllDecorations().some(d=>d.options.linesDecorationsClassName==='smart-detection-margin')`), 'F5-edit-clears-line-decorations')
+      check(true, 'F5-edit-clears-stale-marker-and-details')
+      check(postCount === before + 1, 'F5-single-inference-no-auto-run')
+      await snap('F5-final')
+    } else if (scenario.startsWith('hint-f4')) {
+      const target = async (a,b=a) => evaluate(`(()=>{const a=probe.model.getPositionAt(${a}),b=probe.model.getPositionAt(${b});probe.ed.setSelection({startLineNumber:a.lineNumber,startColumn:a.column,endLineNumber:b.lineNumber,endColumn:b.column})})()`)
+      const review = async () => { await button('Apply',2); await wait(`!!document.querySelector('.smart-hint-diff[open] .monaco-diff-editor')`, 'F4-Diff') }
+      stage = 'F4-incomplete-loop-auto-target'
+      await target(0); await act('Hint'); await text('C4D_HINT: compare the two public inputs.')
+      check(requests.at(-1).input.implementationState==='HAS_IMPLEMENTATION', 'F4-loop-HAS_IMPLEMENTATION')
+      await review(); check(await evaluate('probe.model.getValue()')===source,'F4-Diff-before-any-edit')
+      await button('Apply Fix',2); await wait(`probe.model.getValue().includes('sum += i;')`)
+      const applied=await evaluate('probe.model.getValue()')
+      check(applied.replace('sum += i;','')===source,'F4-loop-header-declarations-and-surroundings-preserved')
+      await evaluate(`probe.ed.trigger('f4','undo',null)`); await wait(`probe.model.getValue()===${JSON.stringify(source)}`)
+      await evaluate(`probe.ed.trigger('f4','redo',null)`); await wait(`probe.model.getValue()===${JSON.stringify(applied)}`)
+      check(events.some(e=>e.channel==='smart-hints:prepare-hint-apply'&&e.result.value?.target.kind==='PARSER_RESOLVED'),'F4-correlated-parser-resolved-target')
+      stage = 'F4-ambiguity-retry-and-Discard'
+      const loop=f4Loop.slice(f4Loop.indexOf('for ('),f4Loop.indexOf('return sum;'))
+      const ambiguous=f4Wrap(f4Loop.replace('return sum;',loop+'return sum;'))
+      await edit(ambiguous); await target(0); await act('Hint'); await text('C4D_HINT: compare the two public inputs.')
+      await button('Apply'); await text('TARGET_INVALID (TARGET)')
+      const posts=postCount, at=ambiguous.indexOf('{',ambiguous.indexOf('for ('))+1
+      await target(at); await review(); check(postCount===posts,'F4-target-retry-same-Hint-no-inference')
+      await button('Discard'); await wait(`!document.querySelector('.smart-hint-diff[open]')`)
+      check(await evaluate('probe.model.getValue()')===ambiguous,'F4-Discard-preserves-source')
+      stage = 'F4-return-boundary-replacement'
+      await click('#learning-chapters button:nth-child(2)')
+      await click('.learning-section-nav [data-tabs-value="practice"]'); await click('.practice-row'); await connect()
+      if (await evaluate('probe.model.getLanguageId()')!==language) { await select('[aria-label="Ngôn ngữ bài tập"]',language); await pause(250); await connect() }
+      const sumWrap=body=>language==='csharp'?`public class Solution { public int Sum(int a,int b) {\n${body}\n} }`:`function Sum(a,b) {\n${body}\n}`
+      const logic=sumWrap('return a;'); f4Code='return a + b;'
+      await edit(logic); await open(); await target(logic.indexOf('return')); await act('Hint'); await text('C4D_HINT: compare the two public inputs.')
+      await review(); await button('Apply Fix'); await wait(`probe.model.getValue().includes('return a + b;')`)
+      check(await evaluate('probe.model.getValue()')===logic.replace('return a;','return a + b;'),'F4-one-return-not-duplicate')
+      await evaluate(`probe.ed.trigger('f4','undo',null)`); await wait(`probe.model.getValue()===${JSON.stringify(logic)}`)
+      await evaluate(`probe.ed.trigger('f4','redo',null)`); await wait(`probe.model.getValue()===${JSON.stringify(logic.replace('return a;','return a + b;'))}`)
+      stage = 'F4-syntax-uncertainty-fail-closed'
+      const syntax=sumWrap('return a + ;')
+      await edit(syntax); await target(syntax.indexOf('return'),syntax.indexOf('return')+'return a + ;'.length)
+      await act('Hint'); await text('C4D_HINT: compare the two public inputs.')
+      check(requests.at(-1).input.implementationState==='UNCERTAIN','F4-syntax-not-forced-to-HAS-or-NO')
+      await button('Apply'); await text('UNSUPPORTED (CLASSIFICATION)')
+      check(await evaluate('probe.model.getValue()')===syntax&&!await evaluate(`!!document.querySelector('.smart-hint-diff[open]')`),'F4-syntax-denied-without-source-replacement')
+      check(postCount===4&&!events.some(e=>e.channel==='exercise:run'),'F4-no-extra-inference-or-execution')
+      await snap('hint-f4-final')
     } else if (scenario.startsWith('hint-apply')) {
       stage = 'Hint-template-Diff-Apply'
       await act('Hint'); await text('C4D_HINT: compare the two public inputs.')
       check(postCount === 1 && requests[0].input.implementationState === 'NO_IMPLEMENTATION', 'template-Hint-one-inference')
+      await wait(`(()=>{const h=document.querySelector('section[aria-label="Hint"] .assistant-code-header');return h&&Array.from(h.querySelectorAll('button')).some(b=>b.textContent==='Apply'&&!b.disabled)})()`, 'Hint-toolbar-ready')
       check(await evaluate(`(()=>{const h=document.querySelector('section[aria-label="Hint"] .assistant-code-header');return h.firstElementChild.className==='assistant-code-language'&&!!h.querySelector('[aria-label="Copy code"]')&&Array.from(h.querySelectorAll('button')).some(b=>b.textContent==='Apply'&&!b.disabled)})()`), 'Hint-toolbar-language-left-actions-right')
       await button('Apply', 2)
       await wait(`!!document.querySelector('.smart-hint-diff[open] .monaco-diff-editor')`, 'Hint-real-Diff')
@@ -586,7 +695,7 @@ async function smoke() {
   } catch (error) {
     if (window && !window.isDestroyed()) await writeFile(join(directory, 'failure.png'), (await window.webContents.capturePage()).toPNG()).catch(() => {})
     console.error(JSON.stringify({ scenario, result: 'FAIL', stage, directory, postCount, consoleErrors: consoleErrors.length, guards,
-      error: error.name, lastEvent: events.at(-1) ? { channel: events.at(-1).channel, state: events.at(-1).result.value?.state,
+      error: error.name, check: activeCheck, lastEvent: events.at(-1) ? { channel: events.at(-1).channel, state: events.at(-1).result.value?.state,
         code: events.at(-1).result.error?.code } : null }))
     app.exit(1)
   } finally { delete globalThis.__c4cConfigure; delete globalThis.__c4cObserveApplication }

@@ -11,6 +11,7 @@ export interface SmartSourceSnapshot {
   isCurrent(): boolean
 }
 export interface PracticeHintEditor {
+  revealIssue?(id: string): boolean
   capture(): SmartSourceSnapshot | undefined; focus(): void; applyFix?(fix: ReviewFix): ApplyFixResult
   captureHintApply?(): HintApplySnapshot | undefined
   /** Fix-only capture; selection freshness freezes only at explicit consent. */

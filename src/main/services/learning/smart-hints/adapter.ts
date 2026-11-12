@@ -32,6 +32,7 @@ const system = 'Bạn hỗ trợ sinh viên bằng tiếng Việt. Chỉ trả J
   + 'Fix nhỏ với UTF-16 offsets và exact old text; thiếu bằng chứng trả NO_FIX/LOCATION_UNKNOWN. '
   + 'Ví dụ giải thích phải được ghi là minh họa. Không bảo đảm fix đúng.'
 const schemas = {
+  DETECT_ISSUES: 'Unsupported outside the separately authorized Gemini detection path.',
   HINT: '{kind:"HINT",thinking:string,steps:string[],code:{language:"csharp"|"javascript",text:string},evidence:string[]}. '
     + 'One unified Hint: thinking first, concrete implementation steps second, practical code in input.language last. All three nonempty. '
     + 'No levels, pseudocode or Markdown fences. Match the public signature and variables. Never claim code is verified.',

@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "types": ["node", "vite/client"] },
+  "include": [
+    "../src/renderer/src/**/*.d.ts",
+    "../src/renderer/src/features/learning/LearningAssistantPanel.tsx",
+    "main/smart-hints-consent.test.ts",
+    "renderer/smart-hints-consent.test.tsx",
+    "main/smart-hints-hint-apply.test.ts"
+  ]
+}

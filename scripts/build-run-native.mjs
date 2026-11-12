@@ -27,7 +27,7 @@ for (const line of environmentText.split(/\r?\n/)) {
   const separator = line.indexOf('=')
   if (separator > 0) environment[line.slice(0, separator)] = line.slice(separator + 1)
 }
-const output = join(root, 'out/main/native')
+const output = process.env.STUDENT_IDE_BUILD_ROOT ? join(process.env.STUDENT_IDE_BUILD_ROOT, 'main/native') : join(root, 'out/main/native')
 mkdirSync(output, { recursive: true })
 const delayHook = join(dirname(process.execPath), 'node_modules/npm/node_modules/node-gyp/src/win_delay_load_hook.cc')
 if (!existsSync(delayHook)) throw new Error('Existing npm/node-gyp Windows delay-load hook unavailable.')

@@ -198,6 +198,58 @@ static class Guard
         catch (InvalidOperationException e) when (Reasons.Contains(e.Message)) { return e.Message; }
         catch { return "INTERNAL"; }
     }
+    // Hint-only target resolution; shared grammar/signature/outside-AST checks stay intact.
+    static string? AssignmentName(StatementSyntax statement) => statement is ExpressionStatementSyntax e
+        && e.Expression is AssignmentExpressionSyntax assignment && assignment.Left is IdentifierNameSyntax name ? name.Identifier.ValueText : null;
+    static bool HintBound(BlockSyntax block, int point, StatementSyntax[] fragment, MethodDeclarationSyntax entry)
+    {
+        if (fragment.Length == 0 || fragment.Any(s => AssignmentName(s) == null)) return false;
+        var names = new System.Collections.Generic.HashSet<string>(entry.ParameterList.Parameters.Select(p => p.Identifier.ValueText), StringComparer.Ordinal);
+        foreach (var owner in block.AncestorsAndSelf()) {
+            if (owner is BlockSyntax parent) foreach (var local in parent.Statements.OfType<LocalDeclarationStatementSyntax>().Where(s => s.Span.End <= point))
+                foreach (var variable in local.Declaration.Variables) names.Add(variable.Identifier.ValueText);
+            if (owner is ForStatementSyntax loop && loop.Declaration != null)
+                foreach (var variable in loop.Declaration.Variables) names.Add(variable.Identifier.ValueText);
+            if (owner is ForEachStatementSyntax each) names.Add(each.Identifier.ValueText);
+            if (owner == entry) break;
+        }
+        return fragment.SelectMany(s => s.DescendantNodesAndSelf()).OfType<IdentifierNameSyntax>().All(n => names.Contains(n.Identifier.ValueText));
+    }
+    static (int start, int end) HintCaret(CompilationUnitSyntax before, MethodDeclarationSyntax entry, string source, string code, JsonElement signature, int? point)
+    {
+        var blocks = entry.Body!.DescendantNodesAndSelf().OfType<BlockSyntax>().ToArray();
+        BlockSyntax? gap = null;
+        foreach (var block in blocks) {
+            int left = block.OpenBraceToken.Span.End;
+            for (int i = 0; i <= block.Statements.Count; i++) {
+                int right = i == block.Statements.Count ? block.CloseBraceToken.SpanStart : block.Statements[i].SpanStart;
+                if (point.HasValue && point >= left && point <= right && Trivia(source[left..point.Value]) && Trivia(source[point.Value..right])) { gap = block; break; }
+                if (i < block.Statements.Count) left = block.Statements[i].Span.End;
+            }
+            if (gap != null) break;
+        }
+        if (point.HasValue && gap == null && point != 0 && point != source.Length) throw Bad("TARGET");
+        string fragmentSource = source[..entry.Body.OpenBraceToken.Span.End] + code + source[entry.Body.CloseBraceToken.SpanStart..];
+        var parsed = Parse(fragmentSource);
+        var fragment = Methods(parsed, signature).Single(m => m.Identifier.ValueText == entry.Identifier.ValueText).Body!.Statements.ToArray();
+        if (fragment.Length == 0) throw Bad("SYNTAX");
+        if (gap != null) {
+            if (fragment.Length == 1) {
+                var next = fragment[0]; string? assignment = AssignmentName(next);
+                var adjacent = gap.Statements.Where(s => (s.Span.End <= point && Trivia(source[s.Span.End..point!.Value])
+                        || s.SpanStart >= point && Trivia(source[point!.Value..s.SpanStart]))
+                    && (next is ReturnStatementSyntax && s is ReturnStatementSyntax
+                        || assignment != null && AssignmentName(s) == assignment && HintBound(gap, point!.Value, fragment, entry))).ToArray();
+                if (adjacent.Length > 1) throw Bad("TARGET");
+                if (adjacent.Length == 1) return (adjacent[0].SpanStart, adjacent[0].Span.End);
+            }
+            if (fragment.Any(s => AssignmentName(s) == null) || HintBound(gap, point!.Value, fragment, entry)) return (point!.Value, point.Value);
+        }
+        if (blocks.Length > 128) throw Bad("TARGET");
+        var inferred = blocks.Where(b => b.Statements.Count == 0 && HintBound(b, b.OpenBraceToken.Span.End, fragment, entry)).ToArray();
+        if (inferred.Length != 1) throw Bad("TARGET");
+        return (inferred[0].OpenBraceToken.Span.End, inferred[0].OpenBraceToken.Span.End);
+    }
     // Separate Hint admission; the Selection Fix entry point above is unchanged.
     static object HintApply(JsonElement input)
     {
@@ -231,16 +283,18 @@ static class Guard
             } else if (implementation == "HAS_IMPLEMENTATION") {
                 stage = "TARGET";
                 var selection = input.GetProperty("selection");
-                if (selection.ValueKind != JsonValueKind.Object) return Fail();
-                start = selection.GetProperty("start").GetInt32(); end = selection.GetProperty("end").GetInt32();
+                start = selection.ValueKind == JsonValueKind.Null ? 0 : selection.GetProperty("start").GetInt32();
+                end = selection.ValueKind == JsonValueKind.Null ? 0 : selection.GetProperty("end").GetInt32();
                 if (start < 0 || end < start || end > source.Length || !Boundary(source, start) || !Boundary(source, end)) return Fail();
                 if (start == end) {
-                    var points = entry.Body!.Statements.SelectMany(s => new[] { s.SpanStart, s.Span.End })
-                        .Concat(new[] { entry.Body.OpenBraceToken.Span.End, entry.Body.CloseBraceToken.SpanStart });
-                    if (!points.Contains(start)) return Fail();
+                    try { (start, end) = HintCaret(before, entry, source, code, signature, selection.ValueKind == JsonValueKind.Null ? null : start); }
+                    catch (Exception e) { if (e.Message != "TARGET") stage = "CANDIDATE"; throw; }
                 } else {
                     var selected = Select(before, methods, source, start, end);
                     if (selected == null || selected.Owner != entry || selected.Kind == "FUNCTION") return Fail();
+                    if (entry.Body!.DescendantNodesAndSelf().Any(n => n.SpanStart >= start && n.Span.End <= end
+                        && n is BlockSyntax or IfStatementSyntax or ForStatementSyntax or ForEachStatementSyntax
+                            or WhileStatementSyntax or DoStatementSyntax or TryStatementSyntax or SwitchStatementSyntax)) return Fail();
                 }
             } else return Fail();
             if (start == 0 && end == source.Length) return Fail();
@@ -259,7 +313,7 @@ static class Guard
             return new { start, end, replacementText };
         } catch (Exception e) {
             if (e.Message == "SIGNATURE" && stage != "SOURCE_PARSE") stage = "SIGNATURE";
-            return Fail(e.Message == "UNSUPPORTED_GRAMMAR" ? "UNSUPPORTED" : null);
+            return Fail(e.Message == "UNSUPPORTED_GRAMMAR" && stage == "SOURCE_PARSE" ? "UNSUPPORTED" : null);
         }
     }
     [MethodImpl(MethodImplOptions.NoInlining)]

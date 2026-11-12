@@ -87,7 +87,7 @@ beforeEach(() => {
 afterEach(async () => { cleanup(); for (const close of closers.splice(0)) await close(); host.monaco.editor.getModels().forEach(m => m.dispose()); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 const wrap = (l: ExerciseLanguage, body: string) => l === 'csharp' ? `public class Solution { public int solve(int x) {${body}} }` : `function solve(x) {${body}}`
 function gate() { let release!: () => void; const promise = new Promise<void>(r => { release = r }); return { promise, release } }
-async function fixture(language: ExerciseLanguage, partial = false, code?: string) {
+async function fixture(language: ExerciseLanguage, partial = false, code?: string, body?: string) {
   // Observe fixed private errors without replacing parser decisions or budgets.
   const guardFailures: unknown[] = [], observed = parser as unknown as { bounded(...args: unknown[]): Promise<unknown> }
   const bounded = observed.bounded.bind(parser)
@@ -95,9 +95,9 @@ async function fixture(language: ExerciseLanguage, partial = false, code?: strin
     try { return await bounded(...args) }
     catch (error) { if (error instanceof SelectionFixError) guardFailures.push(error.selectionFix); throw error }
   })
-  let now = Date.now(), held: { channel: string; gate: ReturnType<typeof gate> } | undefined, invalid = false, malformedFailure = false
+  let now = Date.now(), held: { channel: string; gate: ReturnType<typeof gate> } | undefined, invalid = false, malformedFailure = false, forgedResolved = false
   const pkg = registry(); pkg.data.starters[language] = wrap(language, '')
-  const source = wrap(language, partial ? 'return x;' : '')
+  const source = wrap(language, body ?? (partial ? 'return x;' : ''))
   const reservations = vi.fn(async () => {}), run = vi.fn(async (_c, _h, signal: AbortSignal, execution) => {
     await execution.reserveInference(signal)
     return { kind: 'HINT', thinking: 'F2 thinking', steps: ['F2 steps'], code: { language, text: code ?? (partial ? 'return x + 1;' : wrap(language, 'return x + 1;')) }, evidence: [] }
@@ -117,6 +117,10 @@ async function fixture(language: ExerciseLanguage, partial = false, code?: strin
     if (held?.channel === c) await held.gate.promise
     if (malformedFailure && c === C.prepareHintApply && result && typeof result === 'object' && 'error' in result) return { ok: false, error: { ...result.error as object, details: { requestId: 'forged', noGrant: true }, retryable: true } }
     if (invalid && c === C.prepareHintApply && result && typeof result === 'object' && 'value' in result) return { ok: true, value: { ...result.value as object, proposalId: 'forged' } }
+    if (forgedResolved && c === C.prepareHintApply && result && typeof result === 'object' && 'value' in result) {
+      const value = result.value as { target: object }
+      return { ok: true, value: { ...value, target: { ...value.target, kind: 'PARSER_RESOLVED' } } }
+    }
     return result
   })
   const api = createSmartHintsBridge({ invoke, on() {}, removeListener() {} }, createLearningOrder(), undefined)
@@ -131,20 +135,58 @@ async function fixture(language: ExerciseLanguage, partial = false, code?: strin
   }
   const ui = render(<Harness />)
   await screen.findByLabelText('F2 real model'); fireEvent.click(screen.getByRole('button', { name: 'Learning Assistant' }))
-  await waitFor(() => expect((screen.getByRole('button', { name: 'Hint' }) as HTMLButtonElement).disabled).toBe(false))
+  await waitFor(() => expect((screen.getByRole('button', { name: 'Hint' }) as HTMLButtonElement).disabled).toBe(false), { timeout: 10000 })
   fireEvent.click(screen.getByRole('button', { name: 'Hint' })); await screen.findByText('Đồng ý gửi snapshot', {}, { timeout: 10000 })
   fireEvent.click(screen.getByText('Đồng ý gửi snapshot'))
   try { await screen.findByText('F2 thinking', {}, { timeout: 10000 }) }
   catch { throw Error(`Hint fixture did not complete: ${JSON.stringify({ execution: lastExecution, guardFailures })}`) }
   const region = () => screen.getByRole('region', { name: 'Hint' })
   return { ...ui, Harness, api, invoke, pkg, source, run, reservations, region, expire: () => { now += 300001 },
-    hold: (channel: string) => { const g = gate(); held = { channel, gate: g }; return g }, invalid: () => { invalid = true }, malformedFailure: () => { malformedFailure = true } }
+    hold: (channel: string) => { const g = gate(); held = { channel, gate: g }; return g }, invalid: () => { invalid = true }, malformedFailure: () => { malformedFailure = true }, forgeResolved: () => { forgedResolved = true } }
 }
 async function apply() { await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Apply' })) }) }
 async function diff() { await screen.findByRole('dialog', {}, { timeout: 10000 }); act(() => host.ready?.()) }
 async function confirm() { await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Apply Fix' })) }) }
 
 describe.each(['csharp', 'javascript'] as const)('%s F2 toolbar → real IPC/parser → Diff → native edit', language => {
+  it('F4 infers a unique nested insertion through real Preload/IPC and preserves native Undo/Redo', async () => {
+    const decl = language === 'csharp' ? 'int' : 'let'
+    const f = await fixture(language, true, 'sum += i;', `${decl} sum = 0;\nfor (${decl} i = 1; i <= x; i++) {\n// missing\n}\nreturn sum;`)
+    host.select!(0, 0)
+    await apply(); await diff(); expect(host.edits).not.toHaveBeenCalled()
+    await confirm(); await screen.findByText('Applied')
+    const next = host.model!.getValue()
+    expect(next).toContain('sum += i;'); expect(next.replace('sum += i;', '')).toBe(f.source)
+    expect(host.edits).toHaveBeenCalledOnce()
+    await act(async () => { await host.model!.undo() }); expect(host.model!.getValue()).toBe(f.source)
+    await act(async () => { await host.model!.redo() }); expect(host.model!.getValue()).toBe(next)
+    expect(f.run).toHaveBeenCalledOnce(); expect(f.reservations).toHaveBeenCalledOnce()
+  }, 15000)
+  it('F4 return-boundary caret replaces one statement through correlated parser-resolved proposal', async () => {
+    const f = await fixture(language, true), at = f.source.indexOf('return')
+    host.select!(at, at); await apply(); await diff(); await confirm(); await screen.findByText('Applied')
+    expect(host.model!.getValue()).toBe(wrap(language, 'return x + 1;'))
+    expect(host.model!.getValue().match(/return/g)).toHaveLength(1)
+  }, 15000)
+  it('F4 Preload rejects forged parser-resolved correlation for a nonempty selection', async () => {
+    const f = await fixture(language, true), at = f.source.indexOf('return')
+    host.select!(at, at + 9); f.forgeResolved(); await apply()
+    await within(f.region()).findByText('Failed', {}, { timeout: 10000 })
+    expect(screen.queryByRole('dialog')).toBeNull(); expect(host.edits).not.toHaveBeenCalled()
+    expect(host.model!.getValue()).toBe(f.source)
+  }, 15000)
+  it('F4 a resolved caret grant cannot survive source change followed by Undo before ACK', async () => {
+    const f = await fixture(language, true), at = f.source.indexOf('return')
+    host.select!(at, at); await apply(); await diff()
+    const held = f.hold(C.consumeHintApply); await confirm()
+    await act(async () => {
+      host.model!.pushEditOperations([], [{ range: new host.monaco.Range(1, 1, 1, 1), text: ' ' }], () => [])
+      await host.model!.undo()
+    })
+    held.release(); await within(f.region()).findByText('Stale')
+    expect(host.edits).not.toHaveBeenCalled(); expect(host.model!.getValue()).toBe(f.source)
+    expect(f.run).toHaveBeenCalledOnce(); expect(f.reservations).toHaveBeenCalledOnce()
+  }, 15000)
   it('copies independently, template body Diff is readonly and one manual batch supports Undo/Redo', async () => {
     const f = await fixture(language), writeText = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })

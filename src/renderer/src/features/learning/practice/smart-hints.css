@@ -1,4 +1,7 @@
 .practice-workspace { position: relative; }
+.smart-consent-remember { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
+.smart-hints-consent details { margin: 12px 0; }
+.smart-hints-consent summary { cursor: pointer; }
 .assistant-code-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border, var(--learning-line)); }
 .assistant-code-actions { display: flex; flex-shrink: 0; align-items: center; gap: 2px; padding: 3px 6px; margin-left: auto; }
 .assistant-code-actions button { height: 28px; padding: 4px 7px; border: 0; border-radius: 6px; font-size: 11px; color: var(--muted-foreground, var(--learning-muted)); background: transparent; }
@@ -32,3 +35,5 @@
 .smart-hint-diff pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .smart-hints-drawer button:focus-visible, .smart-hints-consent button:focus-visible, .practice-solution-code pre:focus-visible { outline: 2px solid var(--learning-ink, #26251e); outline-offset: 2px; }
 @media (max-width: 760px) { .smart-hints-drawer { width: 100%; inset-block-start: 48px; border-left: 0; } }
+.monaco-editor .smart-detection-line { background: rgba(220, 38, 38, .12); }
+.monaco-editor .smart-detection-margin { border-left: 3px solid #dc2626; }

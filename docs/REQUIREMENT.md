@@ -1,5 +1,120 @@
 # REQUIREMENT.md
 
+## Practice Problem Description typography — authorized 2026-11-12
+
+Only the exercise-description article follows the user's LeetCode-style typography
+direction: installed Geist, title 21px/600, body 15px/400/1.7, section headings 16px/600,
+inline monospace 13–14px, lightly separated monospace examples and 12–16px paragraph
+spacing. Preserve all exercise data/text, existing sections, Vietnamese and Markdown
+formatting with safe offline rendering. Use the current Learning palette in either
+application theme; do not introduce a new global Learning theme or touch other
+panels. Narrow/resized panels must retain complete content without page overflow;
+long code/tables may scroll locally. No Monaco/Run/Judge/AI/dependency/release work.
+
+## Learning Settings footer — authorized 2026-11-12
+
+Remove the two decorative bottom-left Learning sidebar lines and replace them
+with a Settings gear matching Project's existing entry. Keep it available in
+expanded/collapsed Roadmap states. Open the same application Settings dialog and
+preferences store; when invoked from Learning, dialog/form colors use Learning
+tokens instead of the Project theme. Preserve Project appearance, preference
+persistence, learning content/drafts and existing error/recovery messages.
+
+## F6 — scoped learning-session AI consent, authorized 2026-11-12
+
+For Hint/Analyze/Explain/Suggest Fix only (including F5 detection), supersede
+per-request snapshot confirmation with Main-owned RAM-only consent for the current
+learning session, exercise, language/origin and provider instance. Actual captured
+source/selection/public Run evidence define the requested scope; a remembered
+grant covers only equal/narrower scopes. Code edits within that scope retain it;
+exercise/language/origin/provider/key changes and scope expansion ask again.
+The first concise themed dialog names Gemini and sent data, defaults “Ghi nhớ
+trong phiên học này” on, and puts technical information under “Chi tiết”. Unchecked
+means this request only; Cancel never starts inference. Provide explicit revocation.
+Leaving Learning, document/window retirement, provider rotation or bounded session
+expiry retires grants; closing only the assistant panel does not end Learning.
+Keep immutable per-operation capture, quota/timeout/cancel, F4/F5 edit authority
+and Chat's independent per-turn consent. No SDK, live Gemini, full suite/system
+smoke, new report file, release/installer or Git publication work is authorized.
+
+## AI-SUGGEST-FIX-F5 — authorized 2026-11-11
+
+User explicitly authorizes a separate whole-submission detection path behind
+Suggest Fix when Monaco has no selection. Capture the current Practice source,
+model/revision and trusted public problem/optional same-snapshot public Run;
+use the existing per-request Gemini consent and lifecycle. Return bounded,
+validated advisory issues; only snapshot-matching, exact-quote ranges may mark
+Monaco under a separate owner. AI findings remain suspected, even when citing
+Run evidence. Existing confirmed Run/compiler evidence remains labeled separately.
+Main may resolve inaccurate AI offsets using a unique exact source quote, then
+revalidate all UTF-16/CRLF boundaries. Missing or repeated quotes remain unlocated;
+no fuzzy/nearest-line match or source normalization is permitted. This is the
+2026-11-12 corrective localization amendment. User clarification on
+2026-11-12 supersedes the bottom Error Details presentation: as soon as detection
+completes, highlight affected code lines light red directly in Code Editor.
+Remove the bottom details section and its click-to-open behavior. Existing Monaco
+marker tooltips may show the explanation; issue-list navigation only reveals a
+current valid range. Keep the editor layout height intact. No detection edits,
+grant, Diff, Apply, automatic Run/Submit or new provider/agent. Clear on edit,
+model/exercise/language/session change. Keep selection Suggest Fix parser/Diff/
+Confirm/Undo and Hint Apply F4 unchanged. This explicitly supersedes the earlier
+selection-required UI restriction only for this new advisory path.
+
+## AG-02 — isolated fake-only prototype authorization, 2026-11-11
+
+User authorizes isolated OpenCode2 Engine/client pinning, compatibility/lifecycle/
+negative-security investigation, synthetic project broker and fake Gemini gateway.
+Prototype dependencies are permitted only inside prototypes/ag02-opencode-v2;
+production dependencies, UI, Local AI/Ollama, Learning and P2 release remain
+unchanged. No real credentials/provider calls, real agent writes, installer,
+publication or AG-03 work. An unmet isolation gate requires NO-GO/BLOCKED rather
+than unrestricted Engine execution or a silent architecture switch. This is the
+explicit prototype exception to AG-01's design-only restriction; no production
+agent capability is authorized. See IMPLEMENTATION-PLAN AG-02 for executed versus
+blocked evidence. Historical AG-01 authorization below remains design history.
+
+## AG-01 — Project Coding Agent design authorization, 2026-11-11
+
+The user explicitly authorizes survey/design of a Gemini + OpenCode replacement
+for Project Workspace Local AI Chat. This is a design-only exception to FR-038's
+local-only/fixed Ollama direction and the future-agent exclusion. Phase 8 remains
+the implemented baseline; neither replacement nor a new dependency is approved
+for production by AG-01. AG-02–AG-06 each require separate authorization.
+
+Proposed behavior: explicit cloud opt-in and an eligible project-file disclosure
+manifest; Main-owned project-scoped read/search and proposal-only edits; readonly
+Diff and manual Confirm before any Monaco mutation, with Undo/Redo and stale/dirty
+conflict rejection. No automatic disk writes or code execution. Deny secrets,
+outside-project access, shell/terminal, arbitrary network, external tools/plugins,
+subagents, worktrees and configuration supplied by the project. Keep Electron
+isolation and typed capability IPC. No raw Engine API, paths or credentials in
+Renderer. Reuse a stored Gemini credential only through an explicitly consented
+Main capability, never an exported key. Agent sessions, policies, budgets and
+proposals are separate from Learning Chat/Smart Hints/Hint Apply and Practice.
+
+AG-01 may update existing requirements/architecture/decision/map/plan documents;
+it does not authorize SDK installation, real Gemini calls, production edits,
+full-suite tests, Git publication or release modification. Acceptance is a
+reviewable design with evidence, open feasibility gates and AG-02–AG-06 scope,
+not runtime/Windows/security certification. See the AG-01 sections in ARCHITECTURE,
+DECISIONS and IMPLEMENTATION-PLAN. Historical exclusions below continue to apply
+outside this explicit design scope.
+
+## AI-HINT-APPLY-F4 — authorized 2026-11-11
+
+Correct HAS_IMPLEMENTATION target resolution: parser-confirmed nested block gaps,
+unambiguous adjacent statement replacement from a boundary caret, and unique
+safe insertion without requiring highlighting. Explicit nonempty ranges remain
+exact targets; token-interior/outside-entry/ambiguous/stale targets fail closed.
+Automatic inference is restricted to assignment fragments whose identifiers are
+already bound at exactly one physical empty block. No typecheck/semantic-correctness
+claim. Syntax-uncertain Hint classification remains non-authoritative; no guessed
+recovery or conversion to NO_IMPLEMENTATION. Full-function HAS rewrites, invalid
+candidates and foreign-language responses are rejected. Keep signature/grammar/
+SH-1, consent/Diff/Confirm/Undo, three manual preparations, owned grants and no
+extra inference. Preserve P2 release artifacts. This supersedes only the earlier
+F1/F2 immediate-entry-body and exact-caret-target restrictions for Hint Apply.
+
 ## Learning Assistant Practice-only entry — authorized 2026-11-08
 
 Remove the Learning Assistant trigger and panel from course introduction and

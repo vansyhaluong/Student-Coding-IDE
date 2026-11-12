@@ -1,5 +1,5 @@
 import { SMART_HINT_CHANNELS as C, type SmartHintsApi, type SmartStatus, type SmartPrepare, type SmartReference } from '../../shared/contracts/smart-hints'
-import { validateSmartPrepare, validateSmartStart, validateSmartReference, validateSmartRetire,
+import { validateSmartPrepare, validateSmartStart, validateSmartReference, validateSmartRetire, validateSmartConsentReference,
   isSmartStatus, isSmartCapabilities } from '../../shared/contracts/smart-hints-validation'
 import type { AppResult } from '../../shared/contracts/app-error'
 import type { ValidationResult } from '../../shared/contracts/validation'
@@ -68,6 +68,12 @@ export function createSmartHintsBridge(ipc: IpcRendererLike, order: LearningOrde
     } catch { return invalid(channel) }
   }
   return {
+    async revokeConsent(request) {
+      const checked = validateSmartConsentReference(request), learningEpoch = order.epoch
+      if (disposed || !checked.ok) return invalid(C.revokeConsent)
+      const result = parseAppResult(await invokeSafely(ipc, C.revokeConsent, checked.value), (v): v is null => v === null, C.revokeConsent)
+      return disposed || order.epoch !== learningEpoch ? invalid(C.revokeConsent) : result
+    },
     async prepareHintApply(request) {
       const checked = validatePrepareHintApply(request), before = epoch, learningEpoch = order.epoch, owner = current
       if (!checked.ok || disposed || !owner || owner.requestId !== checked.value.hint.requestId
@@ -92,7 +98,8 @@ export function createSmartHintsBridge(ipc: IpcRendererLike, order: LearningOrde
           || p.binding.packageVersion !== q.packageVersion || p.binding.sourceRevision !== q.sourceRevision
           || JSON.stringify(p.binding.origin) !== JSON.stringify(q.origin)
           || smartCandidate(q.source, p.output.edits, q.origin.eol) === undefined
-          || p.target.kind === 'SELECTION' && (!q.selection || p.target.startOffset !== q.selection.startOffset || p.target.endOffset !== q.selection.endOffset)) return invalid(C.prepareHintApply)
+          || p.target.kind === 'SELECTION' && (!q.selection || p.target.startOffset !== q.selection.startOffset || p.target.endOffset !== q.selection.endOffset)
+          || p.target.kind === 'PARSER_RESOLVED' && q.selection !== null && q.selection.startOffset !== q.selection.endOffset) return invalid(C.prepareHintApply)
         const requestHash = await hash(JSON.stringify(q))
         if (disposed || epoch !== before || order.epoch !== learningEpoch || current !== owner || owner.hintRetired) return invalid(C.prepareHintApply)
         owner.hintRequestHash = requestHash; owner.hintProposalSignature = JSON.stringify(p); owner.hintProposalId = p.proposalId

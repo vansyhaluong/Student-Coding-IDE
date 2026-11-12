@@ -77,7 +77,9 @@ export function useHintApply(input: { hints: ReturnType<typeof useSmartHints>; c
         const d = reply.error.details!, reason = d.reason
         const advice = reason === 'TARGET_INVALID' ? 'Chọn lại đoạn cần sửa hoặc đặt con trỏ tại ranh giới câu lệnh trong đúng hàm.'
           : reason === 'CANDIDATE_INVALID' ? 'Code gợi ý không vượt qua kiểm tra cú pháp, signature hoặc cấu trúc. Chọn lại target chỉ khi phù hợp; không bỏ qua parser.'
-          : reason === 'STALE' ? 'Snapshot, package hoặc thời hạn Hint không còn hợp lệ.' : 'Parser chưa hỗ trợ source/candidate hoặc không sẵn sàng.'
+          : reason === 'STALE' ? 'Snapshot, package hoặc thời hạn Hint không còn hợp lệ.'
+          : d.stage === 'CLASSIFICATION' ? 'Không phân loại an toàn source hiện tại: hãy kiểm tra cú pháp, chữ ký hàm và template. Code được giữ nguyên; không suy đoán vùng ghi đè.'
+          : 'Parser chưa hỗ trợ source/candidate hoặc không sẵn sàng.'
         t.live = false; ticket.current = undefined; release(t)
         publish({ operationId, phase: reason === 'STALE' ? 'Stale' : 'Failed', locked: !reply.error.retryable,
           message: `${reason} (${d.stage}): ${advice} ${reply.error.retryable ? `Còn ${d.remaining} lần thử thủ công trên cùng Hint; không gọi Gemini lại.` : 'Apply đã khóa cho Hint này.'}` })
@@ -97,7 +99,7 @@ export function useHintApply(input: { hints: ReturnType<typeof useSmartHints>; c
       const local = view.operationId === operationId ? view : undefined
       return { phase: local?.phase ?? (eligible(operationId) ? '' : 'Stale'),
         disabled: !eligible(operationId) || !!latest.current.slot.current || !!local?.locked,
-        message: local?.message ?? (!eligible(operationId) ? 'Hint lịch sử hoặc snapshot cũ chỉ để tham khảo; không có quyền Apply.' : 'Template được Main xác định tự động; với code đang viết, hãy chọn vùng hoặc đặt con trỏ ở ranh giới câu lệnh.'),
+        message: local?.message ?? (!eligible(operationId) ? 'Hint lịch sử hoặc snapshot cũ chỉ để tham khảo; không có quyền Apply.' : 'Main xác minh vùng sửa hoặc điểm chèn duy nhất. Khi target chưa rõ, chọn đúng statement hoặc đặt con trỏ tại ranh giới câu lệnh trong hàm.'),
         onApply: () => { void prepare(operationId) }, onCancel: local?.phase === 'Preparing' ? () => retire('Discarded', 'Đã hủy preparation. Code giữ nguyên; không tự retry.') : undefined }
     },
     discard: () => retire('Discarded', 'Đã bỏ đề xuất. Code giữ nguyên; preparation của Hint đã khóa.'),

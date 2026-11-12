@@ -51,6 +51,9 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
   const capabilityProbe = useRef(0), latestApi = useRef(api); latestApi.current = api
   const [checking, setChecking] = useState(false)
   const [state, setState] = useState<{ ctx?: Context; view: SmartHintsView }>({ view: idle })
+  const permission = useRef<{ id: string; remembered: boolean; blocked?: boolean } | undefined>(undefined)
+  const [canRevokeConsent, setCanRevokeConsent] = useState(false), [consentError, setConsentError] = useState('')
+  const revoking = useRef(false)
   const valid = (ctx: Context, op?: Operation) => mounted.current && ctx.live && current.current === ctx
     && latest.current.active && !latest.current.locked && latest.current.key === ctx.key && latest.current.source === ctx.code
     && (!op || ctx.op === op && op.snapshot.isCurrent())
@@ -69,9 +72,15 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     current.current = undefined; admission.current = false
     if (mounted.current) setState({ view: idle })
   }, [api])
+  const endPermission = useCallback(() => {
+    const old = permission.current; permission.current = undefined
+    if (mounted.current) { setCanRevokeConsent(false); setConsentError('') }
+    if (old && api) void api.revokeConsent({ sessionId: old.id }).catch(() => {})
+  }, [api])
+  useEffect(() => () => endPermission(), [api, input.active, input.exerciseId, input.language, endPermission])
   useEffect(() => {
     mounted.current = true; capability.current = undefined; setCapabilities(undefined); setChecking(false)
-    const leave = () => { invalidate('LEARNING_LEFT'); setOpen(false) }
+    const leave = () => { endPermission(); invalidate('LEARNING_LEFT'); setOpen(false) }
     window.addEventListener('pagehide', leave)
     return () => {
       window.removeEventListener('pagehide', leave)
@@ -101,7 +110,7 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
   const show = useCallback(() => { setOpen(true); void probe(true) }, [probe])
   useEffect(() => {
     const changed = () => {
-      invalidate('EDIT'); capability.current = undefined; setCapabilities(undefined)
+      endPermission(); invalidate('EDIT'); capability.current = undefined; setCapabilities(undefined)
       if (open) void probe(true)
     }
     const checked = () => { if (open) void probe(true) }
@@ -111,7 +120,7 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
       window.removeEventListener('smart-hints-configuration-changed', changed)
       window.removeEventListener('smart-hints-readiness-changed', checked)
     }
-  }, [open, probe, invalidate])
+  }, [open, probe, invalidate, endPermission])
   const expire = (ctx: Context, at: number) => {
     ctx.expiresAt = Math.min(ctx.expiresAt ?? at, at)
     clearTimeout(ctx.expiry)
@@ -162,8 +171,15 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     op.sequence = value.sequence; op.binding = JSON.stringify(b); op.signature = JSON.stringify(value); op.status = structuredClone(value)
     if (value.state === 'PREPARED') {
       if (value.expiresAt <= Date.now()) return bad()
+      if (value.consent) {
+        const previous = permission.current
+        permission.current = { id: value.consent.sessionId,
+          remembered: value.consent.reusable || previous?.id === value.consent.sessionId && previous.remembered }
+        setCanRevokeConsent(permission.current.remembered)
+      }
       expire(ctx, value.expiresAt)
-      publish(ctx, op.started ? { phase: 'recovering', canCheck: true, message: uncertain } : { phase: 'consent', prepared: value })
+      if (!op.started && value.consent?.reusable) void consent('REUSE')
+      else publish(ctx, op.started ? { phase: 'recovering', canCheck: true, message: uncertain } : { phase: 'consent', prepared: value })
     } else if (value.state === 'PREPARING' || value.state === 'RUNNING') publish(ctx, { phase: 'running' })
     else if (value.state === 'COMPLETE') {
       if (value.expiresAt <= Date.now() || !isSmartOutput(value.output, q.action, q.source,
@@ -203,13 +219,13 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
   const begin = useCallback(async (action: SmartAction, snapshot: SmartSourceSnapshot) => {
     if (action.kind === 'SUGGEST_FIX' && (!isFixSnapshot(snapshot) || snapshot.sourceRevision !== latest.current.sourceRevision
       || JSON.stringify(action.selection) !== JSON.stringify(snapshot.selection))) return
-    if (admission.current || !api || !latest.current.active || latest.current.locked || !latest.current.exerciseId
+    if (admission.current || revoking.current || permission.current?.blocked || !api || !latest.current.active || latest.current.locked || !latest.current.exerciseId
       || snapshot.exerciseId !== latest.current.exerciseId || !snapshot.isCurrent()) return
     let ctx = current.current
     if (ctx?.expiresAt !== undefined && ctx.expiresAt <= Date.now()) { retire(ctx, 'EDIT'); ctx = undefined; current.current = undefined }
     if (ctx?.op?.pending && valid(ctx)) return
     const sourceKey = JSON.stringify([snapshot.language, snapshot.source, snapshot.origin])
-    if (ctx && (!valid(ctx) || ctx.sourceKey !== sourceKey)) { retire(ctx, 'LANGUAGE'); ctx = undefined }
+    if (ctx && (!valid(ctx) || ctx.sourceKey !== sourceKey)) { retire(ctx, 'EDIT'); ctx = undefined }
     if (!ctx) {
       ctx = { live: true, id: crypto.randomUUID(), key: latest.current.key, code: latest.current.source, sourceKey, origin: snapshot.origin, used: false, hints: [] }
       current.current = ctx
@@ -258,12 +274,12 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
   }, [api, probe, invalidate])
   const run = useRef<SmartPrepare['run']>(null)
   const setRun = useCallback((value: SmartPrepare['run']) => { run.current = value }, [])
-  const consent = useCallback(async () => {
+  const consent = useCallback(async (remember: boolean | 'REUSE' = true) => {
     const ctx = current.current, op = ctx?.op
     if (ctx && op?.q.action.kind === 'SUGGEST_FIX' && !op.started && !op.snapshot.isCurrent()) {
       cancelFix(ctx, op, 'Vùng chọn đã thay đổi. Hãy yêu cầu lại.'); return
     }
-    if (!api || !ctx || !op || !valid(ctx, op) || op.started || op.status?.state !== 'PREPARED') return
+    if (!api || !ctx || !op || !valid(ctx, op) || op.started || op.status?.state !== 'PREPARED' || permission.current?.blocked || revoking.current) return
     if (op.status.expiresAt <= Date.now()) { invalidate('EDIT'); return }
     if (op.q.action.kind === 'SUGGEST_FIX' && (!isFixSnapshot(op.snapshot) || !op.snapshot.freezeTarget())) {
       cancelFix(ctx, op, 'Vùng chọn đã thay đổi. Hãy yêu cầu lại.'); return
@@ -271,10 +287,29 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     op.started = true; clearTimeout(ctx.expiry); ctx.expiresAt = undefined; publish(ctx, { phase: 'starting' })
     if (ctx.hints.length) expire(ctx, Math.min(...ctx.hints.map(h => h.expiresAt)))
     try {
-      const r = await api.start({ requestId: op.q.requestId, operationId: op.status.operationId, captureToken: op.status.captureToken, consentVersion: 1, consentGranted: true })
+      const descriptor = op.status.consent
+      const r = await api.start({ requestId: op.q.requestId, operationId: op.status.operationId, captureToken: op.status.captureToken, consentVersion: 1, consentGranted: true,
+        ...(descriptor ? { consent: { sessionId: descriptor.sessionId, mode: remember === 'REUSE' ? 'REUSE' : remember ? 'SESSION' : 'ONCE' } } : {}) })
+      if (valid(ctx, op) && r.ok && descriptor && remember && permission.current?.id === descriptor.sessionId) {
+        permission.current.remembered = true; setCanRevokeConsent(true)
+      }
       if (valid(ctx, op)) { if (r.ok) accept(ctx, op, r.value); else recover(ctx, op) }
     } catch { recover(ctx, op) }
     if (valid(ctx, op) && op.pending) op.timer = setTimeout(() => { void poll(ctx, op) }, 500)
+  }, [api, invalidate])
+  const revokeConsent = useCallback(async () => {
+    const p = permission.current
+    if (!p || !api || revoking.current) return
+    p.blocked = true; revoking.current = true; setConsentError('')
+    if (current.current?.op?.pending) invalidate('EDIT')
+    try {
+      const result = await api.revokeConsent({ sessionId: p.id })
+      if (!mounted.current || permission.current !== p) return
+      if (result.ok) { permission.current = undefined; setCanRevokeConsent(false) }
+      else { setCanRevokeConsent(true); setConsentError('Chưa xác nhận được việc thu hồi quyền AI. Nhấn thu hồi để thử lại.') }
+    } catch {
+      if (mounted.current && permission.current === p) { setCanRevokeConsent(true); setConsentError('Chưa xác nhận được việc thu hồi quyền AI. Nhấn thu hồi để thử lại.') }
+    } finally { revoking.current = false }
   }, [api, invalidate])
   const check = useCallback(() => { const ctx = current.current; if (ctx?.op) void poll(ctx, ctx.op) }, [api])
   const cancel = useCallback(() => {
@@ -326,6 +361,7 @@ export function useSmartHints(input: { active: boolean; locked: boolean; exercis
     || state.ctx.op && !state.ctx.op.snapshot.isCurrent()) ? idle : state.view
   const ctx = current.current, op = ctx?.op
   return { open, show, close, begin, consent, cancel, check, retry, invalidate, retireSolution, setRun, capabilities, previewFix, selectionChanged,
+    revokeConsent, canRevokeConsent, consentError,
     isBusy: () => admission.current || !!current.current?.op?.pending,
     language: input.language, frozenSelection: ctx && op?.q.action.kind === 'SUGGEST_FIX' && valid(ctx, op) ? op.q.action.selection : undefined,
     checking, view, capturedSource: ctx && op && valid(ctx, op) ? op.q.source : undefined,

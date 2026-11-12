@@ -1,5 +1,128 @@
 # Architecture Decision Log
 
+## F6 — remembered consent owned by Main, accepted 2026-11-12
+
+User explicitly replaces Quick Action per-snapshot popup consent. Renderer-only
+flags cannot authorize disclosure; persisting general approval exceeds the requested
+session. Choose Main-owned ephemeral grants bound to owner/document, exercise,
+language/origin, provider object and exact data-category coverage. Cap at the existing
+30-minute session policy. Source edits may retire operations without retiring this
+grant. Main derives scope from its immutable capture (source always included;
+selection only for Explain/selection Fix; Run only when a trusted receipt contributed).
+Prepared operations expose an opaque session reference and whether coverage exists;
+reuse is revalidated at start, never trusted from a Renderer boolean. Explicit
+single-request consent remains valid without remembering. Revocation cancels active
+owned inference but does not revoke completed local F4 Apply proposals. Chat remains
+independent. This supersedes earlier per-snapshot Quick Action confirmation only.
+
+## AI-SUGGEST-FIX-F5 localization amendment — accepted corrective scope, 2026-11-12
+
+The user's repeated report of missing editor highlights was reproduced by reading
+the running app: two completed detection cards report INVALID_AI_RANGE for a
+missing operand. Prior offline fixtures supplied correct offsets and missed this
+failure. Reopen F5's strict-offset admission for this authorized corrective work.
+
+Options: retaining offset-only admission hides findings with correct quotations;
+fuzzy/nearest-line repair risks marking unrelated code; resolving one unique exact
+source quote establishes deterministic snapshot correspondence without guessing.
+Select the third option in Main only: prefer an already valid quote/offset range;
+otherwise locate the quote only if it occurs exactly once (including overlapping
+occurrences), then revalidate the reconstructed UTF-16/CRLF boundaries. No trimming,
+case folding, newline normalization, fuzzy search or arbitrary occurrence choice.
+Missing/ambiguous quotes stay unlocated; malformed wire still fails closed. This
+supersedes only F5's blanket rejection of inaccurate AI offsets when a unique exact
+quote proves the location. Provenance stays suspected AI; no edits/grants, retries,
+new compiler pipeline, provider/dependency, consent or quota change is authorized.
+
+## AI-SUGGEST-FIX-F5 — separate detection action, authorized 2026-11-11
+
+User authorizes whole-submission advisory detection for Suggest Fix without a
+selection. Use internal DETECT_ISSUES action and DETECTION result, never disguise
+full source as SUGGEST_FIX selection or bypass its parser. Main owns canonical
+issue identity/provenance; provider cannot grant verification/edit authority.
+Range offsets must be bounded UTF-16 boundaries with exact nonempty quoted source
+and text; invalid positions remain unlocated. Existing public Run receipts supply
+only matching trusted evidence, not proof of AI-inferred causes. Own Monaco owner
+and snapshot-bound cleanup/details; no new compiler/Run execution or agent SDK.
+
+## AG-02 — Engine isolation gate BLOCKED / NO-GO, 2026-11-11
+
+User authorized fake-only isolated technical/security prototype, not production.
+Official npm client/Windows x64 binary packages are pinned2.2.7; client installed
+with scripts disabled only in the prototype. Actual V2 Promise-client Node24/
+Electron44 probes pass against a fake server, and synthetic broker/gateway
+negative tests pass, but this does not establish Engine safety.
+
+The private-cwd/proxy launch approach failed its synthetic outside-read and
+unapproved-loopback canary (ordinary Node fixture, not Engine). No verified
+Windows filesystem/config/network confinement backend is available in the
+harness. Engine gate denies launch without override: zero Engine executions.
+Effective permissions/discovery and Engine runtime/routing/lifecycle gates are
+therefore untested, not passed by default or attributed as Engine vulnerabilities.
+Keep AG-01 sidecar recommendation PROPOSED and AG-02 BLOCKED/NO-GO; no AG-03.
+
+Before a future retry the user must choose/provision an enforceable confined
+runner/VM and authorize the remaining prototype, or explicitly approve revisiting
+the Main-owned Gemini loop alternative. No silent architecture or requirement
+change, automatic privilege escalation/system firewall mutation, fork or live API.
+Package license declaration is not dependency-notice/runtime-closure acceptance.
+
+## AG-01 — Gemini/OpenCode Project Agent design decision proposal, 2026-11-11
+
+**PROPOSED — not an Accepted production ADR.** User authorizes design only,
+explicitly opening the FR-038 local-only/fixed Ollama and future-agent scope for
+this survey. Phase8's implemented state/history and Learning decisions remain.
+The ARCHITECTURE AG-01 section contains the current source trace and evidence.
+
+Recommend an app-owned native Engine sidecar with Main-only @opencode/client
+Promise API behind AgentService, not embedding Core into Electron. Official
+[migration](https://opencode.ai/docs/migrate-v1/) identifies the V2 client and
+breaking contracts; the old @opencode-ai/sdk/v2 entry is not OpenCode2 evidence.
+Surveyed upstream dev manifests say2.2.7, but no published pair/hash/runtime is
+selected or installed. Native Core dependencies create avoidable Electron ABI/
+bundle coupling; sidecar still needs its own native Windows and payload gate.
+
+Recommend no actual project root/key in Engine: private empty runtime workspace,
+Main read/search/propose-only broker through one app-controlled MCP transport,
+all native tools/ambient config/extensions/shell denied. Main owns a Gemini
+protocol gateway with the real credential only at upstream dispatch; Engine
+uses a disposable local token. Typed agent IPC never exposes Engine APIs.
+Main proposals plus explicit readonly Diff/Confirm apply only to version-bound
+Monaco buffers, with native Undo and explicit Save; no Engine disk write/revert.
+
+Credential reuse is a future narrow Main port over existing encrypted storage,
+not a second key export/ledger or reuse of Learning's inference coordinator.
+Separate Agent opt-in/model/budgets/sessions/errors; revoke all credential leases
+on key retirement. Existing Learning behavior/model/quota/Hint authorities must
+remain unchanged and pass targeted regressions if that port is later approved.
+
+No AG-02+ production permission follows. Open gates: exact published Engine/client
+and license/runtime closure; secure config/Windows filesystem/egress confinement;
+MCP/Gemini streaming/tool semantics; credential seam/model/budget; auto-save
+suppression/consent UX; Win10/11/CPU/packaged evidence. V1 prototype R1/R2 README
+egress NO-GO remains evidence, not superseded by adopting V2. Stock permissions,
+proxy variables/cwd and Job Objects are not an OS sandbox. If a hard requirement
+cannot be enforced, stop dependent work and record an explicit alternative;
+do not ship a broad agent or silently fork Engine to bypass the gate.
+
+## AI-HINT-APPLY-F4 target-resolution amendment — authorized 2026-11-11
+
+Baseline real P2 parsers reproduced six failures in ten C#/JS cases: nested empty
+loop carets and absent targets reject despite HAS classification; a return-boundary
+caret inserts a second return. Explicit statement selections pass. Syntax-invalid
+source is UNCERTAIN and stays denied. F4 authorizes correcting Hint-only target
+resolution without widening parse grammar or changing Suggest Fix/SH-1.
+Retain exact nonempty selections. Resolve safe nested block trivia gaps and an
+unambiguous adjacent same-kind return/assignment replacement. Infer assignment
+insertion only into a unique empty block with all fragment identifiers already
+lexically bound; ambiguous cases require a target. Parser-resolved offsets use
+a distinct PARSER_RESOLVED proposal target; Preload accepts it only for absent or
+collapsed selection with the original owned/source-bound correlation. Never
+retarget a nonempty selection. Main still mints/consumes one grant after complete
+candidate/header/outside-AST and canonical SH-1 validation. Syntax uncertainty
+remains denied, not recovered by guessing. No model, quota, Chat, Suggest Fix,
+runtime version or timeout change. User task explicitly authorizes this amendment.
+
 ## AI-C4-F3.1 Chat shutdown transport lifetime - authorized 2026-11-08
 
 Evidence: sealed Chat business state is drained before window destruction, but

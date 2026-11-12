@@ -36,7 +36,7 @@ function selection(source: string, startOffset: number, endOffset: number): Smar
   const a = smartPosition(source, startOffset), b = smartPosition(source, endOffset)
   return { startOffset, endOffset, text: source.slice(startOffset, endOffset), startLine: a.line, startColumn: a.column, endLine: b.line, endColumn: b.column }
 }
-async function fixture(language: 'csharp' | 'javascript', body = '', code = wrap(language, 'return x + 1;'), source = wrap(language, body)) {
+async function fixture(language: 'csharp' | 'javascript', body = '', code = wrap(language, 'return x + 1;'), source = wrap(language, body), remember = false) {
   vi.stubGlobal('fetch', () => { throw Error('REAL_NETWORK_FORBIDDEN') })
   let now = Date.now(), live = true
   const q = request({ language, source, action: { kind: 'HINT' } }), pkg = registry()
@@ -53,17 +53,25 @@ async function fixture(language: 'csharp' | 'javascript', body = '', code = wrap
   const check = () => { if (!live) throw Error('retired') }
   const recapture = vi.fn((r: typeof q, generation: number, guard: () => void) => captureSmartHints(pkg.packages, r, generation, guard))
   const p = await service.prepare(1, 'doc', q, check, (g, c) => recapture(q, g, c))
-  service.start(1, 'doc', start(p))
+  service.start(1, 'doc', { ...start(p), ...(remember && p.state === 'PREPARED' && p.consent ? { consent: { sessionId: p.consent.sessionId, mode: 'SESSION' as const } } : {}) })
   await vi.waitFor(() => expect(['COMPLETE', 'FAILED'].includes(service.status(1, 'doc', reference(p)).state)).toBe(true), { timeout: 10000 })
   expect(service.status(1, 'doc', reference(p)).state).toBe('COMPLETE')
   if (q.origin.kind !== 'PRACTICE') throw Error('fixture')
   const apply: PrepareHintApply = { requestId: randomUUID(), hint: reference(p), exerciseId: q.exerciseId, language,
     sourceRevision: q.sourceRevision, source: q.source, packageVersion: 1, origin: q.origin, selection: null }
   const prepare = (value = apply) => service.prepareHintApply(1, 'doc', value, recapture)
-  return { service, q, pkg, apply, prepare, recapture, run, reservations, diagnostics, expire: () => { now += 300001 }, retire: () => { live = false } }
+  return { service, q, p, pkg, apply, prepare, recapture, run, reservations, diagnostics, expire: () => { now += 300001 }, retire: () => { live = false } }
 }
 
 describe.each(['csharp', 'javascript'] as const)('%s F1 trusted Hint Apply with real parser', language => {
+  it('F6 consent revocation does not change completed F4 preparation/consume or reserve another inference', async () => {
+    const f = await fixture(language, '', undefined, undefined, true)
+    if (f.p.state !== 'PREPARED' || !f.p.consent) throw Error('Expected F6 permission')
+    f.service.revokeConsent(1, 'doc', { sessionId: f.p.consent.sessionId })
+    const proposal = await f.prepare()
+    expect(f.service.consumeHintApply(1, 'doc', f.apply.hint, proposal.proposalId)).toEqual(proposal)
+    expect(f.run).toHaveBeenCalledOnce(); expect(f.reservations).toHaveBeenCalledOnce()
+  })
   it('F3 invalid target then reselection prepares one grant on the same trusted Hint', async () => {
     const f = await fixture(language, 'return x;', 'return x + 1;'), at = f.q.source.indexOf('return')
     const bad = { ...f.apply, selection: selection(f.q.source, at + 2, at + 2) }

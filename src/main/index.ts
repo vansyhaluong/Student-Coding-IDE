@@ -101,8 +101,11 @@ void app.whenReady().then(async () => {
   // Normal feature uses only the user's native Settings entry, never a developer environment key.
   delete process.env.GEMINI_API_KEY
   const keyEntry = new NativeSmartHintsKeyEntry()
+  const smartHintsParserAssets = app.isPackaged
+    ? { assetDirectory: join(process.resourcesPath, 'smart-hints-parser') } : {}
   const smartHintsConfiguration = new SmartHintsConfiguration({
-    selectionFixGuard: new MainSelectionFixGuard(),
+    selectionFixGuard: new MainSelectionFixGuard(smartHintsParserAssets),
+    hintContextParser: new MainSelectionFixGuard(smartHintsParserAssets),
     file: join(app.getPath('userData'), 'smart-hints-settings.json'),
     encryption: {
       available: () => process.platform === 'win32' ? safeStorage.isAsyncEncryptionAvailable() : Promise.resolve(false),
@@ -151,10 +154,12 @@ void app.whenReady().then(async () => {
     ),
   })
   // Lazy internal composition only: 5.5F supplies the future typed document entry.
-  // Packaged provider provisioning remains Phase 7; absence fails closed.
+  // Packaged resolution is app-owned only; missing payload fails closed.
   const csharpStore = new CsharpWorkspaceStore(join(app.getPath('userData'), 'workspaces'))
   const csharpCommands = new CsharpPreflightProcess()
-  const csharpManager = createCsharpLanguageManager({ mode: app.isPackaged ? 'packaged' : 'development' }, processManager)
+  const csharpManager = createCsharpLanguageManager(app.isPackaged
+    ? { mode: 'packaged', privateExecutable: join(process.resourcesPath, 'csharp-ls', 'csharp-ls.exe') }
+    : { mode: 'development' }, processManager)
   const csharpSession = new CsharpWorkspaceSession(projectService, fileSystemService,
     new CsharpWorkspace(fileSystemService, csharpStore, csharpCommands), csharpManager, csharpCommands,
     () => console.error('C# synchronization or cleanup failed; owned resources remain tracked.'))

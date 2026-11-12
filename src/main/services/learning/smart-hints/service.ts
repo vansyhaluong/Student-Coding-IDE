@@ -17,6 +17,10 @@ import type { SelectionFixGuard, SelectionFixGuardLease, SelectionFixScope } fro
 import type { ExerciseLanguage } from '../../../../shared/contracts/practice'
 import { SharedExecutionCoordinator } from './execution-coordinator'
 import { MainSelectionFixGuard } from './selection-fix-parser-runtime'
+import { constructDetection } from './detection'
+import { SmartConsentStore } from './consent'
+import { validateSmartConsentReference } from '../../../../shared/contracts/smart-hints-validation'
+import type { SmartConsentReference } from '../../../../shared/contracts/smart-hints'
 import type { PrepareHintApply, HintApplyProposal, ConsumeHintApply, DiscardHintApply } from '../../../../shared/contracts/smart-hints'
 import { validatePrepareHintApply, isHintApplyProposal, validateConsumeHintApply, validateDiscardHintApply } from '../../../../shared/contracts/smart-hints-validation'
 
@@ -44,6 +48,8 @@ interface Operation {
   providerFailureSource?: ProviderFailureSource
   selectionFix?: SelectionFixDiagnostic
   guard?: SelectionFixGuardLease
+  consentSessionId?: string
+  startConsent?: string
   hintCapture?: SmartCapture
   hintClassification?: SmartCapture['hintImplementation']
   hintAttempts?: Map<string, { digest: string; error?: DomainError }>
@@ -61,6 +67,7 @@ export class SmartHintsService {
   private sessions = new Map<number, Session>()
   private tasks = new Set<Promise<unknown>>()
   private stopped = false
+  private readonly consent: SmartConsentStore
   private fixLanguages: ExerciseLanguage[] = []
   private availabilityProbe?: { provider: SmartProvider; abort: AbortController; task: Promise<SmartCapabilities> }
   constructor(private provider?: SmartProvider, private readonly clock = Date.now,
@@ -74,6 +81,10 @@ export class SmartHintsService {
     private readonly hintParser: Pick<MainSelectionFixGuard, 'classifyHint' | 'validateHintFunction'>
       & Partial<Pick<MainSelectionFixGuard, 'prepareHintApply'>> = new MainSelectionFixGuard()) {
     if (!Number.isSafeInteger(execution.timeoutMs) || execution.timeoutMs < 1 || execution.timeoutMs > 30000) throw denied()
+    this.consent = new SmartConsentStore(clock, (owner, id) => {
+      const op = this.operations.get(owner)
+      if (op?.consentSessionId === id && (!op.status || ['PREPARED', 'RUNNING'].includes(op.status.state))) this.finish(op, { state: 'CANCELLED' })
+    })
   }
   // Main composition alone provisions a provider. Unconfigured production fails closed.
   /** Read-only local throttle status. Probes never reserve a request. */
@@ -120,6 +131,7 @@ export class SmartHintsService {
   private track(task: Promise<unknown>): void { this.tasks.add(task); void task.finally(() => this.tasks.delete(task)).catch(() => {}) }
   private live(op: Operation): void {
     if (this.stopped || this.operations.get(op.owner) !== op || op.abort.signal.aborted) throw denied()
+    if (op.consentSessionId && op.status?.state !== 'COMPLETE' && !this.consent.live(op.owner, op.scope, op.consentSessionId)) throw denied()
     try { op.check() } catch { this.invalidate(op.owner); throw denied() }
   }
   private finish(op: Operation, value: { state: 'FAILED'; code: SmartFailure } | { state: 'CANCELLED' | 'EXPIRED' }): void {
@@ -165,7 +177,8 @@ export class SmartHintsService {
   prepare(owner: number, scope: string, value: SmartPrepare, check: () => void,
     capture: (generation: number, check: () => void) => Promise<SmartCapture>): Promise<SmartStatus> {
     const valid = validateSmartPrepare(value)
-    if (!valid.ok || this.stopped) throw denied()
+    if (!valid.ok || this.stopped || valid.value.action.kind === 'DETECT_ISSUES'
+      && !['GEMINI_FREE', 'FAKE'].includes(this.provider?.mode ?? '')) throw denied()
     check(); const request = valid.value, digest = sourceFingerprint(JSON.stringify(request)), now = this.clock()
     let session = this.sessions.get(owner)
     if (!session || session.scope !== scope) {
@@ -228,9 +241,11 @@ export class SmartHintsService {
             op.guard = lease
           }
         }
+        const consent = this.consent.describe(owner, scope, op.capture, this.provider)
+        op.consentSessionId = consent.sessionId
         op.status = { schemaVersion: 1, requestId: request.requestId, operationId: op.operationId, sequence: 0,
           binding: op.capture.binding, state: 'PREPARED', captureToken: op.token, expiresAt: op.expiresAt, consentVersion: 1,
-          statementBytes: Buffer.byteLength(result.statement), runContextKind: result.runContext.kind }
+          statementBytes: Buffer.byteLength(result.statement), runContextKind: result.runContext.kind, consent }
         return structuredClone(op.status)
       } catch (error) { this.fixFailure(op, error); this.finish(op, { state: 'FAILED', code: 'INVALID_INPUT' }); throw denied() }
     })
@@ -249,8 +264,16 @@ export class SmartHintsService {
     if (!validateSmartStart(value).ok) throw denied()
     const op = this.get(owner, scope, { requestId: value.requestId, operationId: value.operationId })
     if (value.captureToken !== op.token) throw denied()
-    if (op.spent) return structuredClone(op.status!)
+    const decision = JSON.stringify(value.consent ?? null)
+    if (value.consent && value.consent.sessionId !== op.consentSessionId) throw denied()
+    if (value.consent && !this.consent.live(owner, scope, value.consent.sessionId)) throw denied()
+    if (op.spent) {
+      if (op.startConsent !== undefined && op.startConsent !== decision) throw denied()
+      return structuredClone(op.status!)
+    }
     if (op.status!.state !== 'PREPARED' || !op.capture) throw denied()
+    if (op.status!.state === 'PREPARED' && op.status!.consent) this.consent.approve(owner, scope, op.status!.consent, value.consent)
+    op.startConsent = decision
     const now = this.clock()
     let failure: SmartFailure | undefined
     if (!this.provider || op.capture.action.kind === 'SUGGEST_FIX' && (!op.guard
@@ -280,7 +303,8 @@ export class SmartHintsService {
         if (op.guard) { await op.guard.assertReady(this.guardScope(op)); this.live(op) }
         const wire = await this.provider!.run(captured, history, op.abort.signal, op.execution)
         this.live(op)
-        const output = captured.action.kind === 'SUGGEST_FIX' ? constructSelectionFix(captured, wire) : wire
+        const output = captured.action.kind === 'DETECT_ISSUES' ? constructDetection(captured, wire)
+          : captured.action.kind === 'SUGGEST_FIX' ? constructSelectionFix(captured, wire) : wire
         op.output = smartOutputDiagnostic(output)
         this.live(op)
         if (this.clock() >= op.expiresAt) { this.finish(op, { state: 'FAILED', code: 'TIMEOUT' }); return }
@@ -431,7 +455,8 @@ export class SmartHintsService {
         if (!isSmartOutput(output, undefined, c.source, [], c.binding.origin.kind === 'PRACTICE' ? c.binding.origin.eol : undefined)
           || smartCandidate(c.source, output.edits, c.binding.origin.kind === 'PRACTICE' ? c.binding.origin.eol : undefined) === undefined) throw denied()
         const proposal: HintApplyProposal = { schemaVersion: 1, requestId: q.requestId, proposalId: randomUUID(), hint: q.hint,
-          binding: c.binding, expiresAt: op.expiresAt, target: { kind: c.hintImplementation === 'NO_IMPLEMENTATION' ? 'TEMPLATE_BODY' : 'SELECTION',
+          binding: c.binding, expiresAt: op.expiresAt, target: { kind: c.hintImplementation === 'NO_IMPLEMENTATION' ? 'TEMPLATE_BODY'
+            : q.selection && parsed.start === q.selection.startOffset && parsed.end === q.selection.endOffset ? 'SELECTION' : 'PARSER_RESOLVED',
             startOffset: parsed.start, endOffset: parsed.end }, output }
         if (!isHintApplyProposal(proposal)) throw denied()
         check(); preparation.proposal = structuredClone(proposal)
@@ -515,15 +540,24 @@ export class SmartHintsService {
     session.retired.add(value.clientContextId)
     const op = this.operations.get(owner)
     if (op?.request.clientContextId === value.clientContextId) this.finish(op, { state: 'CANCELLED' })
-    if (session.context === value.clientContextId) { session.sourceKey = undefined; return true }
+    if (session.context === value.clientContextId) {
+      session.sourceKey = undefined
+      if (['EXERCISE', 'LANGUAGE', 'LEARNING_LEFT'].includes(value.reason)) this.consent.clear(owner)
+      return true
+    }
     return false
   }
   invalidate(owner: number, expected?: Operation): void {
     const op = this.operations.get(owner)
     if (expected && op !== expected) return
     if (op) this.finish(op, { state: 'CANCELLED' })
+    this.consent.clear(owner)
     clearTimeout(this.sessions.get(owner)?.timer)
     this.operations.delete(owner); this.sessions.delete(owner)
+  }
+  revokeConsent(owner: number, scope: string, value: SmartConsentReference): void {
+    if (this.stopped || !validateSmartConsentReference(value).ok) throw denied()
+    this.consent.revoke(owner, scope, value.sessionId)
   }
   beginShutdown(): void { this.stopped = true; this.availabilityProbe?.abort.abort(); this.fixLanguages = []; for (const owner of this.sessions.keys()) this.invalidate(owner); this.provider?.dispose?.() }
   async stop(): Promise<void> { this.beginShutdown(); await Promise.allSettled([...this.tasks]) }

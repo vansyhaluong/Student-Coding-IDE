@@ -1,5 +1,469 @@
 # Student Coding IDE Architecture
 
+## F6 — scoped Quick Action consent, 2026-11-12
+
+SmartHintsService owns a RAM-only consent store separate from source-bound operation
+sessions. Main derives disclosure categories from the validated immutable capture,
+uses category-subset coverage and checks owner/document/exercise/language/origin/
+provider identity and a fixed bounded lifetime before dispatch. Remembering authorizes
+future manually initiated actions, never automatic retries or background requests.
+Revoke/end removes the opaque session and cancels a pending operation; completed
+local Hint Apply authority retains its existing independent guards. Source/edit,
+reset/restore and panel closure retire operations while learning permission survives.
+Exercise/language/learning exit, provider/key changes, document loss and expiry retire
+permission. Preload exposes only a validated consent-revocation capability; Renderer
+shows the brief disclosure and checkbox, or starts a freshly prepared request via
+Main-verified reuse. Chat consent and all Run/Submit/proposal authorities stay separate.
+
+## AI-SUGGEST-FIX-F5 — whole-submission advisory diagnostics, 2026-11-11
+
+Suggest Fix with a single empty Monaco selection routes to DETECT_ISSUES;
+nonempty selection stays SUGGEST_FIX with its existing frozen-selection parser,
+signature/SH-1 checks and Diff/Confirm/Undo. No full-source pseudo-selection is
+created. Detection is Gemini (or offline fake) only and does not depend on parser
+availability, so syntax-invalid submissions can be analyzed without granting edit
+authority. Analyze, Explain, Hint Apply F4 and Chat paths remain separate.
+
+Practice captures its actual practice URI-checked model/source/version; the
+existing hook and Main capture bind exercise/language/model ID/source revision/
+fingerprint and trusted public package metadata before explicit snapshot consent.
+Existing public Run receipts contribute only if source/revision/package/owner
+identity matches; no new Run/compiler/Submit execution or renderer-supplied
+compiler authority. Google transport/model/quota/coordinator stay unchanged;
+the detection-only action has the same30s ceiling as Suggest Fix. No automatic
+provider retry or model fallback. Oversized source is refused, never truncated.
+
+Gemini returns a bounded DETECTION wire with up to8 syntax/logic/runtime/other
+issues: severity, message, explanation, reason, impact, guidance, allowed public
+Run evidence IDs and optional exact source quote/UTF-16 range. Main runtime-
+validates the wire, mints IDs and fixes provenance to AI_INFERENCE and verification
+to SUSPECTED. Range admission requires valid offsets, nonempty exact quoted text,
+source bounds and no CRLF/surrogate split. A well-formed but nonmatching AI range
+is resolved in Main only when its exact nonempty quote occurs uniquely in the
+captured source, with reconstructed offsets revalidated through the same boundary
+gate (2026-11-12 corrective amendment). Count overlapping occurrences as ambiguous.
+Missing/ambiguous matches become null/INVALID_AI_RANGE; unknown stays null/UNLOCATED.
+No nearest-line, fuzzy text search, newline/whitespace normalization or source
+repair. Invalid schema/authority
+claims fail the operation. Empty issues explicitly means no finding, not proof
+of correctness. Existing confirmed compiler/Run failure/location facts appear
+separately in RunEvidence; citing them never verifies an AI diagnosis of cause.
+
+Canonical DETECTION status always has proposalId:null, never edits/Hint material
+or Apply authority. Shared validators and existing Preload/status correlation
+accept only the matching action/output and owner/source-bound result. No public
+filesystem/process/Engine capability or new provider dependency was introduced.
+
+PracticeEditor uses student-ide.ai-detection as its Monaco marker owner and
+preserves all language-provider owners. Its attachment checks the captured model
+ID/revision, actual URI/language/model version/source and exact quote before
+mapping offsets through Monaco. Severity selects the marker level; source/hover
+explicitly says unverified AI. Per the 2026-11-12 user clarification, an editor-owned
+decoration collection immediately highlights affected lines light red with a red
+margin alongside the exact markers. The original severity remains in the Monaco
+marker; all detection line backgrounds use the requested light red. Exclusive
+range ends at column one do not mark the following line. Plain-text marker
+messages include explanation, reason, impact and guidance in the standard editor
+tooltip. No bottom Error Details component/state or custom editor click handler
+is mounted. Current issue-list actions only reveal/focus a valid range; unlocated
+issues cannot select an invented position. No Apply/Confirm/Diff control.
+
+Model content/model changes synchronously invalidate the attachment. Hook source/
+exercise/language/model/session/expiry/close guards retire context and clear
+markers and the owned decoration collection; edit-then-Undo cannot
+resurrect an old result. Historical cards
+remain readonly and cannot navigate after losing current result authority.
+Cancel/timeout/invalid response use existing owned operation lifecycle. Limits:
+16KiB source,8 findings,2048 output tokens; AI locations have syntactic snapshot
+correspondence, not compiler-proven semantic correctness. No live accuracy or
+comprehensive compiler-diagnostic ingestion claim is made.
+
+## AG-02 — technical/security prototype findings, NO-GO, 2026-11-11
+
+**Current recommendation remains unapproved for production.** Prototype code is
+isolated under prototypes/ag02-opencode-v2, not imported by src/. Engine package
+@opencode/cli-windows-x64 and @opencode/client are pinned2.2.7 from official npm;
+the separate lockfile pins schema/protocol2.2.7 and transitive dependencies.
+pins.json records registry SRI and executable identity. This is a binary package
+pin, not a claim that --version or the Engine API ran. No V1 SDK/API is used.
+
+Actual Node24.16.0 client and bundled Electron44 Main client probe passed against
+an explicitly FAKE V2 HTTP/SSE fixture: Basic auth/denial, /api/info, session
+creation, interrupt, event subscription/cancellation and timeout. Electron44.0.0
+reported embedded Node24.18.1, ABI149, no stderr, OS exit0. Main bundle14 inputs,
+no Core/Server. The installed dependency tree nevertheless includes Effect4.1.0
+via schema/protocol; the lean Promise import is not proof of zero transitive
+installation footprint. The first fixture returned the wrong session envelope;
+correcting it to {data:...} per the pinned generated client fixed the test.
+
+37 prototype tests PASS after that fixture correction;118 targeted existing
+Ollama IPC/service, SmartHintsConfiguration and Learning Chat tests PASS with
+fake transports. These are not Engine runtime tests. Broker tests cover read/
+bounded search/proposal-only byte preservation, wrong owner/project/session/epoch/
+consent, extra fields, forged snapshots, stale source/session, invalid ranges,
+secret/path/size limits, traversal, absolute/drive-relative/UNC/device/ADS/reserved
+paths, an actual external directory junction and hardlink. No file symlink or
+Windows race/handle-level confinement certification follows. Synthetic fixture
+creation is harness setup; the broker contains no write method or disk commit.
+
+Standalone fake gateway tests cover fixed model/path/method, fake-loopback-only
+upstream, auth/Origin/tool/size rejection before forwarding, local-token
+replacement/revocation, per-forward budget, provider503, SSE function-call and
+synthetic thought-signature preservation, and cancellation to upstream. Tokens
+are generated in memory and not logged/persisted. This does NOT verify that a
+running Engine respects provider baseURL or uses only the gateway. No Engine/MCP
+end-to-end call or real Gemini request occurred. The fake fixture is deliberately
+not a replacement Engine or production gateway.
+
+**Hard gate: NO-GO for Engine launch in this environment.** Windows11 Home
+10.0.26200 x64, non-administrator; no WindowsSandbox.exe was found and no verified
+per-process filesystem/config/network confinement backend is implemented.
+Read-only firewall inventory showed enabled profiles with default outbound action
+NotConfigured, not an Engine-specific deny boundary. No system policy was changed.
+An ordinary Node child under private cwd/HOME and deny-proxy variables successfully
+read an outside synthetic canary and contacted an unapproved LOOPBACK canary
+(one connection, exit0). This reproduces failure of the cooperative launch
+approach, not an observed V2 Engine exploit or an external-egress measurement.
+The harness's Engine gate always denies ENGINE_ISOLATION_UNVERIFIED, has no
+bypass option and launches zero Engine processes. Client success, Job ownership,
+and deny permissions cannot turn that failed isolation gate into GO.
+
+Consequently actual effective Engine config/tool inventory/global-system-project
+discovery, native read/write/shell/PTY/subagent/plugin/MCP/download denials,
+Engine startup/health/session/events, timeout/crash/restart/descendant cleanup,
+and Engine-to-Gemini routing remain UNTESTED/BLOCKED. Windows10 and Engine Windows11
+runtime/CPU compatibility are UNVERIFIED. The declared2.2.7 Engine artifact may
+be staged but must not be run by these harness files. Existing source/runtime
+limitations from F4 are unchanged.
+
+Static payload checks: archive SRI matches registry; archive SHA256
+666d684601380ad9f7b54a004c6fe61c2a94827fac4a6150ba131ea85e507977;
+EXE SHA256 e06a04f8ec2cbaab32262e9af1474975228a5e8d9ae516da67ac4d1cf0bade8a,
+265672584 bytes, PE AMD64. Archive contains package.json and one EXE, no license
+notice file. MIT is declared; source commit/provenance signature and bundled
+third-party notices/native/DLL/WASM/runtime closure remain unverified. Copying
+the EXE to a new resources/agent-engine path with spaces preserved its hash;
+this is static relocation feasibility only, not a relocated launch or standalone
+claim. No artifact executed/installed itself; no new installer was created.
+
+Alternatives requiring explicit user decision: (1) provision a demonstrably
+confined Windows VM/sandbox or application-specific restricted runner permitting
+only the broker/gateway channels, then repeat AG-02 with stock pinned Engine;
+(2) reconsider the separately designed Main-owned Gemini/tool loop without
+OpenCode. Neither is implemented/selected here. Do not replace the hard gate by
+more cooperative env flags, allow broad project tools or silently patch/fork Engine.
+AG-03 remains NOT_STARTED. See IMPLEMENTATION-PLAN for commands and exact scope.
+
+## AG-01 — Project Gemini/OpenCode Agent proposal, 2026-11-11
+
+**DESIGN_READY for review, not production approved or runtime verified.** User
+authorization is design-only (REQUIREMENT AG-01). Fact, inference and recommendation
+are separated below. AG-02 is the next recommended activity: a separately
+authorized fake-only compatibility/security prototype. No package is installed.
+
+### Current source trace and separation
+
+Fact: App.tsx mounts features/ai/AiChatPanel.tsx in both the Project sidebar and
+a temporary Learning overlay. The panel owns ephemeral history and calls
+window.studentIde.ai.getStatus/startChat/stopChat/onChatEvent. Preload
+bridge/ai.ts validates requests, results and events against shared/contracts/ai.ts.
+AiIpcService uses IpcHandlerRegistry, authorizePreferencesFrame, per-WebContents
+active request ownership/frame correlation, overlap refusal and AbortController;
+Main index.ts constructs OllamaService and routes only to the owning WebContents.
+OllamaService probes GET /api/tags and streams POST /api/chat at fixed
+127.0.0.1:11434 with qwen3:1.7b, stream:true, think:false. NDJSON and aggregate
+output are bounded; malformed/unfinished streams fail; panel unmount, navigation,
+renderer loss and shutdown cancel. There is no projectId/context/tool authority
+in this API. Its window authorization alone is insufficient for an Agent.
+
+Recommendation: Project mode uses a new agent namespace and panel adapter; never
+extend ai:start-chat into a generic tool/command executor. Keep the existing
+beUI presentation and sidebar interaction. Project agent is unavailable in
+Learning; the current Learning overlay remains on the old chat path until a
+separately approved UX decision, never receives agent tools. Learning Chat is a
+different implementation (services/learning/chat + learning-chat IPC); Smart
+Hints/Hint Apply are another domain. No session, schema, quota coordinator, grant,
+parser, exercise source, hidden tests or official artifacts flow between them.
+
+### Official evidence and option selection
+
+Fact: [V2 migration](https://opencode.ai/docs/migrate-v1/) identifies
+@opencode/client as the released V2 API client; @opencode-ai/sdk/v2 examples in
+the [V1 SDK docs](https://opencode.ai/v1/docs/sdk/) are not proof of OpenCode 2
+compatibility. V2 uses permissions arrays and shell/subagent action names.
+The migration notes external_directory is allowed by default: never inherit it.
+The [V2 API](https://opencode.ai/docs/api) labels selected HTTP routes
+experimental; prompt, interrupt, permission reply and event transport need a
+pinned adapter. Its event stream is volatile: disconnection/overflow loses events.
+No permission or applied-edit state may be reconstructed by blindly replaying SSE.
+
+Fact: surveyed upstream dev manifests identify client/core/CLI 2.2.7, MIT, and
+Bun 1.4.4 build tooling. These are mutable source observations, NOT a locked
+published artifact selection. [Promise client README](https://raw.githubusercontent.com/anomalyco/opencode/dev/packages/client/README.md)
+describes a fetch client without Core/Effect runtime dependencies. In contrast,
+[Core manifest](https://raw.githubusercontent.com/anomalyco/opencode/dev/packages/core/package.json)
+has Node/Bun conditional imports and native SQLite/PTY/watcher/image/search
+dependencies. Node support in source does not establish Electron 44 ABI support.
+
+| Option | Benefits | Material costs/risks | AG-01 choice |
+| --- | --- | --- | --- |
+| Embed Core/Engine in Main (or Electron utility process) | Direct hooks; fewer HTTP boundaries | Native/runtime dependency closure, Electron ABI/rebuild conflicts with existing patched node-pty, Main crash/resource coupling; utility process still needs compatibility evidence | Reject for first implementation |
+| App-owned Engine sidecar + Main-only V2 Promise client | Engine runtime separate from Electron ABI; bounded lifecycle and protocol adapter; independently versioned payload | Extra binary/data/loopback surface, config discovery and egress must be constrained and tested | Recommended, conditional on AG-02 gates |
+| Gemini directly in Main with an app-owned loop | Smallest runtime/policy surface | Reimplements orchestration and does not fulfill OpenCode Engine objective | Contingency requiring a new explicit decision if sidecar gates fail |
+
+This is a recommendation, not a claim that a standalone Engine SDK is merely a
+pure JS import. Do not use createOpencode defaults/global executables/auto-daemon
+discovery. Main explicitly launches its exact payload and owns its lifetime.
+
+### Proposed process, provider and credential boundaries
+
+Project panel -> typed agent Preload -> AgentIpcService -> AgentService in Main.
+AgentService composes EngineAdapter (V2 client), AgentProjectTools (authorization),
+AgentProposalService (candidate authority) and GeminiAgentGateway (provider I/O).
+One owner/project generation and one active turn per session; no background work.
+Engine starts in a NEW empty private runtime workspace, not the student's repo
+or a copy containing its config. It is given an opaque session alias, approved
+source content only through tools, and a random revocable local gateway token.
+Absolute project roots, true Gemini keys and inherited developer credentials
+are absent from its config/env/argv. Its own app-managed runtime/data files are
+distinct from agent project-file capabilities; no promise of an OS sandbox is
+inferred from cwd, environment variables or Engine permission settings.
+
+Use only one app-controlled authenticated loopback MCP endpoint hosted by Main,
+with readFile/searchFiles/proposeEdit tools and no resources/prompts/URLs/shell.
+MCP here is a private integration transport, not an extension marketplace or
+user-configurable server registry. Main binds a random port and per-session
+capability, validates exact Origin/Host/transport schema/owner/epoch and byte
+limits, rejects unknown methods/tools and credentials in model arguments.
+[V2 MCP documentation](https://opencode.ai/docs/mcp-servers/) supports remote
+servers; exact headers, initialization and cancellation behavior are AG-02 gates.
+If unsupported, stop and reconsider the transport rather than enable filesystem
+write tools or a broad plugin. No plugin dependency is preapproved.
+
+Disable all native Engine file read/search/edit/write/patch tools and shell,
+PTY, execute/Code Mode, subagent, worktree, skill, webfetch/websearch, browser,
+images, formatters, snapshots/revert and automatic updates/downloads. Allow only
+the three broker tools. Unknown permissions fail closed. The [V2 permissions](https://opencode.ai/docs/permissions/)
+use last-match rules and separate MCP tool actions; they are defense in depth,
+not Main authorization. [Config](https://opencode.ai/docs/config/) discovers
+ancestor/global/system settings and executable extensions. Private HOME/config/
+data/cache/cwd plus a minimal environment are necessary but not evidence that
+all discovery is disabled. Validate effective config/tool inventory at startup;
+unexpected provider/plugin/MCP/agent/config source => NOT_READY. No changes to
+the student's global config, tools, PATH or system settings.
+
+Only the Main GeminiAgentGateway sends HTTPS to a fixed Google Gemini Developer
+API host/model/method allowlist. [Google provider source](https://raw.githubusercontent.com/anomalyco/opencode/dev/packages/ai/src/providers/google.ts)
+supports baseURL and API-key authentication via x-goog-api-key. Proposed Engine
+google provider points to the loopback gateway using a disposable local token.
+Gateway validates path/model/body/tool names and request ownership, rejects
+redirects/arbitrary destinations, removes local auth and injects the true key
+only into upstream headers. Bound input/output/tokens/steps/time; reserve budget
+before EACH actual provider forward, including follow-up/compaction/retry calls.
+Do not reuse Learning's once-per-operation reserveInference memoization for an
+agent loop. No silent retries/model fallback, remote file/URL uploads, alternate
+providers or live connection check. Gemini streaming/tool-call framing, thought
+signatures and provider baseURL behavior must survive fake-protocol fixtures;
+do not coerce them into the existing Smart Hints JSON schema.
+Google's [function-calling contract](https://ai.google.dev/gemini-api/docs/function-calling)
+places actual function execution in the application: receiving a model tool call
+is not approval. Preserve required protocol state across turns and execute only
+the Main-validated broker action. Follow the [API-key security guidance](https://ai.google.dev/gemini-api/docs/api-key):
+keep credentials out of browser code; verify compatibility with the user's
+supported key type/restrictions without changing Learning's validator here.
+
+Fact: SmartHintsConfiguration currently owns a private in-memory key, encrypted
+settings, native Main key-entry UI, safeStorage and Learning's shared coordinator;
+it exposes no reusable credential API. Recommendation: a narrowly authorized
+Main-only GeminiCredentialBroker supplies gateway dispatch leases (no key getter
+to Renderer/Engine); adapt the existing configuration through an internal port
+without changing its enablement/model/quota/storage semantics. Reuse requires a
+separate Agent opt-in; Learning enablement does not imply Agent consent. Preserve
+the single encrypted credential record; no plaintext duplicate/auth.json/.env.
+Key replacement/removal revokes the credential generation and drains its Agent
+gateway before reuse, without turning off or spending Learning's logical budget.
+Agent enablement/budget and provider failures stay Agent-owned. Actual Google
+quota is shared when using the same credential and cannot be isolated by local
+ledgers; report that fact. Any credential seam refactor needs AG-03 regression
+gates and explicit approval; it is not implemented by this design.
+
+Renderer receives hasKey/readiness and redacted domain errors only. Engine logs
+can at most contain a revoked local token, never the Google key. Do not persist
+raw Engine/provider logs or HTTP bodies/headers; project content can itself be
+sensitive. Emit fixed-enum phase/error/counter/timing diagnostics only. Inspect
+crash/session/cache/log artifacts for canary credentials and source retention.
+Discard/delete private data only after owned process-tree settlement and path/
+link/ownership checks; failures retain a safe cleanup-required state. Directory
+removal is not forensic erasure and no durable chat history is in the first scope.
+
+### Project access, proposal, confirmation and Undo
+
+Assumption for first scope: one existing UTF-8 text file applied per confirmation;
+several file proposals may be reviewed individually, without an atomic multi-file
+claim. No create/delete/rename, binary, permissions or encoding conversion.
+Read access is explicitly granted for a disclosed eligible file manifest per
+session/turn, with bounded directory/search results. Initially propose limits of
+20 files/1 MiB aggregate context, 256 KiB/file, 100 search hits, 8 provider forwards
+and 120 seconds/turn; AG-02 measures and AG-03 approves exact constants. Engine
+never broadens that manifest. Reading another file requires explicit scope
+approval; a read approval cannot approve edits.
+
+AgentProjectTools uses ProjectService.getAuthorizedProject and the existing
+FileSystemService containment primitives, with an additional Agent policy on
+EVERY read/search/proposal/consume. Reject absolute/drive-relative/UNC escapes,
+traversal, ADS, reserved/device paths, case aliases, links/junctions/reparse and
+hardlink aliases; revalidate file and ancestor identity around I/O. Exclude .git,
+dependencies, generated/out/release files, .env*, credential/private-key/cert/
+auth/settings/log files and app userData. Add known-secret/value scanning and
+reject suspicious files/content instead of silently redacting code used in a
+diff. Search filters BEFORE reading and before returning paths/snippets; the
+existing SearchService exclusions alone are insufficient for secrets. Recognize
+that pattern scanning cannot prove arbitrary text contains no unknown secret;
+explicit eligible manifests and fail-closed canary tests are required. Project
+instructions and tool results are untrusted data, never executable config or
+authority to change permissions/send new context. Atomic no-follow Windows I/O
+and residual same-user races need AG-02 evidence; do not claim existing string
+realpath checks alone settle them.
+
+Dirty Monaco models are authoritative for open files. A session-owned editor
+capture protocol records project generation, canonical model identity, monotonic
+renderer revision (including edit-then-Undo), Monaco version, EOL, source hash
+and disk fingerprint. Treat submitted snapshot text as untrusted bounded input;
+Main alone authorizes its path. Closed files are authorized/read by Main and
+opened as models before applying; a mismatched disk snapshot requires recapture.
+Never merge a disk-based candidate over a dirty model or silently save/reload it.
+
+proposeEdit receives a relative path, issued snapshot ID, nonoverlapping text
+edits and bounded rationale. Main validates scope/ranges/hashes/limits and builds
+the immutable before/after candidate itself; model text cannot mint a proposal.
+Return opaque proposalId/digest/expiry and safe relative-path Diff data. Readonly
+Diff does not mutate a model/disk; pause the turn before the proposal is reviewed.
+Confirm consumes a one-use owner/session/turn/project/model/revision/source-bound
+grant. Recheck scope, source/disk state and expiry; duplicate exact consumes are
+idempotent, mismatched replays denied, ambiguous transport outcome never re-applied.
+Renderer rechecks the live model immediately after correlated ACK, then uses one
+synchronous Monaco edit transaction with undo stops. No stale auto-rebase. Dirty
+or external changes since capture invalidate the proposal and require new review;
+even change-then-Undo invalidates authority. Discard/Stop revoke proposals.
+
+Result is an UNSAVED Monaco buffer with native Undo/Redo, not Engine disk edits.
+Suspend/defer existing auto-save for pending proposals and the Agent-applied
+transaction until an explicit normal Save; UI states this clearly. The existing
+EditorModelManager createSaveSnapshot/acceptSave and use-editor-workspace save
+path remain the disk-write owner. Existing FileSystemService.write is a direct
+write, not a compare-and-swap transaction; do not claim it protects agent stale
+disk commits. A future direct/atomic multi-file write would need a separate design.
+Saved edits follow normal editor Undo semantics: Undo changes the buffer and a
+later explicit Save changes disk. Never use Engine revert/Git checkout as Undo.
+
+### Proposed typed IPC and lifecycle
+
+New side-effect-free contracts/agent.ts + agent-validation.ts; private schemas
+map Engine/MCP DTOs to application types. Conceptual API (not SDK method names):
+getStatus({projectId}), openSession({projectId,scopeConsent}),
+startTurn({sessionId,clientTurnId,prompt}), stopTurn({sessionId,turnId}),
+captureEditorSnapshot({sessionId,relativePath,modelSnapshot}),
+approveReadScope({sessionId,requestId,decision}),
+getProposal({sessionId,proposalId}), consumeProposal({sessionId,proposalId,digest}),
+discardProposal({sessionId,proposalId}), closeSession({sessionId}), onEvent(listener).
+No public raw permission.reply, Engine endpoint/port/token, provider config,
+absolute paths, arbitrary shell, generic invokeTool or arbitrary diff execution.
+Only a correlated visible manual Confirm arms consume; grant is not transferable
+to another proposal/model. Capability validators cover exact shapes, text/array
+limits, enums and request/reply correspondence on both sides of the bridge.
+
+Events carry owner-scoped session/turn IDs, project epoch, monotonic sequence and
+safe state: status/textDelta/readScopeRequested/proposalReady/terminal/error.
+Readiness is separate from turn lifecycle (NOT_READY/READY versus IDLE/RUNNING/
+WAITING_READ_SCOPE/WAITING_CONFIRM/STOPPING/STOPPED/FAILED). Errors distinguish
+dependency/credential/provider/policy/target/candidate/stale/conflict/cleanup.
+One terminal event per turn; bounded early-event buffering and stale-event drops.
+On event transport gap, cancel/freeze the turn, reconcile authoritative session
+state using the pinned API and revoke pending confirmations; never infer success
+or repeat a prompt/tool/model forward from a missing SSE event.
+
+Close panel, leave Project mode, switch/close project, lose/navigate WebContents,
+replace/remove key or quit: seal admission, revoke capabilities/proposals,
+interrupt Engine session, abort gateway/MCP work, await owned process/descendant
+cleanup, then close transports and private runtime. Interrupt timeout escalates
+only to verified owned-tree termination using the existing Windows lifecycle
+boundary, never process-name/global daemon killing. Job Objects manage lifetime,
+not filesystem/network confinement. Cleanup failure retains STOPPING and ownership
+for retry under ADR-021. No detached/global auto-start service or restart loop.
+
+### Compatibility and unresolved gates
+
+Fact: repository host Node v24.16.0, installed Electron44.0.0 and builder26.18.0;
+host Node is NOT Electron's embedded Node/ABI. [Electron platform support](https://raw.githubusercontent.com/electron/electron/main/README.md)
+lists Windows10+, while [OpenCode install docs](https://opencode.ai/docs/) offer
+Windows x64 and x64-baseline standalone CLI artifacts. Neither certifies the
+exact combination or oldest supported Windows/CPU. AG-02 must pin matching
+published Engine/client versions, checksums/source revision, package exports and
+license closure; test real Node24 client, Electron44 Main bundle/ESM/import graph,
+and native Win10/11 x64 Engine startup without WSL, globally installed Bun/Node/
+OpenCode, Git Bash, auto-downloads or unsupported CPU instructions. Surveyed
+2.2.7 is a candidate only, not a new dependency/version decision.
+
+Future packaging places verified Engine EXE plus DLL/native/WASM/model-catalog/
+provider assets and notices under resources/agent-engine via extraResources.
+The installed builder26.18.0 schema/config must be used for implementation;
+upstream [builder schema](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/scheme.json)
+is reference evidence, not authority to change the pinned builder version.
+Resolve using process.resourcesPath when packaged; explicit build asset root in
+development, never cwd/source tree/PATH/npx. SDK client stays in Main's production
+dependency closure only. Executables live outside ASAR ([Electron ASAR limits](https://www.electronjs.org/docs/latest/tutorial/asar-archives)).
+Include audited runtime closure, not the whole repo/out/, SDK tests, session DB,
+logs, encrypted user keys or runtime downloads. Bundle runtime if the chosen
+artifact needs one; do not assume a Bun build script means Bun is required on
+the student's machine or claim standalone before proving the payload closure.
+Retain current Node24/.NET10/VC++ prerequisites for unrelated IDE features.
+
+Historical local prototypes are V1 SDK/Engine1.19.4, NOT V2 evidence. Their R1/R2
+README files report unexpected bootstrap network activity and an unresolved
+Engine egress/live-API NO-GO. They are evidence only; no historical launcher is
+run or gate waived. The referenced old review docs are absent in this checkout;
+do not invent their contents. AG-02 must demonstrate no ambient config/code or
+unexpected egress with fake credentials/providers and an enforceable isolation
+mechanism. Permission/proxy variables alone are not an OS security boundary.
+If startup/config/egress confinement cannot meet requirements using a stock
+payload, production remains BLOCKED: return evidence and alternatives for an
+explicit decision, never silently patch/fork Engine or weaken the restrictions.
+
+Open decisions: exact published version/payload/runtime; enforceable Windows
+filesystem/config/egress isolation; verified MCP and Gemini framing; credential
+port migration and independent Agent budget/model; exact consent/limits and
+auto-save lease UX; minimum Windows/CPU and signing/distribution acceptance.
+These block dependent implementation/live/release, not completion of AG-01's
+design survey. See IMPLEMENTATION-PLAN for the gated AG-02–AG-06 proposal.
+
+## AI-HINT-APPLY-F4 — Hint-only parser-resolved targets, 2026-11-11
+
+Nonempty requested ranges remain exact targets, restricted to entry expressions
+or leaf statement sequences; selecting an entire control-flow construct cannot
+replace it with a Hint fragment. A collapsed caret resolves in physical block
+trivia gaps, including nested blocks. A unique adjacent matching return or bound
+assignment is replaced rather than creating a duplicate statement. Otherwise an
+explicit valid gap may insert. Token-interior/ambiguous/outside-entry requests
+fail closed. Null/default boundary caret may infer an assignment insertion only
+into one empty block with all fragment identifiers already lexically bound;
+multiple candidates or more than128 blocks require an explicit target. This is
+parse-only scope evidence, not type checking or proof of algorithm correctness.
+
+Every full candidate still passes unchanged grammar, exact entry signature/header,
+outside-target AST shape and SH-1 canonical checks. No complete-function Hint
+rewrite is admitted for HAS_IMPLEMENTATION. Syntax-uncertain Hint classification
+remains non-authoritative and gets an explicit CLASSIFICATION denial; Selection
+Fix recovery is unchanged. No new inference or renderer target authority exists.
+
+Main emits PARSER_RESOLVED only when its verified offsets differ from an absent/
+collapsed request. Preload admits that kind only for such requests and retains
+the original operation/source/package/model/revision/TTL correlation and exact
+consume ACK. HAS_IMPLEMENTATION nonempty selections still require SELECTION with exact offsets.
+Readonly Diff/manual Confirm, one-shot WeakSet arming, native Undo/Redo, stale
+rejection, Discard and the three-attempt F3 policy remain unchanged. This section
+supersedes the historical immediate-body/exact-caret restrictions below only for
+Hint Apply, not Suggest Fix, Chat or provider schema/model/quota.
+
 ## Learning Assistant entry scope — 2026-11-08
 
 LearningWorkspace no longer owns a theory Chat trigger, panel or open state.

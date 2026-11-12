@@ -8,6 +8,7 @@ export default tseslint.config(
       'node_modules',
       'out',
       'dist',
+      'release',
       'spikes/csharp-lsp-compatibility/.dotnet',
       'spikes/csharp-lsp-compatibility/.tools',
       'spikes/csharp-lsp-compatibility/artifacts',
@@ -19,6 +20,12 @@ export default tseslint.config(
   js.configs.recommended,
 
   ...tseslint.configs.recommended,
+
+  {
+    files: ['electron-builder.config.cjs', 'scripts/csharp-ls-payload.cjs'],
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
 
   {
     // Fixed developer references execute through Node's CommonJS loader.

@@ -1,4 +1,4 @@
-import { ArrowDown } from 'lucide-react'
+import { ArrowDown, Settings } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger } from '../../components/motion/tabs'
 import { learningChapters, type ChapterId } from './chapters'
@@ -8,17 +8,20 @@ import { usePractice } from './practice/use-practice'
 import { PracticeWorkspace } from './practice/PracticeWorkspace'
 import { useExerciseRuntime } from './practice/use-exercise-runtime'
 import { useSubmission } from './practice/use-submission'
+import { Button } from '../../components/ui/Button'
 
 interface Props {
   selectedChapterId: ChapterId
   sidebarCollapsed: boolean
   onSelectChapter(id: ChapterId): void
   onCollapseSidebar?(): void
+  onOpenSettings?(): void
+  settingsDisabled?: boolean
   active?: boolean
   exitGuard?: { current: () => Promise<boolean> }
 }
 
-export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelectChapter, onCollapseSidebar, active = true, exitGuard }: Props) {
+export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelectChapter, onCollapseSidebar, onOpenSettings, settingsDisabled = false, active = true, exitGuard }: Props) {
   const introduction = useRef<HTMLElement>(null)
   const mounted = useRef(false)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
@@ -58,7 +61,12 @@ export function LearningWorkspace({ selectedChapterId, sidebarCollapsed, onSelec
             </button>
           ))}
         </nav>
-        {!sidebarCollapsed && <p className="learning-sidebar-note">Kỹ thuật lập trình<br /><span>8 chương · Một hành trình</span></p>}
+        <footer className="learning-sidebar-footer">
+          <Button variant="ghost" size="iconSmall" aria-label="Settings" title="Settings"
+            disabled={settingsDisabled || practice.closing || !onOpenSettings} onClick={onOpenSettings}>
+            <Settings aria-hidden="true" />
+          </Button>
+        </footer>
       </aside>
       <div className="learning-center">
         {selectedChapterId !== 1 && <nav className="learning-section-nav" aria-label="Nội dung học tập">
