@@ -87,11 +87,68 @@ fake fixture tests must never be presented as real Engine acceptance.
 
 ## AG-01 — Project Agent seams, design only, 2026-11-11
 
-Actual existing Local AI: renderer features/ai/AiChatPanel.tsx -> preload
-bridge/ai.ts -> shared/contracts/ai.ts channels -> main/ipc/ai-ipc-service.ts ->
-main/services/ai/ollama-service.ts; main/index.ts composes it and App.tsx mounts
-the panel in Project and a Learning overlay. No project tool authority exists.
-Proposed Project replacement must not activate tools in that Learning overlay.
+Actual existing Local AI: renderer features/ai/AiChatPanel.tsx in learning mode ->
+preload bridge/ai.ts -> shared/contracts/ai.ts channels -> main/ipc/ai-ipc-service.ts ->
+main/services/ai/ollama-service.ts. App.tsx mounts that mode only in the Learning
+overlay. The overlay has no project tool authority.
+
+The Project workspace uses the same AiChatPanel in project mode. That mount calls
+preload bridge/project-agent.ts and does not call Ollama. There is no second chat
+panel. Stage 1, 2026-11-15, is this Gemini loop in Main. It is not the OpenCode
+sidecar and does not complete AG-01 or AG-02. Actual paths:
+shared/contracts/project-agent.ts and project-agent-validation.ts;
+preload/bridge/project-agent.ts (session, turn, cancel, apply);
+main/ipc/project-agent-ipc-service.ts;
+main/services/ai/project-agent-service.ts, project-agent-diff.ts, and project-agent-gemini.ts;
+renderer/src/features/ai/AiChatPanel.tsx (project mode) and refresh-applied-file.ts;
+renderer/src/components/ai/file-diff.tsx and agent-activity.tsx.
+The request field is the existing beUI Prompt Input, with an add-file icon and
+the Gemini model name. The panel heading is CHAT. A reply shows Agent
+Activity above the answer for files that turn wrote and for deletes or
+renames that still need confirmation. The activity list is presentation only.
+Read, list, propose, create, delete, and rename stay in Main. One turn may hold
+up to four file changes. An edit or a create is written in that same turn, after
+the same path, owner, and generation checks, and is not stored as a proposal.
+The chat shows a short result and a File Diff of the written lines. It does not
+show the full proposed source or an Apply button for those changes. Delete and
+rename still wait for confirmation. Apply changes one file or one empty folder
+through FileSystemService only after `confirmed: true` for that proposal. Create writes
+a missing file and can create up to eight missing parent directories along that
+path. If that create makes parent directories and then fails, before or after
+the empty file is removed, only the directories that operation created are
+removed, deepest first, with a non-recursive rmdir inside the project. The
+empty file from that operation is still removed when the write fails. A
+pre-existing directory stays. A pre-existing file stays, and a created file
+that now has content stays. If file or folder cleanup fails, the chat reports
+the original failure and the cleanup failure. A confirmed
+rename or move can create the same bounded set of missing destination parents;
+a deeper path is rejected before any directory is created.
+Delete trashes one existing file, or permanently removes one empty directory
+with a non-recursive rmdir. A non-empty directory is refused. A clean editor
+tab reloads after an edit or create, closes after a file delete, and follows a
+rename. When the destination path is already open, a clean destination tab is
+closed and the source tab follows the new path. A dirty destination tab is kept
+and a clean source tab is closed. Apply is blocked before any disk write when
+both the source tab and the destination tab have unsaved edits, and the user is
+asked to save or discard the source first. A dirty tab keeps its buffer on
+edit, create, and file delete. If a confirmed move creates parent directories
+and then the move fails, only the directories that operation created are
+removed, deepest first, with a non-recursive rmdir inside the project.
+Pre-existing directories stay. If that cleanup fails, the failure is reported
+with the move failure. A failed create or edit fails the turn after the existing cleanup and shows its
+message in the project chat. A failed delete or rename shows its message when
+the student confirms. Delete and rename are the writes that still wait for
+confirmation. Explorer
+refresh uses the existing file-change event for
+the affected path. Each Gemini request reads
+SmartHintsConfiguration.geminiCredential() from Settings and does not spend
+Learning quota. A missing or empty key fails closed before any request. A
+rejected key, a quota or rate limit, a network failure, and an invalid model
+response each appear as a fixed chat message. The response body and the key
+are not shown or logged. Stop and a project switch abort an in-flight turn.
+A live call is manual: enable the Settings key, open a small project that
+contains no secrets, ask one short question in Project chat, and record only
+whether it answered or which alert appeared. The planned rows below remain uncreated.
 
 | Path relative to src/ | Current seam / proposed use | Exists? |
 | --- | --- | --- |
@@ -100,7 +157,7 @@ Proposed Project replacement must not activate tools in that Learning overlay.
 | main/services/search/search-service.ts | Bounded traversal concepts; existing exclusions do not enforce Agent secrets policy | Yes |
 | renderer/src/features/editor/models/editor-model-manager.ts | Model identity, snapshots, dirty state and native transactions | Yes; Agent capture/edit seam planned |
 | renderer/src/features/editor/use-editor-workspace.ts and auto-save.ts | Save/conflict owner; scoped Agent auto-save suppression needed | Yes; not modified by AG-01 |
-| main/services/learning/smart-hints/configuration.ts and native-key.ts | Existing encrypted key/native input; private key has no reuse API | Yes; proposed narrow Main credential port only |
+| main/services/learning/smart-hints/configuration.ts and native-key.ts | Existing encrypted key/native input; stage-1 geminiCredential() borrows it without Learning quota | Yes; broker still planned |
 | main/ipc/ipc-handler-registry.ts and app/desktop-application.ts | Typed validation, authorization and owned shutdown composition | Yes |
 | shared/contracts/agent.ts and agent-validation.ts | Proposed capability DTOs, limits and exact validators | No; planned |
 | preload/bridge/agent.ts and main/ipc/agent-ipc-service.ts | Proposed validated agent namespace and owner routing | No; planned |
@@ -1384,7 +1441,9 @@ and preserves partial content after Stop or error. Thinking... lasts until the
 first content chunk. The service uses AbortController, bounded records/output,
 timeouts, availability checks and malformed/interrupted-stream errors.
 AI tests live in `tests/main/ai-ollama.test.ts`, `tests/main/ai-ipc.test.ts` and
-`tests/renderer/ai-chat-panel.test.tsx`. No agent, tools, file context or persistence exists.
+`tests/renderer/ai-chat-panel.test.tsx`. This Ollama path still has no tools.
+The Project workspace chat is a separate mode of the same panel and is described
+in the AG-01 stage-1 note above.
 
 | Current path | Role | Status |
 |---|---|---|

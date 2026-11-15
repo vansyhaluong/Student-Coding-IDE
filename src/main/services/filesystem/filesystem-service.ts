@@ -6,6 +6,7 @@ import {
   readdir as readdirAsync,
   realpath as realpathAsync,
   rename as renameAsync,
+  rmdir as rmdirAsync,
   writeFile as writeFileAsync,
 } from 'node:fs/promises'
 import { basename, posix } from 'node:path'
@@ -39,6 +40,8 @@ export interface FileSystemPort {
   ): Promise<void>
   mkdir(path: string): Promise<void>
   rename(source: string, destination: string): Promise<void>
+  /** Non-recursive. A non-empty directory must fail. */
+  rmdir(path: string): Promise<void>
 }
 
 export interface StatsLike {
@@ -86,6 +89,7 @@ const nodeFileSystem: FileSystemPort = {
   ),
   mkdir: (path) => mkdirAsync(path),
   rename: renameAsync,
+  rmdir: (path) => rmdirAsync(path),
 }
 
 const nodeWatchFactory: WatchFactory = (rootPath, listener) => {
@@ -336,7 +340,119 @@ export class FileSystemService implements ManagedService {
       await this.fileSystem.mkdir(targetPath)
     }
     const stats = await this.fileSystem.lstat(targetPath)
-    return toFileEntryFromStats(stats, relativePath, name)
+    const entry = toFileEntryFromStats(stats, relativePath, name)
+    this.notify(project.id, relativePath, kind === 'directory' ? 'renamed' : 'changed')
+    return entry
+  }
+
+  /**
+   * Trash one file. A directory is rejected so a project-agent delete cannot
+   * remove a tree. Explorer directory delete keeps using delete().
+   */
+  async deleteFile(projectId: ProjectId, relativePath: string): Promise<void> {
+    const operation = 'file:delete-file'
+    const project = this.projectService.getAuthorizedProject(projectId)
+    const first = await this.resolveExisting(project, relativePath, false)
+    if (!first.stats.isFile() || first.stats.isSymbolicLink()) {
+      throw invalidPath('Only a file can be deleted.', operation)
+    }
+    const target = await this.resolveExisting(project, relativePath, false)
+    if (!target.stats.isFile() || target.stats.isSymbolicLink()) {
+      throw invalidPath('Only a file can be deleted.', operation)
+    }
+    this.projectService.getAuthorizedProject(project.id)
+    await this.options.trashItem(target.lexicalPath)
+    this.notify(project.id, toContractPath(relativePath), 'renamed')
+  }
+
+  /**
+   * Permanently remove one empty directory. Trash is not used: the recycle bin
+   * can move a whole tree if a child appears after an emptiness check. rmdir
+   * stays non-recursive. A non-empty directory, symlink, file, or the project
+   * root is rejected.
+   */
+  async deleteEmptyDirectory(projectId: ProjectId, relativePath: string): Promise<void> {
+    const operation = 'file:delete-empty-directory'
+    const project = this.projectService.getAuthorizedProject(projectId)
+    const first = await this.resolveExisting(project, relativePath, false)
+    if (!first.stats.isDirectory() || first.stats.isSymbolicLink()) {
+      throw invalidPath('Only an empty folder can be deleted.', operation)
+    }
+    if ((await this.fileSystem.readdir(first.canonicalPath)).length > 0) {
+      throw invalidPath('That folder is not empty.', operation)
+    }
+    const target = await this.resolveExisting(project, relativePath, false)
+    if (!target.stats.isDirectory() || target.stats.isSymbolicLink()) {
+      throw invalidPath('Only an empty folder can be deleted.', operation)
+    }
+    if ((await this.fileSystem.readdir(target.canonicalPath)).length > 0) {
+      throw invalidPath('That folder is not empty.', operation)
+    }
+    this.projectService.getAuthorizedProject(project.id)
+    try {
+      await this.fileSystem.rmdir(target.lexicalPath)
+    } catch (error) {
+      if (isNodeErrorCode(error, 'ENOTEMPTY') || isNodeErrorCode(error, 'EEXIST')) {
+        throw invalidPath('That folder is not empty.', operation)
+      }
+      throw error
+    }
+    this.notify(project.id, toContractPath(relativePath), 'renamed')
+  }
+
+  /**
+   * Move one file to another relative path in the same project. The destination
+   * parent must already exist. Directories are not moved.
+   */
+  async move(
+    projectId: ProjectId,
+    sourceRelativePath: string,
+    destinationRelativePath: string,
+  ): Promise<FileEntry> {
+    const operation = 'file:move'
+    const sourceRelative = toContractPath(sourceRelativePath)
+    const destinationRelative = toContractPath(destinationRelativePath)
+    if (
+      sourceRelative.length === 0
+      || destinationRelative.length === 0
+      || sourceRelative === destinationRelative
+    ) {
+      throw invalidPath('The destination is the same as the source.', operation)
+    }
+    const leaf = posix.basename(destinationRelative)
+    validateEntryName(leaf, this.platform, operation)
+    const parentContract = posix.dirname(destinationRelative)
+    const normalizedParent = parentContract === '.' ? '' : parentContract
+    const project = this.projectService.getAuthorizedProject(projectId)
+    const source = await this.resolveExisting(project, sourceRelative, false)
+    if (!source.stats.isFile() || source.stats.isSymbolicLink()) {
+      throw invalidPath('Only a file can be moved.', operation)
+    }
+    const parent = await this.resolveExisting(project, normalizedParent, true)
+    if (!parent.stats.isDirectory() || parent.stats.isSymbolicLink()) {
+      throw invalidPath('The parent path is not a directory.', operation)
+    }
+    const destinationPath = resolveProjectRelativePath(
+      project.canonicalRoot,
+      destinationRelative,
+      this.platform,
+    )
+    await this.assertMissing(destinationPath, operation)
+    const revalidatedSource = await this.resolveExisting(project, sourceRelative, false)
+    if (!revalidatedSource.stats.isFile() || revalidatedSource.stats.isSymbolicLink()) {
+      throw invalidPath('Only a file can be moved.', operation)
+    }
+    const revalidatedParent = await this.resolveExisting(project, normalizedParent, true)
+    if (!revalidatedParent.stats.isDirectory() || revalidatedParent.stats.isSymbolicLink()) {
+      throw invalidPath('The parent path is not a directory.', operation)
+    }
+    await this.assertMissing(destinationPath, operation)
+    this.projectService.getAuthorizedProject(project.id)
+    await this.fileSystem.rename(revalidatedSource.lexicalPath, destinationPath)
+    const moved = await this.fileSystem.lstat(destinationPath)
+    this.notify(project.id, sourceRelative, 'renamed')
+    this.notify(project.id, destinationRelative, 'renamed')
+    return toFileEntryFromStats(moved, destinationRelative, leaf)
   }
 
   private async resolveExisting(
@@ -443,6 +559,15 @@ export class FileSystemService implements ManagedService {
     if (this.status?.projectId === projectId && this.status.state === state) return
     this.status = { projectId, state }
     for (const listener of this.statusListeners) listener(this.status)
+  }
+
+  private notify(
+    projectId: ProjectId,
+    relativePath: string,
+    kind: FileChangedEvent['kind'],
+  ): void {
+    const event: FileChangedEvent = { projectId, relativePath, kind }
+    for (const listener of this.listeners) listener(event)
   }
 
   private closeWatcher(): void {

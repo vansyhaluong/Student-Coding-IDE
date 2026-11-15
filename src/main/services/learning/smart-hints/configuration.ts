@@ -199,6 +199,20 @@ export class SmartHintsConfiguration {
       && !this.document.needsLimitReview && this.dailyUsed() < this.document.dailyLimit
       && (!this.remoteLimit?.retryAt || this.clock() >= this.remoteLimit.retryAt)
   }
+
+  /** Main-only borrow of the stored Gemini key. Does not spend Learning quota or grant Learning consent. */
+  geminiCredential(): { ready: boolean; generation: number; value(): string } {
+    const ready = this.geminiReady()
+    return {
+      ready,
+      generation: this.providerGeneration,
+      value: () => this.geminiReady() ? this.key : '',
+    }
+  }
+
+  private geminiReady(): boolean {
+    return !this.stopped && !this.busy && this.document.enabled && this.state === 'READY' && this.key.length > 0
+  }
   private async retireProvider(): Promise<void> {
     this.providerGeneration++
     for (const listener of this.chatRetirement) listener('PROVIDER_CHANGED')

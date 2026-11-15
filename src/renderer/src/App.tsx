@@ -295,9 +295,13 @@ export default function App() {
               setWorkspaceMode(mode => mode === 'project' ? 'learning' : 'project')
             }}><GraduationCap /></Button>
           <Button className="local-ai-toggle" variant="ghost" size="iconSmall"
-            aria-label={aiOpen ? 'Close Local AI' : 'Open Local AI'}
-            title={aiOpen ? 'Close Local AI' : 'Open Local AI'}
-            aria-expanded={aiOpen} aria-controls="local-ai-panel"
+            aria-label={learning
+              ? (aiOpen ? 'Close Local AI' : 'Open Local AI')
+              : (aiOpen ? 'Close Project chat' : 'Open Project chat')}
+            title={learning
+              ? (aiOpen ? 'Close Local AI' : 'Open Local AI')
+              : (aiOpen ? 'Close Project chat' : 'Open Project chat')}
+            aria-expanded={aiOpen} aria-controls={learning ? 'local-ai-panel' : 'project-chat-panel'}
             onClick={() => setAiOpen(open => !open)}><Sparkles /></Button>
         </div>
       </header>
@@ -515,7 +519,7 @@ export default function App() {
               unavailable={editor.fileSystemUnavailable} onSnapshot={publishGitSnapshot} /> : <p className="git-empty">Open a project to use Source Control.</p>}
           </div>
           </div>
-          {aiOpen && !learning && <AiChatPanel onClose={() => setAiOpen(false)} />}
+          {aiOpen && !learning && <AiChatPanel key={project?.id ?? 'no-project'} mode="project" projectId={project?.id ?? null} onClose={() => setAiOpen(false)} />}
         </aside>
       </div>
 

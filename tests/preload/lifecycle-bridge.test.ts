@@ -37,10 +37,12 @@ describe('lifecycle preload bridge', () => {
   it('exposes only the narrow lifecycle domain API', () => {
     const api = createPreloadApi(new FakeIpcRenderer())
     expect(Object.keys(api).sort()).toEqual([
+      'agent',
       'ai',
       'file',
       'git',
       'language',
+      'learning',
       'lifecycle',
       'project',
       'run',

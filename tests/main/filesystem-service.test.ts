@@ -7,6 +7,7 @@ import {
   realpath,
   rename,
   rm,
+  rmdir,
   symlink,
   writeFile,
 } from 'node:fs/promises'
@@ -81,6 +82,7 @@ describe('FileSystemService', () => {
       writeFile: async (path, data) => writeFile(path, data),
       mkdir: async (path) => mkdir(path),
       rename,
+      rmdir,
     }
     const service = new FileSystemService(projectService, {
       fileSystem,
@@ -118,6 +120,156 @@ describe('FileSystemService', () => {
 
     await service.delete(project.id, 'src/index.ts')
     expect(trashItem).toHaveBeenCalledWith(join(root, 'src', 'index.ts'))
+  })
+
+  it('moves and deletes one file inside the project and refuses a directory', async () => {
+    const root = await temporaryDirectory()
+    const projectService = new ProjectService()
+    const project = await projectService.openRoot(root)
+    const trashItem = vi.fn(async () => undefined)
+    const service = new FileSystemService(projectService, {
+      trashItem,
+      watchFactory: noWatch,
+    })
+    const events: FileChangedEvent[] = []
+    service.subscribe((event) => events.push(event))
+    await service.createDirectory(project.id, '', 'src')
+    await service.createDirectory(project.id, '', 'lib')
+    await service.createFile(project.id, 'src', 'main.ts')
+    await service.write(project.id, 'src/main.ts', 'hello')
+    events.length = 0
+
+    await expect(service.move(project.id, 'src/main.ts', '../outside.ts'))
+      .rejects.toMatchObject({ code: 'INVALID_INPUT' })
+    await expect(service.read(project.id, 'src/main.ts')).resolves.toBe('hello')
+
+    await expect(service.move(project.id, 'src/main.ts', 'lib/app.ts'))
+      .resolves.toMatchObject({ relativePath: 'lib/app.ts', kind: 'file' })
+    await expect(service.read(project.id, 'lib/app.ts')).resolves.toBe('hello')
+    await expect(service.read(project.id, 'src/main.ts')).rejects.toMatchObject({ code: 'ENOENT' })
+    expect(events).toEqual(expect.arrayContaining([
+      { projectId: project.id, relativePath: 'src/main.ts', kind: 'renamed' },
+      { projectId: project.id, relativePath: 'lib/app.ts', kind: 'renamed' },
+    ]))
+
+    await expect(service.deleteFile(project.id, 'lib')).rejects.toMatchObject({ code: 'INVALID_INPUT' })
+    expect(trashItem).not.toHaveBeenCalled()
+    events.length = 0
+    await service.deleteFile(project.id, 'lib/app.ts')
+    expect(trashItem).toHaveBeenCalledWith(join(root, 'lib', 'app.ts'))
+    expect(events).toEqual([{ projectId: project.id, relativePath: 'lib/app.ts', kind: 'renamed' }])
+  })
+
+  it('removes one empty directory and refuses a non-empty directory, a file, and a path outside the project', async () => {
+    const root = await temporaryDirectory()
+    const projectService = new ProjectService()
+    const project = await projectService.openRoot(root)
+    const trashItem = vi.fn(async () => undefined)
+    const service = new FileSystemService(projectService, {
+      trashItem,
+      watchFactory: noWatch,
+    })
+    const events: FileChangedEvent[] = []
+    service.subscribe((event) => events.push(event))
+    await service.createDirectory(project.id, '', 'empty')
+    await service.createDirectory(project.id, '', 'full')
+    await service.createFile(project.id, 'full', 'a.ts')
+    await service.write(project.id, 'full/a.ts', 'keep')
+    await service.createFile(project.id, '', 'note.txt')
+    events.length = 0
+
+    await expect(service.deleteEmptyDirectory(project.id, '../outside'))
+      .rejects.toMatchObject({ code: 'INVALID_INPUT' })
+    await expect(service.deleteEmptyDirectory(project.id, ''))
+      .rejects.toMatchObject({ code: 'INVALID_INPUT' })
+    await expect(service.deleteEmptyDirectory(project.id, 'note.txt'))
+      .rejects.toMatchObject({ code: 'INVALID_INPUT', message: 'Only an empty folder can be deleted.' })
+    await expect(service.deleteEmptyDirectory(project.id, 'full'))
+      .rejects.toMatchObject({ code: 'INVALID_INPUT', message: 'That folder is not empty.' })
+    await expect(service.read(project.id, 'full/a.ts')).resolves.toBe('keep')
+    await expect(service.read(project.id, 'note.txt')).resolves.toBe('')
+    expect(trashItem).not.toHaveBeenCalled()
+
+    await service.deleteEmptyDirectory(project.id, 'empty')
+    await expect(service.stat(project.id, 'empty')).rejects.toMatchObject({ code: 'ENOENT' })
+    await expect(service.stat(project.id, 'full')).resolves.toMatchObject({ kind: 'directory' })
+    expect(trashItem).not.toHaveBeenCalled()
+    expect(events).toEqual([{ projectId: project.id, relativePath: 'empty', kind: 'renamed' }])
+  })
+
+  it('does not remove a directory when a child appears or rmdir reports the folder is not empty', async () => {
+    const root = await temporaryDirectory()
+    const projectService = new ProjectService()
+    const project = await projectService.openRoot(root)
+    const directoryStats = {
+      isFile: () => false,
+      isDirectory: () => true,
+      isSymbolicLink: () => false,
+      size: 0,
+      mtime: new Date(0),
+    }
+    const symbolicStats = {
+      isFile: () => false,
+      isDirectory: () => true,
+      isSymbolicLink: () => true,
+      size: 0,
+      mtime: new Date(0),
+    }
+    const child = {
+      name: 'late.txt',
+      isFile: () => true,
+      isDirectory: () => false,
+      isSymbolicLink: () => false,
+    }
+    let reads = 0
+    const remove = vi.fn(async () => undefined)
+    const fileSystem: FileSystemPort = {
+      realpath: async (path) => path,
+      lstat: async (path) => {
+        if (path === root || path.endsWith('box')) return directoryStats
+        if (path.endsWith('link')) return symbolicStats
+        throw Object.assign(new Error('missing'), { code: 'ENOENT' })
+      },
+      readdir: async () => {
+        reads += 1
+        return reads === 1 ? [] : [child]
+      },
+      readFile: async () => '',
+      writeFile: async () => undefined,
+      mkdir: async () => undefined,
+      rename: async () => undefined,
+      rmdir: remove,
+    }
+    const service = new FileSystemService(projectService, {
+      fileSystem,
+      trashItem: vi.fn(),
+      watchFactory: noWatch,
+    })
+
+    await expect(service.deleteEmptyDirectory(project.id, 'box'))
+      .rejects.toMatchObject({ code: 'INVALID_INPUT', message: 'That folder is not empty.' })
+    expect(remove).not.toHaveBeenCalled()
+
+    await expect(service.deleteEmptyDirectory(project.id, 'link'))
+      .rejects.toMatchObject({ code: 'INVALID_INPUT', message: 'Only an empty folder can be deleted.' })
+    expect(remove).not.toHaveBeenCalled()
+
+    const occupied = vi.fn(async () => {
+      throw Object.assign(new Error('not empty'), { code: 'ENOTEMPTY' })
+    })
+    const occupiedPort: FileSystemPort = {
+      ...fileSystem,
+      readdir: async () => [],
+      rmdir: occupied,
+    }
+    const occupiedService = new FileSystemService(projectService, {
+      fileSystem: occupiedPort,
+      trashItem: vi.fn(),
+      watchFactory: noWatch,
+    })
+    await expect(occupiedService.deleteEmptyDirectory(project.id, 'box'))
+      .rejects.toMatchObject({ code: 'INVALID_INPUT', message: 'That folder is not empty.' })
+    expect(occupied).toHaveBeenCalledTimes(1)
   })
 
   it('does not fall back to permanent deletion when trash fails', async () => {
@@ -181,6 +333,7 @@ describe('FileSystemService', () => {
       writeFile,
       mkdir: async () => undefined,
       rename: async () => undefined,
+      rmdir: async () => undefined,
     }
     const service = new FileSystemService(projectService, {
       fileSystem,
@@ -239,6 +392,7 @@ describe('FileSystemService', () => {
       writeFile: async () => undefined,
       mkdir: async () => undefined,
       rename: async () => undefined,
+      rmdir: async () => undefined,
     }
     const service = new FileSystemService(projectService, {
       fileSystem,

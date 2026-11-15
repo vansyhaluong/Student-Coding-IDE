@@ -76,6 +76,7 @@ describe('Phase 2B preload bridges', () => {
     const api = createPreloadApi(ipcRenderer)
 
     expect(Object.keys(api).sort()).toEqual([
+      'agent',
       'ai',
       'file',
       'git',
@@ -91,7 +92,9 @@ describe('Phase 2B preload bridges', () => {
     expect(api).not.toHaveProperty('ipcRenderer')
     expect(api).not.toHaveProperty('execute')
     expect(api).not.toHaveProperty('fs')
-    expect(Object.keys(api.learning).sort()).toEqual(['exercise', 'getCourse', 'practice'])
+    expect(Object.keys(api.learning).sort()).toEqual([
+      'analysis', 'chat', 'exercise', 'getCourse', 'practice', 'smartHints', 'submission',
+    ])
     await expect(api.project.getActive()).resolves.toMatchObject({ ok: true })
     await expect(api.file.listDirectory(
       'project_1234567890abcdef12345678' as never,

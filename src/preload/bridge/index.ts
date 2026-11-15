@@ -1,4 +1,5 @@
 import { createAiBridge } from './ai'
+import { createProjectAgentBridge } from './project-agent'
 import { createLearningBridge } from './learning'
 import { createSettingsBridge } from './settings'
 import { createLanguageBridge } from './language'
@@ -20,6 +21,7 @@ export function createPreloadApi(
   return {
     learning: createLearningBridge(ipcRenderer),
     ai: createAiBridge(ipcRenderer),
+    agent: createProjectAgentBridge(ipcRenderer),
     settings: createSettingsBridge(ipcRenderer),
     language: createLanguageBridge(ipcRenderer),
     file: createFileBridge(ipcRenderer),

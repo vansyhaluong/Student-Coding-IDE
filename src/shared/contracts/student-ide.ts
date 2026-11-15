@@ -1,4 +1,5 @@
 import type { AiApi } from './ai'
+import type { ProjectAgentApi } from './project-agent'
 import type { LearningApi } from './learning'
 import type { SettingsApi } from './settings'
 import type { LanguageApi } from './language'
@@ -13,6 +14,7 @@ import type { RunApi } from './run'
 export interface StudentIdeApi {
   learning: LearningApi
   ai: AiApi
+  agent: ProjectAgentApi
   settings: SettingsApi
   language: LanguageApi
   file: FileApi

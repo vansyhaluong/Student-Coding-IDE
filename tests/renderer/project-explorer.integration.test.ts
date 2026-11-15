@@ -148,7 +148,7 @@ afterEach(() => {
 })
 
 describe('ProjectExplorer integration', () => {
-  it('overlays only the right sidebar and restores mounted Git/Explorer state after closing Local AI', async () => {
+  it('overlays only the right sidebar and restores mounted Git/Explorer state after closing Project chat', async () => {
     installApi({ project: { getActive: async () => success(project) },
       file: { listDirectory: async (_id, path) => success(path ? [file('src/main.ts')] : [directory('src')]) },
       git: { getState: async () => success({ dependency: 'AVAILABLE', repository: 'REPOSITORY' }),
@@ -164,12 +164,12 @@ describe('ProjectExplorer integration', () => {
     const explorer = view.container.querySelector('#explorer-sidebar-panel')
     const git = view.container.querySelector('#git-sidebar-panel')
     expect(screen.queryByText('Project tools')).toBeNull()
-    const toggle = screen.getByRole('button', { name: 'Open Local AI' })
+    const toggle = screen.getByRole('button', { name: 'Open Project chat' })
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
     toggle.focus()
     fireEvent.click(toggle)
-    expect(screen.getByRole('button', { name: 'Close Local AI' }).getAttribute('aria-expanded')).toBe('true')
-    expect(screen.getByRole('region', { name: 'Local AI chat' }).parentElement?.className).toBe('explorer-sidebar')
+    expect(screen.getByRole('button', { name: 'Close Project chat' }).getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByRole('region', { name: 'Project chat' }).parentElement?.className).toBe('explorer-sidebar')
     expect(view.container.querySelector('#explorer-sidebar-panel')).toBe(explorer)
     expect(view.container.querySelector('#git-sidebar-panel')).toBe(git)
     expect(draft.isConnected).toBe(true)
@@ -178,18 +178,18 @@ describe('ProjectExplorer integration', () => {
     const width = Number(resizer.getAttribute('aria-valuenow'))
     fireEvent.keyDown(resizer, { key: 'ArrowRight' })
     expect(Number(resizer.getAttribute('aria-valuenow'))).toBe(width - 10)
-    fireEvent.click(screen.getByRole('button', { name: 'Close Local AI chat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close Project chat panel' }))
     expect(document.activeElement).toBe(toggle)
     expect(screen.getByRole('tab', { name: 'Source Control' }).getAttribute('aria-selected')).toBe('true')
     expect((screen.getByLabelText('Commit message') as HTMLTextAreaElement).value).toBe('Keep this draft')
-    fireEvent.click(screen.getByRole('button', { name: 'Open Local AI' }))
-    fireEvent.change(screen.getByRole('textbox', { name: 'Ask Qwen' }), { target: { value: 'Temporary prompt' } })
-    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Ask Qwen' }), { key: 'Enter' })
-    fireEvent.click(screen.getByRole('button', { name: 'Close Local AI' }))
-    expect(screen.queryByRole('region', { name: 'Local AI chat' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Open Local AI' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open Project chat' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message the project' }), { target: { value: 'Temporary prompt' } })
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message the project' }), { key: 'Enter' })
+    fireEvent.click(screen.getByRole('button', { name: 'Close Project chat' }))
+    expect(screen.queryByRole('region', { name: 'Project chat' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Open Project chat' }))
     expect(screen.queryByText('Temporary prompt')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Close Local AI' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close Project chat' }))
     fireEvent.click(screen.getByRole('tab', { name: 'Explorer' }))
     expect(screen.getByTitle('src').getAttribute('aria-expanded')).toBe('true')
     expect(screen.getByTitle('src/main.ts')).toBeTruthy()
@@ -2210,6 +2210,40 @@ describe('Phase 6 Auto Save failure integration', () => {
     expect(editorModelManager.findDocument(project.id, 'main.ts')?.model.getValue()).toBe('unsaved content')
     expect(write).toHaveBeenCalledTimes(kind === 'write error' ? 1 : 0)
   })
+
+  it('reloads the open folder when a file is deleted or moved', async () => {
+    const changedEvents = createFileChangedEventBus()
+    const listDirectory = vi.fn()
+      .mockResolvedValueOnce(success([file('old.ts'), file('main.ts')]))
+      .mockResolvedValueOnce(success([file('main.ts')]))
+      .mockResolvedValueOnce(success([file('app.ts')]))
+    installApi({
+      file: {
+        listDirectory,
+        onChanged: changedEvents.subscribe,
+      },
+    })
+    render(createElement(ProjectExplorer, explorerProps()))
+    expect(await screen.findByTitle('old.ts')).toBeTruthy()
+    expect(listDirectory).toHaveBeenCalledWith(project.id, '')
+
+    act(() => changedEvents.publish({
+      projectId: project.id,
+      relativePath: 'old.ts',
+      kind: 'renamed',
+    }))
+    await waitFor(() => expect(screen.queryByTitle('old.ts')).toBeNull())
+    expect(screen.getByTitle('main.ts')).toBeTruthy()
+    expect(listDirectory).toHaveBeenNthCalledWith(2, project.id, '')
+
+    act(() => changedEvents.publish({
+      projectId: project.id,
+      relativePath: 'main.ts',
+      kind: 'renamed',
+    }))
+    await waitFor(() => expect(screen.getByTitle('app.ts')).toBeTruthy())
+    expect(screen.queryByTitle('main.ts')).toBeNull()
+  })
 })
 function renderExplorer(): void {
   render(createElement(ProjectExplorer, explorerProps()))
@@ -2256,12 +2290,18 @@ function installApi(overrides: {
         onResume: () => () => undefined,
         resolveClose: async () => success(null),
       },
-    },
+    } as unknown as StudentIdeApi['learning'],
     ai: {
       getStatus: async () => success('ready'),
       startChat: async () => failure('Not configured'),
       stopChat: async () => success(null),
       onChatEvent: () => () => undefined,
+    },
+    agent: {
+      session: async () => failure('Not configured'),
+      turn: async () => failure('Not configured'),
+      cancel: async () => failure('Not configured'),
+      apply: async () => failure('Not configured'),
     },
     settings: {
       get: async () => success({ settings: { theme: 'dark', fontSize: 13, tabSize: 2, autoSave: false }, recovered: false }),

@@ -31,6 +31,17 @@ Tailwind semantic color utilities map to existing light/dark IDE tokens.
 The standard scrollbar-hide utility required by PromptInput is registered in
 styles.css; it does not change the component source or its intended appearance.
 
+Agent Activity (2026-11-15) is adapted from https://beui.dev/r/agent-activity
+for Project chat replies. English labels are inlined. Search rows do not open
+links. The working shimmer is the bundled text-shimmer style, without the
+locale provider. No new package was added.
+
+File Diff (2026-11-15) is adapted from https://beui.dev/r/file-diff for Project
+chat. It reuses the local AgentDisclosure, ease springs, and cn helper. Line
+text stays plain because the upstream code view depends on Shiki, which this
+project does not install. English labels are inlined. No preview, registry
+installer, or new package was added.
+
 Dependencies: clsx, motion, tailwind-merge (plus existing React/lucide-react).
 No components.json, full shadcn app, demo code or registry installer was added.
 

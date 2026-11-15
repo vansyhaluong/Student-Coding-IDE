@@ -20,6 +20,9 @@ import { NativeSmartHintsKeyEntry } from './services/learning/smart-hints/native
 import { SmartHintsSettingsIpcService } from './ipc/smart-hints-settings-ipc-service'
 import { captureSmartHints } from './services/learning/smart-hints/capture'
 import { LearningChatIpcService } from './ipc/learning-chat-ipc-service'
+import { ProjectAgentIpcService } from './ipc/project-agent-ipc-service'
+import { GeminiProjectAgentModel } from './services/ai/project-agent-gemini'
+import { ProjectAgentService } from './services/ai/project-agent-service'
 import { EXERCISE_CHANNELS } from '../shared/contracts/exercise'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
@@ -230,6 +233,15 @@ void app.whenReady().then(async () => {
     { service: smartHintsConfiguration.service,
       capture: (request, generation, check, receipt) => captureSmartHints(exercisePackages, request, generation, check, receipt) },
     owner => chatIpc.invalidateOwner(owner))
+  const projectAgent = new ProjectAgentService(projectService, fileSystemService, new GeminiProjectAgentModel(
+    { send: (request) => fetch(request) },
+    {
+      ready: () => smartHintsConfiguration.geminiCredential().ready,
+      generation: () => smartHintsConfiguration.geminiCredential().generation,
+      value: () => smartHintsConfiguration.geminiCredential().value(),
+    },
+  ))
+  const projectAgentIpc = new ProjectAgentIpcService(ipcRegistry, projectAgent, authorizePreferencesFrame)
   const chatIpc = new LearningChatIpcService(ipcRegistry, smartHintsConfiguration.chat, authorizePreferencesFrame, context => {
     if (context.kind === 'PRACTICE') {
       if (exercisePackages.status().state !== 'AVAILABLE' || !exercisePackages.has(context.exerciseId)
@@ -313,6 +325,7 @@ void app.whenReady().then(async () => {
       exerciseService.observe(window.webContents)
       exerciseIpc.observe(window.webContents)
       chatIpc.observe(window.webContents)
+      projectAgentIpc.observe(window.webContents)
       return window
     },
     openExternal: (url) => shell.openExternal(url),
@@ -516,6 +529,7 @@ void app.whenReady().then(async () => {
     exerciseService,
     exerciseIpc,
     chatIpc,
+    projectAgentIpc,
     windowManager,
   ], {
     // Business cleanup (including configuration's Chat drain) precedes the
@@ -534,6 +548,7 @@ void app.whenReady().then(async () => {
       exercisePackages.beginShutdown()
       exerciseIpc.beginShutdown()
       chatIpc.beginShutdown()
+      projectAgentIpc.beginShutdown()
     }
     for (const window of BrowserWindow.getAllWindows()) {
       if (!window.isDestroyed()) {

@@ -1,5 +1,238 @@
 # Student Coding IDE Thesis Changelog
 
+## 2026-11-15 — Project chat composer shows the model and an add-file icon
+
+The Project chat heading is now CHAT. The beUI Prompt Input shows a paperclip
+for adding a file and the name gemini-3.1-flash-lite beside the Gemini mark.
+The model stays the existing one. The paperclip does not attach a file yet.
+Main file writes are unchanged.
+
+Project chat panel tests PASS (12). Renderer and Node typecheck and scoped
+ESLint PASS. No live Gemini call. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat shows agent activity on each reply
+
+The Project chat request field stays the existing beUI Prompt Input. Each
+agent reply now shows the beUI Agent Activity list above the answer. While
+the turn runs, the list says it is working. After the turn, it names files
+that were edited or created and deletes or renames that still need
+confirmation. The answer, the file diff, and the confirm buttons stay. Main
+file writes are unchanged. The activity search row does not open a link. No
+new package was added.
+
+90 focused tests PASS. Renderer and Node typecheck and scoped ESLint PASS.
+`npm run build` was not run because `electron-vite dev` still has the native
+modules open. No live Gemini call. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat file diff keeps long lines scrollable
+
+Long source lines in the Project chat File Diff stay whole and scroll sideways
+inside the sidebar. The diff still shows line numbers, additions, and removals,
+and the line list still has a vertical cap. The short result, such as
+"Updated Program.cs", stays above the diff. Auto-apply is unchanged, and
+delete and rename still wait for confirmation. Main file writes are unchanged.
+
+89 focused tests PASS, including a long-line panel check. Renderer and Node
+typecheck and scoped ESLint PASS. `npm run build` stopped while linking native
+modules because `electron-vite dev` already had those files open (LNK1104).
+No live Gemini call. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat applies edits immediately and shows a file diff
+
+The same Project chat now writes an edit or a new file during the turn, after
+the existing path, owner, and generation checks. The chat shows a short result,
+such as "Updated Program.cs", and a File Diff of the changed lines. It does not
+show the full proposed source or Apply / Reject buttons for those changes. A
+clean open tab still reloads, and a dirty tab still keeps its buffer and shows
+the conflict. Delete and rename still wait for confirmation. A failed create
+still removes only the empty file and the parent folders that operation
+created. The Learning overlay stays on Ollama. No Shiki package was added.
+
+No live Gemini call was made.
+
+88 focused tests PASS, covering immediate edit and create, the file diff,
+delete and rename confirmation, failed-create cleanup, and the existing
+credential, Ollama chat, and filesystem checks. The filesystem suite (17) is
+included in that count. Renderer and Node typecheck, scoped ESLint,
+electron-vite build, and diff check PASS. No live Gemini call, full lint, full
+suite, dependency, release, or Git publication. This is not an AG-01 or AG-02
+completion.
+
+## 2026-11-15 — Project chat reports Gemini credential and request failures
+
+The same Project chat reads geminiCredential() from Settings on every Gemini
+request. A missing or empty key fails closed before a request is sent, with no
+fallback key. A rejected key, a quota or rate limit, a network failure, and an
+invalid model response each show a fixed message in the chat. The key and the
+provider body are not shown or logged. Stop and a project switch still abort
+an in-flight turn. The Learning overlay stays on Ollama.
+
+No live Gemini call was made. Manual smoke: enable the existing Settings key,
+open a small project that contains no secrets, ask one short question in
+Project chat, and record only whether it answered or which alert appeared.
+Do not record the key or the prompt.
+
+85 focused tests PASS, covering a missing credential, rejected key, quota,
+network failure, invalid response, cancel, and the existing create, move,
+delete, and Ollama chat checks. The filesystem suite (17) is included in that
+count. Renderer and Node typecheck, scoped ESLint, electron-vite build, and
+diff check PASS. No live Gemini call, full lint, full suite, dependency,
+release, or Git publication. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat removes folders left by a failed create
+
+The same Project chat now removes only the directories a confirmed create
+created when that create fails. Removal runs after the empty-file cleanup,
+deepest first, and uses the same non-recursive empty-directory delete already
+used for a failed move. Directories that already existed stay. If folder
+cleanup fails, the chat shows the original failure and the cleanup failure
+together. The parent cap remains eight. The Gemini caller still reads
+geminiCredential() from Settings on each request. A scripted loop covers the
+failed-create parent cleanup with an injected test credential and no live
+network call. The Learning overlay stays on Ollama.
+
+81 focused tests PASS, covering failed-create parent cleanup, path safety, the
+scripted Gemini loop, and the existing create, move, delete, and Ollama chat
+checks. The filesystem suite (17) is included in that count. Renderer and Node
+typecheck, scoped ESLint, electron-vite build, and diff check PASS. No live
+Gemini call, full lint, full suite, dependency, release, or Git publication.
+This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat removes an empty file left by a failed create
+
+The same Project chat now removes only the empty file a confirmed create made
+when the following write fails. Removal stays inside the project and uses the
+existing file delete. A file that already existed stays. A created file that
+received content stays. If cleanup fails, the chat shows the write failure and
+the cleanup failure together. A failed edit, delete, or rename also shows a
+clear message, and confirmation is still required before any write. The Gemini
+caller still reads geminiCredential() from Settings on each request. A scripted
+loop covers the failed-create cleanup with an injected test credential and no
+live network call. The Learning overlay stays on Ollama.
+
+76 focused tests PASS, covering failed-create cleanup, path safety, apply
+failure messages, the scripted Gemini loop, and the existing move, delete,
+create, and Ollama chat checks. The filesystem suite (17) is included in that
+count. Renderer and Node typecheck, scoped ESLint, electron-vite build, and
+diff check PASS. No live Gemini call, full lint, full suite, dependency,
+release, or Git publication. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat removes folders left by a failed move
+
+The same Project chat now removes only the directories a confirmed move created
+when that move fails. Removal is best-effort, deepest first, and uses the
+existing non-recursive empty-directory delete inside the project. Directories
+that already existed are left in place. If cleanup itself fails, the chat
+reports that failure together with the move failure. When both the source tab
+and the destination tab have unsaved edits, Apply is blocked before any disk
+write and the user is asked to save or discard the source first. A clean source
+tab is still closed when only the destination tab is dirty. The Gemini caller
+still reads geminiCredential() from Settings on each request. A scripted loop
+covers the failed-move cleanup with an injected test credential and no live
+network call. The Learning overlay stays on Ollama.
+
+70 focused tests PASS, covering failed-move cleanup, dirty-source blocking,
+path safety, the scripted Gemini loop, and the existing move, delete, create,
+and Ollama chat checks. The filesystem suite (17) is included in that count.
+Renderer and Node typecheck, scoped ESLint, electron-vite build, and diff check
+PASS. No live Gemini call, full lint, full suite, dependency, release, or Git
+publication. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat can move into new folders and delete an empty folder
+
+The same Project chat can now move a file into a folder that does not exist yet.
+After confirmation, up to eight missing destination parent directories are
+created along that path, one level at a time. A deeper path is rejected before
+any directory is created. The same chat can propose deletion of one empty
+folder. That removal uses a non-recursive rmdir and is permanent. A non-empty
+folder is refused, and deleting a file still uses the recycle bin. When the
+destination path is already open, a clean destination tab is closed and the
+source tab follows the new path. A dirty destination tab is kept, and the source
+tab is closed so it does not stay on the old path. The Gemini caller still uses
+the Settings credential. A scripted loop covers the move into a missing parent,
+the empty-folder delete, and the confirm gate with an injected test credential
+and no live network call. The Learning overlay stays on Ollama.
+
+65 focused tests PASS, covering the missing-parent move, the depth bound,
+empty-folder delete, non-empty and path refusal, tab conflicts, explorer
+refresh, the Gemini request loop, and the existing create, delete, rename, and
+Ollama chat checks. The run-lifecycle suite (16) also PASS after the filesystem
+port gained non-recursive rmdir. Renderer and Node typecheck, scoped ESLint,
+electron-vite build, and diff check PASS. No live Gemini call, full lint, full
+suite, dependency, release, or Git publication. This is not an AG-01 or AG-02
+completion.
+
+## 2026-11-15 — Project chat can delete, rename, and create parent folders
+
+The same Project chat can propose deleting one existing file or renaming it,
+including a move to another folder. Each change is applied only after that
+proposal is confirmed. Delete uses FileSystemService.deleteFile, which trashes
+one file and refuses a directory. Rename uses FileSystemService.move and stays
+inside the project. The destination parent must already exist. Creating a file
+can create up to eight missing parent directories along that path, one level at
+a time, and a deeper path is rejected before any directory is created. A clean
+open tab closes after delete and follows a rename. A dirty tab keeps its unsaved
+buffer. Explorer folders that are already open reload from the existing file
+change event. The Gemini caller still uses the Settings credential. A scripted
+loop covers delete, rename, and the confirm gate with an injected test
+credential and no live network call. The Learning overlay stays on Ollama.
+
+58 focused tests PASS, covering delete, rename, the confirm gate, path
+rejection, parent-folder bounds, tab updates, explorer refresh, the Gemini
+request loop, and the existing create and Ollama chat checks. The filesystem
+suite also PASS. Renderer and Node typecheck, scoped ESLint, electron-vite
+build, and diff check PASS. No live Gemini call, full lint, full suite,
+dependency, release, or Git publication. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat can create files and confirm several edits
+
+The same Project chat can now propose a new file and up to four file changes in
+one turn. Each Apply still writes one file through FileSystemService, and only
+after that proposal is confirmed. Create uses the existing create-file and write
+paths; the parent directory must already exist. A clean open tab reloads. A dirty
+tab keeps its buffer and shows the existing conflict banner. A new file that is
+not open is read from disk when its tab is opened. The Gemini caller still borrows
+the Settings credential and does not spend Learning quota. A scripted Gemini
+response exercises create, edit, and the confirm gate without a live network call
+or a stored key. The Learning overlay stays on Ollama.
+
+35 focused tests PASS, covering create, path rejection, per-file confirmation,
+chat context, the Gemini request loop, editor refresh, and the Ollama panel.
+Renderer and Node typecheck, scoped ESLint, electron-vite build, and diff check
+PASS. No live Gemini call, full lint, full suite, dependency, release, or Git
+publication. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project chat uses the Gemini agent
+
+The existing Project workspace chat now drives the Gemini project agent. The same
+right-sidebar panel stays in place. Project mode calls session, turn, cancel, and
+apply. The edit is written only after Apply. A clean open editor tab reloads from
+the written text. A dirty open tab keeps its buffer and uses the existing
+disk-conflict state. The Learning overlay still uses Ollama and has no file tools.
+The separate Project Agent button and panel were removed.
+
+29 focused tests PASS: project-chat confirm, editor refresh, the Ollama panel,
+the agent service, the Gemini request shape, contract validation, and the
+Project-chat overlay. Renderer and Node typecheck, scoped ESLint, electron-vite
+build, and diff check PASS. No live Gemini call, full lint, full suite, dependency,
+release, or Git publication. This is not an AG-01 or AG-02 completion.
+
+## 2026-11-15 — Project Agent stage 1
+
+Added a Project-workspace chat that can read one project file, list one directory,
+and propose a replacement for one existing file. Main owns the Gemini tool loop,
+path checks, owner binding, and the one-use confirm gate. The renderer applies an
+edit only after the user chooses Apply. Cancel, owner loss, and a project switch
+drop in-flight work and stored proposals. Learning Chat is unchanged. The OpenCode
+sidecar remains design-only.
+
+Ten focused agent tests PASS, covering path rejection, the confirm gate, stale
+project generation, cancellation, the Gemini request shape, and the Apply button.
+Ten preload bridge tests touched by the new API PASS. Renderer and Node typecheck,
+scoped ESLint, electron-vite build, and diff check PASS. No live Gemini call,
+full suite, dependency, release, or Git publication. This is not an AG-01 or AG-02
+completion.
+
 ## 2026-11-12 — Practice Problem Description typography
 
 Scoped the exercise article to installed Geist: 21px/600 title, 15px/400 body at

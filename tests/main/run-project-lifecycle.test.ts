@@ -25,7 +25,7 @@ async function setup() {
     lstat: async (path) => ({ isFile: () => path.endsWith('.js'), isDirectory: () => !path.endsWith('.js'),
       isSymbolicLink: () => false, mtime: new Date(0), size: 1 }),
     readdir: async () => [], readFile: async () => '', writeFile: async () => {},
-    mkdir: async () => {}, rename: async () => {} }
+    mkdir: async () => {}, rename: async () => {}, rmdir: async () => {} }
   let unavailable!: (error: unknown) => void
   const files = new FileSystemService(projects, { fileSystem: disk, platform: 'win32',
     trashItem: async () => {}, watchFactory: () => ({ close: () => {}, onError: (callback) => { unavailable = callback } }) })
