@@ -1,0 +1,32 @@
+{
+  "name": "R6 staged cleanup and recovery, approved 30-slot matrix",
+  "productionPolicyApproved": false,
+  "runsPerSlot": 1,
+  "functionalSlots": 30,
+  "stopOnUnexpectedFailure": true,
+  "cleanupDeadlineMs": 12000,
+  "compileDeadlineMs": 30000,
+  "crashObservationDeadlineMs": 10000,
+  "pollMs": 15,
+  "hostWatchdogMs": 180000,
+  "slots": ["B01", "P01", "P02", "P03", "N01", "N02", "N03", "N04", "S01", "S02", "S03", "S04", "S05", "S06", "R01", "R02", "R03", "R04", "C01", "C02", "C03", "C04", "W01", "W02", "W03", "W04", "W05", "I01", "I02", "I03"],
+  "groups": {
+    "B": {"slots": ["B01"], "prerequisites": ["staged runtime", "native observer", "detached child handshake"]},
+    "P": {"slots": ["P01", "P02", "P03"], "prerequisites": ["checkpoint writer", "stage retry", "external crash observer", "restart recovery"]},
+    "N": {"slots": ["N01", "N02", "N03", "N04"], "prerequisites": ["create rollback", "native fault seams", "stage retry"]},
+    "S": {"slots": ["S01", "S02", "S03", "S04", "S05", "S06"], "prerequisites": ["unchanged DesktopApplication and quit coordinator", "Learning wrapper", "fake Project services"]},
+    "R": {"slots": ["R01", "R02", "R03", "R04"], "prerequisites": ["sandboxed preload", "generation gate", "actual Renderer events"]},
+    "C": {"slots": ["C01", "C02", "C03", "C04"], "prerequisites": ["installed SDK10 and Node24", "actual C# fixture", "external process handles", "restart host"]},
+    "W": {"slots": ["W01", "W02", "W03", "W04", "W05"], "prerequisites": ["real finalized records", "exclusive lease", "identity and reparse checks", "deletion retry"]},
+    "I": {"slots": ["I01", "I02", "I03"], "prerequisites": ["unchanged Project native artifact", "RunService", "TerminalService", "existing node-pty artifact"]}
+  },
+  "notes": [
+    "P01 and P02 share one host/session; a failure blocks every following slot.",
+    "Each other slot has dedicated host/userData. Crash slots use an independent controller holding only process handles, never Job handles.",
+    "C02 requires a retained live compiler handle plus actual csc.dll command-line evidence; a missed compiler window is NOT_OBSERVED, not PASS.",
+    "Expected injected rejection counts PASS only when all strict state assertions pass.",
+    "Project services/PTY isolation is real; Project preparation authority is a fixture. Full Project UI/runtime selection is outside this evidence.",
+    "No old adapter result is used as Policy B acceptance; all Learning execution uses staged PolicySession.",
+    "Previous NOT_OBSERVED results and R1-R5 evidence are immutable. No retries until PASS. P02 and specified shutdown/workspace retries are planned scenario steps."
+  ]
+}

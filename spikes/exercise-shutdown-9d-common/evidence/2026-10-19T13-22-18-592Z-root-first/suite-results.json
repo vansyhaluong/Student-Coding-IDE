@@ -1,0 +1,50 @@
+{
+  "hostPid": 33916,
+  "electron": "44.0.0",
+  "node": "24.18.1",
+  "mode": "root-first",
+  "runRoot": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\host-root-first-e4714d19-8833-4f86-b024-51a20dadb43c",
+  "trace": [
+    "descendant:spawn:execute",
+    "descendant:root-exit:0",
+    "descendant:cancel",
+    "descendant:clean"
+  ],
+  "records": [
+    {
+      "name": "B: root exited while descendant remains; Job-wide cancellation cleans child",
+      "started": "2026-10-19T13:22:21.364Z",
+      "beforeRootExit": {
+        "root": 16848,
+        "child": 6132,
+        "members": [
+          16848,
+          29900,
+          6132
+        ],
+        "additionalProcesses": [
+          {
+            "pid": 29900,
+            "image": "C:\\Windows\\System32\\conhost.exe"
+          }
+        ]
+      },
+      "preCleanup": {
+        "rootExited": true,
+        "childAlive": true,
+        "learningJobActiveProcesses": 1,
+        "jobReleased": false,
+        "members": [
+          6132
+        ],
+        "membershipEvidence": "Direct QueryInformationJobObject on the owned Learning Job handle"
+      },
+      "status": "FAIL",
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n\ntrue !== false\n"
+      },
+      "elapsedMs": 600
+    }
+  ]
+}

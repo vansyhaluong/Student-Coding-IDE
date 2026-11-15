@@ -1,0 +1,249 @@
+[
+  {
+    "name": "C02",
+    "started": "2026-10-20T01:32:38.298Z",
+    "status": "PASS",
+    "timeline": [
+      {
+        "event": "observer-retained",
+        "monotonicMs": 14272.3225,
+        "pid": 31352,
+        "member": true,
+        "created": "31285298:3835859089",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 14272.5425,
+        "pid": 18724,
+        "member": true,
+        "created": "31285298:3837218449",
+        "image": "C:\\Windows\\System32\\conhost.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 16315.5447,
+        "pid": 31248,
+        "member": true,
+        "created": "31285298:3858135698",
+        "image": "C:\\Windows\\System32\\cmd.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 16344.4707,
+        "pid": 20876,
+        "member": true,
+        "created": "31285298:3858417265",
+        "image": "C:\\Windows\\System32\\conhost.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 16444.2512,
+        "pid": 12092,
+        "member": true,
+        "created": "31285298:3859099210",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+      },
+      {
+        "event": "live-csc-command-line-observed",
+        "monotonicMs": 19275.8471,
+        "pid": 12092,
+        "created": "31285298:3859099210",
+        "snapshotSequence": 123
+      },
+      {
+        "event": "hard-kill-requested",
+        "monotonicMs": 19284.085
+      },
+      {
+        "event": "all-observed-handles-signaled",
+        "monotonicMs": 19402.6397
+      }
+    ],
+    "hostIdentity": {
+      "pid": 22848,
+      "created": "31285298:3828114231"
+    },
+    "ready": {
+      "hostPid": 22848,
+      "id": "C02",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning\\sessions\\session-dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+      "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning\\dispositions\\dc4c66e5-55e5-4c47-a72d-4f25cf3d3982.json",
+      "session": {
+        "owner": "exercise:dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+        "sessionId": "dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning\\sessions\\session-dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning\\dispositions\\dc4c66e5-55e5-4c47-a72d-4f25cf3d3982.json",
+        "disposition": null,
+        "proof": null,
+        "nativeStage": "OWNED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "RETAINED",
+        "checkpoint": "OWNED",
+        "lastError": null,
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": false,
+        "released": false,
+        "managerResources": 1,
+        "counters": {
+          "spawn": 1,
+          "query": 9,
+          "terminate": 0,
+          "release": 0,
+          "handlesClosed": 0,
+          "delete": 0
+        },
+        "phase": "compile",
+        "rootPid": 31352,
+        "retained": [
+          {
+            "pid": 31352,
+            "member": true,
+            "created": "31285298:3835859089",
+            "root": true,
+            "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+            "signaled": false,
+            "closed": false
+          },
+          {
+            "pid": 18724,
+            "member": true,
+            "created": "31285298:3837218449",
+            "root": false,
+            "image": "C:\\Windows\\System32\\conhost.exe",
+            "signaled": false,
+            "closed": false
+          }
+        ],
+        "coverageGaps": [],
+        "output": "",
+        "exitCode": null
+      },
+      "members": [
+        31352,
+        18724
+      ],
+      "identities": [
+        {
+          "pid": 31352,
+          "member": true,
+          "created": "31285298:3835859089",
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+        },
+        {
+          "pid": 18724,
+          "member": true,
+          "created": "31285298:3837218449",
+          "image": "C:\\Windows\\System32\\conhost.exe"
+        }
+      ],
+      "sequence": 9,
+      "monotonicMs": 867.8294
+    },
+    "latestSnapshot": {
+      "sequence": 123,
+      "monotonicMs": 3048.6987,
+      "exitCode": null
+    },
+    "compiler": {
+      "pid": 12092,
+      "member": true,
+      "created": "31285298:3859099210",
+      "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "processInfo": {
+        "ProcessId": 12092,
+        "CreationDate": "/Date(1792459961471)/",
+        "CommandLine": "\"C:\\Program Files\\dotnet\\dotnet.exe\"  exec \"C:\\Program Files\\dotnet\\sdk\\10.0.112\\Roslyn\\bincore\\csc.dll\" @c02-compile.rsp"
+      }
+    },
+    "compilerStateAtKill": "PENDING",
+    "afterCrashRecord": {
+      "schemaVersion": 2,
+      "sessionId": "dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+      "owner": "exercise:dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+      "hostEpoch": "7bfb4bdc-3eb4-4a72-959b-63fec8904910",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning\\sessions\\session-dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+      "workspaceIdentity": {
+        "dev": "40663377",
+        "ino": "1407374883757417",
+        "birthtimeNs": "1792459959054643900"
+      },
+      "checkpoint": "OWNED",
+      "revision": 0,
+      "proof": null,
+      "finalized": false,
+      "nativeStage": "OWNED",
+      "processClean": false,
+      "cleanupComplete": false,
+      "workspaceState": "RETAINED"
+    },
+    "recovery": {
+      "hostPid": 15936,
+      "action": "QUARANTINED",
+      "record": {
+        "schemaVersion": 2,
+        "sessionId": "dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+        "owner": "exercise:dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+        "hostEpoch": "7bfb4bdc-3eb4-4a72-959b-63fec8904910",
+        "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-31-26-705Z-R8-C02\\C02-crash\\learning\\sessions\\session-dc4c66e5-55e5-4c47-a72d-4f25cf3d3982",
+        "workspaceIdentity": {
+          "dev": "40663377",
+          "ino": "1407374883757417",
+          "birthtimeNs": "1792459959054643900"
+        },
+        "checkpoint": "OWNED",
+        "revision": 0,
+        "proof": null,
+        "finalized": false,
+        "nativeStage": "OWNED",
+        "processClean": false,
+        "cleanupComplete": false,
+        "workspaceState": "RETAINED"
+      },
+      "processClean": false,
+      "cleanupComplete": false
+    },
+    "observed": [
+      {
+        "pid": 31352,
+        "member": true,
+        "created": "31285298:3835859089",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "signaled": true
+      },
+      {
+        "pid": 18724,
+        "member": true,
+        "created": "31285298:3837218449",
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "signaled": true
+      },
+      {
+        "pid": 31248,
+        "member": true,
+        "created": "31285298:3858135698",
+        "image": "C:\\Windows\\System32\\cmd.exe",
+        "signaled": true
+      },
+      {
+        "pid": 20876,
+        "member": true,
+        "created": "31285298:3858417265",
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "signaled": true
+      },
+      {
+        "pid": 12092,
+        "member": true,
+        "created": "31285298:3859099210",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "signaled": true
+      }
+    ],
+    "limit": "Observer proves retained process termination; no historical coverage claim or fabricated PROCESS_CLEAN after crash"
+  }
+]

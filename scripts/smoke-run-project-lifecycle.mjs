@@ -6,7 +6,7 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
-const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, ProcessManager,
+const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, JavaScriptRunStrategy, ProcessManager,
   RunProjectLifecycle, ProjectService, FileSystemService, UnsavedTransitionService,
   IpcHandlerRegistry, DesktopApplication } = require(resolve(root, 'out/main/run-runtime.js'))
 const fixtureRoot = resolve(root, 'tests/fixtures/run')
@@ -36,7 +36,7 @@ const adapter = new WindowsPipedProcessAdapter()
 const waiters = new Set()
 run = new RunService({ authorize: async (target) => ({ projectId: target.projectId,
   relativePath: target.relativePath, ...await files.authorizeRunFile(target.projectId, target.relativePath) }),
-resolveRuntime: () => detector.resolve() }, {
+resolveRuntime: () => detector.resolve() }, [new JavaScriptRunStrategy()], {
   adapter: { create: (execution, observe) => {
     const native = adapter.create(execution, observe); nativeProcesses.push(native); return native
   } }, manager, onEvent: (_owner, event) => {

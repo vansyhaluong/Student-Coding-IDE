@@ -1,0 +1,39 @@
+{
+  "integrity": [
+    {
+      "label": "R7",
+      "status": "PASS",
+      "checkedFiles": 731,
+      "changed": []
+    },
+    {
+      "label": "R8",
+      "status": "PASS",
+      "checkedFiles": 792,
+      "changed": []
+    }
+  ],
+  "whitespace": {
+    "status": "PASS",
+    "problems": []
+  },
+  "gitDiffCheck": "PASS",
+  "helperSyntax": "PASS",
+  "helperLint": {
+    "status": "PASS",
+    "output": ""
+  },
+  "typecheck": "PASS",
+  "fullLint": {
+    "status": "FAIL",
+    "diagnostics": 368,
+    "note": "Historical spike and archive diagnostics; helper globals corrected after this run. Evidence not edited."
+  },
+  "isolatedBuild": "PASS",
+  "productionBuild": "NOT_RUN",
+  "productionTests": "NOT_RUN",
+  "executedSlots": [
+    "C02"
+  ],
+  "phase9DComplete": false
+}

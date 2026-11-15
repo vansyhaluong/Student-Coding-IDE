@@ -1,0 +1,223 @@
+{
+  "counts": {
+    "PASS": 1,
+    "FAIL": 1,
+    "BLOCKED": 6
+  },
+  "rows": [
+    {
+      "name": "T4-tree",
+      "status": "PASS",
+      "memoryEvidence": {
+        "denial": {
+          "committedByAllocator": 28311552,
+          "win32Error": 1455
+        },
+        "memoryEvents": [
+          {
+            "message": 10,
+            "pid": 13016
+          }
+        ],
+        "output": "ALLOCATOR_READY 33772\r\nALLOC_CEILING 33554432\r\nALLOC_CHILD 13016\r\nALLOCATOR_READY 13016\r\nALLOC_DENIED 28311552 1455\r\n"
+      },
+      "memory": [
+        {
+          "sessionId": "6d4c66e4-3d9d-4fa7-ab4a-6b90868731f8",
+          "phase": "execute",
+          "quota": 67108864,
+          "peakJobCommitBytes": 67223552,
+          "maxReportedJobCommitBytes": 66174976,
+          "samples": 15
+        }
+      ],
+      "cleanup": [
+        {
+          "ms": 118.96889999999996,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "observer": {
+        "mainSignaled": true,
+        "allRetainedSignaled": true,
+        "watchdog": false,
+        "identities": [
+          {
+            "pid": 33772,
+            "created": "31285318:3086892711",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 10156,
+            "created": "31285318:3087087702",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 13016,
+            "created": "31285318:3087876597",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 18132,
+            "created": "31285318:3088150840",
+            "member": true,
+            "signaled": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "T5-csharp",
+      "status": "FAIL",
+      "error": "Observation deadline exceeded",
+      "startupMs": 144.03110000000015,
+      "compileMs": 8392.832,
+      "memory": [
+        {
+          "sessionId": "1446f861-d3fc-4c0d-968e-d949ac0260bd",
+          "phase": "compile",
+          "quota": 2147483648,
+          "peakJobCommitBytes": 112906240,
+          "maxReportedJobCommitBytes": 112902144,
+          "samples": 450
+        },
+        {
+          "sessionId": "d1874760-b61d-4f92-bdea-c9a19162d175",
+          "phase": "execute",
+          "quota": 268435456,
+          "peakJobCommitBytes": 78757888,
+          "maxReportedJobCommitBytes": 78757888,
+          "samples": 569
+        }
+      ],
+      "cleanup": [
+        {
+          "ms": 96.5069999999996,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "observer": {
+        "mainSignaled": true,
+        "allRetainedSignaled": true,
+        "watchdog": false,
+        "identities": [
+          {
+            "pid": 24432,
+            "created": "31285318:3883911962",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 20532,
+            "created": "31285318:3884030555",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 2848,
+            "created": "31285318:3924880013",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 27300,
+            "created": "31285318:3925294518",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 3280,
+            "created": "31285318:3969288285",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 13100,
+            "created": "31285318:3969675880",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 21820,
+            "created": "31285318:3971382361",
+            "member": true,
+            "signaled": true
+          },
+          {
+            "pid": 31952,
+            "created": "31285318:3971588705",
+            "member": true,
+            "signaled": true
+          }
+        ]
+      },
+      "isolation": {
+        "status": "INCOMPLETE",
+        "checks": [
+          {
+            "tag": "before",
+            "at": 1181.274,
+            "projectResources": 2,
+            "stdoutCount": 5,
+            "terminalMarker": "limits-before"
+          }
+        ]
+      }
+    },
+    {
+      "name": "T5-javascript",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T5-csharp: Observation deadline exceeded"
+    },
+    {
+      "name": "T6-timeout-terminate",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T5-csharp: Observation deadline exceeded"
+    },
+    {
+      "name": "T6-memory-finalized",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T5-csharp: Observation deadline exceeded"
+    },
+    {
+      "name": "T7-phase",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T5-csharp: Observation deadline exceeded"
+    },
+    {
+      "name": "T7-operation",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T5-csharp: Observation deadline exceeded"
+    },
+    {
+      "name": "T7-pending-io",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T5-csharp: Observation deadline exceeded"
+    }
+  ],
+  "treeChild": 13016,
+  "t5Failure": {
+    "stage": "Waiting for ALLOCATOR_READY before signaling allocation gate",
+    "runtimeOutput": "RUNTIME_READY\r\nCALL_START\r\nCHILD 21820\r\n",
+    "diagnostic": "C# ProcessStartInfo branch has no redirected/forwarded child standard streams; no readiness marker reaches host. Quota was read back but not exercised to exhaustion.",
+    "limit": "No child GetStdHandle probe was recorded; source/output/gate control-flow evidence identifies missing readiness routing, not a Job enforcement or runtime OOM failure."
+  },
+  "lint": {
+    "status": "FAIL",
+    "errors": 756,
+    "archiveErrors": 698,
+    "modifiedJsErrors": 0,
+    "unchangedLiveSourceErrors": 58,
+    "targetedChangedJs": "PASS",
+    "cppValidation": "MSVC /W4 /WX build PASS; no standalone C++ linter claimed"
+  },
+  "executedEachOnce": true,
+  "extraFunctionalTestsRun": false,
+  "policyBChanged": false,
+  "runtimePatchLocked": false
+}

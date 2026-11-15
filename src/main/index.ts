@@ -1,3 +1,13 @@
+import { JavaScriptRunStrategy } from './services/run/javascript-run-strategy'
+import { CSharpRunStrategy } from './services/run/csharp-run-strategy'
+import { CsharpRunPreparation } from './services/run/csharp-run-preparation'
+import { CsharpRunTargetRequests } from './services/run/csharp-run-target-requests'
+import { CsharpRunTargetStore } from './services/run/csharp-run-target-store'
+import { CsharpRunTargetResolver } from './services/run/csharp-run-target-resolver'
+import { CsharpRunPreflight } from './services/run/csharp-run-preflight'
+import { CsharpRunProbe } from './services/run/csharp-run-probe'
+import { DotnetRunRuntimeResolver } from './services/dependencies/dotnet-run-runtime'
+import { RUN_PROJECT_CHANNELS, type ProjectRunEvent } from '../shared/contracts/run-project'
 import { OllamaService } from './services/ai/ollama-service'
 import { AI_CHANNELS } from '../shared/contracts/ai'
 import { AiIpcService } from './ipc/ai-ipc-service'
@@ -60,6 +70,7 @@ import { GitDocumentOwners } from './services/git/git-document-owners'
 import { GitService } from './services/git/git-service'
 import { DomainError } from './errors/app-error'
 import { RunIpcService } from './ipc/run-ipc-service'
+import { RunSourceGuard } from './services/run/run-source-guard'
 import { WindowManager } from './window/window-manager'
 import { createCsharpLanguageManager } from './services/language/language-service-manager'
 import { CsharpWorkspaceStore } from './services/language/csharp-workspace-store'
@@ -134,6 +145,27 @@ void app.whenReady().then(async () => {
     })
   const nodeRuntime = new NodeRuntimeDetector()
   let runAdapter: WindowsPipedProcessAdapter | undefined
+  const runSourceGuard = new RunSourceGuard(ipcRegistry, {
+    authorizeReply: authorizePreferencesFrame,
+    authorize: (session, ownerId) => {
+      const owner = webContents.fromId(ownerId)
+      if (!owner || owner.isDestroyed() || projectService.getActiveProject()?.id !== session.projectId
+        || fileSystemService.getStatus(session.projectId).state !== 'AVAILABLE'
+        || !['STARTING', 'RUNNING'].includes(runService.getSession(session.sessionId, ownerId).state)) {
+        throw new DomainError({ code: 'PERMISSION_DENIED', retryable: false,
+          message: 'The Run project or window is no longer available.' })
+      }
+      observeRunOwner(ownerId)
+    },
+    send: (ownerId, channel, request) => {
+      const owner = webContents.fromId(ownerId)
+      if (!owner || owner.isDestroyed()) throw new Error('Run owner unavailable')
+      owner.send(channel, request)
+    },
+  })
+  const csharpRunPreparation = CsharpRunPreparation.production(app.getPath('userData'),
+    projectService, fileSystemService, processManager)
+  const runIpcReference: { current?: RunIpcService } = {}
   const runService = new RunService({
     authorize: async (target, ownerId) => {
       const assertOwner = () => {
@@ -146,16 +178,22 @@ void app.whenReady().then(async () => {
       assertOwner()
       return { projectId: target.projectId, relativePath: target.relativePath, ...file }
     },
-    resolveRuntime: () => nodeRuntime.resolve(),
-  }, {
+    resolveRuntime: context => {
+      return context.strategyKind === 'javascript-file' ? nodeRuntime.resolve() : csharpRunPreparation.resolve(context)
+    },
+  }, [new JavaScriptRunStrategy(), new CSharpRunStrategy()], {
     // Delay loading until an authorized Run; unsupported hosts retain normal IDE startup.
     adapter: { create: (execution, observe) => {
       runAdapter ??= new WindowsPipedProcessAdapter()
       return runAdapter.create(execution, observe)
     } },
     manager: processManager,
-    onEvent: (ownerId, event) => publishToRenderer(ownerId, RUN_CHANNELS.event, event),
+    onEvent: (ownerId, event) => /\.csproj$/i.test(event.session.relativePath)
+      ? runIpcReference.current?.publish(ownerId, event) : publishToRenderer(ownerId, RUN_CHANNELS.event, event),
+    onPhase: (ownerId, session, phase) => runIpcReference.current?.publishPhase(ownerId, session, phase),
+    onFinalized: (ownerId, session) => runIpcReference.current?.retireSession(ownerId, session),
     onEventSinkError: () => console.error('A Run event could not be delivered.'),
+    sourceGuard: runSourceGuard,
   })
   const runLifecycle = new RunProjectLifecycle(runService, projectService, fileSystemService,
     () => console.error('Unavailable-project Run cleanup failed; cleanup remains retryable.'))
@@ -312,13 +350,14 @@ void app.whenReady().then(async () => {
   terminalIpcReference.current = terminalIpc
 
   const runOwners = new Map<number, () => void>()
-  const runIpc = new RunIpcService(ipcRegistry, runService, (ownerId) => {
+  const observeRunOwner = (ownerId: number) => {
     if (runOwners.has(ownerId)) return
     const owner = webContents.fromId(ownerId)
     if (!owner || owner.isDestroyed()) throw new DomainError({ code: 'PERMISSION_DENIED',
       message: 'The Run window is no longer available.', retryable: false })
     const cleanup = () => {
-      void runService.stopOwner(ownerId).catch(() => {
+      runSourceGuard.invalidateOwner(ownerId)
+      void Promise.all([runService.stopOwner(ownerId), runIpcReference.current?.invalidateOwner(ownerId)]).catch(() => {
         console.error('Run window cleanup failed; resources remain tracked for shutdown retry.')
       })
     }
@@ -329,12 +368,37 @@ void app.whenReady().then(async () => {
     const remove = () => {
       owner.removeListener('did-start-navigation', navigation)
       owner.removeListener('destroyed', destroyed)
+      owner.removeListener('render-process-gone', cleanup)
       runOwners.delete(ownerId)
     }
     owner.on('did-start-navigation', navigation)
     owner.once('destroyed', destroyed)
+    owner.on('render-process-gone', cleanup)
     runOwners.set(ownerId, remove)
+  }
+  const targetRequests = new CsharpRunTargetRequests(processManager, probeOwner => {
+    const probe = new CsharpRunProbe(processManager, probeOwner)
+    const evaluator = new CsharpRunPreflight(fileSystemService, new DotnetRunRuntimeResolver(probe), probe)
+    const resolver = new CsharpRunTargetResolver(projectService, fileSystemService, evaluator)
+    const store = new CsharpRunTargetStore(app.getPath('userData'), projectService, fileSystemService, resolver)
+    return { store, close: async () => { try { await store.stop() } finally { await probe.stop() } } }
+  }, { projects: projectService, files: fileSystemService,
+    onCleanupError: () => console.error('Run target cleanup remains pending.') })
+  const runIpc = new RunIpcService(ipcRegistry, runService, observeRunOwner, {
+    targets: targetRequests,
+    authorize: (context, projectId) => {
+      authorizePreferencesFrame(context)
+      if (!projectId) return undefined
+      if (targetRequests.isTransitioning || fileSystemService.getStatus(projectId).state !== 'AVAILABLE') throw new DomainError({
+        code: 'PERMISSION_DENIED', message: 'The Run project is unavailable.', retryable: false })
+      return projectService.getAuthorizedProject(projectId)
+    },
+    start: (request, ownerId) => runService.startPlannedRun(request, ownerId),
+    publish: (ownerId, event) => {
+      if (projectService.getActiveProject()?.id === event.session.projectId) publishToRenderer(ownerId, RUN_PROJECT_CHANNELS.event, event)
+    },
   })
+  runIpcReference.current = runIpc
 
   desktopApplication = new DesktopApplication([
     persistenceService,
@@ -348,8 +412,10 @@ void app.whenReady().then(async () => {
     aiService,
     aiIpc,
     unsavedTransitionService,
+    runSourceGuard,
     // Starts after the unsaved guard; stops before it and all Run dependencies.
     runLifecycle,
+    targetRequests,
     { name: 'CsharpWorkspaceStore', stop: () => csharpStore.stop() },
     csharpSession,
     csharpOwners,
@@ -434,7 +500,7 @@ function publishLifecycleToWindows(
 function publishToRenderer(
   ownerId: number,
   channel: string,
-  event: SearchEvent | NamesSearchEvent | RunEvent,
+  event: SearchEvent | NamesSearchEvent | RunEvent | ProjectRunEvent,
 ): void {
   const window = BrowserWindow.getAllWindows().find(
     (candidate) => !candidate.isDestroyed()

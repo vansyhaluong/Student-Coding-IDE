@@ -1,0 +1,57 @@
+{
+  "hostPid": 11268,
+  "action": "CLEANUP_COMPLETE",
+  "record": {
+    "schemaVersion": 2,
+    "sessionId": "9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+    "owner": "exercise:9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+    "hostEpoch": "f2867861-57b9-4040-a387-2ba956126023",
+    "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning",
+    "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\sessions\\session-9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+    "workspaceIdentity": {
+      "dev": "40663377",
+      "ino": "1407374883757577",
+      "birthtimeNs": "1792460902762001800"
+    },
+    "checkpoint": "CLEANUP_COMPLETE",
+    "revision": 3,
+    "proof": {
+      "kind": "VERIFIED",
+      "allRetainedSignaled": true,
+      "jobEmpty": true,
+      "observerSettled": true,
+      "unresolvedErrors": 0,
+      "retained": [
+        {
+          "pid": 34168,
+          "member": true,
+          "created": "31285301:387455907",
+          "root": true,
+          "image": "C:\\Program Files\\nodejs\\node.exe",
+          "signaled": true,
+          "closed": false
+        },
+        {
+          "pid": 23460,
+          "member": true,
+          "created": "31285301:387543621",
+          "root": false,
+          "image": "C:\\Windows\\System32\\conhost.exe",
+          "signaled": true,
+          "closed": false
+        }
+      ],
+      "accounting": {
+        "totalProcesses": 2,
+        "activeProcesses": 0,
+        "limitTerminations": 0
+      },
+      "coverageGaps": []
+    },
+    "finalized": true,
+    "nativeStage": "HANDLES_CLOSED",
+    "processClean": true,
+    "cleanupComplete": true,
+    "workspaceState": "REMOVED"
+  }
+}

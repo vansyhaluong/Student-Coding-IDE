@@ -1,3 +1,4 @@
+import { JavaScriptRunStrategy } from '../../src/main/services/run/javascript-run-strategy'
 /** @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -28,7 +29,7 @@ function deferred() {
 }
 function setup(path = 'main.js') {
   const handlers = new Map<string, (event: IpcInvokeEventLike, payload: unknown) => Promise<unknown>>()
-  const listeners = new Set<(event: unknown, payload: unknown) => void>()
+  const listeners = new Set<Parameters<IpcRendererLike['on']>[1]>()
   const events: RunEvent[] = []
   const frames = new Map<number, () => void>()
   let frameId = 0
@@ -56,7 +57,7 @@ function setup(path = 'main.js') {
       close: async () => { closing.resolve(); await gate.promise; native.finish(); native.released = true } }
   }) }
   const emit = (event: RunEvent) => { for (const listener of listeners) listener({}, event) }
-  const run = new RunService(authority, { adapter, manager, onEvent: (_owner, event) => { events.push(event); emit(event) } })
+  const run = new RunService(authority, [new JavaScriptRunStrategy()], { adapter, manager, onEvent: (_owner, event) => { events.push(event); emit(event) } })
   const owner = vi.fn()
   const ipc = new RunIpcService(registry, run, owner); ipc.start()
   const api = createPreloadApi(transport)
@@ -99,7 +100,8 @@ describe('Phase 4E editor and narrow Run integration', () => {
     await start(h)
     expect(h.transport.invoke).toHaveBeenCalledWith(RUN_CHANNELS.start, { projectId, relativePath: 'main.js', dirty: false })
     expect(h.owner).toHaveBeenCalledWith(7)
-    expect(Object.keys(h.api.run).sort()).toEqual(['onEvent', 'start', 'stop'])
+    expect(Object.keys(h.api.run).sort()).toEqual(['cancelResolution', 'clearTarget', 'closeInput', 'inputStatus', 'onEvent', 'onProjectEvent',
+      'resolveTargets', 'selectTarget', 'sendInput', 'start', 'startProject', 'stop'])
   })
   it('blocks dirty JS without autosave or an invocation', () => {
     const h = setup(); render(<Harness h={h} />)
@@ -237,18 +239,18 @@ describe('Phase 4E output and view lifecycle', () => {
     expect(screen.getByRole('button', { name: /Run unavailable: Project unavailable/ }).hasAttribute('disabled')).toBe(true)
     expect(screen.queryByLabelText('Run output for main.js')).toBeNull()
   })
-  it('tab toggling and remount keep one event listener, unmount removes it and pending frames', async () => {
+  it('tab toggling and remount keep one listener per Run event channel, unmount removes both and pending frames', async () => {
     const h = setup(); const view = render(<Harness h={h} />)
     const a = await start(h)
     for (let i = 0; i < 4; i++) fireEvent.click(screen.getByText('Toggle panel'))
-    expect(h.listeners.size).toBe(1)
+    expect(h.listeners.size).toBe(2)
     act(() => h.emit({ type: 'stdout', session: a, data: 'buffered' }))
     view.unmount()
     expect(h.listeners.size).toBe(0)
     expect(h.frames.size).toBe(0)
     h.controller.activateProject(projectId)
     const remount = render(<Harness h={h} />)
-    expect(h.listeners.size).toBe(1)
+    expect(h.listeners.size).toBe(2)
     remount.unmount()
     expect(h.listeners.size).toBe(0)
   })
@@ -259,6 +261,6 @@ describe('Phase 4E output and view lifecycle', () => {
     expect(document.body.classList.contains('is-resizing-panel')).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Hide Output' }))
     expect(document.body.classList.contains('is-resizing-panel')).toBe(false)
-    expect(h.listeners.size).toBe(1)
+    expect(h.listeners.size).toBe(2)
   })
 })

@@ -1,0 +1,20 @@
+<Project>
+  <UsingTask TaskName="GateHold" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <Task>
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Log.LogMessage(Microsoft.Build.Framework.MessageImportance.High,
+          "BUILD_HELD:" + System.Diagnostics.Process.GetCurrentProcess().Id);
+        System.Threading.Thread.Sleep(60000);
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="HoldActualCompileWorker" AfterTargets="CoreCompile" Condition="'$(GateHoldBuild)' == 'true'">
+    <GateHold />
+  </Target>
+  <Target Name="ProveNoBuild" BeforeTargets="CoreCompile" Condition="'$(GateRejectBuild)' == 'true'">
+    <Error Text="UNEXPECTED_BUILD" />
+  </Target>
+  <Target Name="ProveNoRestore" BeforeTargets="Restore" Condition="'$(GateRejectRestore)' == 'true'">
+    <Error Text="UNEXPECTED_RESTORE" />
+  </Target>
+</Project>

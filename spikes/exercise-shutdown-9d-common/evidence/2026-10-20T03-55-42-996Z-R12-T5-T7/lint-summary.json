@@ -1,0 +1,9 @@
+{
+  "status": "FAIL",
+  "errors": 756,
+  "archiveErrors": 698,
+  "modifiedJsErrors": 0,
+  "unchangedLiveSourceErrors": 58,
+  "targetedChangedJs": "PASS",
+  "cppValidation": "MSVC /W4 /WX build PASS; no standalone C++ linter claimed"
+}

@@ -83,6 +83,7 @@ describe('Phase 2B preload bridges', () => {
       'lifecycle',
       'project',
       'run',
+      'runSourceGuard',
       'search',
       'settings',
       'terminal',

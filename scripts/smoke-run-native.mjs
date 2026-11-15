@@ -4,15 +4,128 @@ import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { copyFile, mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
-const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, ProcessManager }
+const { WindowsPipedProcessAdapter, NodeRuntimeDetector, RunService, JavaScriptRunStrategy, ProcessManager }
   = require(resolve(root, 'out/main/run-runtime.js'))
 const projectId = 'project_1234567890abcdef12345678'
 const cwd = resolve(root, 'tests/fixtures/run')
 const records = []
 let liveProcess
+let argumentDirectory
+const binding = require(resolve(root, 'out/main/native/run-process.node'))
+const execFileAsync = promisify(execFile)
+async function handleCount() {
+  const { stdout } = await execFileAsync(resolve(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe'),
+    ['-NoProfile', '-NonInteractive', '-Command', `(Get-Process -Id ${process.pid}).HandleCount`],
+    { windowsHide: true, shell: false })
+  return Number(stdout.trim())
+}
+async function argumentSmoke(runtime) {
+  argumentDirectory = await mkdtemp(resolve(tmpdir(), 'student-ide-run-argv '))
+  const executable = resolve(argumentDirectory, 'node space # Việt 😀.exe')
+  const fixture = resolve(argumentDirectory, 'argv space # Việt 😀.js')
+  await copyFile(runtime.executable, executable)
+  await copyFile(resolve(cwd, 'argv.js'), fixture)
+  const adapter = new WindowsPipedProcessAdapter(undefined, { ...process.env,
+    NODE_OPTIONS: '--this-must-never-reach-node', NODE_PATH: 'private', ELECTRON_RUN_AS_NODE: '1',
+    RUN_SMOKE_INHERITED: 'inherited # Việt 😀' })
+  const preparation = { executable, args: [fixture], cwd: argumentDirectory,
+    shell: false, environmentAdditions: {} }
+  async function roundTrip(args) {
+    const events = []
+    liveProcess = adapter.create({ ...preparation, args: [fixture, ...args] }, (event) => events.push(event))
+    const pid = liveProcess.ownership.rootPid
+    await bounded(liveProcess.settled)
+    assert.equal(events.find((event) => event.type === 'exit')?.exitCode, 0)
+    assert.equal(events.filter((event) => event.type === 'error').length, 0)
+    const output = JSON.parse(events.filter((event) => event.type === 'stdout').map((event) => event.data).join(''))
+    assert.deepEqual(output, { args, cwd: argumentDirectory, stdin: '', nodeOptions: null,
+      nodePath: null, electronAsNode: null, inherited: 'inherited # Việt 😀' })
+    const job = liveProcess.ownership.job
+    await bounded(liveProcess.close())
+    assert.equal(liveProcess.isReleased(), true)
+    assert.equal(await job.activeProcessCount(), 0)
+    assert.throws(() => process.kill(pid, 0), 'root must no longer exist')
+    liveProcess = undefined
+  }
+  await roundTrip([])
+  const handlesBefore = await handleCount()
+  const tricky = ['', 'one', 'two words', 'C:\\space # Việt 😀\\', 'a"b', '"', '\\', '\\\\',
+    'a\\"b', 'a\\\\"b', 'trailing\\\\', '\t', 'line\r\nbreak', '& echo injected | > marker', '%PATH%', '!PATH!', '^()']
+  for (let i = 0; i < 20; ++i) await roundTrip(tricky)
+  await roundTrip(Array.from({ length: 1023 }, (_, i) => `arg${i}`))
+  // All these paths contain no quotes/backslashes at the end: quoted length is +2.
+  const overhead = executable.length + 2 + 1 + fixture.length + 2 + 1 + 2
+  await roundTrip(['x'.repeat(32766 - overhead)])
+  let rejected = 0
+  for (const change of [
+    { args: 'not-an-array' }, { args: [null] }, { args: [1] }, { args: Array(2) },
+    { args: ['bad\0argument'] }, { args: Array(1025).fill('') },
+    { args: [fixture, 'x'.repeat(32767 - overhead)] }, { args: ['\\'.repeat(20000)] },
+    { args: ['x'.repeat(32767)] }, { executable: 'node.exe' }, { executable: 'C:node.exe' },
+    { executable: '\\node.exe' }, { executable: executable + '\0' },
+    { executable: argumentDirectory }, { executable: fixture }, { executable: executable + '.missing.exe' },
+    { cwd: '.' }, { cwd: 'C:relative' }, { cwd: fixture }, { cwd: argumentDirectory + '\0' },
+    { cwd: resolve(argumentDirectory, 'missing') }, { shell: true }, { environmentAdditions: { UNSAFE: '1' } },
+  ]) {
+    assert.throws(() => adapter.create({ ...preparation, ...change }, () => {}))
+    ++rejected
+  }
+  for (const [args, environment, observer] of [
+    ['legacy-string', [], () => {}], [[], [], null], [[], ['=empty'], () => {}],
+    [[], ['INVALID'], () => {}], [[], ['A=bad\0value'], () => {}],
+    [[], ['A=' + 'x'.repeat(32765)], () => {}], [[], Array(32768).fill('A=B'), () => {}],
+  ]) {
+    assert.throws(() => binding.createRun(executable, args, argumentDirectory, environment, observer))
+    ++rejected
+  }
+  // Zero args is valid and stdin EOF lets Node terminate without an interactive REPL.
+  liveProcess = adapter.create({ ...preparation, args: [] }, () => {})
+  await bounded(liveProcess.settled)
+  await bounded(liveProcess.close())
+  liveProcess = undefined
+  const handlesAfter = await handleCount()
+  assert.ok(handlesAfter <= handlesBefore + 2, `native handle growth: ${handlesBefore} -> ${handlesAfter}`)
+  for (const mode of ['live-root', 'root-first']) {
+    let output = '', ready
+    const childReady = new Promise((done) => { ready = done })
+    liveProcess = adapter.create({ ...preparation,
+      args: [resolve(cwd, 'argv-tree.js'), mode, 'space # Việt 😀', ''] }, (event) => {
+      if (event.type === 'stdout') {
+        output += event.data
+        if (output.includes('\n')) ready()
+      }
+    })
+    await bounded(childReady)
+    const childPid = Number(output.trim()), rootPid = liveProcess.ownership.rootPid
+    const job = liveProcess.ownership.job
+    if (mode === 'root-first') await bounded(liveProcess.settled)
+    process.kill(childPid, 0)
+    assert.ok(await job.activeProcessCount() > 0)
+    await bounded(Promise.all([liveProcess.close(), liveProcess.close()]))
+    assert.equal(liveProcess.isReleased(), true)
+    assert.equal(await job.activeProcessCount(), 0)
+    assert.throws(() => process.kill(rootPid, 0))
+    assert.throws(() => process.kill(childPid, 0))
+    liveProcess = undefined
+  }
+  return { roundTrips: 23, rejected, maxArguments: 1024, maxCommandLine: 32766,
+    closedStdin: true, filteredEnvironment: true, handlesBefore, handlesAfter,
+    multiArgumentStop: true, multiArgumentRootFirstCleanup: true }
+}
+async function removeArgumentDirectory() {
+  if (!argumentDirectory) return
+  const path = resolve(argumentDirectory)
+  assert.ok(path.startsWith(resolve(tmpdir(), 'student-ide-run-argv ')))
+  await rm(path, { recursive: true, force: true })
+  argumentDirectory = undefined
+}
 async function bounded(promise) {
   let timer
   try { return await Promise.race([promise, new Promise((_, reject) => {
@@ -33,7 +146,7 @@ async function run() {
         canonicalFile: resolve(cwd, target.relativePath) }
     },
     resolveRuntime: async () => runtime,
-  })
+  }, [new JavaScriptRunStrategy()])
   for (let i = 0; i < 15; ++i) {
     const file = ['basic.js', 'nonzero.js', 'stream.js'][i % 3]
     const events = []
@@ -83,12 +196,15 @@ async function run() {
   await assert.rejects(service.launchPrepared(failed.session.sessionId, 7, brokenAdapter, manager, () => {}))
   assert.equal(manager.size, 0)
   service.releasePreparation(failed.session.sessionId, 7)
+  const argumentsResult = await argumentSmoke(runtime)
+  await removeArgumentDirectory()
   console.log(JSON.stringify({ result: 'PASS', electron: process.versions.electron,
     node: process.versions.node, modules: process.versions.modules, napi: process.versions.napi,
-    arch: process.arch, cycles: records.length, rootFirstCleanup: true, failedSpawn: true, records }))
+    arch: process.arch, cycles: records.length, rootFirstCleanup: true, failedSpawn: true, argumentsResult, records }))
 }
 run().then(() => app.quit(), async (error) => {
   console.error(error)
   if (liveProcess) await liveProcess.close().catch(console.error)
+  await removeArgumentDirectory().catch(console.error)
   app.exit(1)
 })

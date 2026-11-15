@@ -8,10 +8,86 @@ are recorded only after their implementing work packages pass.
 
 ## Planned C# Project Run extension (2026-10-07)
 
-Status: `NOT_STARTED`; design accepted in ADR-024, implementation not authorized
-by the planning task. The implemented capability matrix below still reports
-current production behavior (C# Run deferred/unimplemented). The planned extension
+Status: `IN_PROGRESS`; M1-01 through M1-12 (including M1-09a) COMPLETE; M2-01 through M2-05 COMPLETE; M2-06 automated Windows 11 x64 Electron evidence PASS, manual W not run, so M2-06 and M2-07 are not COMPLETE.
+Main has a production CSharpRunStrategy and typed Run IPC/Preload; M1-11 exposes
+Console target selection, Run/Stop/Re-run and phase/failure Output in Project Workspace.
+M2-05 adds an Output line composer for a C# execute session. JavaScript and build
+do not accept Console input. The 2026-11-15 M2-06 Electron smoke passed 60/60 on
+SDK 8.0.410 and 10.0.112; manual W cells were not run. M1-12 Core acceptance is COMPLETE after the
+2026-11-15 suite-hygiene pass (`npm test` 1608/1608; existing Windows 11 smoke 48/48).
+Full-workspace lint still fails only in preserved unrelated trees and is not claimed green.
+Design is accepted in ADR-024. The extension
 is separate from Phase 5.5 intelligence and Phase 9 Exercise Runtime.
+
+M1-05 provides Main-only contextual Run SDK resolution (stable SDK >=8) and
+structured single-project MSBuild evaluation, verified with real SDK 8/net8 and
+SDK 10/net10 on Windows 11 x64. CLI honors candidate/ancestor global.json; Run
+does not reuse the language detector's SDK >=10 eligibility rule. Evaluation
+returns facts, including Library and multi-target data; it does not expose a C#
+Run capability, select targets or certify runtime/targeting-pack availability.
+
+M1-06 adds Main-only bounded independent .csproj discovery, evaluated Console
+classification and recursive in-root reference validation. Existing semantic
+resolution distinguishes zero/one/multiple eligible targets and unassessable
+candidates; multiple or partially unassessable results never choose a target.
+Real SDK 8/net8 and SDK 10/net10 classification smoke is 14/14 PASS on Windows 11
+x64, including Web, test, WPF and WinForms rejection. No language workspace
+selection, persistence, build/run capability, picker or Console input is added.
+
+M1-07 adds Main-only selection/change/clear and isolated versioned Run-target
+persistence using the existing persistence service. Every saved/explicit choice
+is checked against fresh M1-06 results and canonical authorization. Invalid or
+recovered choices require fresh selection; project changes invalidate async work.
+No public selection API, picker, execution lifecycle or C# Run runtime is added.
+
+M1-08 adds Main-only cancellable preparation and sequential execution plans to
+the existing RunService. One JS step or two trusted C# steps share one session;
+intermediate exit requires complete cleanup before advancement. Stop aborts
+preparation/build/execution/gaps; retained cleanup blocks replacement and project
+or shutdown completion. Fake plans verify the seam (31 new/145 focused tests).
+JavaScript's live API stays unchanged; no C# build/run strategy, source handshake,
+public phase API, picker or stdin was composed in that package.
+
+M1-09a adds a five-second owner/frame/session-scoped saved-source handshake with
+aggregate revision/dirty/conflict over all retained project documents. Main
+requires approval and rechecks before C# plan preparation and each launch; edits
+during preparation/build invalidate it even if saved immediately. Stop/project/
+renderer/shutdown invalidation fails closed. Execution retires the guard, so edits
+do not cancel running programs. No automatic Save, file content transfer, target
+UI, native launch strategy or stdin is added. Verification: 67 new/380 focused
+tests PASS, typecheck/scoped lint/diff PASS. Source/disk concurrency acceptance
+still requires the later Core Acceptance package.
+
+M1-09 adds Main-only CSharpRunStrategy and owned preparation composition. Fresh
+Run target selection/evaluation supplies the runtime; fixed Debug build/restore
+then `dotnet run --no-build --no-restore --no-launch-profile` share one session.
+Build servers are disabled and build node reuse is false. SDK/TFM fingerprint
+drift, dirty/stale source or invalid selection block launch. Build failure never
+executes; Stop and cleanup retain the existing fail-closed ownership rules.
+Verification: 30 new tests, 384 focused regression tests, typecheck/scoped lint
+and whitespace PASS. Real SDK 8.0.410/net8.0 and 10.0.112/net10.0 smoke: 14/14
+cases plus 4/4 repeated resource cases PASS. No public C# Run API/UI or stdin;
+JavaScript behavior is preserved. See `spikes/csharp-project-run/M1-09-REPORT.md`.
+
+M1-10 adds typed resolve/select/clear/cancel/startProject/onProjectEvent methods to
+the existing Run bridge. Main owns selection, sender/frame/project/session checks,
+probe cancellation and retained cleanup. Start returns an early session; actual
+execution still requires M1-09 revalidation and the M1-09a saved-source handshake.
+C# phase/output/exit/failure events are semantic and separate from unchanged JS
+events. Verification: 63 new tests and 443 focused regressions PASS, plus typecheck,
+scoped lint and whitespace. No native/execution policy or UI change; no new native
+smoke claim. M1-11 UI remains NOT_STARTED and overall C# Run remains IN_PROGRESS.
+
+Pre-UI R2 adds optional allowlisted `selectionDiagnostic` (`STALE_TARGET` or
+`PERSISTENCE_RECOVERED`) to public C# resolutions. Normal/unselected results keep
+their existing shape; resolution state remains authority. Stale/recovered choices
+never auto-select a replacement even with one candidate. Shared/Main/Preload
+validation and controlled IPC integration are verified; no picker/UI is added.
+
+M1-11 adds the existing-workbench target dialog and unified Run action, project-wide
+Save-first checks, phase/stream/failure projection and Stop during all C# phases.
+Target identity does not depend on the active `.cs` document. Focused UI/JS regressions
+and a seven-session real Electron/net8.0 smoke pass; no stdin or M1-12 acceptance.
 
 Milestone 1 adds saved SDK-style Console `.csproj` selection, independent remembered
 Run target, Run-specific SDK/global.json/single-framework checks, SDK build/restore
@@ -22,7 +98,10 @@ must pass before overall C# Run can be COMPLETE. No terminal/PTY substitution.
 
 Run readiness never depends on csharp-ls. Existing intelligence's SDK >=10 policy
 remains; the planned Run policy accepts compatible stable effective SDK >=8 with
-net8.0/net10.0 Windows evidence required. No loose `.cs`, Web/API, debugger,
+net8.0/net10.0 Windows 11 x64 evidence required. M1-04's recorded 32/32 cases
+satisfy its compatibility gate under the ADR-024 scope amendment. Windows 10 is
+outside the verified C# Project Run acceptance baseline. Compatibility is not
+claimed. Other IDE platform obligations remain unchanged. No loose `.cs`, Web/API, debugger,
 launch profiles, advanced multi-target selection, SDK auto-install or Exercise
 Judge in this extension. See Architecture Section 10 and Plan Section 13.7.
 
@@ -47,7 +126,7 @@ Architecture Section 6 for the approved Learning boundaries.
 | HTML | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Deferred | Deferred | No | N/A | Monaco HTML worker | V1 syntax/completion/hover; diagnostics deferred because provider has no validation support |
 | CSS | 2 | Yes | Yes | Yes, verified provider support | Not required | Not required | Yes | Yes | No | N/A | Monaco CSS worker | Accepted and verified for Phase 3 V1 |
 | JSON | 2 | Yes | Yes, local schema-free behavior | No useful result without a configured local schema | Not required | Not required | Yes | Yes | No | N/A | Monaco JSON worker | Accepted and verified for current local-only configuration |
-| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Yes | Yes | Yes | Yes | Yes, open documents | Yes | Deferred | Independent; no C# Run selected | Monaco tokenization + Main-owned `csharp-ls` semantic providers | Phase 3 syntax and Phase 5.5A–5.5H COMPLETE; automated verification and user-confirmed manual acceptance PASS |
+| C# | Phase 5.5 V1 intelligence | Yes, implemented in Phase 3 | Yes | Yes | Yes | Yes | Yes, open documents | Yes | Console `.csproj` through M1-12; M2 input pending | Independent Run SDK >=8; CLI-selected single framework | Monaco tokenization + Main-owned `csharp-ls` semantic providers | Phase 3 syntax and Phase 5.5A–5.5H COMPLETE; automated verification and user-confirmed manual acceptance PASS |
 | PHP | Syntax-only | Yes | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Not V1 | Future | Monaco tokenization only | Accepted syntax-only scope |
 
 ## Deferred future language support

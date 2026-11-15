@@ -1,0 +1,1 @@
+https://github.com/fsprojects/FSharp.Control.AsyncSeq/blob/main/LICENSE.md

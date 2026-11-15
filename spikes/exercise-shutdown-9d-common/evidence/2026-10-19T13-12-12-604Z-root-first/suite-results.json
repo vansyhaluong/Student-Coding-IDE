@@ -1,0 +1,22 @@
+{
+  "hostPid": 25884,
+  "electron": "44.0.0",
+  "node": "24.18.1",
+  "mode": "root-first",
+  "runRoot": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\host-root-first-79684cca-50af-4e4b-97a1-0b5a454dafb7",
+  "trace": [
+    "descendant:spawn:execute"
+  ],
+  "records": [
+    {
+      "name": "B: root exited while descendant remains; Job-wide cancellation cleans child",
+      "started": "2026-10-19T13:12:14.622Z",
+      "status": "FAIL",
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n\n3 !== 2\n"
+      },
+      "elapsedMs": 629
+    }
+  ]
+}

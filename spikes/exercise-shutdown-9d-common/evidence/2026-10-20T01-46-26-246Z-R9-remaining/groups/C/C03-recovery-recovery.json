@@ -1,0 +1,27 @@
+{
+  "hostPid": 31592,
+  "action": "QUARANTINED",
+  "record": {
+    "schemaVersion": 2,
+    "sessionId": "f72c306d-d0c0-47af-8ee2-56a63387fc84",
+    "owner": "exercise:f72c306d-d0c0-47af-8ee2-56a63387fc84",
+    "hostEpoch": "730d3433-f0a2-436f-a4d9-bf382e9f1fa5",
+    "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning",
+    "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\sessions\\session-f72c306d-d0c0-47af-8ee2-56a63387fc84",
+    "workspaceIdentity": {
+      "dev": "40663377",
+      "ino": "1970324837178834",
+      "birthtimeNs": "1792460901555142000"
+    },
+    "checkpoint": "OWNED",
+    "revision": 0,
+    "proof": null,
+    "finalized": false,
+    "nativeStage": "OWNED",
+    "processClean": false,
+    "cleanupComplete": false,
+    "workspaceState": "RETAINED"
+  },
+  "processClean": false,
+  "cleanupComplete": false
+}

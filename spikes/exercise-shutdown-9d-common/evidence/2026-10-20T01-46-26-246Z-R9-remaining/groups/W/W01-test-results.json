@@ -1,0 +1,460 @@
+{
+  "hostPid": 24684,
+  "embeddedNode": "24.18.1",
+  "electron": "44.0.0",
+  "id": "W01",
+  "records": [
+    {
+      "name": "W01",
+      "started": "2026-10-20T01:48:22.753Z",
+      "monotonicStart": 145.0079,
+      "pending": {
+        "owner": "exercise:9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+        "sessionId": "9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\sessions\\session-9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\dispositions\\9a190cd8-5a52-4e27-81a7-67fdf8baf5c2.json",
+        "disposition": "CLEAN",
+        "proof": {
+          "kind": "VERIFIED",
+          "allRetainedSignaled": true,
+          "jobEmpty": true,
+          "observerSettled": true,
+          "unresolvedErrors": 0,
+          "retained": [
+            {
+              "pid": 34168,
+              "member": true,
+              "created": "31285301:387455907",
+              "root": true,
+              "image": "C:\\Program Files\\nodejs\\node.exe",
+              "signaled": true,
+              "closed": false
+            },
+            {
+              "pid": 23460,
+              "member": true,
+              "created": "31285301:387543621",
+              "root": false,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "signaled": true,
+              "closed": false
+            }
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          },
+          "coverageGaps": []
+        },
+        "nativeStage": "HANDLES_CLOSED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "DELETE_PENDING",
+        "checkpoint": "FINALIZED",
+        "lastError": {
+          "kind": "WORKSPACE",
+          "message": "EBUSY: resource busy or locked, unlink 'D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\sessions\\session-9a190cd8-5a52-4e27-81a7-67fdf8baf5c2\\locked.txt'"
+        },
+        "processClean": true,
+        "cleanupComplete": false,
+        "finalized": false,
+        "released": true,
+        "managerResources": 0,
+        "counters": {
+          "spawn": 1,
+          "query": 14,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 2,
+          "delete": 1
+        },
+        "phase": "execute",
+        "rootPid": 34168,
+        "accounting": {
+          "totalProcesses": 2,
+          "activeProcesses": 0,
+          "limitTerminations": 0
+        },
+        "retained": [
+          {
+            "pid": 34168,
+            "member": true,
+            "created": "31285301:387455907",
+            "root": true,
+            "image": "C:\\Program Files\\nodejs\\node.exe",
+            "signaled": true,
+            "closed": true
+          },
+          {
+            "pid": 23460,
+            "member": true,
+            "created": "31285301:387543621",
+            "root": false,
+            "image": "C:\\Windows\\System32\\conhost.exe",
+            "signaled": true,
+            "closed": true
+          }
+        ],
+        "coverageGaps": [],
+        "output": "READY\n",
+        "exitCode": 1,
+        "timeline": [
+          {
+            "event": "checkpoint-acknowledged",
+            "monotonicMs": 170.6067,
+            "elapsedMs": 24.910200000000003,
+            "checkpoint": "OWNED"
+          },
+          {
+            "event": "handle-retained",
+            "monotonicMs": 189.136,
+            "elapsedMs": 43.43539999999999,
+            "pid": 34168,
+            "key": "34168:31285301:387455907",
+            "root": true
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 189.3158,
+            "elapsedMs": 43.6147,
+            "members": [
+              34168
+            ],
+            "accounting": {
+              "totalProcesses": 1,
+              "activeProcesses": 1,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "launched",
+            "monotonicMs": 189.4554,
+            "elapsedMs": 43.7551,
+            "rootPid": 34168,
+            "phase": "execute",
+            "executable": "C:\\Program Files\\nodejs\\node.exe"
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 211.1658,
+            "elapsedMs": 65.4668,
+            "members": [
+              34168,
+              23460
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "handle-retained",
+            "monotonicMs": 211.4479,
+            "elapsedMs": 65.74709999999999,
+            "pid": 23460,
+            "key": "23460:31285301:387543621",
+            "root": false
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 226.6438,
+            "elapsedMs": 80.9434,
+            "members": [
+              34168,
+              23460
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 242.0223,
+            "elapsedMs": 96.3229,
+            "members": [
+              34168,
+              23460
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 265.7046,
+            "elapsedMs": 120.00399999999999,
+            "members": [
+              34168,
+              23460
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 265.82,
+            "elapsedMs": 120.11850000000001,
+            "members": [
+              34168,
+              23460
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "admission-closed",
+            "monotonicMs": 267.2931,
+            "elapsedMs": 121.5916
+          },
+          {
+            "event": "cleanup-stage-entry",
+            "monotonicMs": 267.6804,
+            "elapsedMs": 121.97869999999998,
+            "nativeStage": "OWNED"
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 267.7825,
+            "elapsedMs": 122.08059999999998,
+            "members": [
+              34168,
+              23460
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "terminate-returned",
+            "monotonicMs": 267.8913,
+            "elapsedMs": 122.18969999999999
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 267.9077,
+            "elapsedMs": 122.20590000000001,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "root-exit",
+            "monotonicMs": 274.503,
+            "elapsedMs": 128.80190000000002,
+            "code": 1
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 288.3797,
+            "elapsedMs": 142.6785,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "handle-signaled",
+            "monotonicMs": 288.4115,
+            "elapsedMs": 142.70970000000003,
+            "pid": 34168,
+            "created": "31285301:387455907"
+          },
+          {
+            "event": "handle-signaled",
+            "monotonicMs": 288.4213,
+            "elapsedMs": 142.71939999999998,
+            "pid": 23460,
+            "created": "31285301:387543621"
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 288.4849,
+            "elapsedMs": 142.7829,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 303.5357,
+            "elapsedMs": 157.83489999999998,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 303.811,
+            "elapsedMs": 158.11010000000002,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "TERMINATION_VERIFIED",
+            "monotonicMs": 303.9464,
+            "elapsedMs": 158.24499999999998
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 318.6896,
+            "elapsedMs": 172.98839999999998,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "checkpoint-acknowledged",
+            "monotonicMs": 322.1407,
+            "elapsedMs": 176.439,
+            "checkpoint": "RELEASE_READY"
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 322.1702,
+            "elapsedMs": 176.46829999999997,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "native-release-start",
+            "monotonicMs": 322.2941,
+            "elapsedMs": 176.59240000000003,
+            "members": []
+          },
+          {
+            "event": "native-released",
+            "monotonicMs": 322.3868,
+            "elapsedMs": 176.68499999999997
+          },
+          {
+            "event": "observed-handles-closed",
+            "monotonicMs": 322.5515,
+            "elapsedMs": 176.8497
+          },
+          {
+            "event": "checkpoint-acknowledged",
+            "monotonicMs": 333.8123,
+            "elapsedMs": 188.1106,
+            "checkpoint": "FINALIZED"
+          },
+          {
+            "event": "PROCESS_CLEAN",
+            "monotonicMs": 333.8186,
+            "elapsedMs": 188.11659999999998
+          },
+          {
+            "event": "cleanup-rejected",
+            "monotonicMs": 336.5155,
+            "elapsedMs": 190.814,
+            "kind": "WORKSPACE",
+            "message": "EBUSY: resource busy or locked, unlink 'D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\sessions\\session-9a190cd8-5a52-4e27-81a7-67fdf8baf5c2\\locked.txt'",
+            "resources": 0
+          }
+        ]
+      },
+      "checkpoint": {
+        "schemaVersion": 2,
+        "sessionId": "9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+        "owner": "exercise:9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+        "hostEpoch": "f2867861-57b9-4040-a387-2ba956126023",
+        "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\sessions\\session-9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+        "workspaceIdentity": {
+          "dev": "40663377",
+          "ino": "1407374883757577",
+          "birthtimeNs": "1792460902762001800"
+        },
+        "checkpoint": "FINALIZED",
+        "revision": 2,
+        "proof": {
+          "kind": "VERIFIED",
+          "allRetainedSignaled": true,
+          "jobEmpty": true,
+          "observerSettled": true,
+          "unresolvedErrors": 0,
+          "retained": [
+            {
+              "pid": 34168,
+              "member": true,
+              "created": "31285301:387455907",
+              "root": true,
+              "image": "C:\\Program Files\\nodejs\\node.exe",
+              "signaled": true,
+              "closed": false
+            },
+            {
+              "pid": 23460,
+              "member": true,
+              "created": "31285301:387543621",
+              "root": false,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "signaled": true,
+              "closed": false
+            }
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          },
+          "coverageGaps": []
+        },
+        "finalized": true,
+        "nativeStage": "HANDLES_CLOSED",
+        "processClean": true,
+        "cleanupComplete": false,
+        "workspaceState": "DELETE_PENDING"
+      },
+      "countersBeforeRetry": {
+        "spawn": 1,
+        "query": 14,
+        "terminate": 1,
+        "release": 1,
+        "handlesClosed": 2,
+        "delete": 1
+      },
+      "restart": {
+        "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\dispositions\\9a190cd8-5a52-4e27-81a7-67fdf8baf5c2.json",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\sessions\\session-9a190cd8-5a52-4e27-81a7-67fdf8baf5c2"
+      },
+      "status": "PASS",
+      "elapsedMs": 193.4239
+    }
+  ]
+}

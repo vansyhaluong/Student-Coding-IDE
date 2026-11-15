@@ -1,0 +1,665 @@
+{
+  "runId": "2026-10-20T01-46-26-246Z-R9-remaining",
+  "build": {
+    "status": "PASS",
+    "attempts": 1
+  },
+  "watchdogExpired": null,
+  "slots": [
+    {
+      "name": "C03",
+      "status": "PASS",
+      "crash": {
+        "host": {
+          "pid": 26156,
+          "created": "31285301:305449741"
+        },
+        "timeline": [
+          {
+            "event": "observer-retained",
+            "monotonicMs": 14452.614,
+            "pid": 29556,
+            "member": true,
+            "created": "31285301:375274504",
+            "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+          },
+          {
+            "event": "observer-retained",
+            "monotonicMs": 14452.6538,
+            "pid": 29928,
+            "member": true,
+            "created": "31285301:375670359",
+            "image": "C:\\Windows\\System32\\conhost.exe"
+          },
+          {
+            "event": "hard-kill-requested",
+            "monotonicMs": 14453.3217
+          },
+          {
+            "event": "all-observed-handles-signaled",
+            "monotonicMs": 14474.1878
+          }
+        ],
+        "observed": [
+          {
+            "pid": 29556,
+            "member": true,
+            "created": "31285301:375274504",
+            "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+            "signaled": true
+          },
+          {
+            "pid": 29928,
+            "member": true,
+            "created": "31285301:375670359",
+            "image": "C:\\Windows\\System32\\conhost.exe",
+            "signaled": true
+          }
+        ],
+        "recoveryHost": 31592,
+        "recoveryAction": "QUARANTINED",
+        "rootPid": 29556,
+        "readyOutput": "READY-CSHARP\r\n"
+      },
+      "recovery": {
+        "hostPid": 31592,
+        "action": "QUARANTINED",
+        "record": {
+          "schemaVersion": 2,
+          "sessionId": "f72c306d-d0c0-47af-8ee2-56a63387fc84",
+          "owner": "exercise:f72c306d-d0c0-47af-8ee2-56a63387fc84",
+          "hostEpoch": "730d3433-f0a2-436f-a4d9-bf382e9f1fa5",
+          "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning",
+          "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\sessions\\session-f72c306d-d0c0-47af-8ee2-56a63387fc84",
+          "workspaceIdentity": {
+            "dev": "40663377",
+            "ino": "1970324837178834",
+            "birthtimeNs": "1792460901555142000"
+          },
+          "checkpoint": "OWNED",
+          "revision": 0,
+          "proof": null,
+          "finalized": false,
+          "nativeStage": "OWNED",
+          "processClean": false,
+          "cleanupComplete": false,
+          "workspaceState": "RETAINED"
+        },
+        "processClean": false,
+        "cleanupComplete": false
+      }
+    },
+    {
+      "name": "C04",
+      "status": "PASS",
+      "crash": {
+        "host": {
+          "pid": 16556,
+          "created": "31285301:379798406"
+        },
+        "timeline": [
+          {
+            "event": "observer-retained",
+            "monotonicMs": 15055.6486,
+            "pid": 21608,
+            "member": true,
+            "created": "31285301:381697664",
+            "image": "C:\\Program Files\\nodejs\\node.exe"
+          },
+          {
+            "event": "observer-retained",
+            "monotonicMs": 15055.6823,
+            "pid": 4988,
+            "member": true,
+            "created": "31285301:381846987",
+            "image": "C:\\Windows\\System32\\conhost.exe"
+          },
+          {
+            "event": "observer-retained",
+            "monotonicMs": 15055.7059,
+            "pid": 30912,
+            "member": true,
+            "created": "31285301:382531937",
+            "image": "C:\\Program Files\\nodejs\\node.exe"
+          },
+          {
+            "event": "hard-kill-requested",
+            "monotonicMs": 15056.4185
+          },
+          {
+            "event": "all-observed-handles-signaled",
+            "monotonicMs": 15075.1834
+          }
+        ],
+        "observed": [
+          {
+            "pid": 21608,
+            "member": true,
+            "created": "31285301:381697664",
+            "image": "C:\\Program Files\\nodejs\\node.exe",
+            "signaled": true
+          },
+          {
+            "pid": 4988,
+            "member": true,
+            "created": "31285301:381846987",
+            "image": "C:\\Windows\\System32\\conhost.exe",
+            "signaled": true
+          },
+          {
+            "pid": 30912,
+            "member": true,
+            "created": "31285301:382531937",
+            "image": "C:\\Program Files\\nodejs\\node.exe",
+            "signaled": true
+          }
+        ],
+        "recoveryHost": 20564,
+        "recoveryAction": "QUARANTINED",
+        "rootPid": 21608,
+        "readyOutput": "READY\n"
+      },
+      "recovery": {
+        "hostPid": 20564,
+        "action": "QUARANTINED",
+        "record": {
+          "schemaVersion": 2,
+          "sessionId": "178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+          "owner": "exercise:178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+          "hostEpoch": "fe45ce97-877a-4718-b842-4dbb0657db77",
+          "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning",
+          "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\sessions\\session-178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+          "workspaceIdentity": {
+            "dev": "40663377",
+            "ino": "1688849860468203",
+            "birthtimeNs": "1792460902183905000"
+          },
+          "checkpoint": "OWNED",
+          "revision": 0,
+          "proof": null,
+          "finalized": false,
+          "nativeStage": "OWNED",
+          "processClean": false,
+          "cleanupComplete": false,
+          "workspaceState": "RETAINED"
+        },
+        "processClean": false,
+        "cleanupComplete": false
+      }
+    },
+    {
+      "name": "W01",
+      "status": "PASS",
+      "elapsedMs": 193.4239,
+      "recovery": {
+        "hostPid": 11268,
+        "action": "CLEANUP_COMPLETE",
+        "record": {
+          "schemaVersion": 2,
+          "sessionId": "9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+          "owner": "exercise:9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+          "hostEpoch": "f2867861-57b9-4040-a387-2ba956126023",
+          "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning",
+          "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W01-test\\learning\\sessions\\session-9a190cd8-5a52-4e27-81a7-67fdf8baf5c2",
+          "workspaceIdentity": {
+            "dev": "40663377",
+            "ino": "1407374883757577",
+            "birthtimeNs": "1792460902762001800"
+          },
+          "checkpoint": "CLEANUP_COMPLETE",
+          "revision": 3,
+          "proof": {
+            "kind": "VERIFIED",
+            "allRetainedSignaled": true,
+            "jobEmpty": true,
+            "observerSettled": true,
+            "unresolvedErrors": 0,
+            "retained": [
+              {
+                "pid": 34168,
+                "member": true,
+                "created": "31285301:387455907",
+                "root": true,
+                "image": "C:\\Program Files\\nodejs\\node.exe",
+                "signaled": true,
+                "closed": false
+              },
+              {
+                "pid": 23460,
+                "member": true,
+                "created": "31285301:387543621",
+                "root": false,
+                "image": "C:\\Windows\\System32\\conhost.exe",
+                "signaled": true,
+                "closed": false
+              }
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            },
+            "coverageGaps": []
+          },
+          "finalized": true,
+          "nativeStage": "HANDLES_CLOSED",
+          "processClean": true,
+          "cleanupComplete": true,
+          "workspaceState": "REMOVED"
+        }
+      },
+      "pending": {
+        "processClean": true,
+        "cleanupComplete": false,
+        "finalized": false,
+        "counters": {
+          "spawn": 1,
+          "query": 14,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 2,
+          "delete": 1
+        }
+      }
+    },
+    {
+      "name": "W02",
+      "status": "PASS",
+      "elapsedMs": 239.07080000000002,
+      "pending": {
+        "processClean": true,
+        "cleanupComplete": false,
+        "finalized": false,
+        "counters": {
+          "spawn": 1,
+          "query": 15,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 2,
+          "delete": 1
+        }
+      },
+      "session": {
+        "disposition": "CLEAN",
+        "processClean": true,
+        "cleanupComplete": true,
+        "finalized": true,
+        "proof": "VERIFIED",
+        "counters": {
+          "spawn": 1,
+          "query": 15,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 2,
+          "delete": 2
+        }
+      }
+    },
+    {
+      "name": "W03",
+      "status": "PASS",
+      "elapsedMs": 232.28969999999998,
+      "session": {
+        "disposition": "CLEAN",
+        "processClean": true,
+        "cleanupComplete": true,
+        "finalized": true,
+        "proof": "VERIFIED",
+        "counters": {
+          "spawn": 1,
+          "query": 15,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 2,
+          "delete": 2
+        }
+      }
+    },
+    {
+      "name": "W04",
+      "status": "PASS",
+      "elapsedMs": 122.5115,
+      "recovery": {
+        "action": "QUARANTINED",
+        "record": {
+          "schemaVersion": 2,
+          "sessionId": "a6d2290c-b5d9-4bbb-90ca-47eef1fa0ce7",
+          "owner": "exercise:a6d2290c-b5d9-4bbb-90ca-47eef1fa0ce7",
+          "hostEpoch": "ab41a0d6-f967-412e-98cc-7e7098ee3d2c",
+          "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W04-test\\learning",
+          "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W04-test\\learning\\sessions\\session-a6d2290c-b5d9-4bbb-90ca-47eef1fa0ce7",
+          "workspaceIdentity": {
+            "dev": "40663377",
+            "ino": "1407374883757627",
+            "birthtimeNs": "1792460904327961800"
+          },
+          "checkpoint": "OWNED",
+          "revision": 0,
+          "proof": null,
+          "finalized": false,
+          "nativeStage": "OWNED",
+          "processClean": false,
+          "cleanupComplete": false,
+          "workspaceState": "RETAINED"
+        },
+        "processClean": false,
+        "cleanupComplete": false
+      },
+      "session": {
+        "disposition": null,
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": false,
+        "counters": {
+          "spawn": 1,
+          "query": 6,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 0,
+          "delete": 0
+        }
+      }
+    },
+    {
+      "name": "W05",
+      "status": "PASS",
+      "elapsedMs": 332.6981,
+      "recovery": {
+        "hostPid": 18688,
+        "action": "QUARANTINED",
+        "record": {
+          "schemaVersion": 2,
+          "sessionId": "fb947bee-4076-428a-b4f2-6614790390ef",
+          "owner": "exercise:fb947bee-4076-428a-b4f2-6614790390ef",
+          "hostEpoch": "e1bda2ad-72bf-4a90-9d2d-cf5f225ad2a5",
+          "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W05-test\\learning",
+          "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\W05-test\\learning\\sessions\\session-fb947bee-4076-428a-b4f2-6614790390ef",
+          "workspaceIdentity": {
+            "dev": "40663377",
+            "ino": "1407374883757643",
+            "birthtimeNs": "1792460904669985700"
+          },
+          "checkpoint": "FINALIZED",
+          "revision": 2,
+          "proof": {
+            "kind": "HISTORY_UNVERIFIED",
+            "allRetainedSignaled": true,
+            "jobEmpty": true,
+            "observerSettled": true,
+            "unresolvedErrors": 0,
+            "retained": [
+              {
+                "pid": 12744,
+                "member": true,
+                "created": "31285301:406552149",
+                "root": true,
+                "image": "C:\\Program Files\\nodejs\\node.exe",
+                "signaled": true,
+                "closed": false
+              }
+            ],
+            "accounting": {
+              "totalProcesses": 4,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            },
+            "coverageGaps": []
+          },
+          "finalized": true,
+          "nativeStage": "HANDLES_CLOSED",
+          "processClean": false,
+          "cleanupComplete": false,
+          "workspaceState": "QUARANTINED"
+        },
+        "processClean": false,
+        "cleanupComplete": false
+      },
+      "session": {
+        "disposition": "HISTORY_UNVERIFIED",
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": true,
+        "proof": "HISTORY_UNVERIFIED",
+        "counters": {
+          "spawn": 1,
+          "query": 5,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 1,
+          "delete": 0
+        }
+      }
+    },
+    {
+      "name": "I01",
+      "status": "PASS",
+      "elapsedMs": 2441.2446999999997,
+      "projectResources": 2,
+      "projectSession": "run_485f0334-57d0-4b26-855f-f82c369fd93c",
+      "terminalSession": "terminal_50c5f9a5-5fa2-4552-96cc-968985c5574b",
+      "session": {
+        "disposition": "CLEAN",
+        "processClean": true,
+        "cleanupComplete": true,
+        "finalized": true,
+        "proof": "VERIFIED",
+        "counters": {
+          "spawn": 1,
+          "query": 18,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 2,
+          "delete": 1
+        }
+      }
+    },
+    {
+      "name": "I02",
+      "status": "PASS",
+      "elapsedMs": 1314.0784,
+      "projectResources": 2,
+      "projectSession": "run_023dcaad-6eab-45c9-b229-ac41c311fbc2",
+      "terminalSession": "terminal_101ccf1a-9a07-4c14-8a46-d2ec5c198807",
+      "session": {
+        "disposition": "CLEAN",
+        "processClean": true,
+        "cleanupComplete": true,
+        "finalized": true,
+        "proof": "VERIFIED",
+        "counters": {
+          "spawn": 1,
+          "query": 49,
+          "terminate": 2,
+          "release": 1,
+          "handlesClosed": 2,
+          "delete": 1
+        }
+      }
+    },
+    {
+      "name": "I03",
+      "status": "PASS",
+      "elapsedMs": 1018.6243,
+      "projectResources": 2,
+      "projectSession": "run_b366486f-4463-40af-adb1-1bbdbed57a58",
+      "terminalSession": "terminal_35dd2ad7-7568-4f04-9a3f-e7aad030f7e7",
+      "session": {
+        "disposition": "HISTORY_UNVERIFIED",
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": true,
+        "proof": "HISTORY_UNVERIFIED",
+        "counters": {
+          "spawn": 1,
+          "query": 5,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 1,
+          "delete": 0
+        }
+      }
+    }
+  ],
+  "latestMatrix": [
+    {
+      "name": "B01",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "P01",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "P02",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "P03",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "N01",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "N02",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "N03",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "N04",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "S01",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "S02",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "S03",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "S04",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "S05",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "S06",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "R01",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "R02",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "R03",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "R04",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "C01",
+      "status": "PASS",
+      "run": "R6"
+    },
+    {
+      "name": "C02",
+      "status": "PASS",
+      "run": "R8"
+    },
+    {
+      "name": "C03",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "C04",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "W01",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "W02",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "W03",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "W04",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "W05",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "I01",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "I02",
+      "status": "PASS",
+      "run": "R9"
+    },
+    {
+      "name": "I03",
+      "status": "PASS",
+      "run": "R9"
+    }
+  ],
+  "latestCounts": {
+    "PASS": 30
+  },
+  "integrity": {
+    "status": "PASS",
+    "checkedFiles": 852,
+    "changed": [],
+    "scope": "Pre-edit baseline through end: tracked files, all src/scripts/docs, Project artifacts, PTY artifacts, prior spike artifacts/evidence and 9D.0"
+  },
+  "limits": "30 latest PASS across R6/R8/R9, not a single uninterrupted run; historical FAIL and NOT_OBSERVED preserved."
+}

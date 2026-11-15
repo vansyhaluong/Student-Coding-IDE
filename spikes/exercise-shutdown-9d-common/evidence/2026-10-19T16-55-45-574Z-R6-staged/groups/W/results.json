@@ -1,0 +1,27 @@
+[
+  {
+    "name": "W01",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  },
+  {
+    "name": "W02",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  },
+  {
+    "name": "W03",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  },
+  {
+    "name": "W04",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  },
+  {
+    "name": "W05",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  }
+]

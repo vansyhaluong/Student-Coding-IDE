@@ -1,0 +1,467 @@
+{
+  "runId": "2026-10-20T03-23-52-749Z-R10-limits",
+  "counts": {
+    "PASS": 8,
+    "FAIL": 1,
+    "BLOCKED": 7
+  },
+  "rows": [
+    {
+      "name": "T1-csharp-first",
+      "status": "PASS",
+      "startupMs": 204.2572,
+      "executionObservedMs": 19.41860000000088,
+      "launchToResultMs": 237.15920000000006,
+      "compileMs": 9951.9552,
+      "memory": [
+        {
+          "sessionId": "a07551e4-f4dd-4d79-a8b4-2fc44fdb1a64",
+          "phase": "compile",
+          "quota": 2147483648,
+          "peakJobCommitBytes": 118050816,
+          "maxReportedJobCommitBytes": 118046720,
+          "samples": 511
+        },
+        {
+          "sessionId": "f61a68dc-a6d4-4b4a-8963-43f77f79cc5b",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 9453568,
+          "maxReportedJobCommitBytes": 9363456,
+          "samples": 17
+        }
+      ],
+      "cleanupMs": [
+        {
+          "phase": "compile",
+          "ms": 115.85489999999845,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        },
+        {
+          "phase": "execute",
+          "ms": 91.3726999999999,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "T1-csharp-next",
+      "status": "PASS",
+      "startupMs": 111.51710000000003,
+      "executionObservedMs": 27.270900000000438,
+      "launchToResultMs": 145.95010000000002,
+      "compileMs": 4741.7355,
+      "memory": [
+        {
+          "sessionId": "fa250127-7dd5-4d1d-b55f-d95ce8c351b7",
+          "phase": "compile",
+          "quota": 2147483648,
+          "peakJobCommitBytes": 107241472,
+          "maxReportedJobCommitBytes": 107106304,
+          "samples": 270
+        },
+        {
+          "sessionId": "1d058458-b3e1-444a-9f4e-38f0d8155207",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 9498624,
+          "maxReportedJobCommitBytes": 9474048,
+          "samples": 15
+        }
+      ],
+      "cleanupMs": [
+        {
+          "phase": "compile",
+          "ms": 92.82290000000012,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        },
+        {
+          "phase": "execute",
+          "ms": 72.99110000000019,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "T1-javascript-first",
+      "status": "PASS",
+      "startupMs": 104.35410000000002,
+      "executionObservedMs": 23.980799999999988,
+      "launchToResultMs": 136.6348,
+      "memory": [
+        {
+          "sessionId": "74f6738a-7e34-416a-848c-d3582fff0857",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 21614592,
+          "maxReportedJobCommitBytes": 21340160,
+          "samples": 15
+        }
+      ],
+      "cleanupMs": [
+        {
+          "phase": "execute",
+          "ms": 80.16580000000005,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "T1-javascript-next",
+      "status": "PASS",
+      "startupMs": 109.08579999999998,
+      "executionObservedMs": 21.076900000000023,
+      "launchToResultMs": 139.87759999999997,
+      "memory": [
+        {
+          "sessionId": "ef9b7f6a-45a2-4964-9989-91e10e369792",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 21827584,
+          "maxReportedJobCommitBytes": 21827584,
+          "samples": 14
+        }
+      ],
+      "cleanupMs": [
+        {
+          "phase": "execute",
+          "ms": 78.9108,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "T2-csharp",
+      "status": "PASS",
+      "startupMs": 144.0576000000001,
+      "compileMs": 5487.3212,
+      "timeout": {
+        "reason": "EXECUTE_TIMEOUT",
+        "due": 9353.1763,
+        "requestedAt": 9360.9278,
+        "overshootMs": 7.755100000000311,
+        "phaseMs": 2000,
+        "operationMs": 60000,
+        "terminationConfirmedMs": 109.53870000000097
+      },
+      "memory": [
+        {
+          "sessionId": "d97b2084-28c4-4a62-a10b-d50ddeb03361",
+          "phase": "compile",
+          "quota": 2147483648,
+          "peakJobCommitBytes": 107896832,
+          "maxReportedJobCommitBytes": 107859968,
+          "samples": 309
+        },
+        {
+          "sessionId": "8a22a880-a932-4e8f-81b2-06b28e167b6e",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 28749824,
+          "maxReportedJobCommitBytes": 28741632,
+          "samples": 113
+        }
+      ],
+      "cleanupMs": [
+        {
+          "phase": "compile",
+          "ms": 98.76100000000042,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        },
+        {
+          "phase": "execute",
+          "ms": 107.04360000000088,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "isolation": {
+        "status": "PASS",
+        "runSession": "run_59b975da-89bf-47fd-b984-6fa9a3e00eda",
+        "terminalSession": "terminal_aa431bf7-c945-49ee-b3c3-d2ac751eb915",
+        "checks": [
+          {
+            "tag": "before",
+            "at": 1698.9346,
+            "projectResources": 2,
+            "stdoutCount": 9,
+            "terminalMarker": "limits-before"
+          },
+          {
+            "tag": "after",
+            "at": 9629.9331,
+            "projectResources": 2,
+            "stdoutCount": 60,
+            "terminalMarker": "limits-after"
+          }
+        ]
+      },
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "T2-javascript",
+      "status": "PASS",
+      "startupMs": 166.11369999999988,
+      "timeout": {
+        "reason": "EXECUTE_TIMEOUT",
+        "due": 3190.1175000000003,
+        "requestedAt": 3196.9333,
+        "overshootMs": 6.819799999999759,
+        "phaseMs": 2000,
+        "operationMs": 60000,
+        "terminationConfirmedMs": 121.7195999999999
+      },
+      "memory": [
+        {
+          "sessionId": "4d612682-94ac-4066-a1d6-a017ba95b84c",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 40775680,
+          "maxReportedJobCommitBytes": 40767488,
+          "samples": 109
+        }
+      ],
+      "cleanupMs": [
+        {
+          "phase": "execute",
+          "ms": 117.99380000000019,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "isolation": {
+        "status": "PASS",
+        "runSession": "run_b07427c1-74de-4b78-ba0f-3f9eb48de8e8",
+        "terminalSession": "terminal_29204b41-6c8f-4628-bb7f-87fab0260bd5",
+        "checks": [
+          {
+            "tag": "before",
+            "at": 1154.6138,
+            "projectResources": 2,
+            "stdoutCount": 5,
+            "terminalMarker": "limits-before"
+          },
+          {
+            "tag": "after",
+            "at": 3402.3521,
+            "projectResources": 2,
+            "stdoutCount": 19,
+            "terminalMarker": "limits-after"
+          }
+        ]
+      },
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "T3-csharp",
+      "status": "PASS",
+      "timeout": {
+        "reason": "COMPILE_TIMEOUT",
+        "due": 2301.7636,
+        "requestedAt": 2309.2542,
+        "overshootMs": 7.493499999999585,
+        "phaseMs": 2000,
+        "operationMs": 60000,
+        "terminationConfirmedMs": 189.89879999999994
+      },
+      "memory": [
+        {
+          "sessionId": "a00cb6c2-9fdc-4d2f-bfdd-033543788c87",
+          "phase": "compile",
+          "quota": 2147483648,
+          "peakJobCommitBytes": 77496320,
+          "maxReportedJobCommitBytes": 77492224,
+          "samples": 102
+        }
+      ],
+      "cleanupMs": [
+        {
+          "phase": "compile",
+          "ms": 184.3499999999999,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "T4-root",
+      "status": "PASS",
+      "memory": [
+        {
+          "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34",
+          "phase": "execute",
+          "quota": 67108864,
+          "peakJobCommitBytes": 67203072,
+          "maxReportedJobCommitBytes": 66150400,
+          "samples": 12
+        }
+      ],
+      "memoryEvidence": {
+        "denial": {
+          "committedByAllocator": 63963136,
+          "win32Error": 1455
+        },
+        "memoryEvents": [
+          {
+            "message": 10,
+            "pid": 20884
+          }
+        ],
+        "output": "ALLOCATOR_READY 20884\r\nALLOC_DENIED 63963136 1455\r\n"
+      },
+      "cleanupMs": [
+        {
+          "phase": "execute",
+          "ms": 107.19630000000001,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "name": "T4-tree",
+      "status": "FAIL",
+      "error": "Observation deadline exceeded",
+      "memory": [
+        {
+          "sessionId": "ac356a98-43cf-4b47-a14e-e17154061158",
+          "phase": "execute",
+          "quota": 67108864,
+          "peakJobCommitBytes": 67256320,
+          "maxReportedJobCommitBytes": 66203648,
+          "samples": 495
+        }
+      ],
+      "allObservedSignaled": true,
+      "watchdog": false,
+      "observerExit": {
+        "code": 1,
+        "signal": null
+      }
+    },
+    {
+      "name": "T5-csharp",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T4-tree: Observation deadline exceeded"
+    },
+    {
+      "name": "T5-javascript",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T4-tree: Observation deadline exceeded"
+    },
+    {
+      "name": "T6-timeout-terminate",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T4-tree: Observation deadline exceeded"
+    },
+    {
+      "name": "T6-memory-finalized",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T4-tree: Observation deadline exceeded"
+    },
+    {
+      "name": "T7-phase",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T4-tree: Observation deadline exceeded"
+    },
+    {
+      "name": "T7-operation",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T4-tree: Observation deadline exceeded"
+    },
+    {
+      "name": "T7-pending-io",
+      "status": "BLOCKED",
+      "reason": "Stop after unexpected FAIL T4-tree: Observation deadline exceeded"
+    }
+  ],
+  "treeFailure": {
+    "error": {
+      "message": "Observation deadline exceeded",
+      "stack": "Error: Observation deadline exceeded\n    at until (D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\host.cjs:643:9)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at listOnTimeout (node:internal/timers:567:9)\n    at process.processTimers (node:internal/timers:541:7)\n    at async memory (D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\host.cjs:3272:39)\n    at async execute (D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\host.cjs:3324:5)\n    at async main (D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\host.cjs:3390:5)"
+    },
+    "output": "ALLOCATOR_READY 23436\r\nALLOC_CEILING 33554432\r\nALLOC_CHILD 1604\r\n",
+    "quotaEvents": [
+      {
+        "at": 432.9256,
+        "message": 10,
+        "pid": 1604,
+        "quota": 67108864,
+        "peakJobCommitBytes": 67256320,
+        "jobCommitReportedBytes": 66203648
+      }
+    ],
+    "cause": "allocator.cpp tree child startup specifies cb only, without STARTF_USESTDHANDLES/std handles. Child denial marker is not routed into host pipe. Job membership and memory-limit notification observed, but paired allocation-denial criterion missing.",
+    "limitation": "No child GetStdHandle probe was recorded; missing routing is diagnosed from tested source, absence of child output and observed child allocation event. No corrected fixture run was made.",
+    "safety": {
+      "allRetainedSignaled": true,
+      "watchdog": false,
+      "checkpoint": "OWNED",
+      "finalized": false,
+      "processClean": false
+    }
+  },
+  "build": {
+    "status": "PASS",
+    "attempts": 1
+  },
+  "runtime": {
+    "sdk": "10.0.112",
+    "node": "v24.16.0",
+    "inventory": "8.0.410 [C:\\Program Files\\dotnet\\sdk]\r\n9.0.314 [C:\\Program Files\\dotnet\\sdk]\r\n10.0.112 [C:\\Program Files\\dotnet\\sdk]\r\n",
+    "policy": "Installed stable SDK10 / Node24; patch not locked; no download or major fallback"
+  }
+}

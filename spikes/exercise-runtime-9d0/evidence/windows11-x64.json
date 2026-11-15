@@ -1,0 +1,1178 @@
+{
+  "date": "2026-10-19T03:39:26.738Z",
+  "platform": "win32",
+  "architecture": "x64",
+  "hostNode": "v24.16.0",
+  "sdk": "10.0.112",
+  "limits": {
+    "outputBytes": 65536,
+    "resultBytes": 65536,
+    "inputBytes": 65536,
+    "executeMs": 1500,
+    "compileMs": 30000,
+    "probeMs": 10000
+  },
+  "records": [
+    {
+      "name": "catalogue: all 63 exercises compatible with six synchronous JSON types",
+      "exercises": 63,
+      "sampleCases": 126,
+      "status": "PASS",
+      "totalMs": 2
+    },
+    {
+      "name": "node inventory",
+      "status": "PASS",
+      "version": "v24.16.0",
+      "executable": "C:\\Program Files\\nodejs\\node.exe"
+    },
+    {
+      "name": "sdk inventory",
+      "status": "PASS",
+      "version": "8.0.410 [C:\\Program Files\\dotnet\\sdk]\r\n9.0.314 [C:\\Program Files\\dotnet\\sdk]\r\n10.0.112 [C:\\Program Files\\dotnet\\sdk]",
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe"
+    },
+    {
+      "name": "csharp: all 63 actual starters/signatures, 126 sample calls",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 22224,
+          "exitCode": 0,
+          "ms": 406,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 16392,
+          "exitCode": 0,
+          "ms": 5529,
+          "stdoutBytes": 317,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 23812,
+          "exitCode": 0,
+          "ms": 377,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 414,
+      "compileMs": 5529,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        377
+      ],
+      "actualStarterCalls": 126,
+      "status": "PASS",
+      "totalMs": 6348
+    },
+    {
+      "name": "csharp: real Sum, two cases, separate processes",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 20360,
+          "exitCode": 0,
+          "ms": 191,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 14360,
+          "exitCode": 0,
+          "ms": 4459,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 12184,
+          "exitCode": 0,
+          "ms": 132,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 13180,
+          "exitCode": 0,
+          "ms": 130,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 197,
+      "compileMs": 4459,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        132,
+        130
+      ],
+      "status": "PASS",
+      "totalMs": 4936
+    },
+    {
+      "name": "csharp: JSON int32 argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 29492,
+          "exitCode": 0,
+          "ms": 179,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 29280,
+          "exitCode": 0,
+          "ms": 4240,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 24628,
+          "exitCode": 0,
+          "ms": 131,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 3804,
+          "exitCode": 0,
+          "ms": 129,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 185,
+      "compileMs": 4240,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        131,
+        129
+      ],
+      "status": "PASS",
+      "totalMs": 4705
+    },
+    {
+      "name": "csharp: JSON boolean argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 25736,
+          "exitCode": 0,
+          "ms": 168,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 29308,
+          "exitCode": 0,
+          "ms": 4516,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 10812,
+          "exitCode": 0,
+          "ms": 152,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 25524,
+          "exitCode": 0,
+          "ms": 174,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 174,
+      "compileMs": 4516,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        152,
+        174
+      ],
+      "status": "PASS",
+      "totalMs": 5035
+    },
+    {
+      "name": "csharp: JSON string argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 5372,
+          "exitCode": 0,
+          "ms": 183,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 5824,
+          "exitCode": 0,
+          "ms": 4617,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 31056,
+          "exitCode": 0,
+          "ms": 211,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 31480,
+          "exitCode": 0,
+          "ms": 144,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 189,
+      "compileMs": 4617,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        211,
+        144
+      ],
+      "status": "PASS",
+      "totalMs": 5182
+    },
+    {
+      "name": "csharp: JSON int32[] argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 27272,
+          "exitCode": 0,
+          "ms": 191,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 23876,
+          "exitCode": 0,
+          "ms": 4594,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 30508,
+          "exitCode": 0,
+          "ms": 139,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 16912,
+          "exitCode": 0,
+          "ms": 131,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 196,
+      "compileMs": 4594,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        139,
+        131
+      ],
+      "status": "PASS",
+      "totalMs": 5091
+    },
+    {
+      "name": "csharp: JSON string[] argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 30084,
+          "exitCode": 0,
+          "ms": 200,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 2296,
+          "exitCode": 0,
+          "ms": 4491,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 23116,
+          "exitCode": 0,
+          "ms": 142,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 14764,
+          "exitCode": 0,
+          "ms": 127,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 207,
+      "compileMs": 4491,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        142,
+        127
+      ],
+      "status": "PASS",
+      "totalMs": 4984
+    },
+    {
+      "name": "csharp: JSON int32[][] argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 25320,
+          "exitCode": 0,
+          "ms": 167,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 24628,
+          "exitCode": 0,
+          "ms": 4039,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 12128,
+          "exitCode": 0,
+          "ms": 131,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 17460,
+          "exitCode": 0,
+          "ms": 118,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 172,
+      "compileMs": 4039,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        131,
+        118
+      ],
+      "status": "PASS",
+      "totalMs": 4474
+    },
+    {
+      "name": "csharp: compile error",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 12848,
+          "exitCode": 0,
+          "ms": 155,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 26524,
+          "exitCode": 1,
+          "ms": 2287,
+          "stdoutBytes": 957,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 2457
+    },
+    {
+      "name": "csharp: runtime error",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 2492,
+          "exitCode": 0,
+          "ms": 170,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 27792,
+          "exitCode": 0,
+          "ms": 4260,
+          "stdoutBytes": 317,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 4492,
+          "exitCode": 1,
+          "ms": 142,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 26228,
+          "exitCode": 1,
+          "ms": 129,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 178,
+      "compileMs": 4260,
+      "compileCount": 1,
+      "offlineRestore": {
+        "sources": [
+          "C:\\Program Files\\dotnet\\library-packs"
+        ],
+        "libraries": 0
+      },
+      "executeMs": [
+        142,
+        129
+      ],
+      "status": "PASS",
+      "totalMs": 4725
+    },
+    {
+      "name": "csharp: infinite loop times out",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 12616,
+          "exitCode": 0,
+          "ms": 199,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 4228,
+          "exitCode": 0,
+          "ms": 4442,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 6187
+    },
+    {
+      "name": "csharp: compile deadline, no execution after timeout",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 23444,
+          "exitCode": 0,
+          "ms": 178,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 199
+    },
+    {
+      "name": "csharp: aggregate stdout/stderr exceeds 64 KiB",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 14444,
+          "exitCode": 0,
+          "ms": 169,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 31500,
+          "exitCode": 0,
+          "ms": 4497,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 4813
+    },
+    {
+      "name": "csharp: Stop while prepare process owned",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 19
+    },
+    {
+      "name": "csharp: Stop while compile process owned",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 13008,
+          "exitCode": 0,
+          "ms": 190,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 265
+    },
+    {
+      "name": "csharp: Stop while execute process owned",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 6716,
+          "exitCode": 0,
+          "ms": 165,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 21768,
+          "exitCode": 0,
+          "ms": 6067,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 6324
+    },
+    {
+      "name": "csharp: Stop before preparation",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 2
+    },
+    {
+      "name": "csharp: missing runtime",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 3
+    },
+    {
+      "name": "csharp: invalid executable image",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 24
+    },
+    {
+      "name": "csharp: descendant terminated after timeout",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 23980,
+          "exitCode": 0,
+          "ms": 181,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 31380,
+          "exitCode": 0,
+          "ms": 5811,
+          "stdoutBytes": 316,
+          "stderrBytes": 0
+        }
+      ],
+      "descendantPid": 23612,
+      "descendantAbsent": true,
+      "status": "PASS",
+      "totalMs": 7530
+    },
+    {
+      "name": "javascript: all 63 actual starters/signatures, 126 sample calls",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 6308,
+          "exitCode": 0,
+          "ms": 58,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 10868,
+          "exitCode": 0,
+          "ms": 122,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 61,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        122
+      ],
+      "actualStarterCalls": 126,
+      "status": "PASS",
+      "totalMs": 192
+    },
+    {
+      "name": "javascript: real Sum, two cases, separate processes",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 9900,
+          "exitCode": 0,
+          "ms": 58,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 10024,
+          "exitCode": 0,
+          "ms": 117,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 11292,
+          "exitCode": 0,
+          "ms": 100,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 60,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        117,
+        100
+      ],
+      "status": "PASS",
+      "totalMs": 289
+    },
+    {
+      "name": "javascript: JSON int32 argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 15948,
+          "exitCode": 0,
+          "ms": 52,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 21168,
+          "exitCode": 0,
+          "ms": 81,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 21332,
+          "exitCode": 0,
+          "ms": 89,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 54,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        81,
+        89
+      ],
+      "status": "PASS",
+      "totalMs": 235
+    },
+    {
+      "name": "javascript: JSON boolean argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 2104,
+          "exitCode": 0,
+          "ms": 53,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 18280,
+          "exitCode": 0,
+          "ms": 87,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 1140,
+          "exitCode": 0,
+          "ms": 81,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 55,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        87,
+        81
+      ],
+      "status": "PASS",
+      "totalMs": 234
+    },
+    {
+      "name": "javascript: JSON string argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 13560,
+          "exitCode": 0,
+          "ms": 76,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 25456,
+          "exitCode": 0,
+          "ms": 118,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 31388,
+          "exitCode": 0,
+          "ms": 111,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 78,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        118,
+        111
+      ],
+      "status": "PASS",
+      "totalMs": 324
+    },
+    {
+      "name": "javascript: JSON int32[] argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 10680,
+          "exitCode": 0,
+          "ms": 68,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 27924,
+          "exitCode": 0,
+          "ms": 132,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 30620,
+          "exitCode": 0,
+          "ms": 105,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 71,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        132,
+        105
+      ],
+      "status": "PASS",
+      "totalMs": 323
+    },
+    {
+      "name": "javascript: JSON string[] argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 5648,
+          "exitCode": 0,
+          "ms": 65,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 4584,
+          "exitCode": 0,
+          "ms": 85,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 6080,
+          "exitCode": 0,
+          "ms": 88,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 67,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        85,
+        88
+      ],
+      "status": "PASS",
+      "totalMs": 254
+    },
+    {
+      "name": "javascript: JSON int32[][] argument and return",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 14116,
+          "exitCode": 0,
+          "ms": 103,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 21616,
+          "exitCode": 0,
+          "ms": 89,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 7296,
+          "exitCode": 0,
+          "ms": 85,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 108,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        89,
+        85
+      ],
+      "status": "PASS",
+      "totalMs": 296
+    },
+    {
+      "name": "javascript: syntax error",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 30864,
+          "exitCode": 0,
+          "ms": 60,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 17644,
+          "exitCode": 1,
+          "ms": 103,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 14236,
+          "exitCode": 1,
+          "ms": 101,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 62,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        103,
+        101
+      ],
+      "status": "PASS",
+      "totalMs": 280
+    },
+    {
+      "name": "javascript: runtime error",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 28488,
+          "exitCode": 0,
+          "ms": 78,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 8640,
+          "exitCode": 1,
+          "ms": 125,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 24956,
+          "exitCode": 1,
+          "ms": 192,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 80,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        125,
+        192
+      ],
+      "status": "PASS",
+      "totalMs": 413
+    },
+    {
+      "name": "javascript: infinite loop times out",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 5720,
+          "exitCode": 0,
+          "ms": 93,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 1610
+    },
+    {
+      "name": "javascript: aggregate stdout/stderr exceeds 64 KiB",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 27836,
+          "exitCode": 0,
+          "ms": 53,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 147
+    },
+    {
+      "name": "javascript: Stop while prepare process owned",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 20
+    },
+    {
+      "name": "javascript: Stop while execute process owned",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 13908,
+          "exitCode": 0,
+          "ms": 67,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 156
+    },
+    {
+      "name": "javascript: Stop before preparation",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 1
+    },
+    {
+      "name": "javascript: missing runtime",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 4
+    },
+    {
+      "name": "javascript: invalid executable image",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 25
+    },
+    {
+      "name": "javascript: descendant terminated after timeout",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 19220,
+          "exitCode": 0,
+          "ms": 67,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        }
+      ],
+      "descendantPid": 26320,
+      "descendantAbsent": true,
+      "status": "PASS",
+      "totalMs": 1598
+    },
+    {
+      "name": "owner isolation: exercise Stop preserves another owned process/resource",
+      "foreignPid": 21476,
+      "survivedExerciseStop": true,
+      "status": "PASS",
+      "totalMs": 94
+    },
+    {
+      "name": "JavaScript: invalid return type rejected",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 24564,
+          "exitCode": 0,
+          "ms": 52,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 30184,
+          "exitCode": 0,
+          "ms": 80,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 142
+    },
+    {
+      "name": "JavaScript: async function rejected",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 24944,
+          "exitCode": 0,
+          "ms": 53,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 27896,
+          "exitCode": 1,
+          "ms": 90,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 19996,
+          "exitCode": 1,
+          "ms": 104,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "prepareMs": 55,
+      "compileMs": 0,
+      "compileCount": 0,
+      "executeMs": [
+        90,
+        104
+      ],
+      "status": "PASS",
+      "totalMs": 264
+    },
+    {
+      "name": "JavaScript: bounded result file",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [
+        {
+          "pid": 24724,
+          "exitCode": 0,
+          "ms": 73,
+          "stdoutBytes": 10,
+          "stderrBytes": 0
+        },
+        {
+          "pid": 31656,
+          "exitCode": 0,
+          "ms": 115,
+          "stdoutBytes": 0,
+          "stderrBytes": 0
+        }
+      ],
+      "status": "PASS",
+      "totalMs": 202
+    },
+    {
+      "name": "input contract: overflow and wrong argument type rejected before spawn",
+      "cleanup": "process ownership released; temporary workspace absent",
+      "commands": [],
+      "status": "PASS",
+      "totalMs": 3
+    }
+  ],
+  "failures": []
+}

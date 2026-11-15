@@ -1,0 +1,94 @@
+{
+  "hostPid": 16556,
+  "id": "C04",
+  "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning",
+  "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\sessions\\session-178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+  "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\dispositions\\178f89a8-63c4-4232-bc8c-33cb2e0d06a1.json",
+  "session": {
+    "owner": "exercise:178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+    "sessionId": "178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+    "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\sessions\\session-178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+    "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\dispositions\\178f89a8-63c4-4232-bc8c-33cb2e0d06a1.json",
+    "disposition": null,
+    "proof": null,
+    "nativeStage": "OWNED",
+    "persistenceStage": "ACKNOWLEDGED",
+    "workspaceState": "RETAINED",
+    "checkpoint": "OWNED",
+    "lastError": null,
+    "processClean": false,
+    "cleanupComplete": false,
+    "finalized": false,
+    "released": false,
+    "managerResources": 1,
+    "counters": {
+      "spawn": 1,
+      "query": 9,
+      "terminate": 0,
+      "release": 0,
+      "handlesClosed": 0,
+      "delete": 0
+    },
+    "phase": "execute",
+    "rootPid": 21608,
+    "retained": [
+      {
+        "pid": 21608,
+        "member": true,
+        "created": "31285301:381697664",
+        "root": true,
+        "image": "C:\\Program Files\\nodejs\\node.exe",
+        "signaled": false,
+        "closed": false
+      },
+      {
+        "pid": 4988,
+        "member": true,
+        "created": "31285301:381846987",
+        "root": false,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "signaled": false,
+        "closed": false
+      },
+      {
+        "pid": 30912,
+        "member": true,
+        "created": "31285301:382531937",
+        "root": false,
+        "image": "C:\\Program Files\\nodejs\\node.exe",
+        "signaled": false,
+        "closed": false
+      }
+    ],
+    "coverageGaps": [],
+    "output": "READY\n",
+    "exitCode": null
+  },
+  "members": [
+    21608,
+    4988,
+    30912
+  ],
+  "identities": [
+    {
+      "pid": 21608,
+      "member": true,
+      "created": "31285301:381697664",
+      "image": "C:\\Program Files\\nodejs\\node.exe"
+    },
+    {
+      "pid": 4988,
+      "member": true,
+      "created": "31285301:381846987",
+      "image": "C:\\Windows\\System32\\conhost.exe"
+    },
+    {
+      "pid": 30912,
+      "member": true,
+      "created": "31285301:382531937",
+      "image": "C:\\Program Files\\nodejs\\node.exe"
+    }
+  ],
+  "sequence": 1,
+  "monotonicMs": 279.3434
+}

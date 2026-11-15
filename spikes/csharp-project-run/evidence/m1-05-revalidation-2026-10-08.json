@@ -1,0 +1,980 @@
+{
+  "runId": "2026-10-08T00-42-22.219Z",
+  "platform": "win32",
+  "arch": "x64",
+  "cases": [
+    {
+      "name": "no global.json / real default selection",
+      "result": "PASS",
+      "effectiveSdk": "10.0.112"
+    },
+    {
+      "name": "SDK 8: ancestor global.json, spaces/Unicode, Console and reference facts",
+      "result": "PASS",
+      "effectiveSdk": "8.0.410",
+      "properties": {
+        "OutputType": "Exe",
+        "TargetFramework": "net8.0",
+        "TargetFrameworks": "",
+        "TargetFrameworkIdentifier": ".NETCoreApp",
+        "TargetFrameworkVersion": "v8.0",
+        "UsingMicrosoftNETSdk": "true",
+        "UsingMicrosoftNETSdkWeb": "",
+        "UseWPF": "",
+        "UseWindowsForms": "",
+        "IsTestProject": ""
+      }
+    },
+    {
+      "name": "SDK 8: Library and multi-target facts without runnable classification",
+      "result": "PASS"
+    },
+    {
+      "name": "SDK 8: evaluation never builds/restores or modifies fixtures",
+      "result": "PASS"
+    },
+    {
+      "name": "SDK 10: ancestor global.json, spaces/Unicode, Console and reference facts",
+      "result": "PASS",
+      "effectiveSdk": "10.0.112",
+      "properties": {
+        "OutputType": "Exe",
+        "TargetFramework": "net10.0",
+        "TargetFrameworks": "",
+        "TargetFrameworkIdentifier": ".NETCoreApp",
+        "TargetFrameworkVersion": "v10.0",
+        "UsingMicrosoftNETSdk": "true",
+        "UsingMicrosoftNETSdkWeb": "",
+        "UseWPF": "",
+        "UseWindowsForms": "",
+        "IsTestProject": ""
+      }
+    },
+    {
+      "name": "SDK 10: Library and multi-target facts without runnable classification",
+      "result": "PASS"
+    },
+    {
+      "name": "SDK 10: evaluation never builds/restores or modifies fixtures",
+      "result": "PASS"
+    },
+    {
+      "name": "nearest global.json overrides ancestor / same candidate re-resolves SDK",
+      "result": "PASS"
+    },
+    {
+      "name": "real CLI roll-forward to installed SDK 8 feature band",
+      "result": "PASS"
+    },
+    {
+      "name": "Directory.Build.props, Debug condition and explicit import are evaluated",
+      "result": "PASS"
+    },
+    {
+      "name": "global.json comments follow real CLI behavior",
+      "result": "PASS"
+    },
+    {
+      "name": "future TFM remains an evaluated fact; no M1-06 classification or targeting-pack claim",
+      "result": "PASS"
+    },
+    {
+      "name": "missing-sdk",
+      "result": "PASS"
+    },
+    {
+      "name": "malformed-global",
+      "result": "PASS"
+    },
+    {
+      "name": "trailing-comma-global",
+      "result": "PASS"
+    },
+    {
+      "name": "invalid-global",
+      "result": "PASS"
+    },
+    {
+      "name": "malformed project returns evaluation failure and releases native Job",
+      "result": "PASS"
+    },
+    {
+      "name": "missing project and traversal rejected without process launch",
+      "result": "PASS"
+    },
+    {
+      "name": "real evaluation cancellation after native process creation",
+      "result": "PASS"
+    },
+    {
+      "name": "eight repeated production evaluations release every Job/resource",
+      "result": "PASS",
+      "handleCounts": [
+        677,
+        677,
+        677,
+        677,
+        677,
+        677,
+        677,
+        677
+      ],
+      "sessions": 77,
+      "allReleased": true
+    }
+  ],
+  "commands": [
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\unPinned",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\unPinned",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\unPinned\\App.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\unPinned",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\nested\\Console App.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Multi.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\nested\\Console App.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10\\Multi.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk10",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\nested\\Console App.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\roll",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\roll",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\roll\\App.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\roll",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\props\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\props\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\props\\nested\\App.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\props\\nested",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\comments",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\comments",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\comments\\App.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\comments",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Future.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\missing-sdk",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\missing-sdk",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\malformed-global",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\malformed-global",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\trailing-comma-global",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\trailing-comma-global",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\invalid-global",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\invalid-global",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Broken.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--list-sdks"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    },
+    {
+      "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "msbuild",
+        "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library\\Library.csproj",
+        "-nologo",
+        "-verbosity:quiet",
+        "-interactive:false",
+        "-nodeReuse:false",
+        "-noAutoResponse",
+        "-property:Configuration=Debug",
+        "-getProperty:OutputType,TargetFramework,TargetFrameworks,TargetFrameworkIdentifier,TargetFrameworkVersion,UsingMicrosoftNETSdk,UsingMicrosoftNETSdkWeb,UseWPF,UseWindowsForms,IsTestProject",
+        "-getItem:ProjectReference"
+      ],
+      "cwd": "C:\\Windows\\Temp\\coding-ide-m1-05-2026-10-08T00-42-22.219Z\\Workspace Việt # 😀\\sdk8\\Library",
+      "shell": false
+    }
+  ],
+  "initialProcesses": [],
+  "sourceHashes": {
+    "src/main/services/dependencies/dotnet-run-runtime.ts": "86cf00db984e4e112dd5209dd04c6de1b848ca4857f4ae211451cd4e6498980f",
+    "src/main/services/run/csharp-run-preflight.ts": "6a094227cb20922ce1ab3aaf86e90e749d096f11a99ce7f567db9bd4eabfcb57",
+    "src/main/services/run/csharp-run-probe.ts": "28c9203854448498160e6a2ba4840ebaac913ca08d2b5471d1e8d0150efcddab",
+    "src/main/services/run/windows-piped-process-adapter.ts": "a168356989cc6023792305969028a3699c8b2faa0180cb15e45ecf3b93f850f7",
+    "src/main/services/run/native/run-process.cpp": "f03c4a6b080e87e3d5a0c19523805ff74e31d3172eba0ef56147df38fe223b6b"
+  },
+  "inventory": [
+    {
+      "version": "8.0.410",
+      "major": 8,
+      "prerelease": false
+    },
+    {
+      "version": "9.0.314",
+      "major": 9,
+      "prerelease": false
+    },
+    {
+      "version": "10.0.112",
+      "major": 10,
+      "prerelease": false
+    }
+  ],
+  "executable": "C:\\Program Files\\dotnet\\dotnet.exe",
+  "newSurvivingProcesses": [],
+  "result": "PASS",
+  "resources": 0
+}

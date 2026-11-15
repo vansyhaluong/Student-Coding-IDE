@@ -1,0 +1,65 @@
+{
+  "runId": "2026-10-19T16-21-02-885Z-R5-policy-b",
+  "plan": {
+    "name": "R5 installed-runtime policy-B feasibility",
+    "productionPolicyApproved": false,
+    "functionalSlots": 21,
+    "runsPerSlot": 1,
+    "cleanupDeadlineMs": 12000,
+    "pollMs": 15,
+    "negativeUnresolvedDeadlineMs": 150,
+    "compileDeadlineMs": 30000,
+    "stopOnUnexpectedFailure": true,
+    "slots": [
+      "node-cold",
+      "node-warm",
+      "csharp-cold",
+      "csharp-warm",
+      "root-first",
+      "short-natural-1",
+      "short-natural-2",
+      "short-held-1",
+      "short-held-2",
+      "race-0",
+      "race-15",
+      "race-30",
+      "race-60",
+      "failed-association",
+      "history-restart",
+      "deny-unsignaled",
+      "deny-member",
+      "deny-query",
+      "deny-ownership",
+      "deny-native",
+      "deny-record"
+    ],
+    "notes": [
+      "No repetition until PASS. A missing natural timing phenomenon is NOT_OBSERVED.",
+      "Held-tree fixtures deliberately isolate tracker historical gaps; external observer handles establish actual termination separately.",
+      "Restart requires a new Electron Main PID, not a new function in the same host.",
+      "Old 16 blocked scenarios, hard-crash suite and live Project UI regression are not executed.",
+      "Fault-seam negatives distinguish expected policy rejection from unexpected test FAIL.",
+      "Accounting mismatch is diagnostic only; HISTORY_UNVERIFIED never receives PROCESS_CLEAN or CLEANUP_COMPLETE."
+    ]
+  },
+  "records": [],
+  "builds": [],
+  "integrity": {
+    "status": "PASS",
+    "changed": [],
+    "checkedFiles": 507,
+    "scope": "Before isolated build through end of run; includes original R1/R2/R3/R4 evidence"
+  },
+  "environment": {
+    "branch": "feature/phase-9a-learning-mode",
+    "node": "v24.16.0",
+    "sdk": "10.0.112",
+    "inventory": "8.0.410 [C:\\Program Files\\dotnet\\sdk]\r\n9.0.314 [C:\\Program Files\\dotnet\\sdk]\r\n10.0.112 [C:\\Program Files\\dotnet\\sdk]\r\n",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "stopped": {
+    "status": "FAIL",
+    "message": "Command failed: C:\\Program Files\\nodejs\\node.exe D:\\coding-ide\\spikes\\exercise-shutdown-9d-common\\build.mjs --policy-b\nfile:///D:/coding-ide/spikes/exercise-shutdown-9d-common/build.mjs:51\r\n  if (result.error || result.status !== 0) throw result.error ?? Error('Spike native build failed; stop for review')\r\n                                                                 ^\r\n\r\nError: Spike native build failed; stop for review\r\n    at file:///D:/coding-ide/spikes/exercise-shutdown-9d-common/build.mjs:51:66\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\r\n    at async node:internal/modules/esm/loader:633:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v24.16.0\r\n"
+  }
+}
