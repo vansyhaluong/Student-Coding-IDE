@@ -26,11 +26,8 @@ export * from './search'
 export * from './student-ide'
 export * from './terminal'
 export * from './validation'
-<<<<<<< HEAD
 export * from './smart-hints'
 export * from './learning-chat'
 export * from './project-agent'
 export * from './project-agent-validation'
-=======
 export * from './run-project'
->>>>>>> origin/develop

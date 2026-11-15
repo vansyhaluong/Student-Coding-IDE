@@ -22,6 +22,7 @@ import { WindowsProcessTreeTerminator } from '../../../src/main/services/process
 import { ProjectService } from '../../../src/main/services/project/project-service'
 import { FileSystemService } from '../../../src/main/services/filesystem/filesystem-service'
 import { RunService } from '../../../src/main/services/run/run-service'
+import { JavaScriptRunStrategy } from '../../../src/main/services/run/javascript-run-strategy'
 import { WindowsPipedProcessAdapter } from '../../../src/main/services/run/windows-piped-process-adapter'
 import { NodeRuntimeDetector } from '../../../src/main/services/dependencies/node-runtime'
 import { TerminalService } from '../../../src/main/services/terminal/terminal-service'
@@ -158,6 +159,7 @@ async function main() {
   files = new FileSystemService(projects, { trashItem: async () => { throw Error('unused') } }); await files.start()
   run = new RunService({ authorize: async target => ({ projectId: target.projectId, relativePath: target.relativePath,
     ...await files.authorizeRunFile(target.projectId, target.relativePath) }), resolveRuntime: () => new NodeRuntimeDetector().resolve() },
+  [new JavaScriptRunStrategy()],
   { adapter: new WindowsPipedProcessAdapter(resolve('out/main/native/run-process.node')), manager,
     onEvent: (_owner, event) => { if (event.type === 'stdout') projectText += event.data } })
   projectSession = await run.startRun({ projectId, relativePath: 'heartbeat.js', dirty: false }, window.webContents.id)
