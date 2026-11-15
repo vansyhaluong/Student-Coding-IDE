@@ -1,13 +1,18 @@
 import { randomUUID } from 'node:crypto'
-import { validateStartRunRequest, validateStopRunRequest, validateSemanticStartRunRequest,
+import { isRunSessionId, runInputCapability, validateCloseRunInputRequest,
+  validateSendRunInputRequest, validateStartRunRequest, validateStopRunRequest, validateSemanticStartRunRequest,
+  type RunInputAcknowledgement, type RunInputGateReason, type RunInputStatus,
   type SemanticStartRunRequest, type RunExecutionPhase, type RunEvent, type RunState,
-  type RunSession, type RunSessionId, type StartRunRequest } from '../../../shared/contracts/run'
+  type RunSession, type RunSessionId, type RunTargetKind, type StartRunRequest,
+} from '../../../shared/contracts/run'
+import type { ProjectId } from '../../../shared/contracts/project'
 import { DomainError, invalidInputError, serializeAppError } from '../../errors/app-error'
 import { runTargetIdentity, runExecutionFingerprint, snapshotExecution, snapshotPlan, runPlanFingerprint,
   type RunPreparationContext,
   type AuthorizedRunTarget, type PreparedRun, type RunRuntime, type RunStrategy,
   type RunRuntimeContext } from './run-strategy'
 import type { PipedProcessAdapter, PipedProcessEvent, PipedRunProcess } from './piped-process-adapter'
+import { RunInputQueue, runInputRejection } from './run-input-queue'
 import type { ProcessManager } from '../process/process-manager'
 import { sourceGuardError, type RunSourceGuardPort, type RunSourceLease } from './run-source-guard'
 
@@ -28,8 +33,14 @@ interface LifecycleSession {
   session: RunSession
   readonly ownerId: number
   readonly identity: string
+  readonly kind: RunTargetKind
+  readonly projectGeneration: number
+  readonly ownerGeneration: number
   readonly ready: Promise<void>
   process?: PipedRunProcess
+  input?: RunInputQueue
+  /** Set when input must stay shut even if the execute step is created later. */
+  inputBlock?: RunInputGateReason
   cleanup?: Promise<void>
   exitCode: number | null
   stdoutEof: boolean
@@ -71,6 +82,7 @@ export class RunService {
   private readonly processes = new Map<RunSessionId, PipedRunProcess>()
   private readonly strategies: readonly RunStrategy[]
   private readonly sessions = new Map<RunSessionId, LifecycleSession>()
+  private readonly inputs = new Map<RunSessionId, { ownerId: number; projectId: ProjectId; queue: RunInputQueue }>()
   private readonly targets = new Map<string, LifecycleSession>()
   private readonly starts = new Map<string, Promise<unknown>>()
   private readonly pendingStarts = new Map<Promise<RunSession>, string>()
@@ -218,8 +230,10 @@ export class RunService {
       const entry: LifecycleSession = {
         session: Object.freeze({ projectId: target.projectId, relativePath: target.relativePath,
           sessionId: `run_${randomUUID()}` as RunSessionId, state: 'STARTING' }),
-        ownerId, identity, ready: Promise.resolve(), exitCode: null, stdoutEof: false,
+        ownerId, identity, kind: strategy.kind, ready: Promise.resolve(), exitCode: null, stdoutEof: false,
         stderrEof: false, cancelled: false, observationFailed: false, finalized: false,
+        projectGeneration: this.projectGenerations.get(target.projectId) ?? 0,
+        ownerGeneration: this.ownerGenerations.get(ownerId) ?? 0,
         plan: { controller: new AbortController(), phase: 'PREPARING', generation: 0, cleanupFailed: false },
       }
       this.sessions.set(entry.session.sessionId, entry)
@@ -320,12 +334,16 @@ export class RunService {
         check() // A synchronous phase observer may have requested Stop.
         control.sourceLease?.assertValid()
         let child: PipedRunProcess | undefined
+        const lineInput = strategy.kind === 'csharp-project' && step.phase === 'EXECUTING'
         const unregister = this.execution!.manager.register({ id: `run-step:${entry.session.sessionId}:${generation}`,
           ownerId: context.resourceOwnerId, close: () => this.cleanup(entry) })
+        const observeStep = (event: PipedProcessEvent) => {
+          if (control.generation === generation) this.observe(entry, event)
+        }
         try {
-          child = this.execution!.adapter.create(step.execution, event => {
-            if (control.generation === generation) this.observe(entry, event)
-          })
+          child = lineInput
+            ? this.execution!.adapter.create(step.execution, observeStep, 'line-input')
+            : this.execution!.adapter.create(step.execution, observeStep)
         } catch (error) {
           unregister()
           if (strategy.kind === 'csharp-project') throw new DomainError({ code: 'PROCESS_FAILED',
@@ -334,15 +352,13 @@ export class RunService {
           throw error
         }
         const created = child
-        entry.process = {
-          ownership: created.ownership, settled: created.settled, isReleased: () => created.isReleased(),
-          close: async () => {
-            await created.close()
-            if (!created.isReleased() || entry.exitCode === null || !entry.stdoutEof || !entry.stderrEof) {
-              throw runFailure('run:cleanup', 'Run process observers have not completed.')
-            }
-          },
-        }
+        entry.process = forwardRunProcess(created, async () => {
+          await created.close()
+          if (!created.isReleased() || entry.exitCode === null || !entry.stdoutEof || !entry.stderrEof) {
+            throw runFailure('run:cleanup', 'Run process observers have not completed.')
+          }
+        })
+        if (lineInput) this.attachInput(entry, created)
         // Subsequent edits never restart or cancel an already-executing program.
         if (step.phase === 'EXECUTING') { control.sourceLease?.release(); control.sourceLease = undefined }
         if (entry.session.state === 'STARTING') this.transition(entry, 'RUNNING')
@@ -380,6 +396,9 @@ export class RunService {
   suspendProject(projectId: string): () => void {
     this.projectGenerations.set(projectId, (this.projectGenerations.get(projectId) ?? 0) + 1)
     this.projectBlocks.set(projectId, (this.projectBlocks.get(projectId) ?? 0) + 1)
+    for (const entry of this.sessions.values()) {
+      if (entry.session.projectId === projectId) this.closeLiveInput(entry, 'PROJECT_CHANGED')
+    }
     let released = false
     return () => {
       if (released) return
@@ -399,7 +418,9 @@ export class RunService {
   async stopProject(projectId: string): Promise<void> {
     this.projectGenerations.set(projectId, (this.projectGenerations.get(projectId) ?? 0) + 1)
     for (const entry of this.sessions.values()) {
-      if (entry.session.projectId === projectId && entry.plan) this.cancelPlan(entry)
+      if (entry.session.projectId !== projectId) continue
+      this.closeLiveInput(entry, 'PROJECT_CHANGED')
+      if (entry.plan) this.cancelPlan(entry)
     }
     await Promise.allSettled([...this.pendingStarts].filter(([, id]) => id === projectId).map(([task]) => task))
     const results = await Promise.allSettled([...this.sessions.values()]
@@ -418,7 +439,11 @@ export class RunService {
   async stopOwner(ownerId: number): Promise<void> {
     this.ownerGenerations.set(ownerId, (this.ownerGenerations.get(ownerId) ?? 0) + 1)
     for (const entry of this.sessions.values()) {
-      if (entry.ownerId === ownerId) { entry.muted = true; if (entry.plan) this.cancelPlan(entry) }
+      if (entry.ownerId === ownerId) {
+        entry.muted = true
+        this.closeLiveInput(entry, 'OWNER_LOST')
+        if (entry.plan) this.cancelPlan(entry)
+      }
     }
     await Promise.allSettled([...this.pendingOwners].filter(([, id]) => id === ownerId).map(([task]) => task))
     const results = await Promise.allSettled([...this.sessions.values()]
@@ -435,6 +460,7 @@ export class RunService {
     this.stopping = true
     for (const entry of this.sessions.values()) {
       entry.muted = true
+      this.closeLiveInput(entry, 'SHUTDOWN')
       if (entry.plan) this.cancelPlan(entry)
     }
   }
@@ -476,8 +502,10 @@ export class RunService {
         throw invalidInputError('run:start', ['target'])
       }
       let ready!: () => void
-      const entry: LifecycleSession = { session: preparation.session, ownerId, identity,
+      const entry: LifecycleSession = { session: preparation.session, ownerId, identity, kind: 'javascript-file',
         ready: new Promise<void>((resolve) => { ready = resolve }), exitCode: null,
+        projectGeneration: this.projectGenerations.get(preparation.session.projectId) ?? 0,
+        ownerGeneration: this.ownerGenerations.get(ownerId) ?? 0,
         stdoutEof: false, stderrEof: false, cancelled: false, observationFailed: false, finalized: false }
       this.sessions.set(entry.session.sessionId, entry)
       this.targets.set(identity, entry)
@@ -522,6 +550,7 @@ export class RunService {
     this.getSession(sessionId, ownerId)
     const entry = this.sessions.get(sessionId)
     if (!entry) return
+    this.closeLiveInput(entry, 'STOPPED')
     if (entry.plan) this.cancelPlan(entry)
     else if (entry.exitCode === null) entry.cancelled = true
     this.transition(entry, 'STOPPING')
@@ -558,6 +587,7 @@ export class RunService {
   }
 
   private cleanup(entry: LifecycleSession): Promise<void> {
+    this.sealInput(entry)
     if (entry.finalized) return Promise.resolve()
     if (entry.cleanup) return entry.cleanup
     if (!entry.plan || entry.cancelled) this.transition(entry, 'STOPPING')
@@ -587,11 +617,13 @@ export class RunService {
     else if (event.type === 'exit') {
       if (entry.exitCode !== null) return
       entry.exitCode = event.exitCode
+      if (entry.plan?.phase === 'EXECUTING') this.closeLiveInput(entry, entry.cancelled ? 'STOPPED' : 'EXITED')
       if (entry.plan) { entry.plan.finished?.(); return }
       // Root exit initiates owned descendant cleanup even if a child holds a pipe.
       void this.requestCleanup(entry).catch(() => undefined) // cleanup emits its safe failure
     } else if (!entry.observationFailed) {
       entry.observationFailed = true
+      if (entry.plan?.phase === 'EXECUTING') this.closeLiveInput(entry, entry.cancelled ? 'STOPPED' : 'EXITED')
       this.emitError(entry, runFailure('run:output', 'Run output could not be fully observed.',
         entry.plan && /\.csproj$/i.test(entry.session.relativePath) ? 'OBSERVATION_FAILED' : undefined))
       if (entry.plan) { entry.plan.finished?.(); return }
@@ -607,13 +639,18 @@ export class RunService {
 
   private finalize(entry: LifecycleSession, state: 'EXITED' | 'FAILED' | 'CANCELLED'): void {
     if (entry.finalized) return
+    this.sealInput(entry)
     entry.plan?.sourceLease?.release()
     entry.session = Object.freeze({ ...entry.session, state })
     entry.finalized = true
     this.sessions.delete(entry.session.sessionId)
     if (this.targets.get(entry.identity) === entry) this.targets.delete(entry.identity)
     this.completed.set(entry.session.sessionId, { session: entry.session, ownerId: entry.ownerId })
-    if (this.completed.size > 128) this.completed.delete(this.completed.keys().next().value!)
+    if (this.completed.size > 128) {
+      const oldest = this.completed.keys().next().value!
+      this.completed.delete(oldest)
+      this.inputs.delete(oldest)
+    }
     this.emit(entry, { type: 'state', session: entry.session })
     this.emit(entry, { type: 'exit', session: entry.session, exitCode: entry.exitCode })
     try { this.execution?.onFinalized?.(entry.ownerId, entry.session) }
@@ -674,22 +711,170 @@ export class RunService {
     try { native = adapter.create(execution, observe) }
     catch (error) { unregister(); throw error }
     const created = native
-    const process: PipedRunProcess = {
-      ownership: created.ownership, settled: created.settled, isReleased: () => created.isReleased(),
-      close: async () => {
-        await created.close()
-        if (!created.isReleased()) throw new Error('Native Run resource was not released.')
-        lifecycle?.released()
-        this.processes.delete(sessionId)
-        this.preparations.delete(sessionId)
-        unregister()
-      },
-    }
+    const process = forwardRunProcess(created, async () => {
+      await created.close()
+      if (!created.isReleased()) throw new Error('Native Run resource was not released.')
+      lifecycle?.released()
+      this.processes.delete(sessionId)
+      this.preparations.delete(sessionId)
+      unregister()
+    })
     this.processes.set(sessionId, process)
     return process
   }
+
+  sendInput(value: unknown, ownerId: number): Promise<RunInputAcknowledgement> {
+    if (!Number.isSafeInteger(ownerId) || ownerId <= 0) return Promise.reject(invalidInputError('run:input', ['owner']))
+    const identity = inputIdentity(value)
+    if (!identity) return Promise.reject(invalidInputError('run:input', ['request']))
+    const validated = validateSendRunInputRequest(value)
+    const denial = this.denyInput(identity, ownerId)
+    if (denial) return Promise.resolve(denial)
+    if (!validated.ok) {
+      const text = value && typeof value === 'object' ? (value as { text?: unknown }).text : undefined
+      const exact = !!value && typeof value === 'object'
+        && Object.keys(value).length === 4
+        && ['projectId', 'sessionId', 'sequence', 'text'].every(key => Object.prototype.hasOwnProperty.call(value, key))
+      if (!exact || typeof text !== 'string') {
+        return Promise.resolve(runInputRejection(identity.projectId, identity.sessionId, identity.sequence, 'INVALID_INPUT'))
+      }
+      return this.queueFor(identity.sessionId).submit({ ...identity, text })
+    }
+    return this.queueFor(validated.value.sessionId).submit(validated.value)
+  }
+
+  closeInput(value: unknown, ownerId: number): Promise<RunInputAcknowledgement> {
+    if (!Number.isSafeInteger(ownerId) || ownerId <= 0) return Promise.reject(invalidInputError('run:input', ['owner']))
+    const identity = inputIdentity(value)
+    if (!identity) return Promise.reject(invalidInputError('run:input', ['request']))
+    const validated = validateCloseRunInputRequest(value)
+    const denial = this.denyInput(identity, ownerId)
+    if (denial) return Promise.resolve(denial)
+    if (!validated.ok) return Promise.resolve(runInputRejection(identity.projectId, identity.sessionId, identity.sequence, 'INVALID_INPUT'))
+    return this.queueFor(validated.value.sessionId).close(validated.value)
+  }
+
+  getInputStatus(sessionId: RunSessionId, ownerId: number): RunInputStatus {
+    if (!isRunSessionId(sessionId) || !Number.isSafeInteger(ownerId) || ownerId <= 0) {
+      throw invalidInputError('run:input', ['sessionId'])
+    }
+    const entry = this.sessions.get(sessionId)
+    const retained = this.inputs.get(sessionId)
+    const owner = entry?.ownerId ?? retained?.ownerId
+    if (owner === undefined || owner !== ownerId) throw inputDenied()
+    if (entry?.input) return entry.input.status()
+    if (!entry && retained) return retained.queue.status()
+    return this.inactiveStatus(entry!)
+  }
+
+  /** Owner, project, step, and lifecycle denials. Undefined means the live queue may accept the request. */
+  private denyInput(request: { projectId: ProjectId; sessionId: RunSessionId; sequence: number },
+    ownerId: number): RunInputAcknowledgement | undefined {
+    const entry = this.sessions.get(request.sessionId)
+    const retained = this.inputs.get(request.sessionId)
+    const owner = entry?.ownerId ?? retained?.ownerId
+    const projectId = entry?.session.projectId ?? retained?.projectId
+    if (owner === undefined || owner !== ownerId || projectId !== request.projectId) {
+      return runInputRejection(request.projectId, request.sessionId, request.sequence, 'SESSION_UNAVAILABLE')
+    }
+    if (entry) {
+      const blocked = this.inputGuard(entry)
+      if (blocked) {
+        this.closeLiveInput(entry, blocked)
+        return runInputRejection(request.projectId, request.sessionId, request.sequence, 'INPUT_CLOSED')
+      }
+    }
+    if (!(entry?.input ?? retained?.queue)) {
+      return runInputRejection(request.projectId, request.sessionId, request.sequence, 'CAPABILITY_DENIED')
+    }
+    return undefined
+  }
+
+  private queueFor(sessionId: RunSessionId): RunInputQueue {
+    const queue = this.sessions.get(sessionId)?.input ?? this.inputs.get(sessionId)?.queue
+    if (!queue) throw inputDenied()
+    return queue
+  }
+
+  private inputGuard(entry: LifecycleSession): RunInputGateReason | undefined {
+    if (this.stopping) return 'SHUTDOWN'
+    if ((this.ownerGenerations.get(entry.ownerId) ?? 0) !== entry.ownerGeneration) return 'OWNER_LOST'
+    if (this.projectBlocks.has(entry.session.projectId)
+      || (this.projectGenerations.get(entry.session.projectId) ?? 0) !== entry.projectGeneration) {
+      return 'PROJECT_CHANGED'
+    }
+    return undefined
+  }
+
+  private inactiveStatus(entry: LifecycleSession): RunInputStatus {
+    const phase = entry.plan?.phase ?? 'EXECUTING'
+    return {
+      projectId: entry.session.projectId,
+      sessionId: entry.session.sessionId,
+      capability: runInputCapability(entry.kind, phase),
+      nextSequence: 1,
+      queuedSubmissions: 0,
+      queuedUtf8Bytes: 0,
+      gate: 'CLOSED',
+      // Closed capability is the authority. EOF here means this step has no writer.
+      reason: entry.inputBlock ?? (this.stopping ? 'SHUTDOWN' : 'EOF'),
+    }
+  }
+
+  private attachInput(entry: LifecycleSession, process: PipedRunProcess): void {
+    if (process.stdin !== 'line-input' || !process.writeInput || !process.closeInput) return
+    const writeInput = process.writeInput
+    const closeInput = process.closeInput
+    const queue = new RunInputQueue(entry.session.projectId, entry.session.sessionId, {
+      writeInput: bytes => writeInput.call(process, bytes),
+      closeInput: () => closeInput.call(process),
+    }, () => {
+      if (!entry.finalized) void this.stopRun(entry.session.sessionId, entry.ownerId).catch(() => undefined)
+    })
+    entry.input = queue
+    this.inputs.set(entry.session.sessionId, {
+      ownerId: entry.ownerId, projectId: entry.session.projectId, queue,
+    })
+    if (entry.inputBlock) queue.closeGate(entry.inputBlock)
+    else if (this.stopping) queue.closeGate('SHUTDOWN')
+    else if (entry.cancelled) queue.closeGate('STOPPED')
+  }
+
+  /** First explicit lifecycle reason wins over EOF. Later reasons do not replace it. */
+  private closeLiveInput(entry: LifecycleSession, reason: RunInputGateReason): void {
+    if (entry.inputBlock === undefined || entry.inputBlock === 'EOF') entry.inputBlock = reason
+    entry.input?.closeGate(reason)
+  }
+
+  private sealInput(entry: LifecycleSession): void {
+    if (!entry.input || entry.input.status().gate === 'CLOSED') return
+    this.closeLiveInput(entry, this.stopping ? 'SHUTDOWN' : entry.cancelled ? 'STOPPED' : 'EXITED')
+  }
 }
 
+function forwardRunProcess(created: PipedRunProcess, close: () => Promise<void>): PipedRunProcess {
+  return {
+    ownership: created.ownership,
+    settled: created.settled,
+    isReleased: () => created.isReleased(),
+    ...(created.stdin === undefined ? {} : { stdin: created.stdin }),
+    ...(created.writeInput ? { writeInput: (bytes: Uint8Array) => created.writeInput!(bytes) } : {}),
+    ...(created.closeInput ? { closeInput: () => created.closeInput!() } : {}),
+    close,
+  }
+}
+function inputDenied(): DomainError {
+  return new DomainError({ code: 'PERMISSION_DENIED', operation: 'run:input', retryable: false,
+    message: 'Run session is not owned by this window.' })
+}
+function inputIdentity(value: unknown): { projectId: ProjectId; sessionId: RunSessionId; sequence: number } | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const record = value as Record<string, unknown>
+  if (typeof record.projectId !== 'string' || !/^project_[a-f0-9]{24}$/.test(record.projectId)) return undefined
+  if (!isRunSessionId(record.sessionId)) return undefined
+  if (typeof record.sequence !== 'number' || !Number.isSafeInteger(record.sequence) || record.sequence < 1) return undefined
+  return { projectId: record.projectId as ProjectId, sessionId: record.sessionId, sequence: record.sequence }
+}
 function sessionOwner(sessionId: RunSessionId): string { return `run-session:${sessionId}` }
 /** Detach an uncooperative promise on cancellation while still observing rejection. */
 function abortable<T>(task: Promise<T>, signal: AbortSignal): Promise<T> {

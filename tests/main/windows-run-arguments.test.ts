@@ -3,7 +3,8 @@ import { WindowsPipedProcessAdapter } from '../../src/main/services/run/windows-
 import type { PreparedRun } from '../../src/main/services/run/run-strategy'
 
 const binding = vi.hoisted(() => ({ capability: 'student-ide-piped-job-v1',
-  createRun: vi.fn(() => ({})), control: vi.fn(() => 123) }))
+  createRun: vi.fn(() => ({})), createRunInput: vi.fn(() => ({})),
+  writeRun: vi.fn(), closeRunInput: vi.fn(), control: vi.fn(() => 123) }))
 vi.mock('node:module', () => ({ createRequire: () => () => binding }))
 
 describe.skipIf(process.platform !== 'win32' || process.arch !== 'x64')('Main-only Windows Run argv policy', () => {
@@ -35,6 +36,19 @@ describe.skipIf(process.platform !== 'win32' || process.arch !== 'x64')('Main-on
       expect(() => adapter.create({ ...run, ...change } as PreparedRun, vi.fn())).toThrow()
       expect(binding.createRun).not.toHaveBeenCalled()
     })
+
+  it('keeps closed stdin on createRun and uses the Run input entry only when requested', () => {
+    const adapter = new WindowsPipedProcessAdapter('binding', {})
+    const closed = adapter.create(run, vi.fn())
+    expect(binding.createRun).toHaveBeenCalledTimes(1)
+    expect(binding.createRunInput).not.toHaveBeenCalled()
+    expect(closed.stdin).toBe('closed')
+    const opened = adapter.create(run, vi.fn(), 'line-input')
+    expect(binding.createRunInput).toHaveBeenCalledWith(run.executable, run.args, run.cwd, [], expect.any(Function))
+    expect(opened.stdin).toBe('line-input')
+    expect(opened.writeInput).toEqual(expect.any(Function))
+    expect(opened.closeInput).toEqual(expect.any(Function))
+  })
 
   it('fails closed when an old native artifact lacks the array entry', () => {
     const create = binding.createRun

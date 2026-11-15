@@ -1,0 +1,379 @@
+{
+  "startedBaseline": {
+    "branch": "feature/phase-9a-learning-mode",
+    "commit": "11c71a0f0ebd90f76606a5297c5f16ba4b5427ac"
+  },
+  "environment": {
+    "node": "v24.16.0",
+    "sdk": "10.0.112",
+    "inventory": "8.0.410 [C:\\Program Files\\dotnet\\sdk]\r\n9.0.314 [C:\\Program Files\\dotnet\\sdk]\r\n10.0.112 [C:\\Program Files\\dotnet\\sdk]\r\n",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "records": [
+    {
+      "name": "B: root exited while descendant remains; Job-wide cancellation cleans child",
+      "started": "2026-10-19T13:30:56.574Z",
+      "beforeRootExit": {
+        "root": 22372,
+        "child": 6120,
+        "members": [
+          22372,
+          32556,
+          6120
+        ],
+        "additionalProcesses": [
+          {
+            "pid": 32556,
+            "image": "C:\\Windows\\System32\\conhost.exe"
+          }
+        ]
+      },
+      "preCleanup": {
+        "rootExited": true,
+        "childAlive": true,
+        "learningJobActiveProcesses": 1,
+        "jobReleased": false,
+        "members": [
+          6120
+        ],
+        "membershipEvidence": "Direct QueryInformationJobObject on the owned Learning Job handle"
+      },
+      "root": 22372,
+      "child": 6120,
+      "retainedAfterRootExit": true,
+      "postCleanup": {
+        "childExited": true,
+        "membersBeforeRelease": [],
+        "released": true,
+        "resources": 0,
+        "workspaceAbsent": true,
+        "additionalProcessesExited": true
+      },
+      "r4": {
+        "clock": "node:perf_hooks performance.now monotonic milliseconds",
+        "originMonotonicMs": 655.4334,
+        "originalDeadlineMs": 12000,
+        "observationPollMs": 15,
+        "milestones": {
+          "helper:32556:terminated": 0.6277999999999793,
+          "sample": 0.6707999999999856,
+          "cleanup-start": 0.7703000000000202,
+          "native-terminate-returned": 1.615000000000009,
+          "job-active-count": 2.2264999999999873,
+          "job-empty-observed": 2.2403000000000475,
+          "native-job-released": 2.6621000000000095,
+          "manager-cleanup-resolved": 2.7998000000000047,
+          "manager-zero": 2.810100000000034,
+          "cleanup-resolved": 13.335699999999974,
+          "child:terminated": 13.379599999999982,
+          "cleanup-await-returned": 13.412199999999984,
+          "immediate-assertions-passed": 17.51419999999996,
+          "passive-finished": 17.614000000000033
+        },
+        "timeline": [
+          {
+            "event": "helper:32556:terminated",
+            "monotonicMs": 656.0612,
+            "offsetMs": 0.6277999999999793,
+            "pid": 32556,
+            "lastObservedAliveOffsetMs": null,
+            "source": "before-cleanup"
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 656.1042,
+            "offsetMs": 0.6707999999999856,
+            "source": "before-cleanup",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": true
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": false,
+            "wrapperReleased": false,
+            "resources": 1
+          },
+          {
+            "event": "cleanup-start",
+            "monotonicMs": 656.2037,
+            "offsetMs": 0.7703000000000202
+          },
+          {
+            "event": "native-terminate-returned",
+            "monotonicMs": 657.0484,
+            "offsetMs": 1.615000000000009
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 657.081,
+            "offsetMs": 1.6476000000000113,
+            "source": "native:terminate",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": true
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": false,
+            "wrapperReleased": false,
+            "resources": 1
+          },
+          {
+            "event": "job-active-count",
+            "monotonicMs": 657.6599,
+            "offsetMs": 2.2264999999999873,
+            "active": 0
+          },
+          {
+            "event": "job-empty-observed",
+            "monotonicMs": 657.6737,
+            "offsetMs": 2.2403000000000475
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 657.6987,
+            "offsetMs": 2.2653000000000247,
+            "source": "native:count",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": true
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": false,
+            "wrapperReleased": false,
+            "resources": 1
+          },
+          {
+            "event": "native-job-released",
+            "monotonicMs": 658.0955,
+            "offsetMs": 2.6621000000000095,
+            "membersBeforeRelease": []
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 658.1347,
+            "offsetMs": 2.7012999999999465,
+            "source": "native:release",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": true
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": true,
+            "wrapperReleased": false,
+            "resources": 1
+          },
+          {
+            "event": "manager-cleanup-resolved",
+            "monotonicMs": 658.2332,
+            "offsetMs": 2.7998000000000047,
+            "resources": 0
+          },
+          {
+            "event": "manager-zero",
+            "monotonicMs": 658.2435,
+            "offsetMs": 2.810100000000034
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 658.2771,
+            "offsetMs": 2.8437000000000126,
+            "source": "manager-resolve",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": true
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": true,
+            "wrapperReleased": true,
+            "resources": 0
+          },
+          {
+            "event": "cleanup-resolved",
+            "monotonicMs": 668.7691,
+            "offsetMs": 13.335699999999974
+          },
+          {
+            "event": "child:terminated",
+            "monotonicMs": 668.813,
+            "offsetMs": 13.379599999999982,
+            "pid": 6120,
+            "lastObservedAliveOffsetMs": 2.8337999999999965,
+            "source": "cleanup-resolve"
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 668.8403,
+            "offsetMs": 13.40689999999995,
+            "source": "cleanup-resolve",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": false
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": true,
+            "wrapperReleased": true,
+            "resources": 0
+          },
+          {
+            "event": "cleanup-await-returned",
+            "monotonicMs": 668.8456,
+            "offsetMs": 13.412199999999984
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 668.8587,
+            "offsetMs": 13.425299999999993,
+            "source": "after-cleanup-await",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": false
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": true,
+            "wrapperReleased": true,
+            "resources": 0
+          },
+          {
+            "event": "cleanup-resolved",
+            "monotonicMs": 672.411,
+            "offsetMs": 16.97759999999994
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 672.4495,
+            "offsetMs": 17.016099999999938,
+            "source": "cleanup-resolve",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": false
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": true,
+            "wrapperReleased": true,
+            "resources": 0
+          },
+          {
+            "event": "immediate-assertions-passed",
+            "monotonicMs": 672.9476,
+            "offsetMs": 17.51419999999996
+          },
+          {
+            "event": "sample",
+            "monotonicMs": 672.9776,
+            "offsetMs": 17.544200000000046,
+            "source": "passive-start",
+            "states": [
+              {
+                "label": "child",
+                "pid": 6120,
+                "alive": false
+              },
+              {
+                "label": "helper:32556",
+                "pid": 32556,
+                "alive": false
+              }
+            ],
+            "nativeReleased": true,
+            "wrapperReleased": true,
+            "resources": 0
+          },
+          {
+            "event": "passive-finished",
+            "monotonicMs": 673.0474,
+            "offsetMs": 17.614000000000033,
+            "allObservedTerminated": true,
+            "originalDeadlineMs": 12000,
+            "deadlineExceeded": false
+          }
+        ],
+        "immediateAcceptance": {
+          "status": "PASS"
+        },
+        "processStatesAtEnd": [
+          {
+            "label": "child",
+            "pid": 6120,
+            "alive": false
+          },
+          {
+            "label": "helper:32556",
+            "pid": 32556,
+            "alive": false
+          }
+        ],
+        "nativeReleased": true,
+        "wrapperReleased": true,
+        "resources": 0,
+        "membersBeforeRelease": [],
+        "workspaceAbsent": true,
+        "jobHandleOpenedOrDuplicatedByObserver": false
+      },
+      "status": "PASS",
+      "elapsedMs": 420
+    },
+    {
+      "name": "E: tracked source/config/data and existing Project build artifacts unchanged",
+      "status": "PASS",
+      "changed": [],
+      "checkedFiles": 494
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "hostPid": 25988,
+  "id": "C01",
+  "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning",
+  "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\sessions\\session-bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+  "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\dispositions\\bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f.json",
+  "session": {
+    "owner": "exercise:bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+    "sessionId": "bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+    "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\sessions\\session-bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+    "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\dispositions\\bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f.json",
+    "disposition": null,
+    "proof": null,
+    "nativeStage": "OWNED",
+    "persistenceStage": "ACKNOWLEDGED",
+    "workspaceState": "RETAINED",
+    "checkpoint": "OWNED",
+    "lastError": null,
+    "processClean": false,
+    "cleanupComplete": false,
+    "finalized": false,
+    "released": false,
+    "managerResources": 0,
+    "counters": {
+      "spawn": 0,
+      "query": 0,
+      "terminate": 0,
+      "release": 0,
+      "handlesClosed": 0,
+      "delete": 0
+    },
+    "phase": "",
+    "rootPid": 0,
+    "retained": [],
+    "coverageGaps": [],
+    "output": "",
+    "exitCode": null
+  },
+  "members": [],
+  "identities": [],
+  "monotonicMs": 210.2459
+}

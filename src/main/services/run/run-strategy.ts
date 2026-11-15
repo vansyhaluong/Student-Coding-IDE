@@ -36,7 +36,7 @@ export interface RunRuntimeContext {
   readonly preparation?: RunPreparationContext
 }
 
-/** Main-only plans; the existing adapter still supplies closed stdin. */
+/** Main-only plans. The adapter keeps closed stdin except for a C# execute step. */
 export interface RunExecutionStep {
   readonly phase: Exclude<RunExecutionPhase, 'PREPARING'>
   readonly execution: PreparedRun

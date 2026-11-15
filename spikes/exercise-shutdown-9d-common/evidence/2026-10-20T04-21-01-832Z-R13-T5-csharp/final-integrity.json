@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "protectedFiles": 1168,
+  "changed": [],
+  "sourceChangedAfterRun": [],
+  "priorEvidence": "R1-R12 preserved; earlier R13 existing artifacts also preserved",
+  "productionPolicyBNativeQuotaPlanAndWorkload": "UNCHANGED",
+  "assertionsUnchanged": true,
+  "changedSourceLint": "PASS",
+  "typecheck": "PASS",
+  "isolatedBuild": "PASS",
+  "fullLint": {
+    "status": "FAIL",
+    "errors": 1029,
+    "archiveErrors": 976,
+    "changedSourceErrors": 0,
+    "unchangedLiveSourceErrors": 53,
+    "targetedChangedSource": "PASS"
+  },
+  "sourceHashes": {
+    "allocator.cpp": "ffa13336070cd907eb6b8add7b21d38e06074662e9d24861867ad707d0d6fd0d",
+    "build.mjs": "24c91ebcb77779804549ae01d94e19fedb9557f96fa18ae3d0b63b8321405c5d",
+    "host.ts": "95dbfef4eeb739e722dc2dc6e198472708fc32740cdfa8904904a58d4601f810",
+    "native.inc": "6ab79833a29846259db5db3e9835a4632f029b326fbec3f92d1732ce572ceae3",
+    "plan.json": "69e5701b2a7f82f7fe37e30a6e88804603c754240c100bbf94d0b4278071eb9c",
+    "prepare-csharp-fix.mjs": "452f84f7542036f0ff86c7cd652050d83ab79084d4a7a9604c2a510873f83f5c",
+    "prepare-fix.mjs": "acafa8032929cbb0ae5c39da3aee64dcb75fc64c22e7879f757a88ab86416c89",
+    "prepare.mjs": "bec1397f3986ec9ad52821a4860eff7cbd5edf9c4d6df36a7d7595d02f9fd62c",
+    "run.mjs": "58183b2ffc3ea59632760f0988fc14ab8c9c0fcf1b004e853f8c4644727100e4"
+  }
+}

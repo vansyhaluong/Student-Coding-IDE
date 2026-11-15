@@ -728,11 +728,16 @@ criteria của V1. Python Run được defer khỏi V1 hiện tại.
 
 #### Approved C# Project Run extension — planning baseline (2026-10-07)
 
-Current status: `IN_PROGRESS`; M1-01 through M1-10 (including M1-09a) COMPLETE;
-Main C# build/execute and typed IPC/Preload are verified. M1-11 UI remains NOT_STARTED;
-user-facing C# Run and overall Core Acceptance are not complete.
-The original planning authorization was design/documentation only. Production
-C# Run and Console input remain unimplemented. The Phase 4 scope below remains historical acceptance;
+Current status: `IN_PROGRESS`; M1-01 through M1-12 (including M1-09a) and M2-01 through M2-05 COMPLETE.
+M2-06 automated Windows 11 x64 Electron evidence PASS; manual W cells were not run, so M2-06 and M2-07 are not COMPLETE. RunService queues Console lines for a live C#
+execute step. Typed IPC, Preload, and the Output line composer expose send, close,
+and status for that step. JavaScript and build do not accept Console input.
+Main C# build/execute, typed IPC/Preload, and the workspace target/Run/Stop/Output
+presentation are verified. Milestone 1 core acceptance is COMPLETE.
+The original planning authorization was design/documentation only. Console input
+is a typed session capability with an Output line composer. Milestone 2 automated
+Windows 11 x64 Electron acceptance passed on 2026-11-15. Manual W cells and M2-07
+completion remain outstanding. The Phase 4 scope below remains historical acceptance;
 the C# exception is governed by ADR-024 and Implementation Plan Section 13.7.
 Phase 5.5 intelligence and Phase 9 Exercise Runtime do not implement this feature.
 

@@ -1,6 +1,8 @@
-import { RUN_CHANNELS, validateStartRunRequest, validateStopRunRequest,
-  type StartRunRequest, type RunSession, type RunSessionId, type RunEvent, type RunExecutionPhase,
-  type SemanticStartRunRequest } from '../../shared/contracts/run'
+import { RUN_CHANNELS, RUN_INPUT_CHANNELS, validateCloseRunInputRequest, validateRunInputAcknowledgement,
+  validateRunInputStatus, validateRunInputStatusRequest, validateSendRunInputRequest, validateStartRunRequest,
+  validateStopRunRequest, type CloseRunInputRequest, type RunInputAcknowledgement, type RunInputStatus,
+  type SendRunInputRequest, type StartRunRequest, type RunSession,
+  type RunSessionId, type RunEvent, type RunExecutionPhase, type SemanticStartRunRequest } from '../../shared/contracts/run'
 import { RUN_PROJECT_CHANNELS, validateRunProjectRequest, validateCSharpRunTarget,
   validateCSharpStartRunRequest, validateCSharpRunSession, validateProjectRunEvent,
   validateProjectRunFailure, type CSharpRunSession, type ProjectRunEvent } from '../../shared/contracts/run-project'
@@ -14,6 +16,9 @@ import { DomainError } from '../errors/app-error'
 export interface RunCommands {
   startRun(request: StartRunRequest, ownerId: number): Promise<RunSession>
   stopRun(sessionId: RunSessionId, ownerId: number): Promise<void>
+  sendInput(request: SendRunInputRequest, ownerId: number): Promise<RunInputAcknowledgement>
+  closeInput(request: CloseRunInputRequest, ownerId: number): Promise<RunInputAcknowledgement>
+  getInputStatus(sessionId: RunSessionId, ownerId: number): RunInputStatus
 }
 export interface ProjectRunIpcOptions {
   readonly targets: CsharpRunTargetRequests
@@ -24,6 +29,13 @@ export interface ProjectRunIpcOptions {
 }
 const unavailable = () => new DomainError({ code: 'PERMISSION_DENIED', retryable: false,
   message: 'The C# Run request is no longer authorized.', operation: 'run:project' })
+function matchedAcknowledgement(request: { projectId: ProjectId; sessionId: RunSessionId; sequence: number },
+  acknowledgement: RunInputAcknowledgement): RunInputAcknowledgement {
+  const valid = validateRunInputAcknowledgement(acknowledgement)
+  if (!valid.ok || valid.value.projectId !== request.projectId || valid.value.sessionId !== request.sessionId
+    || valid.value.sequence !== request.sequence) throw unavailable()
+  return valid.value
+}
 export class RunIpcService implements ManagedService {
   readonly name = 'RunIpcService'
   private readonly cleanup: (() => void)[] = []
@@ -81,6 +93,30 @@ export class RunIpcService implements ManagedService {
           phase: this.phases.get(session.sessionId)?.phase ?? 'PREPARING' })
         if (!result.ok || result.value.projectId !== request.projectId || result.value.relativePath !== request.relativePath) throw unavailable()
         return result.value
+      } }))
+    this.cleanup.push(this.registry.register({ channel: RUN_INPUT_CHANNELS.send, validate: validateSendRunInputRequest,
+      handle: async (request, context) => {
+        const check = this.check(context, request.projectId)
+        const acknowledgement = await this.run.sendInput(request, context.senderId)
+        check()
+        return matchedAcknowledgement(request, acknowledgement)
+      } }))
+    this.cleanup.push(this.registry.register({ channel: RUN_INPUT_CHANNELS.close, validate: validateCloseRunInputRequest,
+      handle: async (request, context) => {
+        const check = this.check(context, request.projectId)
+        const acknowledgement = await this.run.closeInput(request, context.senderId)
+        check()
+        return matchedAcknowledgement(request, acknowledgement)
+      } }))
+    this.cleanup.push(this.registry.register({ channel: RUN_INPUT_CHANNELS.status, validate: validateRunInputStatusRequest,
+      handle: (request, context) => {
+        const check = this.check(context, request.projectId)
+        const status = this.run.getInputStatus(request.sessionId, context.senderId)
+        check()
+        if (status.projectId !== request.projectId || status.sessionId !== request.sessionId) throw unavailable()
+        const valid = validateRunInputStatus(status)
+        if (!valid.ok) throw unavailable()
+        return valid.value
       } }))
   }
   private check(context: IpcRequestContext, projectId: ProjectId): () => void {

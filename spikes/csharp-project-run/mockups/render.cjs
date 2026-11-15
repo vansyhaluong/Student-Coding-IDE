@@ -1,3 +1,5 @@
+/* global require, __dirname, console */
+/* eslint-disable @typescript-eslint/no-require-imports -- Electron artifact runner intentionally uses CommonJS. */
 // Artifact-only renderer. Does not load IDE production code or Run services.
 const { app, BrowserWindow } = require('electron')
 const path = require('node:path')

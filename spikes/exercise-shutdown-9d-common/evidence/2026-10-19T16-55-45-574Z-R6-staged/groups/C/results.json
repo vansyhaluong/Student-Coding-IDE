@@ -1,0 +1,216 @@
+[
+  {
+    "name": "C01",
+    "started": "2026-10-19T17:11:59.396Z",
+    "status": "PASS",
+    "timeline": [
+      {
+        "event": "hard-kill-requested",
+        "monotonicMs": 28213.0114
+      },
+      {
+        "event": "all-observed-handles-signaled",
+        "monotonicMs": 28232.5378
+      }
+    ],
+    "hostIdentity": {
+      "pid": 25988,
+      "created": "31285228:4086171381"
+    },
+    "ready": {
+      "hostPid": 25988,
+      "id": "C01",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\sessions\\session-bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+      "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\dispositions\\bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f.json",
+      "session": {
+        "owner": "exercise:bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+        "sessionId": "bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\sessions\\session-bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\dispositions\\bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f.json",
+        "disposition": null,
+        "proof": null,
+        "nativeStage": "OWNED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "RETAINED",
+        "checkpoint": "OWNED",
+        "lastError": null,
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": false,
+        "released": false,
+        "managerResources": 0,
+        "counters": {
+          "spawn": 0,
+          "query": 0,
+          "terminate": 0,
+          "release": 0,
+          "handlesClosed": 0,
+          "delete": 0
+        },
+        "phase": "",
+        "rootPid": 0,
+        "retained": [],
+        "coverageGaps": [],
+        "output": "",
+        "exitCode": null
+      },
+      "members": [],
+      "identities": [],
+      "monotonicMs": 210.2459
+    },
+    "afterCrashRecord": {
+      "schemaVersion": 2,
+      "sessionId": "bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+      "owner": "exercise:bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+      "hostEpoch": "a84db647-cb41-4893-a8d1-ae23ecfbb4fd",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\sessions\\session-bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+      "workspaceIdentity": {
+        "dev": "40663377",
+        "ino": "1407374883757144",
+        "birthtimeNs": "1792429919626324100"
+      },
+      "checkpoint": "OWNED",
+      "revision": 0,
+      "proof": null,
+      "finalized": false,
+      "nativeStage": "OWNED",
+      "processClean": false,
+      "cleanupComplete": false,
+      "workspaceState": "RETAINED"
+    },
+    "recovery": {
+      "hostPid": 26916,
+      "action": "QUARANTINED",
+      "record": {
+        "schemaVersion": 2,
+        "sessionId": "bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+        "owner": "exercise:bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+        "hostEpoch": "a84db647-cb41-4893-a8d1-ae23ecfbb4fd",
+        "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C01-crash\\learning\\sessions\\session-bea9ecae-b235-4d4b-b5c4-a0ae1051ca4f",
+        "workspaceIdentity": {
+          "dev": "40663377",
+          "ino": "1407374883757144",
+          "birthtimeNs": "1792429919626324100"
+        },
+        "checkpoint": "OWNED",
+        "revision": 0,
+        "proof": null,
+        "finalized": false,
+        "nativeStage": "OWNED",
+        "processClean": false,
+        "cleanupComplete": false,
+        "workspaceState": "RETAINED"
+      },
+      "processClean": false,
+      "cleanupComplete": false
+    },
+    "observed": [],
+    "limit": "Observer proves retained process termination; no historical coverage claim or fabricated PROCESS_CLEAN after crash"
+  },
+  {
+    "name": "C02",
+    "started": "2026-10-19T17:11:59.953Z",
+    "status": "FAIL",
+    "timeline": [
+      {
+        "event": "observer-retained",
+        "monotonicMs": 28773.012,
+        "pid": 34004,
+        "member": true,
+        "created": "31285228:4094162503",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 28847.0317,
+        "pid": 23892,
+        "member": true,
+        "created": "31285228:4094949424",
+        "image": "C:\\Windows\\System32\\conhost.exe"
+      }
+    ],
+    "hostIdentity": {
+      "pid": 14540,
+      "created": "31285228:4091735954"
+    },
+    "ready": {
+      "hostPid": 14540,
+      "id": "C02",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C02-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C02-crash\\learning\\sessions\\session-114952ab-a1cf-479e-a2c4-de727158c3bc",
+      "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C02-crash\\learning\\dispositions\\114952ab-a1cf-479e-a2c4-de727158c3bc.json",
+      "session": {
+        "owner": "exercise:114952ab-a1cf-479e-a2c4-de727158c3bc",
+        "sessionId": "114952ab-a1cf-479e-a2c4-de727158c3bc",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C02-crash\\learning\\sessions\\session-114952ab-a1cf-479e-a2c4-de727158c3bc",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\C02-crash\\learning\\dispositions\\114952ab-a1cf-479e-a2c4-de727158c3bc.json",
+        "disposition": null,
+        "proof": null,
+        "nativeStage": "OWNED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "RETAINED",
+        "checkpoint": "OWNED",
+        "lastError": null,
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": false,
+        "released": false,
+        "managerResources": 1,
+        "counters": {
+          "spawn": 1,
+          "query": 1,
+          "terminate": 0,
+          "release": 0,
+          "handlesClosed": 0,
+          "delete": 0
+        },
+        "phase": "compile",
+        "rootPid": 34004,
+        "retained": [
+          {
+            "pid": 34004,
+            "member": true,
+            "created": "31285228:4094162503",
+            "root": true,
+            "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+            "signaled": false,
+            "closed": false
+          }
+        ],
+        "coverageGaps": [],
+        "output": "",
+        "exitCode": null
+      },
+      "members": [
+        34004
+      ],
+      "identities": [
+        {
+          "pid": 34004,
+          "member": true,
+          "created": "31285228:4094162503",
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+        }
+      ],
+      "monotonicMs": 221.2458
+    },
+    "phenomenon": "No retained live actual csc.dll compiler window; no compile hard-crash claim",
+    "error": {
+      "message": "Expected values to be strictly equal:\n\nnull !== 0\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nnull !== 0\n\n    at crash (file:///D:/coding-ide/spikes/exercise-shutdown-9d-common/staged-run.mjs:119:111)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///D:/coding-ide/spikes/exercise-shutdown-9d-common/staged-run.mjs:187:45"
+    }
+  },
+  {
+    "name": "C03",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  },
+  {
+    "name": "C04",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  }
+]

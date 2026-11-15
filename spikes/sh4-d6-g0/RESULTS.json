@@ -1,0 +1,277 @@
+{
+  "scope": "ISOLATED_G0_SYNTHETIC_ONLY",
+  "runAtUtc": "2026-11-05T08:07:07.969Z",
+  "sdk": "10.0.112",
+  "sdkResolution": {
+    "state": "AVAILABLE",
+    "sdk": "10.0.112",
+    "runtime": "10.0.12"
+  },
+  "referencePack": "10.0.12",
+  "roslyn": "5.0.0.0",
+  "electronRuntime": {
+    "ready": true,
+    "typescript": "6.0.3",
+    "node": "24.18.1",
+    "electron": "44.0.0"
+  },
+  "artifacts": {
+    "csharpHelperBytes": 15872,
+    "roslynLibraries": [
+      {
+        "name": "Microsoft.CodeAnalysis.dll",
+        "bytes": 8132392
+      },
+      {
+        "name": "Microsoft.CodeAnalysis.CSharp.dll",
+        "bytes": 18540328
+      }
+    ],
+    "javascriptBundleBytes": 9982536,
+    "devDependencyAbsentAtRuntime": true,
+    "relocatedNonAsciiSpacePath": true
+  },
+  "csharp": {
+    "elapsedMs": 464,
+    "cases": [
+      {
+        "id": "expression",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "statement",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "whole-function",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "multiline",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "params-changed",
+        "reason": "SIGNATURE"
+      },
+      {
+        "id": "return-changed",
+        "reason": "SIGNATURE"
+      },
+      {
+        "id": "static-changed",
+        "reason": "SIGNATURE"
+      },
+      {
+        "id": "entry-renamed",
+        "reason": "SIGNATURE"
+      },
+      {
+        "id": "malformed",
+        "reason": "SYNTAX"
+      },
+      {
+        "id": "whole-file",
+        "reason": "WHOLE_FILE"
+      },
+      {
+        "id": "partial-header",
+        "reason": "TARGET"
+      },
+      {
+        "id": "structure-escape",
+        "reason": "STRUCTURE"
+      },
+      {
+        "id": "no-execution",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "unicode-offset",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "directive-reject",
+        "reason": "UNSUPPORTED_GRAMMAR"
+      },
+      {
+        "id": "public-starter-metadata",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "type-int",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "type-bool",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "type-string",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "type-int[]",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "type-string[]",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "type-int[][]",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "cross-functions",
+        "reason": "TARGET"
+      },
+      {
+        "id": "helper-whole-function",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "helper-expression",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "split-surrogate",
+        "reason": "RANGE"
+      },
+      {
+        "id": "split-crlf",
+        "reason": "RANGE"
+      },
+      {
+        "id": "out-of-bounds",
+        "reason": "RANGE"
+      }
+    ]
+  },
+  "javascript": {
+    "elapsedMs": 541,
+    "cases": [
+      {
+        "id": "expression",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "statement",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "whole-function",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "multiline",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "params-changed",
+        "reason": "SIGNATURE"
+      },
+      {
+        "id": "entry-renamed",
+        "reason": "SIGNATURE"
+      },
+      {
+        "id": "signature-default",
+        "reason": "SIGNATURE"
+      },
+      {
+        "id": "malformed",
+        "reason": "SYNTAX"
+      },
+      {
+        "id": "whole-file",
+        "reason": "WHOLE_FILE"
+      },
+      {
+        "id": "trivia-bypass",
+        "reason": "WHOLE_FILE"
+      },
+      {
+        "id": "partial-header",
+        "reason": "TARGET"
+      },
+      {
+        "id": "structure-escape",
+        "reason": "STRUCTURE"
+      },
+      {
+        "id": "no-execution",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "unicode-offset",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "typed-js-reject",
+        "reason": "UNSUPPORTED_GRAMMAR"
+      },
+      {
+        "id": "public-starter-metadata",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "cross-functions",
+        "reason": "TARGET"
+      },
+      {
+        "id": "helper-whole-function",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "helper-expression",
+        "reason": "ACCEPT"
+      },
+      {
+        "id": "split-surrogate",
+        "reason": "RANGE"
+      },
+      {
+        "id": "split-crlf",
+        "reason": "RANGE"
+      },
+      {
+        "id": "out-of-bounds",
+        "reason": "RANGE"
+      }
+    ]
+  },
+  "lifecycle": {
+    "workerTermination": [
+      {
+        "mode": "cancel",
+        "terminated": true,
+        "threadId": -1
+      },
+      {
+        "mode": "deadline",
+        "terminated": true,
+        "threadId": -1
+      }
+    ],
+    "helperTermination": [
+      {
+        "mode": "cancel",
+        "ready": true,
+        "terminated": true,
+        "exitObserved": true
+      },
+      {
+        "mode": "deadline",
+        "ready": true,
+        "terminated": true,
+        "exitObserved": true
+      }
+    ],
+    "missingRoslynFailedClosed": true,
+    "ownedArtifactsRemovedAfterExit": true
+  },
+  "protectedFilesUnchanged": true,
+  "liveRequests": 0,
+  "productionDependenciesInstalled": 0
+}

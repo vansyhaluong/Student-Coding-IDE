@@ -1,0 +1,4 @@
+{
+  "message": "Observed process image unavailable",
+  "stack": "Error: Observed process image unavailable\n    at D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\host.cjs:3566:71\n    at Array.map (<anonymous>)\n    at publish (D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\host.cjs:3562:32)\n    at Timeout.<anonymous> (D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\host.cjs:3594:9)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)"
+}

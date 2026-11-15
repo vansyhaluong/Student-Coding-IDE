@@ -1,0 +1,30 @@
+﻿{
+    "observedAtUtc":  "2026-10-19T17:17:48.8774830Z",
+    "queriedPids":  [
+                        14540,
+                        34004,
+                        23892
+                    ],
+    "matchingProcesses":  [
+
+                          ],
+    "scope":  "Read-only post-watchdog metadata, not retained-handle termination proof",
+    "artifacts":  [
+                      {
+                          "relative":  "Exercise.csproj",
+                          "length":  462,
+                          "lastWriteUtc":  "2026-10-19T17:12:00.1882689Z"
+                      },
+                      {
+                          "relative":  "obj/project.assets.json",
+                          "length":  21520,
+                          "lastWriteUtc":  "2026-10-19T17:12:04.3172325Z"
+                      },
+                      {
+                          "relative":  "bin/Release/net10.0/Exercise.dll",
+                          "length":  977408,
+                          "lastWriteUtc":  "2026-10-19T17:12:13.8614480Z"
+                      }
+                  ],
+    "hypothesis":  "Snapshot publication stopped between temporary write and destination replacement; exact exception not captured, no confirmed root cause"
+}

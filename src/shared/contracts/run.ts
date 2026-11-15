@@ -351,3 +351,222 @@ export function validateRunEvent(value: unknown): ValidationResult<RunEvent> {
   }
   return invalid('$')
 }
+
+/** M2-01 lexical input contracts. Main still authorizes owner, project, session,
+ * execute step and sequence. These types carry no command or process fields.
+ * `closed` is the only capability for JavaScript and for C# preparation/build.
+ */
+export const RUN_INPUT_CHANNELS = {
+  send: 'run:send-input', close: 'run:close-input', status: 'run:input-status',
+} as const
+export const RUN_INPUT_LIMITS = {
+  maximumRequestUtf8Bytes: 16 * 1024,
+  maximumQueuedUtf8Bytes: 64 * 1024,
+  maximumQueuedSubmissions: 32,
+  writeDeadlineMilliseconds: 10_000,
+  minimumSequence: 1,
+} as const
+export const RUN_STDIN_MODES = ['closed', 'line-input'] as const
+export type RunStdinMode = typeof RUN_STDIN_MODES[number]
+export type RunInputCapability =
+  | { readonly mode: 'closed'; readonly acceptsInput: false }
+  | { readonly mode: 'line-input'; readonly acceptsInput: true }
+export interface SendRunInputRequest {
+  readonly projectId: ProjectId
+  readonly sessionId: RunSessionId
+  readonly sequence: number
+  readonly text: string
+}
+export interface CloseRunInputRequest {
+  readonly projectId: ProjectId
+  readonly sessionId: RunSessionId
+  readonly sequence: number
+}
+export interface RunInputStatusRequest {
+  readonly projectId: ProjectId
+  readonly sessionId: RunSessionId
+}
+export const RUN_INPUT_REJECTION_REASONS = [
+  'INVALID_INPUT', 'CAPABILITY_DENIED', 'INPUT_CLOSED', 'INPUT_BUSY',
+  'SEQUENCE_MISMATCH', 'SESSION_UNAVAILABLE', 'WRITE_FAILED', 'WRITE_TIMEOUT',
+] as const
+export type RunInputRejectionReason = typeof RUN_INPUT_REJECTION_REASONS[number]
+export type RunInputAcknowledgement = {
+  readonly projectId: ProjectId
+  readonly sessionId: RunSessionId
+  readonly sequence: number
+} & (
+  | { readonly state: 'DELIVERED' }
+  | { readonly state: 'REJECTED'; readonly reason: RunInputRejectionReason; readonly retryable: boolean }
+)
+export const RUN_INPUT_GATE_REASONS = [
+  'EOF', 'STOPPED', 'EXITED', 'WRITE_TIMEOUT', 'WRITE_FAILED',
+  'OWNER_LOST', 'PROJECT_CHANGED', 'SHUTDOWN',
+] as const
+export type RunInputGateReason = typeof RUN_INPUT_GATE_REASONS[number]
+export type RunInputStatus = {
+  readonly projectId: ProjectId
+  readonly sessionId: RunSessionId
+  readonly capability: RunInputCapability
+  readonly nextSequence: number
+  readonly queuedSubmissions: number
+  readonly queuedUtf8Bytes: number
+} & (
+  | { readonly gate: 'OPEN' }
+  | { readonly gate: 'CLOSED'; readonly reason: RunInputGateReason }
+)
+
+/** Line-input exists only for a C# execute step. Build and JavaScript stay closed. */
+export function runInputCapability(kind: RunTargetKind, phase: RunExecutionPhase): RunInputCapability {
+  return kind === 'csharp-project' && phase === 'EXECUTING'
+    ? { mode: 'line-input', acceptsInput: true }
+    : { mode: 'closed', acceptsInput: false }
+}
+
+/** CRLF and lone CR become LF. A missing final LF is added. Empty text is one empty line. */
+export function prepareRunInputText(text: string): ValidationResult<string> {
+  if (typeof text !== 'string' || text.includes('\0') || hasUnpairedSurrogate(text)) return invalid('$.text')
+  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const line = normalized.endsWith('\n') ? normalized : `${normalized}\n`
+  return utf8ByteLength(line) <= RUN_INPUT_LIMITS.maximumRequestUtf8Bytes
+    ? { ok: true, value: line } : invalid('$.text')
+}
+
+export function validateRunInputCapability(value: unknown): ValidationResult<RunInputCapability> {
+  const object = validateExactObject(value, ['mode', 'acceptsInput'])
+  if (!object.ok) return object
+  const { mode, acceptsInput } = object.value
+  if (mode === 'closed' && acceptsInput === false) return { ok: true, value: { mode, acceptsInput } }
+  if (mode === 'line-input' && acceptsInput === true) return { ok: true, value: { mode, acceptsInput } }
+  return invalid('$.mode')
+}
+
+export function validateSendRunInputRequest(value: unknown): ValidationResult<SendRunInputRequest> {
+  const object = validateExactObject(value, ['projectId', 'sessionId', 'sequence', 'text'])
+  if (!object.ok) return object
+  const identity = inputIdentity(object.value)
+  if (!identity.ok) return identity
+  const prepared = prepareRunInputText(object.value.text as string)
+  return prepared.ok ? { ok: true, value: { ...identity.value, text: object.value.text as string } } : prepared
+}
+
+export function validateCloseRunInputRequest(value: unknown): ValidationResult<CloseRunInputRequest> {
+  const object = validateExactObject(value, ['projectId', 'sessionId', 'sequence'])
+  if (!object.ok) return object
+  return inputIdentity(object.value)
+}
+
+export function validateRunInputStatusRequest(value: unknown): ValidationResult<RunInputStatusRequest> {
+  const object = validateExactObject(value, ['projectId', 'sessionId'])
+  if (!object.ok) return object
+  if (typeof object.value.projectId !== 'string' || !/^project_[a-f0-9]{24}$/.test(object.value.projectId)) return invalid('$.projectId')
+  if (!isRunSessionId(object.value.sessionId)) return invalid('$.sessionId')
+  return { ok: true, value: { projectId: object.value.projectId as ProjectId, sessionId: object.value.sessionId } }
+}
+
+export function validateRunInputAcknowledgement(value: unknown): ValidationResult<RunInputAcknowledgement> {
+  const object = validateExactObject(value, ['projectId', 'sessionId', 'sequence', 'state', 'reason', 'retryable'])
+  if (!object.ok) return object
+  const identity = inputIdentity(object.value)
+  if (!identity.ok) return identity
+  const { state, reason, retryable } = object.value
+  if (state === 'DELIVERED') {
+    const exact = validateExactObject(value, ['projectId', 'sessionId', 'sequence', 'state'])
+    return exact.ok ? { ok: true, value: { ...identity.value, state } } : exact
+  }
+  if (state !== 'REJECTED') return invalid('$.state')
+  const exact = validateExactObject(value, ['projectId', 'sessionId', 'sequence', 'state', 'reason', 'retryable'])
+  if (!exact.ok) return exact
+  if (typeof reason !== 'string' || !RUN_INPUT_REJECTION_REASONS.includes(reason as RunInputRejectionReason)) {
+    return invalid('$.reason')
+  }
+  const expectedRetryable = reason === 'INPUT_BUSY'
+  if (retryable !== expectedRetryable) return invalid('$.retryable')
+  return { ok: true, value: { ...identity.value, state, reason: reason as RunInputRejectionReason, retryable } }
+}
+
+export function validateRunInputStatus(value: unknown): ValidationResult<RunInputStatus> {
+  const object = validateExactObject(value, [
+    'projectId', 'sessionId', 'capability', 'nextSequence', 'queuedSubmissions', 'queuedUtf8Bytes', 'gate', 'reason',
+  ])
+  if (!object.ok) return object
+  if (typeof object.value.projectId !== 'string' || !/^project_[a-f0-9]{24}$/.test(object.value.projectId)) return invalid('$.projectId')
+  if (!isRunSessionId(object.value.sessionId)) return invalid('$.sessionId')
+  const nextSequence = inputSequence(object.value.nextSequence)
+  if (!nextSequence.ok) return { ok: false, issues: [{ path: '$.nextSequence', message: 'Invalid Run field' }] }
+  const capability = validateRunInputCapability(object.value.capability)
+  if (!capability.ok) return capability
+  const queuedSubmissions = boundedInteger(object.value.queuedSubmissions, 0, RUN_INPUT_LIMITS.maximumQueuedSubmissions, '$.queuedSubmissions')
+  if (!queuedSubmissions.ok) return queuedSubmissions
+  const queuedUtf8Bytes = boundedInteger(object.value.queuedUtf8Bytes, 0, RUN_INPUT_LIMITS.maximumQueuedUtf8Bytes, '$.queuedUtf8Bytes')
+  if (!queuedUtf8Bytes.ok) return queuedUtf8Bytes
+  const counts = {
+    projectId: object.value.projectId as ProjectId,
+    sessionId: object.value.sessionId,
+    nextSequence: nextSequence.value,
+    capability: capability.value,
+    queuedSubmissions: queuedSubmissions.value,
+    queuedUtf8Bytes: queuedUtf8Bytes.value,
+  }
+  if (object.value.gate === 'OPEN') {
+    if (capability.value.mode !== 'line-input') return invalid('$.gate')
+    const exact = validateExactObject(value, [
+      'projectId', 'sessionId', 'capability', 'nextSequence', 'queuedSubmissions', 'queuedUtf8Bytes', 'gate',
+    ])
+    return exact.ok ? { ok: true, value: { ...counts, gate: 'OPEN' } } : exact
+  }
+  if (object.value.gate !== 'CLOSED') return invalid('$.gate')
+  const exact = validateExactObject(value, [
+    'projectId', 'sessionId', 'capability', 'nextSequence', 'queuedSubmissions', 'queuedUtf8Bytes', 'gate', 'reason',
+  ])
+  if (!exact.ok) return exact
+  const reason = object.value.reason
+  if (typeof reason !== 'string' || !RUN_INPUT_GATE_REASONS.includes(reason as RunInputGateReason)) return invalid('$.reason')
+  return { ok: true, value: { ...counts, gate: 'CLOSED', reason: reason as RunInputGateReason } }
+}
+
+function inputIdentity(value: Record<string, unknown>): ValidationResult<{
+  projectId: ProjectId
+  sessionId: RunSessionId
+  sequence: number
+}> {
+  if (typeof value.projectId !== 'string' || !/^project_[a-f0-9]{24}$/.test(value.projectId)) return invalid('$.projectId')
+  if (!isRunSessionId(value.sessionId)) return invalid('$.sessionId')
+  const sequence = inputSequence(value.sequence)
+  return sequence.ok
+    ? { ok: true, value: { projectId: value.projectId as ProjectId, sessionId: value.sessionId, sequence: sequence.value } }
+    : sequence
+}
+
+function inputSequence(value: unknown): ValidationResult<number> {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= RUN_INPUT_LIMITS.minimumSequence
+    ? { ok: true, value } : invalid('$.sequence')
+}
+
+function boundedInteger(value: unknown, minimum: number, maximum: number, path: string): ValidationResult<number> {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= minimum && value <= maximum
+    ? { ok: true, value } : invalid(path)
+}
+
+function hasUnpairedSurrogate(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code < 0xD800 || code > 0xDFFF) continue
+    const next = value.charCodeAt(index + 1)
+    if (code > 0xDBFF || !(next >= 0xDC00 && next <= 0xDFFF)) return true
+    index += 1
+  }
+  return false
+}
+
+function utf8ByteLength(value: string): number {
+  let bytes = 0
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code < 0x80) bytes += 1
+    else if (code < 0x800) bytes += 2
+    else if (code >= 0xD800 && code <= 0xDBFF) { bytes += 4; index += 1 }
+    else bytes += 3
+  }
+  return bytes
+}

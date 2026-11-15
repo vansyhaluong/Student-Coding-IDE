@@ -140,7 +140,10 @@ describe('Run IPC and preload foundation', () => {
     const handlers = new Map<string, (event: IpcInvokeEventLike, value: unknown) => Promise<unknown>>()
     const registry = new IpcHandlerRegistry({ handle: (channel, listener) => { handlers.set(channel, listener) },
       removeHandler: (channel) => { handlers.delete(channel) } })
-    const commands = { startRun: vi.fn(async () => snapshot), stopRun: vi.fn(async () => {}) }
+    const commands = { startRun: vi.fn(async () => snapshot), stopRun: vi.fn(async () => {}),
+      sendInput: vi.fn(async () => { throw new Error('unused') }),
+      closeInput: vi.fn(async () => { throw new Error('unused') }),
+      getInputStatus: vi.fn(() => { throw new Error('unused') }) }
     const ipc = new RunIpcService(registry, commands)
     ipc.start()
     const start = handlers.get(RUN_CHANNELS.start)!
@@ -161,8 +164,8 @@ describe('Run IPC and preload foundation', () => {
     const transport: IpcRendererLike = { invoke: vi.fn(async () => ({ ok: true, value: snapshot })),
       on: vi.fn((_channel, callback) => { listener = callback }), removeListener: vi.fn() }
     const api = createRunBridge(transport)
-    expect(Object.keys(api).sort()).toEqual(['cancelResolution', 'clearTarget', 'onEvent', 'onProjectEvent',
-      'resolveTargets', 'selectTarget', 'start', 'startProject', 'stop'])
+    expect(Object.keys(api).sort()).toEqual(['cancelResolution', 'clearTarget', 'closeInput', 'inputStatus', 'onEvent', 'onProjectEvent',
+      'resolveTargets', 'selectTarget', 'sendInput', 'start', 'startProject', 'stop'])
     expect(await api.start(request)).toEqual({ ok: true, value: snapshot })
     expect(await api.start({ ...request, dirty: 'false' } as never)).toMatchObject({ ok: false })
     expect(transport.invoke).toHaveBeenCalledTimes(1)

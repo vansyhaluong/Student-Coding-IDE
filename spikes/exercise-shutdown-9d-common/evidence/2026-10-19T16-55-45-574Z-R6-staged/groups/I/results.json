@@ -1,0 +1,17 @@
+[
+  {
+    "name": "I01",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  },
+  {
+    "name": "I02",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  },
+  {
+    "name": "I03",
+    "status": "BLOCKED",
+    "reason": "Expected values to be strictly equal:\n\nnull !== 0\n"
+  }
+]

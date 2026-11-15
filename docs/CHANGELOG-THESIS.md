@@ -2,6 +2,174 @@
 
 This changelog records substantial work created for the independent Student Coding IDE. It does not claim Orca source or general IDE concepts as original implementation.
 
+## C# Project Run M2-06 — Windows 11 x64 Electron evidence (2026-11-15)
+
+- The C# Run Electron smoke now forwards line input and drives the Output
+  composer. On Windows 11 Home Single Language 10.0.26200 x64 it passed 60/60
+  cases, 30 on SDK 8.0.410 and 30 on SDK 10.0.112. Resources ended at 0 and
+  every native child was released. ReadLine accepted Unicode, a multiline
+  draft, an empty line, and EOF. Stop during ReadLine and during a blocked
+  8000-byte write both returned. Re-run dropped the unsent draft. Project
+  switch during ReadLine cleaned the session. Killing `dotnet run` ends that
+  host tree; killing direct `GateApp.exe` left its child in the job until close.
+- JavaScript Run, Terminal job/service, Git native, and C# native, workspace,
+  and language-acceptance smokes passed. `npm test` passed 1653/1653. Both
+  typechecks and `npm run build` passed. Full-workspace lint still fails in
+  preserved prototypes, spikes, and release, and is not claimed green.
+- Manual W cells were not run: physical typing, paste, IME, SDK uninstall,
+  a missing targeting pack, and closing the app during input. M2-06 and M2-07
+  are not COMPLETE. Overall C# Run stays IN_PROGRESS. Phase 7 packaging stays
+  NOT_STARTED.
+
+## C# Project Run M2-05 — Output line composer (2026-11-15)
+
+- Output now has Send, Enter, and EOF for a C# execute session that accepts
+  input. Shift+Enter and IME Enter do not send. A busy or rejected line stays
+  in the box and is not sent again automatically. EOF does not send the unsent
+  draft. JavaScript and build stay closed, including a no-writer EOF status.
+  Re-run drops the draft and ignores a late acknowledgement.
+- 5 composer tests plus the existing C# and JavaScript Output renderer tests
+  PASS. Both typechecks and scoped ESLint PASS. No full suite, production build,
+  or new Windows manual cell in this package.
+- M2-05 COMPLETE. M2-06 and M2-07 remain NOT_STARTED. Overall C# Run stays
+  IN_PROGRESS.
+
+## C# Project Run M2-04 — semantic input IPC (2026-11-15)
+
+- The Run bridge now sends a line, closes input, and reads input status. Preload
+  and Main both check the project, session, and sequence. JavaScript input is
+  rejected as `CAPABILITY_DENIED`. Transport failures hide the raw error. A late
+  acknowledgement after owner invalidation, or one for another project or session,
+  is not accepted.
+- 4 focused IPC tests and 273 related contract, IPC, preload, and renderer tests
+  PASS. Both typechecks and scoped ESLint PASS. Output still has no line composer.
+  No full suite or new Windows manual cell in this package.
+- M2-04 COMPLETE. M2-05 through M2-07 remain NOT_STARTED. Overall C# Run stays
+  IN_PROGRESS.
+
+## C# Project Run M2-03 — session input queue (2026-11-15)
+
+- RunService now keeps `writeInput` and `closeInput` and queues UTF-8 lines for the
+  C# execute step only. JavaScript and build stay closed. One session preserves
+  order, the 16 KiB / 64 KiB / 32 / 10-second limits, and a gate that closes
+  before Stop, exit, re-run, project switch, owner loss, and shutdown.
+- A full queue rejects the new submission and keeps accepted bytes. Duplicate
+  sequences are not written again. EOF follows accepted bytes and a repeated
+  close does not close the pipe twice. A write timeout stops the session.
+  A broken pipe closes input and leaves the process to its normal exit.
+- 11 focused queue tests and 141 Run regression tests PASS. Both typechecks and
+  scoped ESLint PASS. No IPC, preload, renderer, full suite, or new Windows
+  manual cell in this package.
+- M2-03 COMPLETE. M2-04 through M2-07 remain NOT_STARTED. Overall C# Run stays
+  IN_PROGRESS.
+
+## C# Project Run M2-02 — native Run stdin (2026-11-15)
+
+- Added a Run-only overlapped stdin pipe (`createRunInput`) with one asynchronous
+  UTF-8 write, a 16 KiB bound, ordered EOF, and Stop cancellation. JavaScript and
+  build still use closed `createRun`. The C# language writer and Git entry points
+  stay on their existing pipes.
+- The Windows adapter exposes optional `writeInput` and `closeInput`. Closed mode
+  rejects both. RunService still drops those methods until M2-03.
+- Native module rebuilt for Electron 44 / Windows x64. Input smoke PASS: repeated
+  Unicode, a 9000-byte write, idempotent EOF, broken pipe, one in-flight writer,
+  and Stop unblocking a full pipe as `cancelled`. Focused tests 12/12. Typecheck
+  and scoped ESLint PASS. No full suite, full-workspace lint, or new Windows
+  manual cells in this package.
+- M2-02 COMPLETE. M2-03 through M2-07 remain NOT_STARTED. Overall C# Run stays
+  IN_PROGRESS.
+
+## C# Project Run M2-01 — input contracts (2026-11-15)
+
+- Added lexical `sendInput` / `closeInput` contracts, line normalization, 16 KiB
+  UTF-8 bound, acknowledgements, and input status. JavaScript and C# build stay
+  closed. Only a C# execute step is described as line-input. No command or
+  process fields. Duplicate-sequence and session ownership remain Main checks.
+- 23 new contract tests and 129 focused contract tests PASS. Typecheck and scoped
+  ESLint PASS. No native, IPC, preload, renderer, or queue change.
+- M2-01 COMPLETE. M2-02 through M2-07 remain NOT_STARTED. Overall C# Run stays
+  IN_PROGRESS.
+
+## C# Project Run M1-12 — suite blocker resolved (2026-11-15)
+
+- Raised the Windows real-Git integration suite timeout to 20 seconds. Assertions
+  are unchanged. The file passes 32/32 alone and inside `npm test --maxWorkers=4`.
+- Excluded `prototypes/**` from Vitest collection. The untracked spike files stay
+  on disk. No C# Run product, IPC, preload, native, dependency, or ADR change.
+- `npm test` exits 0: 100 files, 1608/1608. Focused C# matrix 613/613. Typecheck,
+  production build, and `git diff --check` PASS. The existing Windows 11 x64
+  smoke remains 48/48 on SDK 8.0.410 and 10.0.112.
+- M1-12 is COMPLETE. Overall C# Run stays IN_PROGRESS. M2 stays NOT_STARTED.
+  Full-workspace lint was not re-run and is still the earlier unrelated failure
+  in preserved prototypes, spikes, and release. Unrun manual cells are not
+  claimed PASS.
+
+## C# Project Run M1-12 — acceptance re-check remains BLOCKED (2026-11-15)
+
+- Re-ran the core matrix without product changes. Focused C# Run tests: 613/613
+  across 22 files. Windows 11 x64 Electron 44 smoke: 24/24 on SDK 8.0.410 and
+  24/24 on SDK 10.0.112; owned resources and source leases returned to 0.
+- `npm run typecheck` and `npm run build` PASS. `npm test` FAIL: one parallel
+  Git integration timeout that passes 32/32 alone, plus six untracked prototype
+  files Vitest cannot collect. Full workspace lint remains the previously recorded
+  unrelated failure. Hard root kill, root-unavailable recovery, shutdown during
+  build, physical SDK removal, and a simultaneous Terminal/Git/language smoke
+  were not claimed.
+- M1-12 stays BLOCKED. Overall C# Run stays IN_PROGRESS. M2 stays NOT_STARTED.
+  No ADR, dependency, or execution-policy change.
+
+## C# Project Run M1-11 — re-verification (2026-11-15)
+
+- Rechecked the existing workspace target chooser, unified Run/Stop, project
+  Save-first guard, phase/failure Output, and JavaScript current-file path.
+  No product code, preload, Main, or ADR change in this pass.
+- Focused renderer tests PASS: C# UI 29/29, JavaScript Output integration 22/22,
+  source-guard 14/14. Typecheck, production build, scoped ESLint, and
+  `git diff --check` PASS. Full workspace lint still fails only in preserved
+  prototypes, spikes, and release files (2560 errors, 7 warnings).
+- The 2026-11-12 Electron/net8.0 UI smoke was not rerun. M1-11 remains COMPLETE.
+  M1-12 remains BLOCKED. M2 remains NOT_STARTED.
+
+## C# Project Run M1-12 - Core acceptance BLOCKED (2026-11-12)
+
+- Verified 24 distinct real Electron/native Core cases per SDK 8.0.410/net8.0 and
+  10.0.112/net10.0 on Windows 11 x64: selection/persistence/stale target, phases,
+  streams/exits, build/restore failures, Save-first/conflicts, all-phase Stop,
+  source invalidation, project/owner loss and retained cleanup/Retry Stop.
+  All successful cases release owned native children/leases; final resources 0.
+- Fixed one reproduced UI defect: rejected preflight output was erased by automatic
+  discovery. Retain the error until explicit refresh and invalidate stale READY.
+  Added a failing-then-passing UI regression; 65 focused UI/source-guard tests PASS.
+  Corrected only CommonJS lint metadata in the existing C# mockup runner.
+- JS production UI/native smoke PASS (8 sessions, 5 re-runs, Stop, streams,
+  Output tabs, exits 0/7). Final npm test: 1608 tests/100 project files PASS,
+  command FAIL due to 6 untracked prototype collection failures. Typecheck/build
+  PASS. Full lint FAIL: 2560 errors/7 warnings in preserved unrelated files;
+  supplementary tracked/addition scope 358 files has 0 errors. Diff check PASS.
+- Added Core smoke script and updated existing plan/map/capability docs only;
+  raw evidence remains in out/m1-12. No separate report, ADR/dependency change,
+  Learning/AI/Terminal/Language Server change, release change or Git publication.
+- M1-12/Milestone 1 BLOCKED: full-workspace gates and explicitly listed fresh
+  Windows manual evidence are not complete. Overall C# Run IN_PROGRESS; M2 is
+  NOT_STARTED. No stdin/ReadLine or packaged/installer acceptance claim.
+
+## C# Project Run M1-11 — Workspace UI (2026-11-12)
+
+- Extended the existing Run toolbar/controller and Output using M1-10 typed APIs;
+  added a compact shared-Dialog target chooser. Main retains target authority and
+  persistence. Single/multiple/no-target, stale/recovered choices, dirty/conflict
+  Save-first checks, no-editor Run, Stop/Re-run and JS compatibility are covered.
+- Added phase separators, build/runtime failure and exit results, early queued Stop,
+  retained cleanup retry, discovery cancellation and stale activation/session/target
+  rejection. No auto-save, second execution mechanism, dependency or ADR change.
+- 288 focused tests/10 files PASS; final UI regression run 28/28 PASS (289 distinct
+  cases across runs). Scoped typecheck/lint/build PASS; real Electron/net8.0 UI smoke
+  seven sessions PASS, including Stop in all three phases and zero remaining owned
+  resources. Narrow 900px dialog and both themes visually inspected.
+- M1-11 COMPLETE only. M1-12, Console.ReadLine/stdin (M2) and release work remain
+  outside this task. Existing unrelated untracked work is preserved; no full suite,
+  separate report, commit, push or merge.
+
 ## C# Run pre-UI R2 — Public selection diagnostics (2026-10-08)
 
 - Extended existing C# resolution DTO with optional selectionDiagnostic containing

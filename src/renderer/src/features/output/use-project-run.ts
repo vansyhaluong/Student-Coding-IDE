@@ -19,7 +19,7 @@ export function useProjectRun(project: ProjectIdentity | null, unavailable: bool
     const disconnectGuard = sourceGuard.connect()
     // Immediate event-boundary invalidation, before React commits the new project.
     const removeProject = window.studentIde.project.onChanged(({ activeProject }) => {
-      controller.activateProject(activeProject?.id ?? null)
+      controller.activateProject(activeProject?.id ?? null, true)
       sourceGuard.activateProject(activeProject?.id ?? null)
       sourceGuard.setAvailable(!!activeProject)
     })

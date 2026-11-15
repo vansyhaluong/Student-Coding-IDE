@@ -1,0 +1,56 @@
+{
+  "startedBaseline": {
+    "branch": "feature/phase-9a-learning-mode",
+    "commit": "11c71a0f0ebd90f76606a5297c5f16ba4b5427ac"
+  },
+  "environment": {
+    "node": "v24.16.0",
+    "sdk": "10.0.112",
+    "inventory": "8.0.410 [C:\\Program Files\\dotnet\\sdk]\r\n9.0.314 [C:\\Program Files\\dotnet\\sdk]\r\n10.0.112 [C:\\Program Files\\dotnet\\sdk]\r\n",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "records": [
+    {
+      "name": "B: root exited while descendant remains; Job-wide cancellation cleans child",
+      "started": "2026-10-19T13:22:21.364Z",
+      "beforeRootExit": {
+        "root": 16848,
+        "child": 6132,
+        "members": [
+          16848,
+          29900,
+          6132
+        ],
+        "additionalProcesses": [
+          {
+            "pid": 29900,
+            "image": "C:\\Windows\\System32\\conhost.exe"
+          }
+        ]
+      },
+      "preCleanup": {
+        "rootExited": true,
+        "childAlive": true,
+        "learningJobActiveProcesses": 1,
+        "jobReleased": false,
+        "members": [
+          6132
+        ],
+        "membershipEvidence": "Direct QueryInformationJobObject on the owned Learning Job handle"
+      },
+      "status": "FAIL",
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n\ntrue !== false\n"
+      },
+      "elapsedMs": 600
+    },
+    {
+      "name": "E: tracked source/config/data and existing Project build artifacts unchanged",
+      "status": "PASS",
+      "changed": [],
+      "checkedFiles": 494
+    }
+  ]
+}

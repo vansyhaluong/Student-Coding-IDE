@@ -443,11 +443,13 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `IN_PROGRESS` with M1-01 through M1-10 (including M1-09a) COMPLETE, including native
+the extension is `IN_PROGRESS` with M1-01 through M1-12 (including M1-09a) COMPLETE, including native
 argv, compatibility evidence, Run SDK/evaluation and target discovery/classification.
+M1-12 Core acceptance is `COMPLETE`. M2-01 through M2-05 are `COMPLETE`. M2-06 automated Windows 11 x64 Electron evidence PASS; manual W cells were not run, so M2-06 and M2-07 are not COMPLETE.
 M1-07 selection/persistence, M1-08 lifecycle, M1-09a source guard and M1-09 C# strategy
-composition are implemented in Main. M1-10 typed IPC/Preload is implemented;
-M1-11 C# Run presentation remains `NOT_STARTED`.
+composition are implemented in Main. M1-10 typed IPC/Preload is implemented.
+M1-11 presents compact target choice, project Save-first checks, and phase/failure
+output in the existing Run toolbar and Output panel.
 The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
@@ -460,7 +462,8 @@ under the 2026-10-07 ADR-024 platform amendment. Windows 10 is outside the verif
 C# Project Run acceptance baseline. Compatibility is not claimed. Other IDE
 Windows 10/11 and Phase 7 packaging obligations remain unchanged. Native process
 ownership, two-step execution, stdin feasibility and fail-closed cleanup retain
-their accepted design. Production C# Run and Console input remain unimplemented.
+their accepted design. Production C# strategy, typed IPC, and M1-11 Run presentation
+are implemented. Typed input IPC and the Output line composer are implemented. Milestone 2 acceptance remains outstanding.
 
 M1-01 compatibility baseline: additive SemanticRunTarget/SemanticStartRunRequest,
 SemanticRunSession and resolution/failure DTOs are validated separately. The live
@@ -869,10 +872,19 @@ JS/Git/LSP entry points compatible; a dedicated Run entry/writer may reuse the
 internal pipe/Job primitives but never LSP sessions or language-process factories.
 Argument limits must respect CreateProcess command-line limits and fail safely.
 
+M2-02 implements that native mode. `createRunInput` is a Run-only overlapped
+stdin pipe with one in-flight UTF-8 write, ordered EOF, and Stop cancellation.
+`createRun` remains the closed default. The adapter exposes `writeInput` and
+`closeInput` only as Main-owned process methods. M2-03 forwards those methods
+from both RunService wrappers and queues them for the C# execute step. M2-04
+exposes that queue through typed `sendInput`, `closeInput`, and `inputStatus`.
+M2-05 composes those calls in Output for a C# execute session whose capability
+accepts input. JavaScript and build stay hidden.
+
 Native writes run asynchronously off the JS thread, ordered with one write in
-flight per session. PipedRunProcess gains optional Main-only stdin writing/closure;
-RunService's wrapper must forward this capability (it currently forwards only
-close/ownership). Creation-time Windows Job assignment remains atomic. Pending
+flight per session. PipedRunProcess has optional Main-only stdin writing/closure.
+RunService forwards that capability and owns the per-session queue. Creation-time
+Windows Job assignment remains atomic. Pending
 writes and callback references participate in resource finalization; Stop must
 cancel/unblock a blocked pipe without waiting forever for a read.
 

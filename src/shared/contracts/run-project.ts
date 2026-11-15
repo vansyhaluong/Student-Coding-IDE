@@ -2,9 +2,10 @@ import type { AppResult } from './app-error'
 import { isProjectId, type ProjectId } from './project'
 import { validateExactObject, type ValidationResult } from './validation'
 import { validateCSharpRunTargetResolution, validateRunFailure, validateSemanticRunSession,
-  validateSemanticRunTarget, validateSemanticStartRunRequest, type CSharpProjectRunTarget,
-  type CSharpRunTargetResolution, type RunFailure, type SemanticRunSession,
-  type SemanticStartRunRequest } from './run'
+  validateSemanticRunTarget, validateSemanticStartRunRequest, type CloseRunInputRequest,
+  type CSharpProjectRunTarget, type CSharpRunTargetResolution, type RunFailure,
+  type RunInputAcknowledgement, type RunInputStatus, type RunInputStatusRequest,
+  type SemanticRunSession, type SemanticStartRunRequest, type SendRunInputRequest } from './run'
 
 export const RUN_PROJECT_CHANNELS = { resolve: 'run:resolve-targets', select: 'run:select-target',
   clear: 'run:clear-target', cancel: 'run:cancel-resolution', start: 'run:start-project', event: 'run:project-event' } as const
@@ -29,6 +30,9 @@ export interface ProjectRunApi {
   clearTarget(request: RunProjectRequest): Promise<AppResult<CSharpRunTargetResolution>>
   cancelResolution(request: RunProjectRequest): Promise<AppResult<null>>
   startProject(request: CSharpStartRunRequest): Promise<AppResult<CSharpRunSession>>
+  sendInput(request: SendRunInputRequest): Promise<AppResult<RunInputAcknowledgement>>
+  closeInput(request: CloseRunInputRequest): Promise<AppResult<RunInputAcknowledgement>>
+  inputStatus(request: RunInputStatusRequest): Promise<AppResult<RunInputStatus>>
   onProjectEvent(listener: (event: ProjectRunEvent) => void): () => void
 }
 const invalid = (): ValidationResult<never> => ({ ok: false, issues: [{ path: '$', message: 'Invalid C# Run payload' }] })

@@ -1,0 +1,193 @@
+{
+  "hostPid": 34464,
+  "electron": "44.0.0",
+  "node": "24.18.1",
+  "mode": "suite",
+  "runRoot": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\host-suite-b49a4128-cdea-4218-8b24-1e722c28f2fb",
+  "trace": [
+    "normal:spawn:execute",
+    "normal:cancel",
+    "normal:barrier",
+    "normal:root-exit:1",
+    "normal:clean",
+    "learning-failure:spawn:execute",
+    "learning-failure:cancel",
+    "learning-failure:barrier",
+    "learning-failure:barrier",
+    "learning-failure:root-exit:1",
+    "learning-failure:clean",
+    "project-failure:spawn:execute",
+    "project-failure:cancel",
+    "project-failure:root-exit:1",
+    "project-failure:clean",
+    "project-failure:barrier",
+    "project-pending:spawn:execute",
+    "project-pending:cancel",
+    "project-pending:root-exit:1",
+    "project-pending:clean",
+    "project-pending:barrier",
+    "approval:spawn:execute",
+    "approval:cancel",
+    "approval:barrier",
+    "approval:root-exit:1",
+    "approval:clean",
+    "idempotent:spawn:execute",
+    "idempotent:cancel",
+    "idempotent:cancel",
+    "idempotent:barrier",
+    "idempotent:barrier",
+    "idempotent:root-exit:1",
+    "idempotent:clean",
+    "phase-prepare:spawn:prepare",
+    "phase-prepare:cancel",
+    "phase-prepare:root-exit:1",
+    "phase-prepare:clean",
+    "phase-compile:spawn:compile",
+    "phase-compile:cancel",
+    "phase-compile:root-exit:1",
+    "phase-compile:clean",
+    "phase-execute:spawn:execute",
+    "phase-execute:cancel",
+    "phase-execute:root-exit:1",
+    "phase-execute:clean",
+    "timeout:spawn:execute",
+    "timeout:cancel",
+    "timeout:root-exit:1",
+    "timeout:clean",
+    "descendant:spawn:execute",
+    "descendant:root-exit:0"
+  ],
+  "records": [
+    {
+      "name": "A: graceful IDE quit with running Exercise; Project order then Learning then Window",
+      "started": "2026-10-19T13:01:26.860Z",
+      "order": [
+        "project",
+        "window"
+      ],
+      "trace": [
+        "normal:spawn:execute",
+        "normal:cancel",
+        "normal:barrier",
+        "normal:root-exit:1",
+        "normal:clean"
+      ],
+      "stoppingEvents": 1,
+      "finalQuitCalls": 1,
+      "status": "PASS",
+      "elapsedMs": 145
+    },
+    {
+      "name": "A: Learning cleanup rejection does not block Project; retry without STOPPING replay",
+      "started": "2026-10-19T13:01:27.014Z",
+      "projectStops": 1,
+      "windowStops": 1,
+      "stoppingEvents": 1,
+      "trace": [
+        "learning-failure:spawn:execute",
+        "learning-failure:cancel",
+        "learning-failure:barrier",
+        "learning-failure:barrier",
+        "learning-failure:root-exit:1",
+        "learning-failure:clean"
+      ],
+      "status": "PASS",
+      "elapsedMs": 82
+    },
+    {
+      "name": "A: Project rejects before Learning barrier; background cancellation still cleans",
+      "started": "2026-10-19T13:01:27.098Z",
+      "projectAttempts": 2,
+      "stoppingEvents": 1,
+      "backgroundCleanBeforeBarrier": true,
+      "status": "PASS",
+      "elapsedMs": 154
+    },
+    {
+      "name": "A: Project pending before Learning; background cleanup and shared shutdown promise",
+      "started": "2026-10-19T13:01:27.255Z",
+      "cleanedWhileProjectPending": true,
+      "status": "PASS",
+      "elapsedMs": 81
+    },
+    {
+      "name": "A: cancelled close approval does not cancel Exercise; later approved quit works",
+      "started": "2026-10-19T13:01:27.338Z",
+      "approvals": 2,
+      "quits": 1,
+      "status": "PASS",
+      "elapsedMs": 108
+    },
+    {
+      "name": "A: concurrent cancellation/stop idempotent; no new spawn after shutdown",
+      "started": "2026-10-19T13:01:27.448Z",
+      "spawns": 1,
+      "status": "PASS",
+      "elapsedMs": 46
+    },
+    {
+      "name": "B: cancellation at prepare owned-process boundary",
+      "started": "2026-10-19T13:01:27.496Z",
+      "pid": 24648,
+      "scope": "Controlled long-running Node phase fixture; real C# compiler checked separately",
+      "status": "PASS",
+      "elapsedMs": 38
+    },
+    {
+      "name": "B: cancellation at compile owned-process boundary",
+      "started": "2026-10-19T13:01:27.535Z",
+      "pid": 34692,
+      "scope": "Controlled long-running Node phase fixture; real C# compiler checked separately",
+      "status": "PASS",
+      "elapsedMs": 39
+    },
+    {
+      "name": "B: cancellation at execute owned-process boundary",
+      "started": "2026-10-19T13:01:27.575Z",
+      "pid": 30080,
+      "scope": "Controlled long-running Node phase fixture; real C# compiler checked separately",
+      "status": "PASS",
+      "elapsedMs": 47
+    },
+    {
+      "name": "B: real C# prepare/compile/execute cancellation using installed SDK10",
+      "started": "2026-10-19T13:01:27.623Z",
+      "phases": [
+        {
+          "phase": "prepare",
+          "stopped": true,
+          "resources": 0
+        },
+        {
+          "phase": "compile",
+          "stopped": true,
+          "resources": 0
+        },
+        {
+          "phase": "execute",
+          "stopped": true,
+          "resources": 0
+        }
+      ],
+      "status": "PASS",
+      "elapsedMs": 11286
+    },
+    {
+      "name": "B: infinite loop stopped by experimental timeout",
+      "started": "2026-10-19T13:01:38.910Z",
+      "experimentalTimeoutMs": 150,
+      "status": "PASS",
+      "elapsedMs": 201
+    },
+    {
+      "name": "B: root exited while descendant remains; Job-wide cancellation cleans child",
+      "started": "2026-10-19T13:01:39.113Z",
+      "status": "FAIL",
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n\nfalse !== true\n"
+      },
+      "elapsedMs": 734
+    }
+  ]
+}

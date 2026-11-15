@@ -1,0 +1,33 @@
+{
+  "name": "R10 RAM and timeout validation; production policy not approved",
+  "runsPerVariant": 1,
+  "stopOnUnexpectedFailure": true,
+  "probeMs": 10000,
+  "compileMs": 30000,
+  "executeMs": 2000,
+  "operationMs": 60000,
+  "cleanupMs": 12000,
+  "observationMs": 10000,
+  "watchdogMs": 180000,
+  "pollMs": 15,
+  "compileQuotaBytes": 2147483648,
+  "executeQuotaBytes": 536870912,
+  "lowQuotaBytes": 67108864,
+  "runtimeTestQuotaBytes": 268435456,
+  "compileTimeoutTrialMs": 2000,
+  "variants": ["T1-csharp-first", "T1-csharp-next", "T1-javascript-first", "T1-javascript-next", "T2-csharp", "T2-javascript", "T3-csharp", "T4-root", "T4-tree", "T5-csharp", "T5-javascript", "T6-timeout-terminate", "T6-memory-finalized", "T7-phase", "T7-operation", "T7-pending-io"],
+  "assertions": [
+    "Job quota set and read back before CreateProcess; no RSS-based quota claim",
+    "T1 correct result and no memory event; initial vs subsequent launch, not OS cold-cache guarantee",
+    "T2 deadline from launch is 2000ms, retained root and child must terminate through PolicySession",
+    "T3 actual installed csc.dll invocation still PENDING at compile timeout; otherwise NOT_OBSERVED",
+    "T4 native commit denial below safety ceiling plus Job memory-limit event is required for PASS",
+    "T5 managed/Buffer allocation 64MiB retained in runtime root; native child commits up to 320MiB, denies at aggregate 256MiB Job cap; unknown cause is NOT_OBSERVED",
+    "T6 planned failure and one stage-aware retry only; no false clean state",
+    "T7 phase 500ms vs operation 1500ms; operation 750ms vs phase 2000ms; cleanup caller deadline 200ms with tracked pending FINALIZED IO and explicit release; no pending-task abandonment",
+    "T2 T5 T6 actual Project Run stdout and PTY markers before and after cancellation/retry",
+    "Watchdog firing or unexpected assertion failure is FAIL; remaining variants BLOCKED",
+    "Independent controller retains process handles and creation identities, never a Job handle",
+    "Observed timeout overshoot is reported, not hidden by extending deadlines"
+  ]
+}

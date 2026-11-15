@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "protectedFiles": 1103,
+  "changed": [],
+  "sourceChangedAfterRun": [],
+  "sourceHashes": {
+    "allocator.cpp": "ffa13336070cd907eb6b8add7b21d38e06074662e9d24861867ad707d0d6fd0d",
+    "build.mjs": "24c91ebcb77779804549ae01d94e19fedb9557f96fa18ae3d0b63b8321405c5d",
+    "host.ts": "f915d4dcb96ddbcf4e5ece520b2d9f5071bcd99b3c90b9ad5ab0c5f008801c07",
+    "native.inc": "6ab79833a29846259db5db3e9835a4632f029b326fbec3f92d1732ce572ceae3",
+    "plan.json": "69e5701b2a7f82f7fe37e30a6e88804603c754240c100bbf94d0b4278071eb9c",
+    "prepare-fix.mjs": "acafa8032929cbb0ae5c39da3aee64dcb75fc64c22e7879f757a88ab86416c89",
+    "prepare.mjs": "bec1397f3986ec9ad52821a4860eff7cbd5edf9c4d6df36a7d7595d02f9fd62c",
+    "run.mjs": "8118f6f6f32dbc9f0eb3d406e7e707cbdf4df5ba3ffb3a24745eedce8e5033f7"
+  },
+  "priorEvidence": "R1-R10 unchanged; R11 existing artifacts also unchanged",
+  "policyBQuotaPlanHostAndProduction": "UNCHANGED",
+  "functionalCases": [
+    "T5-csharp"
+  ],
+  "selectedChangedSourceLint": "PASS",
+  "strictCppBuild": "PASS",
+  "typecheck": "PASS",
+  "fullLint": {
+    "status": "FAIL",
+    "errors": 756,
+    "archiveErrors": 698,
+    "modifiedJsErrors": 0,
+    "unchangedLiveSourceErrors": 58,
+    "targetedChangedJs": "PASS",
+    "cppValidation": "MSVC /W4 /WX build PASS; no standalone C++ linter claimed"
+  },
+  "productionBuildTests": "NOT_RUN"
+}

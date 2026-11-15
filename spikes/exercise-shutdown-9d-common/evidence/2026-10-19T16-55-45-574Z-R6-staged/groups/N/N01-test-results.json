@@ -1,0 +1,66 @@
+{
+  "hostPid": 25720,
+  "embeddedNode": "24.18.1",
+  "electron": "44.0.0",
+  "id": "N01",
+  "records": [
+    {
+      "name": "N01",
+      "started": "2026-10-19T17:11:47.617Z",
+      "monotonicStart": 241.61,
+      "session": {
+        "owner": "exercise:6cf4c968-1c8a-4f88-ad29-0d857b93e7d0",
+        "sessionId": "6cf4c968-1c8a-4f88-ad29-0d857b93e7d0",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\N01-test\\learning\\sessions\\session-6cf4c968-1c8a-4f88-ad29-0d857b93e7d0",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\N01-test\\learning\\dispositions\\6cf4c968-1c8a-4f88-ad29-0d857b93e7d0.json",
+        "disposition": null,
+        "proof": null,
+        "nativeStage": "OWNED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "RETAINED",
+        "checkpoint": "OWNED",
+        "lastError": null,
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": false,
+        "released": false,
+        "managerResources": 0,
+        "counters": {
+          "spawn": 0,
+          "query": 0,
+          "terminate": 0,
+          "release": 0,
+          "handlesClosed": 0,
+          "delete": 0
+        },
+        "phase": "execute",
+        "rootPid": 0,
+        "retained": [],
+        "coverageGaps": [],
+        "output": "",
+        "exitCode": null,
+        "timeline": [
+          {
+            "event": "checkpoint-acknowledged",
+            "monotonicMs": 281.4356,
+            "elapsedMs": 38.813799999999986,
+            "checkpoint": "OWNED"
+          },
+          {
+            "event": "launch-rejected-before-session",
+            "monotonicMs": 304.9422,
+            "elapsedMs": 62.309499999999986,
+            "error": "Injected Job creation failure"
+          },
+          {
+            "event": "lease-released",
+            "monotonicMs": 305.6128,
+            "elapsedMs": 62.9838
+          }
+        ]
+      },
+      "status": "PASS",
+      "elapsedMs": 64.16269999999997
+    }
+  ]
+}

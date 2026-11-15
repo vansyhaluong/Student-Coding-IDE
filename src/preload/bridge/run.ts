@@ -1,6 +1,7 @@
-import { RUN_CHANNELS, validateRunEvent, validateRunSession,
-  validateStartRunRequest, validateStopRunRequest, type RunApi,
-  type RunSession } from '../../shared/contracts/run'
+import { RUN_CHANNELS, RUN_INPUT_CHANNELS, validateCloseRunInputRequest, validateRunEvent,
+  validateRunInputAcknowledgement, validateRunInputStatus, validateRunInputStatusRequest,
+  validateRunSession, validateSendRunInputRequest, validateStartRunRequest, validateStopRunRequest,
+  type RunApi, type RunInputAcknowledgement, type RunInputStatus, type RunSession } from '../../shared/contracts/run'
 import type { AppResult } from '../../shared/contracts/app-error'
 import type { IpcRendererLike } from './lifecycle'
 import { invokeSafely } from './invoke'
@@ -79,6 +80,36 @@ export function createRunBridge(ipc: IpcRendererLike): RunApi {
           return result.ok && result.value.projectId === valid.value.projectId
             && result.value.relativePath === valid.value.relativePath
         }, RUN_PROJECT_CHANNELS.start)
+    },
+    async sendInput(request) {
+      const valid = validateSendRunInputRequest(request)
+      if (!valid.ok) return invalid()
+      return parseProjectResult(await invokeSafely(ipc, RUN_INPUT_CHANNELS.send, valid.value),
+        (value): value is RunInputAcknowledgement => {
+          const result = validateRunInputAcknowledgement(value)
+          return result.ok && result.value.projectId === valid.value.projectId
+            && result.value.sessionId === valid.value.sessionId && result.value.sequence === valid.value.sequence
+        }, RUN_INPUT_CHANNELS.send)
+    },
+    async closeInput(request) {
+      const valid = validateCloseRunInputRequest(request)
+      if (!valid.ok) return invalid()
+      return parseProjectResult(await invokeSafely(ipc, RUN_INPUT_CHANNELS.close, valid.value),
+        (value): value is RunInputAcknowledgement => {
+          const result = validateRunInputAcknowledgement(value)
+          return result.ok && result.value.projectId === valid.value.projectId
+            && result.value.sessionId === valid.value.sessionId && result.value.sequence === valid.value.sequence
+        }, RUN_INPUT_CHANNELS.close)
+    },
+    async inputStatus(request) {
+      const valid = validateRunInputStatusRequest(request)
+      if (!valid.ok) return invalid()
+      return parseProjectResult(await invokeSafely(ipc, RUN_INPUT_CHANNELS.status, valid.value),
+        (value): value is RunInputStatus => {
+          const result = validateRunInputStatus(value)
+          return result.ok && result.value.projectId === valid.value.projectId
+            && result.value.sessionId === valid.value.sessionId
+        }, RUN_INPUT_CHANNELS.status)
     },
     onProjectEvent(listener) {
       const wrapped = (_event: unknown, value: unknown) => {

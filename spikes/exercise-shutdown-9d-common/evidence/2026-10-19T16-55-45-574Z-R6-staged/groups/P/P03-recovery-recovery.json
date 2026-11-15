@@ -1,0 +1,50 @@
+{
+  "hostPid": 34092,
+  "action": "QUARANTINED",
+  "record": {
+    "schemaVersion": 2,
+    "sessionId": "581db0dc-91a1-4b2f-bbee-8776213649a2",
+    "owner": "exercise:581db0dc-91a1-4b2f-bbee-8776213649a2",
+    "hostEpoch": "5cda62bd-f4ce-4ea5-b537-eb3f3551f93e",
+    "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\P03-crash\\learning",
+    "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-19T16-55-45-574Z-R6-staged\\P03-crash\\learning\\sessions\\session-581db0dc-91a1-4b2f-bbee-8776213649a2",
+    "workspaceIdentity": {
+      "dev": "40663377",
+      "ino": "1407374883756674",
+      "birthtimeNs": "1792429906033250800"
+    },
+    "checkpoint": "RELEASE_READY",
+    "revision": 1,
+    "proof": {
+      "kind": "HISTORY_UNVERIFIED",
+      "allRetainedSignaled": true,
+      "jobEmpty": true,
+      "observerSettled": true,
+      "unresolvedErrors": 0,
+      "retained": [
+        {
+          "pid": 24792,
+          "member": true,
+          "created": "31285228:3952900145",
+          "root": true,
+          "image": "C:\\Program Files\\nodejs\\node.exe",
+          "signaled": true,
+          "closed": false
+        }
+      ],
+      "accounting": {
+        "totalProcesses": 4,
+        "activeProcesses": 0,
+        "limitTerminations": 0
+      },
+      "coverageGaps": []
+    },
+    "finalized": false,
+    "nativeStage": "OWNED",
+    "processClean": false,
+    "cleanupComplete": false,
+    "workspaceState": "QUARANTINED"
+  },
+  "processClean": false,
+  "cleanupComplete": false
+}

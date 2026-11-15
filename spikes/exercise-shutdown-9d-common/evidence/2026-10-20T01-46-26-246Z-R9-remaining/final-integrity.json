@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "protectedFiles": 852,
+  "changed": [],
+  "added": [],
+  "sourceChanges": [
+    "REPORT.md",
+    "staged-run.mjs"
+  ],
+  "priorEvidence": "R1-R8 unchanged in protected inventory",
+  "hostRuntimePolicyNativeBuildSources": "UNCHANGED",
+  "selectedSlots": [
+    "C03",
+    "C04",
+    "W01",
+    "W02",
+    "W03",
+    "W04",
+    "W05",
+    "I01",
+    "I02",
+    "I03"
+  ],
+  "eachRunOnce": true,
+  "allPreviouslyBlocked": true,
+  "watchdogExpired": false,
+  "build": {
+    "status": "PASS",
+    "attempts": 1
+  },
+  "typecheck": "PASS",
+  "fullLint": {
+    "status": "FAIL",
+    "diagnostics": 469,
+    "log": "lint.log"
+  },
+  "controllerSyntax": "PASS",
+  "gitDiffCheck": "PASS",
+  "changedSourceWhitespace": "PASS",
+  "productionBuildAndTests": "NOT_RUN",
+  "production9DStatus": "NOT_STARTED",
+  "productionAuthorized": false
+}

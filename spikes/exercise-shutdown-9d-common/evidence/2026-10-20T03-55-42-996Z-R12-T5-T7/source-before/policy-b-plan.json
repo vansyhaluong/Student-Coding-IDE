@@ -1,0 +1,26 @@
+{
+  "name": "R5 installed-runtime policy-B feasibility",
+  "productionPolicyApproved": false,
+  "functionalSlots": 21,
+  "runsPerSlot": 1,
+  "cleanupDeadlineMs": 12000,
+  "pollMs": 15,
+  "negativeUnresolvedDeadlineMs": 150,
+  "compileDeadlineMs": 30000,
+  "stopOnUnexpectedFailure": true,
+  "slots": [
+    "node-cold", "node-warm", "csharp-cold", "csharp-warm", "root-first",
+    "short-natural-1", "short-natural-2", "short-held-1", "short-held-2",
+    "race-0", "race-15", "race-30", "race-60",
+    "failed-association", "history-restart",
+    "deny-unsignaled", "deny-member", "deny-query", "deny-ownership", "deny-native", "deny-record"
+  ],
+  "notes": [
+    "No repetition until PASS. A missing natural timing phenomenon is NOT_OBSERVED.",
+    "Held-tree fixtures deliberately isolate tracker historical gaps; external observer handles establish actual termination separately.",
+    "Restart requires a new Electron Main PID, not a new function in the same host.",
+    "Old 16 blocked scenarios, hard-crash suite and live Project UI regression are not executed.",
+    "Fault-seam negatives distinguish expected policy rejection from unexpected test FAIL.",
+    "Accounting mismatch is diagnostic only; HISTORY_UNVERIFIED never receives PROCESS_CLEAN or CLEANUP_COMPLETE."
+  ]
+}

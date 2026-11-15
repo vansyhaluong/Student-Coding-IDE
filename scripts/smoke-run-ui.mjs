@@ -57,6 +57,7 @@ async function smoke() {
     await wait(`document.querySelector('[aria-label="Run"]:not(:disabled)')`)
     await click('[aria-label="Run"]')
     await wait(`document.querySelector('.output-log')?.textContent.includes('ready') && document.querySelector('[aria-label="Run again"]:not(:disabled)')`)
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Console input"]')`), null)
     // Re-run repeatedly through the built Renderer and narrow production Preload.
     // Each next session is observed only after Main fully releases its predecessor.
     const reRunCycles = 6

@@ -1,0 +1,1 @@
+https://github.com/ionide/LanguageServerProtocol/blob/main/LICENSE.md
