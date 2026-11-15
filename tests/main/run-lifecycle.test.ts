@@ -1,3 +1,4 @@
+import { JavaScriptRunStrategy } from '../../src/main/services/run/javascript-run-strategy'
 import { win32 } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { RunService } from '../../src/main/services/run/run-service'
@@ -7,6 +8,7 @@ import { isRunSessionId, validateRunEvent, type RunEvent, type RunSessionId,
   type StartRunRequest } from '../../src/shared/contracts/run'
 import type { ProjectId } from '../../src/shared/contracts'
 import type { PipedProcessEvent, PipedRunProcess } from '../../src/main/services/run/piped-process-adapter'
+import type { RunStrategy } from '../../src/main/services/run/run-strategy'
 
 function deferred<T = void>() {
   let resolve!: (value: T | PromiseLike<T>) => void
@@ -16,7 +18,7 @@ function deferred<T = void>() {
 const projectId = 'project_1234567890abcdef12345678' as ProjectId
 const request: StartRunRequest = { projectId, relativePath: 'main.js', dirty: false }
 
-function setup() {
+function setup(strategy: RunStrategy = new JavaScriptRunStrategy()) {
   const events: RunEvent[] = []
   const waiters = new Set<(event: RunEvent) => void>()
   const manager = new ProcessManager()
@@ -66,7 +68,7 @@ function setup() {
     events.push(event)
     for (const waiter of waiters) waiter(event)
   })
-  const service = new RunService(authority, { adapter, manager, onEvent: sink })
+  const service = new RunService(authority, [strategy], { adapter, manager, onEvent: sink })
   function waitFor(predicate: (event: RunEvent) => boolean): Promise<RunEvent> {
     const existing = events.find(predicate)
     if (existing) return Promise.resolve(existing)
@@ -295,6 +297,36 @@ describe('Phase 4C Stop and cleanup ownership', () => {
 })
 
 describe('Phase 4C re-run, concurrency and stale protection', () => {
+  it('M1-02 serializes aliases and reruns by target even with a shared non-target first argument', async () => {
+    const js = new JavaScriptRunStrategy()
+    const h = setup({ kind: js.kind, supports: target => js.supports(target),
+      prepare: (target, runtime) => ({ ...js.prepare(target, runtime), args: ['--fixed', target.canonicalFile] }) })
+    const a = await h.service.startRun(request, 7)
+    const other = await h.service.startRun({ ...request, relativePath: 'other.js' }, 7)
+    expect(h.manager.size).toBe(2)
+    const replacement = await h.service.startRun({ ...request, relativePath: 'MAIN.js' }, 7)
+    expect(h.service.getSession(a.sessionId, 7).state).toBe('CANCELLED')
+    expect(h.service.getSession(other.sessionId, 7).state).toBe('RUNNING')
+    expect(replacement.sessionId).not.toBe(a.sessionId)
+    expect(h.manager.size).toBe(2)
+    await h.service.stop()
+    expect(h.manager.size).toBe(0)
+  })
+
+  it.each([2, 3])('M1-02 rejects runtime fingerprint drift at resolution %s and permits fresh retry', async stage => {
+    const h = setup()
+    let call = 0
+    h.authority.resolveRuntime.mockImplementation(async () => ({
+      executable: ++call === stage ? 'C:\\changed\\node.exe' : 'C:\\node\\node.exe',
+    }))
+    await expect(h.service.startRun(request, 7)).rejects.toMatchObject({ code: 'INVALID_INPUT' })
+    expect(h.adapter.create).not.toHaveBeenCalled()
+    expect(h.manager.size).toBe(0)
+    const next = await h.service.startRun(request, 7)
+    await h.service.stopRun(next.sessionId, 7)
+    expect(h.manager.size).toBe(0)
+  })
+
   it('fully cleans A before B is created and rejects every late A event', async () => {
     const h = setup(); h.manual()
     const a = await h.service.startRun(request, 7)

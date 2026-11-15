@@ -1,0 +1,24 @@
+{
+  "hostPid": 29276,
+  "record": {
+    "schemaVersion": 1,
+    "disposition": "HISTORY_UNVERIFIED",
+    "finalized": true,
+    "processClean": false,
+    "cleanupComplete": false,
+    "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\policy-b\\2026-10-19T16-31-46-833Z-R5-policy-b-suite-8452fe1e-4113-468b-b328-0bf31e70e9f9\\sessions\\session-sU8naF",
+    "owner": "exercise:fd59b8e7-a9af-41d6-a097-369d08b35a1c",
+    "rootPid": 33332,
+    "accounting": {
+      "totalProcesses": 4,
+      "activeProcesses": 0,
+      "limitTerminations": 0
+    },
+    "records": 1,
+    "coverageGaps": [],
+    "knownHandlesSignaled": true,
+    "jobEmpty": true
+  },
+  "workspacePreserved": true,
+  "action": "quarantined; no delete, no PID lookup or killing"
+}

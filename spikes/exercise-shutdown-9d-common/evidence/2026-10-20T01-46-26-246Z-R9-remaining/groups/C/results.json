@@ -1,0 +1,389 @@
+[
+  {
+    "name": "C03",
+    "started": "2026-10-20T01:48:14.540Z",
+    "status": "PASS",
+    "timeline": [
+      {
+        "event": "observer-retained",
+        "monotonicMs": 14452.614,
+        "pid": 29556,
+        "member": true,
+        "created": "31285301:375274504",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 14452.6538,
+        "pid": 29928,
+        "member": true,
+        "created": "31285301:375670359",
+        "image": "C:\\Windows\\System32\\conhost.exe"
+      },
+      {
+        "event": "hard-kill-requested",
+        "monotonicMs": 14453.3217
+      },
+      {
+        "event": "all-observed-handles-signaled",
+        "monotonicMs": 14474.1878
+      }
+    ],
+    "hostIdentity": {
+      "pid": 26156,
+      "created": "31285301:305449741"
+    },
+    "ready": {
+      "hostPid": 26156,
+      "id": "C03",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\sessions\\session-f72c306d-d0c0-47af-8ee2-56a63387fc84",
+      "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\dispositions\\f72c306d-d0c0-47af-8ee2-56a63387fc84.json",
+      "session": {
+        "owner": "exercise:f72c306d-d0c0-47af-8ee2-56a63387fc84",
+        "sessionId": "f72c306d-d0c0-47af-8ee2-56a63387fc84",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\sessions\\session-f72c306d-d0c0-47af-8ee2-56a63387fc84",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\dispositions\\f72c306d-d0c0-47af-8ee2-56a63387fc84.json",
+        "disposition": null,
+        "proof": null,
+        "nativeStage": "OWNED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "RETAINED",
+        "checkpoint": "OWNED",
+        "lastError": null,
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": false,
+        "released": false,
+        "managerResources": 1,
+        "counters": {
+          "spawn": 1,
+          "query": 10,
+          "terminate": 0,
+          "release": 0,
+          "handlesClosed": 0,
+          "delete": 0
+        },
+        "phase": "execute",
+        "rootPid": 29556,
+        "retained": [
+          {
+            "pid": 29556,
+            "member": true,
+            "created": "31285301:375274504",
+            "root": true,
+            "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+            "signaled": false,
+            "closed": false
+          },
+          {
+            "pid": 29928,
+            "member": true,
+            "created": "31285301:375670359",
+            "root": false,
+            "image": "C:\\Windows\\System32\\conhost.exe",
+            "signaled": false,
+            "closed": false
+          }
+        ],
+        "coverageGaps": [],
+        "output": "READY-CSHARP\r\n",
+        "exitCode": null
+      },
+      "members": [
+        29556,
+        29928
+      ],
+      "identities": [
+        {
+          "pid": 29556,
+          "member": true,
+          "created": "31285301:375274504",
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+        },
+        {
+          "pid": 29928,
+          "member": true,
+          "created": "31285301:375670359",
+          "image": "C:\\Windows\\System32\\conhost.exe"
+        }
+      ],
+      "sequence": 1,
+      "monotonicMs": 7046.0687
+    },
+    "afterCrashRecord": {
+      "schemaVersion": 2,
+      "sessionId": "f72c306d-d0c0-47af-8ee2-56a63387fc84",
+      "owner": "exercise:f72c306d-d0c0-47af-8ee2-56a63387fc84",
+      "hostEpoch": "730d3433-f0a2-436f-a4d9-bf382e9f1fa5",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\sessions\\session-f72c306d-d0c0-47af-8ee2-56a63387fc84",
+      "workspaceIdentity": {
+        "dev": "40663377",
+        "ino": "1970324837178834",
+        "birthtimeNs": "1792460901555142000"
+      },
+      "checkpoint": "OWNED",
+      "revision": 0,
+      "proof": null,
+      "finalized": false,
+      "nativeStage": "OWNED",
+      "processClean": false,
+      "cleanupComplete": false,
+      "workspaceState": "RETAINED"
+    },
+    "recovery": {
+      "hostPid": 31592,
+      "action": "QUARANTINED",
+      "record": {
+        "schemaVersion": 2,
+        "sessionId": "f72c306d-d0c0-47af-8ee2-56a63387fc84",
+        "owner": "exercise:f72c306d-d0c0-47af-8ee2-56a63387fc84",
+        "hostEpoch": "730d3433-f0a2-436f-a4d9-bf382e9f1fa5",
+        "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\sessions\\session-f72c306d-d0c0-47af-8ee2-56a63387fc84",
+        "workspaceIdentity": {
+          "dev": "40663377",
+          "ino": "1970324837178834",
+          "birthtimeNs": "1792460901555142000"
+        },
+        "checkpoint": "OWNED",
+        "revision": 0,
+        "proof": null,
+        "finalized": false,
+        "nativeStage": "OWNED",
+        "processClean": false,
+        "cleanupComplete": false,
+        "workspaceState": "RETAINED"
+      },
+      "processClean": false,
+      "cleanupComplete": false
+    },
+    "observed": [
+      {
+        "pid": 29556,
+        "member": true,
+        "created": "31285301:375274504",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "signaled": true
+      },
+      {
+        "pid": 29928,
+        "member": true,
+        "created": "31285301:375670359",
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "signaled": true
+      }
+    ],
+    "limit": "Observer proves retained process termination; no historical coverage claim or fabricated PROCESS_CLEAN after crash"
+  },
+  {
+    "name": "C04",
+    "started": "2026-10-20T01:48:22.022Z",
+    "status": "PASS",
+    "timeline": [
+      {
+        "event": "observer-retained",
+        "monotonicMs": 15055.6486,
+        "pid": 21608,
+        "member": true,
+        "created": "31285301:381697664",
+        "image": "C:\\Program Files\\nodejs\\node.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 15055.6823,
+        "pid": 4988,
+        "member": true,
+        "created": "31285301:381846987",
+        "image": "C:\\Windows\\System32\\conhost.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 15055.7059,
+        "pid": 30912,
+        "member": true,
+        "created": "31285301:382531937",
+        "image": "C:\\Program Files\\nodejs\\node.exe"
+      },
+      {
+        "event": "hard-kill-requested",
+        "monotonicMs": 15056.4185
+      },
+      {
+        "event": "all-observed-handles-signaled",
+        "monotonicMs": 15075.1834
+      }
+    ],
+    "hostIdentity": {
+      "pid": 16556,
+      "created": "31285301:379798406"
+    },
+    "ready": {
+      "hostPid": 16556,
+      "id": "C04",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\sessions\\session-178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+      "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\dispositions\\178f89a8-63c4-4232-bc8c-33cb2e0d06a1.json",
+      "session": {
+        "owner": "exercise:178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+        "sessionId": "178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\sessions\\session-178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\dispositions\\178f89a8-63c4-4232-bc8c-33cb2e0d06a1.json",
+        "disposition": null,
+        "proof": null,
+        "nativeStage": "OWNED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "RETAINED",
+        "checkpoint": "OWNED",
+        "lastError": null,
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": false,
+        "released": false,
+        "managerResources": 1,
+        "counters": {
+          "spawn": 1,
+          "query": 9,
+          "terminate": 0,
+          "release": 0,
+          "handlesClosed": 0,
+          "delete": 0
+        },
+        "phase": "execute",
+        "rootPid": 21608,
+        "retained": [
+          {
+            "pid": 21608,
+            "member": true,
+            "created": "31285301:381697664",
+            "root": true,
+            "image": "C:\\Program Files\\nodejs\\node.exe",
+            "signaled": false,
+            "closed": false
+          },
+          {
+            "pid": 4988,
+            "member": true,
+            "created": "31285301:381846987",
+            "root": false,
+            "image": "C:\\Windows\\System32\\conhost.exe",
+            "signaled": false,
+            "closed": false
+          },
+          {
+            "pid": 30912,
+            "member": true,
+            "created": "31285301:382531937",
+            "root": false,
+            "image": "C:\\Program Files\\nodejs\\node.exe",
+            "signaled": false,
+            "closed": false
+          }
+        ],
+        "coverageGaps": [],
+        "output": "READY\n",
+        "exitCode": null
+      },
+      "members": [
+        21608,
+        4988,
+        30912
+      ],
+      "identities": [
+        {
+          "pid": 21608,
+          "member": true,
+          "created": "31285301:381697664",
+          "image": "C:\\Program Files\\nodejs\\node.exe"
+        },
+        {
+          "pid": 4988,
+          "member": true,
+          "created": "31285301:381846987",
+          "image": "C:\\Windows\\System32\\conhost.exe"
+        },
+        {
+          "pid": 30912,
+          "member": true,
+          "created": "31285301:382531937",
+          "image": "C:\\Program Files\\nodejs\\node.exe"
+        }
+      ],
+      "sequence": 1,
+      "monotonicMs": 279.3434
+    },
+    "afterCrashRecord": {
+      "schemaVersion": 2,
+      "sessionId": "178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+      "owner": "exercise:178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+      "hostEpoch": "fe45ce97-877a-4718-b842-4dbb0657db77",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\sessions\\session-178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+      "workspaceIdentity": {
+        "dev": "40663377",
+        "ino": "1688849860468203",
+        "birthtimeNs": "1792460902183905000"
+      },
+      "checkpoint": "OWNED",
+      "revision": 0,
+      "proof": null,
+      "finalized": false,
+      "nativeStage": "OWNED",
+      "processClean": false,
+      "cleanupComplete": false,
+      "workspaceState": "RETAINED"
+    },
+    "recovery": {
+      "hostPid": 20564,
+      "action": "QUARANTINED",
+      "record": {
+        "schemaVersion": 2,
+        "sessionId": "178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+        "owner": "exercise:178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+        "hostEpoch": "fe45ce97-877a-4718-b842-4dbb0657db77",
+        "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C04-crash\\learning\\sessions\\session-178f89a8-63c4-4232-bc8c-33cb2e0d06a1",
+        "workspaceIdentity": {
+          "dev": "40663377",
+          "ino": "1688849860468203",
+          "birthtimeNs": "1792460902183905000"
+        },
+        "checkpoint": "OWNED",
+        "revision": 0,
+        "proof": null,
+        "finalized": false,
+        "nativeStage": "OWNED",
+        "processClean": false,
+        "cleanupComplete": false,
+        "workspaceState": "RETAINED"
+      },
+      "processClean": false,
+      "cleanupComplete": false
+    },
+    "observed": [
+      {
+        "pid": 21608,
+        "member": true,
+        "created": "31285301:381697664",
+        "image": "C:\\Program Files\\nodejs\\node.exe",
+        "signaled": true
+      },
+      {
+        "pid": 4988,
+        "member": true,
+        "created": "31285301:381846987",
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "signaled": true
+      },
+      {
+        "pid": 30912,
+        "member": true,
+        "created": "31285301:382531937",
+        "image": "C:\\Program Files\\nodejs\\node.exe",
+        "signaled": true
+      }
+    ],
+    "limit": "Observer proves retained process termination; no historical coverage claim or fabricated PROCESS_CLEAN after crash"
+  }
+]

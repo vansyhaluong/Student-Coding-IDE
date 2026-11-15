@@ -1,0 +1,31 @@
+{
+  "startedBaseline": {
+    "branch": "feature/phase-9a-learning-mode",
+    "commit": "11c71a0f0ebd90f76606a5297c5f16ba4b5427ac"
+  },
+  "environment": {
+    "node": "v24.16.0",
+    "sdk": "10.0.112",
+    "inventory": "8.0.410 [C:\\Program Files\\dotnet\\sdk]\r\n9.0.314 [C:\\Program Files\\dotnet\\sdk]\r\n10.0.112 [C:\\Program Files\\dotnet\\sdk]\r\n",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "records": [
+    {
+      "name": "B: root exited while descendant remains; Job-wide cancellation cleans child",
+      "started": "2026-10-19T13:12:14.622Z",
+      "status": "FAIL",
+      "error": {
+        "name": "AssertionError",
+        "message": "Expected values to be strictly equal:\n\n3 !== 2\n"
+      },
+      "elapsedMs": 629
+    },
+    {
+      "name": "E: tracked source/config/data and existing Project build artifacts unchanged",
+      "status": "PASS",
+      "changed": [],
+      "checkedFiles": 494
+    }
+  ]
+}

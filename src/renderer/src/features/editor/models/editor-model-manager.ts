@@ -1,4 +1,5 @@
 import type { editor } from 'monaco-editor'
+import type { RunSourceState } from '../../../../../shared/contracts/run-source-guard'
 
 import type { ProjectId } from '../../../../../shared/contracts'
 import { phase3LanguageIdForPath } from '../../language/language-capabilities'
@@ -85,6 +86,8 @@ export class EditorModelManager {
     event: EditorDocumentLifecycleEvent,
   ) => void>()
   private activeKey: string | null = null
+  private readonly sourceSignatures = new Map<ProjectId, string>()
+  private readonly sourceRevisions = new Map<ProjectId, number>()
 
   constructor(private readonly modelHost: MonacoModelHost) {}
 
@@ -108,6 +111,14 @@ export class EditorModelManager {
 
   getActiveDocument(): EditorDocument | null {
     return this.activeKey ? this.documents.get(this.activeKey) ?? null : null
+  }
+
+  /** Aggregate all retained project buffers; active tab and source language are irrelevant. */
+  getSourceState(projectId: ProjectId): RunSourceState {
+    const documents = this.getOpenDocuments().filter(document => document.projectId === projectId)
+    return { revision: this.sourceRevisions.get(projectId) ?? 0,
+      dirty: documents.some(document => document.dirty),
+      conflict: documents.some(document => document.externalConflict || document.diskState !== 'available') }
   }
 
   findDocument(projectId: ProjectId, relativePath: string): EditorDocument | null {
@@ -386,6 +397,16 @@ export class EditorModelManager {
   }
 
   private emit(): void {
+    const projects = new Set([...this.sourceSignatures.keys(), ...[...this.documents.values()].map(document => document.projectId)])
+    for (const projectId of projects) {
+      const signature = JSON.stringify([...this.documents.values()].filter(document => document.projectId === projectId)
+        .sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0)
+        .map(document => [document.key, document.model.getVersionId(), document.dirty, document.externalConflict, document.diskState]))
+      if (signature !== (this.sourceSignatures.get(projectId) ?? '[]')) {
+        this.sourceRevisions.set(projectId, (this.sourceRevisions.get(projectId) ?? 0) + 1)
+        this.sourceSignatures.set(projectId, signature)
+      }
+    }
     for (const listener of this.listeners) listener()
   }
 

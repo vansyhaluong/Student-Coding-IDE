@@ -1,0 +1,284 @@
+[
+  {
+    "identity": "Argu/6.2.5",
+    "source": "https://api.nuget.org/v3-flatcontainer/argu/6.2.5/argu.6.2.5.nupkg",
+    "sha256": "e4771972f728e1ef3e8602e1ce5c64ed998554bb592fd2d5afb2db997b0b98d5",
+    "license": "MIT"
+  },
+  {
+    "identity": "Castle.Core/5.2.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/castle.core/5.2.1/castle.core.5.2.1.nupkg",
+    "sha256": "b8d7bffcf0a76062e1c714292c3c9342ea081f9bbb7460e5ca3736c2a010e03e",
+    "license": "Apache-2.0"
+  },
+  {
+    "identity": "FSharp.Control.AsyncSeq/3.2.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/fsharp.control.asyncseq/3.2.1/fsharp.control.asyncseq.3.2.1.nupkg",
+    "sha256": "7b3499ac632a4d064ab74a230912945ae0c6c75255532359ce499466356a8809",
+    "license": null
+  },
+  {
+    "identity": "FSharp.Core/10.0.101",
+    "source": "https://api.nuget.org/v3-flatcontainer/fsharp.core/10.0.101/fsharp.core.10.0.101.nupkg",
+    "sha256": "8bb72b744d3fbbefe61420f5acd15cfe24f94c5afc0da7bd74da554666e949b6",
+    "license": "MIT"
+  },
+  {
+    "identity": "Humanizer.Core/2.14.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg",
+    "sha256": "117be88dd74fbbef492a0386f4d4908144df5aad51a4e630eda7710cf28327aa",
+    "license": "MIT"
+  },
+  {
+    "identity": "ICSharpCode.Decompiler/9.1.0.7988",
+    "source": "https://api.nuget.org/v3-flatcontainer/icsharpcode.decompiler/9.1.0.7988/icsharpcode.decompiler.9.1.0.7988.nupkg",
+    "sha256": "ccf2e02cd3b8702aed37d051f71e97f96d0c36443bd67003228a4e0b55418404",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Bcl.AsyncInterfaces/10.0.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.bcl.asyncinterfaces/10.0.1/microsoft.bcl.asyncinterfaces.10.0.1.nupkg",
+    "sha256": "687a2c9511a6028b7fcf51820aa4b38c0c53fe196dc4e388675fe8b62e166c66",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Build.Framework/18.7.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.build.framework/18.7.1/microsoft.build.framework.18.7.1.nupkg",
+    "sha256": "ade8937e786462c81f30195cc86a43202cd5b6625a02dd223a38aaf6f83da308",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Build.Locator/1.10.12",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.build.locator/1.10.12/microsoft.build.locator.1.10.12.nupkg",
+    "sha256": "6c16965dced70f5d7196bd9b639d00ed01d8f8d569417c92953851eec7234030",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis/5.9.0/microsoft.codeanalysis.5.9.0.nupkg",
+    "sha256": "66599a97e71b9263b1a8e2166768b30c61cb9aff8d2c1424df693d5b67a29146",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.Common/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.common/5.9.0/microsoft.codeanalysis.common.5.9.0.nupkg",
+    "sha256": "77efd4715c24c8cd6b36f9b92980a2f5a86e4a7b53648d4f1ca3b79a3933a429",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.CSharp/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.csharp/5.9.0/microsoft.codeanalysis.csharp.5.9.0.nupkg",
+    "sha256": "7602c3dbaa122268f3b26c6cc0dd02eb9224dea9442ed27af5c3fe56d643993f",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.CSharp.Features/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.csharp.features/5.9.0/microsoft.codeanalysis.csharp.features.5.9.0.nupkg",
+    "sha256": "c3c2e02f1bf535eff05e7db82b9ae1413815aa0eb9e7850da3d4d683506cfab6",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.CSharp.Workspaces/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.csharp.workspaces/5.9.0/microsoft.codeanalysis.csharp.workspaces.5.9.0.nupkg",
+    "sha256": "f568b37cdd24377194ff20e517968dae87f9adc0308f5924a63bc59a2fc86daf",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.Elfie/1.0.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.elfie/1.0.0/microsoft.codeanalysis.elfie.1.0.0.nupkg",
+    "sha256": "13ff8f95e82f599e7d7b94e2dd3bca2412dadea0a70ca9a2efe0dc9cea35b9f8",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.Features/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.features/5.9.0/microsoft.codeanalysis.features.5.9.0.nupkg",
+    "sha256": "d6ad3d7a3eb0c31c1f9eb642cae59c5a69fc460bd5f071354d199a71c6ccce2f",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.Scripting.Common/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.scripting.common/5.9.0/microsoft.codeanalysis.scripting.common.5.9.0.nupkg",
+    "sha256": "058777a379e2bd6b004eb8bc8d81aaeb25f09443d80979f2ba46794f434b5345",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.VisualBasic/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.visualbasic/5.9.0/microsoft.codeanalysis.visualbasic.5.9.0.nupkg",
+    "sha256": "99d250903d2ee9dd27c18ebafc67aabefb3adf875f72ca8327d5ca2f885f27a0",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.VisualBasic.Workspaces/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.visualbasic.workspaces/5.9.0/microsoft.codeanalysis.visualbasic.workspaces.5.9.0.nupkg",
+    "sha256": "faf74373a85bd34ccbb55ffef1e04262aee84f247617b503bfb49cb8f8ad6d40",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.Workspaces.Common/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.workspaces.common/5.9.0/microsoft.codeanalysis.workspaces.common.5.9.0.nupkg",
+    "sha256": "f87f124f57d177b34ca3168e12bf1781050048cfde84ea0e9e3207dfc1d5921e",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.CodeAnalysis.Workspaces.MSBuild/5.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.codeanalysis.workspaces.msbuild/5.9.0/microsoft.codeanalysis.workspaces.msbuild.5.9.0.nupkg",
+    "sha256": "2f8cb42826f48e33dc0e18c1aea4ccd7ef0c9a20844bfdda3665a762c449ef11",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.DiaSymReader/2.0.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.diasymreader/2.0.0/microsoft.diasymreader.2.0.0.nupkg",
+    "sha256": "f21a2d66687c45be90ea80fd31e6fbe12bc075b0e8dfd63fd66f21e371c78e3c",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Caching.Abstractions/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.caching.abstractions/10.0.9/microsoft.extensions.caching.abstractions.10.0.9.nupkg",
+    "sha256": "bd4c6109921780860f8cd2d64502413537cf1a7e4ae087e815fa0e72ad61a145",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Caching.Memory/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.caching.memory/10.0.9/microsoft.extensions.caching.memory.10.0.9.nupkg",
+    "sha256": "0ad94be375ac6e5c545f8258e7b0d138f969f2d91b1b9d27a5ca1d19540bf61a",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Configuration/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.configuration/10.0.9/microsoft.extensions.configuration.10.0.9.nupkg",
+    "sha256": "e1df2be95cae9ded506f4930ab37c63c0ec12b69ef6a239e9d388979dceaeac5",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Configuration.Abstractions/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.configuration.abstractions/10.0.9/microsoft.extensions.configuration.abstractions.10.0.9.nupkg",
+    "sha256": "a6589a92c10041dc723d4454552957a5f1772f3241f77cc769e103b1a1794091",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Configuration.Binder/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.configuration.binder/10.0.9/microsoft.extensions.configuration.binder.10.0.9.nupkg",
+    "sha256": "a2e25afbce07fdb7cc8baeefdb98631168532320476964c902812f02bc1bac60",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.DependencyInjection/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.dependencyinjection/10.0.9/microsoft.extensions.dependencyinjection.10.0.9.nupkg",
+    "sha256": "608aa00e49f04eae3c5fcf0899dadf6afded990ead67020e62c2ede9d4f8d0cf",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.dependencyinjection.abstractions/10.0.9/microsoft.extensions.dependencyinjection.abstractions.10.0.9.nupkg",
+    "sha256": "633429180b2b8cb535f2cd35e8b98cec33092a69743332a5d5b3cf609fdeac49",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Logging/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging/10.0.9/microsoft.extensions.logging.10.0.9.nupkg",
+    "sha256": "eb8e316313c1f8fb701944c028957dc01c971d61644793a5d29d3cc05430326e",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Logging.Abstractions/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging.abstractions/10.0.9/microsoft.extensions.logging.abstractions.10.0.9.nupkg",
+    "sha256": "b2edaafce66e1bb9c1df09d44d57229b2de81d275eb458788619a32377ffca6f",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Logging.Configuration/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging.configuration/10.0.9/microsoft.extensions.logging.configuration.10.0.9.nupkg",
+    "sha256": "7c3b4a6b7e97141cdd8f07f483dfa62f8cb6c44e8371ef984cee9d41a018619f",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Logging.Console/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging.console/10.0.9/microsoft.extensions.logging.console.10.0.9.nupkg",
+    "sha256": "8ba0b7ce4facfeec7eb423a7c7b803a688f6845cc1cfad61aa1d337db66f1c7a",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Options/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.options/10.0.9/microsoft.extensions.options.10.0.9.nupkg",
+    "sha256": "fdf735835483248f359ce6514bb5b82d92000b4b2c99ab2a69686024afbdad1b",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Options.ConfigurationExtensions/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.options.configurationextensions/10.0.9/microsoft.extensions.options.configurationextensions.10.0.9.nupkg",
+    "sha256": "5d5289acd8cfa348688d8e55e31a0bc5e769be4aadaf8189aa409484b2924dc4",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.Extensions.Primitives/10.0.9",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.primitives/10.0.9/microsoft.extensions.primitives.10.0.9.nupkg",
+    "sha256": "5843ed9a511ec66e904854782139411ee503e7f6ea31f79c3b115ee6191b00f5",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.NET.StringTools/18.7.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.net.stringtools/18.7.1/microsoft.net.stringtools.18.7.1.nupkg",
+    "sha256": "b13124fa77a2aff41bae7f77fd3d42dea525db927492f0ff31fea88e8060cd07",
+    "license": "MIT"
+  },
+  {
+    "identity": "Microsoft.VisualStudio.SolutionPersistence/1.0.52",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.visualstudio.solutionpersistence/1.0.52/microsoft.visualstudio.solutionpersistence.1.0.52.nupkg",
+    "sha256": "29918fb4e5dee87bfc46b91cb20a0b29347268249c2294046b6361341de2397c",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Composition/10.0.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.composition/10.0.1/system.composition.10.0.1.nupkg",
+    "sha256": "b7a87385d8c997c5c1200af2f5ab8e644cbc8e42b2d6a0d19ab6713be22c9974",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Composition.AttributedModel/10.0.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.composition.attributedmodel/10.0.1/system.composition.attributedmodel.10.0.1.nupkg",
+    "sha256": "ee3c020b3ec08e6a63dba24f94cc54ed86f0831b881ee3ef861c1617637285dc",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Composition.Convention/10.0.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.composition.convention/10.0.1/system.composition.convention.10.0.1.nupkg",
+    "sha256": "796ad9d05bce9e185acb14f5f77aa3532d9fd1cc217f4d6325ace981f55bdc59",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Composition.Hosting/10.0.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.composition.hosting/10.0.1/system.composition.hosting.10.0.1.nupkg",
+    "sha256": "a651dd8c34bbbc261a3fb51ab27c7527d6ab3fd7730c5525f443de9588f47f44",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Composition.Runtime/10.0.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.composition.runtime/10.0.1/system.composition.runtime.10.0.1.nupkg",
+    "sha256": "98e41dc2e491f4092b6ef82ad148ebfae0cdfaf16335b3a2d6e70e52ca6f1215",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Composition.TypedParts/10.0.1",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.composition.typedparts/10.0.1/system.composition.typedparts.10.0.1.nupkg",
+    "sha256": "e6305cff9da6d8c431479f8091ab931068736b8b0d5ebf409f520f40d92f7df0",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Configuration.ConfigurationManager/10.0.4",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.configuration.configurationmanager/10.0.4/system.configuration.configurationmanager.10.0.4.nupkg",
+    "sha256": "20e82d9cdea11cd7686430efac8068333569f83d52589d4bc09f93214b84dd6f",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Diagnostics.EventLog/10.0.4",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.diagnostics.eventlog/10.0.4/system.diagnostics.eventlog.10.0.4.nupkg",
+    "sha256": "8056ddbda9e2ef8a1ef262d9edba78233e657cfd1d25b73e49a500ca4a3cd8f6",
+    "license": "MIT"
+  },
+  {
+    "identity": "System.Security.Cryptography.ProtectedData/10.0.4",
+    "source": "https://api.nuget.org/v3-flatcontainer/system.security.cryptography.protecteddata/10.0.4/system.security.cryptography.protecteddata.10.0.4.nupkg",
+    "sha256": "6826d05cc250ac310e1870b06d8dfa08e4a418706b65f4a73f24ebcfa3f6025e",
+    "license": "MIT"
+  }
+]

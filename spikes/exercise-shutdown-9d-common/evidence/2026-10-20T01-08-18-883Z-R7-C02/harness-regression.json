@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "renameFailure": {
+    "code": "EPERM",
+    "message": "EPERM: operation not permitted, rename 'D:\\coding-ide\\spikes\\exercise-shutdown-9d-common\\evidence\\2026-10-20T01-08-18-883Z-R7-C02\\rename-sharing-probe.json.tmp' -> 'D:\\coding-ide\\spikes\\exercise-shutdown-9d-common\\evidence\\2026-10-20T01-08-18-883Z-R7-C02\\rename-sharing-probe.json'"
+  },
+  "staleDestinationSequence": 1,
+  "pendingTemporarySequence": 2,
+  "oldAbortReads": 0,
+  "correctedAbortReads": 1,
+  "limitation": "Deterministic reproduction of failure mechanisms; R6 did not capture its original rename exception."
+}

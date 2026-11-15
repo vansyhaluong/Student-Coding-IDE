@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-07",
+  "platform": "Windows 11 10.0.26200 x64",
+  "scope": "M1-04 isolated spike and existing application regression; no production C# Run composition",
+  "postRunHostPolicyEnvironment": {
+    "MSBUILDDISABLENODEREUSE": null,
+    "DOTNET_CLI_USE_MSBUILD_SERVER": null,
+    "DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER": null,
+    "UseSharedCompilation": null
+  },
+  "checks": [
+    { "command": "node spikes/csharp-project-run/build-native.mjs", "result": "PASS", "exitCode": 0, "details": "Existing MSVC/Electron headers, W4/WX, separate run-probe.node" },
+    { "command": "node_modules/.bin/electron.cmd spikes/csharp-project-run/harness.mjs", "result": "PASS_ON_RECORDED_HOST", "exitCode": 0, "cases": 32, "resources": 0, "newSurvivingProcesses": 0, "runId": "2026-10-07T13-52-23-262Z" },
+    { "command": "npm run build", "result": "PASS", "exitCode": 0, "details": "Production Main/Preload/Renderer and Windows native binding" },
+    { "command": "npm test", "result": "PASS", "exitCode": 0, "files": 85, "tests": 1195, "note": "Existing non-failing jsdom canvas diagnostic" },
+    { "command": "node_modules/.bin/electron.cmd scripts/smoke-run-native.mjs", "result": "PASS", "exitCode": 0, "jsCycles": 15, "argumentRoundTrips": 23, "invalidInputs": 30, "handlesBefore": 690, "handlesAfter": 690 },
+    { "command": "node_modules/.bin/electron.cmd scripts/smoke-run-lifecycle.mjs", "result": "PASS", "exitCode": 0, "sessions": 5, "remainingResources": 0 },
+    { "command": "node_modules/.bin/electron.cmd scripts/smoke-run-project-lifecycle.mjs", "result": "PASS", "exitCode": 0, "sessions": 4, "remainingResources": 0, "allNativeReleased": true },
+    { "command": "node_modules/.bin/electron.cmd scripts/smoke-git-native.mjs", "result": "PASS", "exitCode": 0, "gitVersion": "2.47.1.windows.2" },
+    { "command": "node_modules/.bin/electron.cmd scripts/smoke-csharp-native.mjs", "result": "PASS", "exitCode": 0, "details": "Hard-root/descendant ownership, blocked stdin, real provider initialization and graceful shutdown/release" },
+    { "command": "npm run node-pty:smoke-service", "result": "PASS", "exitCode": 0, "scenarios": ["live-root", "natural-root"], "details": "Descendants gone; unrelated control survived; ProcessManager released after Job finalization" },
+    { "command": "npm run typecheck", "result": "PASS", "exitCode": 0 },
+    { "command": "npm run lint", "result": "PASS", "exitCode": 0 },
+    { "command": "git diff --check", "result": "PASS", "exitCode": 0 },
+    { "command": "SHA-256 comparison against evidence inventory", "result": "PASS", "details": "Harness and production native source hashes match executed evidence" }
+  ],
+  "unexecuted": [
+    "Windows 10 platform run of the M1-04 matrix",
+    "Manual application UI smoke (production C# Run is not implemented)",
+    "Packaged/installed Windows acceptance"
+  ],
+  "hardGate": "BLOCKED",
+  "blocker": "Plan section 13.7 both-Windows-version evidence requirement; only Windows 11 host available",
+  "m1_05": "NOT_STARTED"
+}

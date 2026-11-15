@@ -2272,6 +2272,7 @@ function installApi(overrides: {
 } = {}): StudentIdeApi {
   window.matchMedia = vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })
   const api: StudentIdeApi = {
+<<<<<<< HEAD
     learning: {
       getCourse: async () => failure('Learning content is not configured in this Project Explorer fixture'),
       exercise: {
@@ -2291,6 +2292,9 @@ function installApi(overrides: {
         resolveClose: async () => success(null),
       },
     } as unknown as StudentIdeApi['learning'],
+=======
+    runSourceGuard: { onRequested: () => () => {}, onReleased: () => () => {}, reply: async () => success(null) },
+>>>>>>> origin/develop
     ai: {
       getStatus: async () => success('ready'),
       startChat: async () => failure('Not configured'),
@@ -2321,6 +2325,15 @@ function installApi(overrides: {
       ...overrides.git,
     },
     run: {
+      resolveTargets: async () => failure('Not configured'),
+      selectTarget: async () => failure('Not configured'),
+      clearTarget: async () => failure('Not configured'),
+      cancelResolution: async () => failure('Not configured'),
+      startProject: async () => failure('Not configured'),
+      sendInput: async () => failure('Not configured'),
+      closeInput: async () => failure('Not configured'),
+      inputStatus: async () => failure('Not configured'),
+      onProjectEvent: () => () => undefined,
       start: async () => failure('Not configured'),
       stop: async () => failure('Not configured'),
       onEvent: () => () => undefined,

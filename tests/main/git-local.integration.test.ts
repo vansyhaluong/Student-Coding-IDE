@@ -99,7 +99,8 @@ async function setup(directory: string, head: boolean) {
   return { directory, executable, runner, git, put, read, index, hook, service, project, projects, calls, control }
 }
 
-describe.skipIf(process.platform !== 'win32')('Phase 5C production service with real local Git', () => {
+// Real Git work exceeds the 5s default when npm test runs other suites in parallel.
+describe.skipIf(process.platform !== 'win32')('Phase 5C production service with real local Git', { timeout: 20_000 }, () => {
   beforeAll(async () => {
     baselineDirectory = await mkdtemp(join(tmpdir(), 'student-ide-phase5c-baseline-'))
     assertSafeFixture(baselineDirectory)

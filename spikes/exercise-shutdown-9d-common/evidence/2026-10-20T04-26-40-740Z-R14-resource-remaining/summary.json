@@ -1,0 +1,546 @@
+{
+  "currentRunCounts": {
+    "PASS": 7,
+    "FAIL": 0,
+    "NOT_OBSERVED": 0,
+    "BLOCKED": 0
+  },
+  "rows": [
+    {
+      "name": "T5-csharp",
+      "status": "PASS",
+      "startupMs": 323.15179999999964,
+      "compileMs": 13120.8102,
+      "memoryEvidence": {
+        "denial": {
+          "committedByAllocator": 187695104,
+          "win32Error": 1455
+        },
+        "memoryEvents": [
+          {
+            "message": 10,
+            "pid": 27800
+          }
+        ],
+        "output": "RUNTIME_READY\r\nCALL_START\r\nCHILD 27800\r\nALLOCATOR_READY 27800\r\nALLOC_DENIED 187695104 1455\r\n"
+      },
+      "memory": [
+        {
+          "sessionId": "34042366-0de9-4ea7-afb5-fd01dde7c389",
+          "phase": "compile",
+          "quota": 2147483648,
+          "peakJobCommitBytes": 118063104,
+          "maxReportedJobCommitBytes": 118063104,
+          "samples": 654,
+          "peakMiB": 112.59375,
+          "reportedMiB": 112.59375
+        },
+        {
+          "sessionId": "4ec45d0d-fabb-4425-a62d-e96878a54707",
+          "phase": "execute",
+          "quota": 268435456,
+          "peakJobCommitBytes": 268820480,
+          "maxReportedJobCommitBytes": 267767808,
+          "samples": 40,
+          "peakMiB": 256.3671875,
+          "reportedMiB": 255.36328125
+        }
+      ],
+      "cleanups": [
+        {
+          "ms": 123.95060000000012,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        },
+        {
+          "ms": 145.98829999999907,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "isolation": {
+        "status": "PASS",
+        "runSession": "run_c24e7c11-1ba3-4b06-996e-d9b57aa2532e",
+        "terminalSession": "terminal_f5574998-8b05-4557-938a-a7aa7c092212",
+        "checks": [
+          {
+            "tag": "before",
+            "at": 1292.547,
+            "projectResources": 2,
+            "stdoutCount": 4,
+            "terminalMarker": "limits-before"
+          },
+          {
+            "tag": "after",
+            "at": 15647.139,
+            "projectResources": 2,
+            "stdoutCount": 96,
+            "terminalMarker": "limits-after"
+          }
+        ]
+      },
+      "observer": {
+        "allRetainedSignaled": true,
+        "mainSignaled": true,
+        "retainedIdentities": 8,
+        "watchdog": false
+      }
+    },
+    {
+      "name": "T5-javascript",
+      "status": "PASS",
+      "startupMs": 96.70399999999995,
+      "memoryEvidence": {
+        "denial": {
+          "committedByAllocator": 177209344,
+          "win32Error": 1455
+        },
+        "memoryEvents": [
+          {
+            "message": 10,
+            "pid": 34248
+          }
+        ],
+        "output": "RUNTIME_READY\nCALL_START\nCHILD 34248\nALLOCATOR_READY 34248\r\nALLOC_DENIED 177209344 1455\r\n"
+      },
+      "memory": [
+        {
+          "sessionId": "b151b2fd-d120-41d8-bafe-d032bb706a4f",
+          "phase": "execute",
+          "quota": 268435456,
+          "peakJobCommitBytes": 269410304,
+          "maxReportedJobCommitBytes": 268361728,
+          "samples": 24,
+          "peakMiB": 256.9296875,
+          "reportedMiB": 255.9296875
+        }
+      ],
+      "cleanups": [
+        {
+          "ms": 131.99580000000014,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "isolation": {
+        "status": "PASS",
+        "runSession": "run_5ce22fae-a468-489c-9b9a-557319b0631b",
+        "terminalSession": "terminal_0056f3c6-e239-4559-884c-0c59f2f34e9f",
+        "checks": [
+          {
+            "tag": "before",
+            "at": 1246.0796,
+            "projectResources": 2,
+            "stdoutCount": 5,
+            "terminalMarker": "limits-before"
+          },
+          {
+            "tag": "after",
+            "at": 1823.9344,
+            "projectResources": 2,
+            "stdoutCount": 9,
+            "terminalMarker": "limits-after"
+          }
+        ]
+      },
+      "observer": {
+        "allRetainedSignaled": true,
+        "mainSignaled": true,
+        "retainedIdentities": 3,
+        "watchdog": false
+      }
+    },
+    {
+      "name": "T6-timeout-terminate",
+      "status": "PASS",
+      "startupMs": 109.65890000000002,
+      "timeout": {
+        "reason": "EXECUTE_TIMEOUT",
+        "due": 2995.6888,
+        "requestedAt": 3018.022,
+        "overshootMs": 22.337600000000293,
+        "phaseMs": 2000,
+        "operationMs": 60000,
+        "terminationConfirmedMs": 184.75289999999995
+      },
+      "memory": [
+        {
+          "sessionId": "191c37dc-7626-4331-81c9-8cb7f11564d7",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 40611840,
+          "maxReportedJobCommitBytes": 40353792,
+          "samples": 110,
+          "peakMiB": 38.73046875,
+          "reportedMiB": 38.484375
+        }
+      ],
+      "cleanups": [
+        {
+          "ms": 181.51249999999982,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "retry": {
+        "before": {
+          "spawn": 1,
+          "query": 108,
+          "terminate": 1,
+          "release": 0,
+          "handlesClosed": 0,
+          "delete": 0
+        },
+        "after": {
+          "spawn": 1,
+          "query": 116,
+          "terminate": 2,
+          "release": 1,
+          "handlesClosed": 3,
+          "delete": 1
+        }
+      },
+      "isolation": {
+        "status": "PASS",
+        "runSession": "run_21428137-06c7-4c3f-bdb2-d6f4038a72ab",
+        "terminalSession": "terminal_f9dcfa6d-beca-40e0-a1be-cec5f6ad3029",
+        "checks": [
+          {
+            "tag": "before",
+            "at": 970.9493,
+            "projectResources": 2,
+            "stdoutCount": 4,
+            "terminalMarker": "limits-before"
+          },
+          {
+            "tag": "failure",
+            "at": 3093.9612,
+            "projectResources": 2,
+            "stdoutCount": 18,
+            "terminalMarker": "limits-failure"
+          },
+          {
+            "tag": "after",
+            "at": 3252.9457,
+            "projectResources": 2,
+            "stdoutCount": 19,
+            "terminalMarker": "limits-after"
+          }
+        ]
+      },
+      "observer": {
+        "allRetainedSignaled": true,
+        "mainSignaled": true,
+        "retainedIdentities": 3,
+        "watchdog": false
+      }
+    },
+    {
+      "name": "T6-memory-finalized",
+      "status": "PASS",
+      "startupMs": 113.6119000000001,
+      "memoryEvidence": {
+        "denial": {
+          "committedByAllocator": 177209344,
+          "win32Error": 1455
+        },
+        "memoryEvents": [
+          {
+            "message": 10,
+            "pid": 8020
+          }
+        ],
+        "output": "RUNTIME_READY\nCALL_START\nCHILD 8020\nALLOCATOR_READY 8020\r\nALLOC_DENIED 177209344 1455\r\n"
+      },
+      "memory": [
+        {
+          "sessionId": "a58cbd15-38fc-4a13-9511-26a7b94876de",
+          "phase": "execute",
+          "quota": 268435456,
+          "peakJobCommitBytes": 269459456,
+          "maxReportedJobCommitBytes": 268410880,
+          "samples": 23,
+          "peakMiB": 256.9765625,
+          "reportedMiB": 255.9765625
+        }
+      ],
+      "cleanups": [
+        {
+          "ms": 187.2150999999999,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "retry": {
+        "before": {
+          "spawn": 1,
+          "query": 27,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 3,
+          "delete": 0
+        },
+        "after": {
+          "spawn": 1,
+          "query": 27,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 3,
+          "delete": 1
+        }
+      },
+      "isolation": {
+        "status": "PASS",
+        "runSession": "run_e81fa359-9f90-4de2-9564-7571f756b829",
+        "terminalSession": "terminal_e0b4f979-3b96-4684-b082-4d294d15643d",
+        "checks": [
+          {
+            "tag": "before",
+            "at": 1064.6528,
+            "projectResources": 2,
+            "stdoutCount": 5,
+            "terminalMarker": "limits-before"
+          },
+          {
+            "tag": "failure",
+            "at": 1527.4297,
+            "projectResources": 2,
+            "stdoutCount": 8,
+            "terminalMarker": "limits-failure"
+          },
+          {
+            "tag": "after",
+            "at": 1659.4337,
+            "projectResources": 2,
+            "stdoutCount": 9,
+            "terminalMarker": "limits-after"
+          }
+        ]
+      },
+      "observer": {
+        "allRetainedSignaled": true,
+        "mainSignaled": true,
+        "retainedIdentities": 3,
+        "watchdog": false
+      }
+    },
+    {
+      "name": "T7-phase",
+      "status": "PASS",
+      "startupMs": 140.4377,
+      "timeout": {
+        "reason": "EXECUTE_TIMEOUT",
+        "due": 654.62,
+        "requestedAt": 663.134,
+        "overshootMs": 8.516999999999939,
+        "phaseMs": 500,
+        "operationMs": 1500,
+        "terminationConfirmedMs": 108.55589999999995
+      },
+      "memory": [
+        {
+          "sessionId": "0c70421f-8884-4018-9d0b-ab38ad10d5a2",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 40898560,
+          "maxReportedJobCommitBytes": 40890368,
+          "samples": 31,
+          "peakMiB": 39.00390625,
+          "reportedMiB": 38.99609375
+        }
+      ],
+      "cleanups": [
+        {
+          "ms": 105.5743,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "observer": {
+        "allRetainedSignaled": true,
+        "mainSignaled": true,
+        "retainedIdentities": 3,
+        "watchdog": false
+      }
+    },
+    {
+      "name": "T7-operation",
+      "status": "PASS",
+      "startupMs": 120.02980000000002,
+      "timeout": {
+        "reason": "OPERATION_TIMEOUT",
+        "due": 903.9715,
+        "requestedAt": 913.0589,
+        "overshootMs": 9.09170000000006,
+        "phaseMs": 2000,
+        "operationMs": 750,
+        "terminationConfirmedMs": 116.67149999999992
+      },
+      "memory": [
+        {
+          "sessionId": "08b9ce79-9034-496c-aad6-a8184e143946",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 40914944,
+          "maxReportedJobCommitBytes": 40906752,
+          "samples": 41,
+          "peakMiB": 39.01953125,
+          "reportedMiB": 39.01171875
+        }
+      ],
+      "cleanups": [
+        {
+          "ms": 113.96319999999992,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "observer": {
+        "allRetainedSignaled": true,
+        "mainSignaled": true,
+        "retainedIdentities": 3,
+        "watchdog": false
+      }
+    },
+    {
+      "name": "T7-pending-io",
+      "status": "PASS",
+      "startupMs": 189.15120000000002,
+      "memory": [
+        {
+          "sessionId": "afa5119b-fdb9-4e61-9a53-2e5017f653f8",
+          "phase": "execute",
+          "quota": 536870912,
+          "peakJobCommitBytes": 21106688,
+          "maxReportedJobCommitBytes": 21106688,
+          "samples": 13,
+          "peakMiB": 20.12890625,
+          "reportedMiB": 20.12890625
+        }
+      ],
+      "cleanups": [
+        {
+          "ms": 0.055399999999963256,
+          "proof": "VERIFIED",
+          "checkpoint": "CLEANUP_COMPLETE"
+        }
+      ],
+      "pendingIO": {
+        "deadlineMs": 200,
+        "observedMs": 202.9878,
+        "pendingRetained": true,
+        "underlyingPolicySessionRejectsAtDeadline": false,
+        "stage": "HANDLES_CLOSED",
+        "record": "RELEASE_READY",
+        "limit": "Observer/caller detects timeout; unchanged PolicySession itself has no whole-cleanup pending-I/O deadline",
+        "originalResourceCleanupToCompleteMs": 241.8437,
+        "note": "cleanups[].ms is the later idempotent verification call, not the original IO-pending task"
+      },
+      "observer": {
+        "allRetainedSignaled": true,
+        "mainSignaled": true,
+        "retainedIdentities": 2,
+        "watchdog": false
+      }
+    }
+  ],
+  "latestMatrix": [
+    {
+      "name": "T1-csharp-first",
+      "status": "PASS",
+      "run": "R10"
+    },
+    {
+      "name": "T1-csharp-next",
+      "status": "PASS",
+      "run": "R10"
+    },
+    {
+      "name": "T1-javascript-first",
+      "status": "PASS",
+      "run": "R10"
+    },
+    {
+      "name": "T1-javascript-next",
+      "status": "PASS",
+      "run": "R10"
+    },
+    {
+      "name": "T2-csharp",
+      "status": "PASS",
+      "run": "R10"
+    },
+    {
+      "name": "T2-javascript",
+      "status": "PASS",
+      "run": "R10"
+    },
+    {
+      "name": "T3-csharp",
+      "status": "PASS",
+      "run": "R10"
+    },
+    {
+      "name": "T4-root",
+      "status": "PASS",
+      "run": "R10"
+    },
+    {
+      "name": "T4-tree",
+      "status": "PASS",
+      "run": "R11"
+    },
+    {
+      "name": "T5-csharp",
+      "status": "PASS",
+      "run": "R13"
+    },
+    {
+      "name": "T5-javascript",
+      "status": "PASS",
+      "run": "R14"
+    },
+    {
+      "name": "T6-timeout-terminate",
+      "status": "PASS",
+      "run": "R14"
+    },
+    {
+      "name": "T6-memory-finalized",
+      "status": "PASS",
+      "run": "R14"
+    },
+    {
+      "name": "T7-phase",
+      "status": "PASS",
+      "run": "R14"
+    },
+    {
+      "name": "T7-operation",
+      "status": "PASS",
+      "run": "R14"
+    },
+    {
+      "name": "T7-pending-io",
+      "status": "PASS",
+      "run": "R14"
+    }
+  ],
+  "latestCounts": {
+    "PASS": 16,
+    "FAIL": 0,
+    "NOT_OBSERVED": 0,
+    "BLOCKED": 0
+  },
+  "limit": "Latest per-variant evidence across R10/R11/R13/R14; historical R10/R12 failures preserved, not one uninterrupted run.",
+  "assertionsUnchanged": true,
+  "javascriptT6T7FixturesUnchanged": true,
+  "lint": {
+    "status": "FAIL",
+    "errors": 1029,
+    "archiveErrors": 976,
+    "changedSourceErrors": 0,
+    "unchangedLiveSourceErrors": 53,
+    "targetedChangedSource": "PASS"
+  }
+}

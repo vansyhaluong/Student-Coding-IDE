@@ -46,6 +46,7 @@ describe('lifecycle preload bridge', () => {
       'lifecycle',
       'project',
       'run',
+      'runSourceGuard',
       'search',
       'settings',
       'terminal',

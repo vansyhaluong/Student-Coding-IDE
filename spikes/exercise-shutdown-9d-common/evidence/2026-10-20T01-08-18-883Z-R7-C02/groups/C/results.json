@@ -1,0 +1,117 @@
+[
+  {
+    "name": "C02",
+    "started": "2026-10-20T01:25:56.189Z",
+    "status": "FAIL",
+    "timeline": [
+      {
+        "event": "observer-retained",
+        "monotonicMs": 16983.851,
+        "pid": 28148,
+        "member": true,
+        "created": "31285297:4114324677",
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 17110.2002,
+        "pid": 29028,
+        "member": true,
+        "created": "31285297:4116012980",
+        "image": "C:\\Windows\\System32\\conhost.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 23187.8207,
+        "pid": 31548,
+        "member": true,
+        "created": "31285297:4176672472",
+        "image": "C:\\Program Files\\dotnet\\sdk\\10.0.112\\Roslyn\\bincore\\csc.exe"
+      },
+      {
+        "event": "observer-retained",
+        "monotonicMs": 23325.0235,
+        "pid": 28172,
+        "member": true,
+        "created": "31285297:4177940087",
+        "image": "C:\\Windows\\System32\\conhost.exe"
+      }
+    ],
+    "hostIdentity": {
+      "pid": 12928,
+      "created": "31285297:4104453798"
+    },
+    "ready": {
+      "hostPid": 12928,
+      "id": "C02",
+      "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-08-18-883Z-R7-C02\\C02-crash\\learning",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-08-18-883Z-R7-C02\\C02-crash\\learning\\sessions\\session-a98f4fd0-ed48-451d-86d7-8d4ef6bfd85e",
+      "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-08-18-883Z-R7-C02\\C02-crash\\learning\\dispositions\\a98f4fd0-ed48-451d-86d7-8d4ef6bfd85e.json",
+      "session": {
+        "owner": "exercise:a98f4fd0-ed48-451d-86d7-8d4ef6bfd85e",
+        "sessionId": "a98f4fd0-ed48-451d-86d7-8d4ef6bfd85e",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-08-18-883Z-R7-C02\\C02-crash\\learning\\sessions\\session-a98f4fd0-ed48-451d-86d7-8d4ef6bfd85e",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-08-18-883Z-R7-C02\\C02-crash\\learning\\dispositions\\a98f4fd0-ed48-451d-86d7-8d4ef6bfd85e.json",
+        "disposition": null,
+        "proof": null,
+        "nativeStage": "OWNED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "RETAINED",
+        "checkpoint": "OWNED",
+        "lastError": null,
+        "processClean": false,
+        "cleanupComplete": false,
+        "finalized": false,
+        "released": false,
+        "managerResources": 1,
+        "counters": {
+          "spawn": 1,
+          "query": 3,
+          "terminate": 0,
+          "release": 0,
+          "handlesClosed": 0,
+          "delete": 0
+        },
+        "phase": "compile",
+        "rootPid": 28148,
+        "retained": [
+          {
+            "pid": 28148,
+            "member": true,
+            "created": "31285297:4114324677",
+            "root": true,
+            "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+            "signaled": false,
+            "closed": false
+          }
+        ],
+        "coverageGaps": [],
+        "output": "",
+        "exitCode": null
+      },
+      "members": [
+        28148
+      ],
+      "identities": [
+        {
+          "pid": 28148,
+          "member": true,
+          "created": "31285297:4114324677",
+          "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+        }
+      ],
+      "sequence": 3,
+      "monotonicMs": 936.2726
+    },
+    "latestSnapshot": {
+      "sequence": 1057,
+      "monotonicMs": 21735.5722,
+      "exitCode": null
+    },
+    "phenomenon": "No retained live actual csc.dll compiler window; no compile hard-crash claim",
+    "error": {
+      "message": "Expected values to be strictly equal:\n\n1 !== 0\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at crash (file:///D:/coding-ide/spikes/exercise-shutdown-9d-common/staged-run.mjs:130:111)\n    at async file:///D:/coding-ide/spikes/exercise-shutdown-9d-common/staged-run.mjs:205:45"
+    }
+  }
+]

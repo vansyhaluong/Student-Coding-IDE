@@ -1,0 +1,1015 @@
+{
+  "name": "T4-root",
+  "status": "PASS",
+  "started": "2026-10-20T03:35:24.513Z",
+  "timeline": [
+    {
+      "event": "cleanup-start",
+      "monotonicMs": 489.69,
+      "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34"
+    },
+    {
+      "event": "cleanup-finished",
+      "monotonicMs": 598.9178,
+      "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34",
+      "ms": 107.19630000000001
+    }
+  ],
+  "commands": [
+    {
+      "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34",
+      "executable": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe",
+      "args": [
+        "Local\\student-9d-343ceef5-0b20-40fd-b454-06f8abae21d9",
+        "96",
+        "hold"
+      ],
+      "phase": "execute",
+      "quota": 67108864,
+      "launchAt": 267.1874
+    }
+  ],
+  "memoryEvidence": {
+    "denial": {
+      "committedByAllocator": 63963136,
+      "win32Error": 1455
+    },
+    "memoryEvents": [
+      {
+        "message": 10,
+        "pid": 20884
+      }
+    ],
+    "output": "ALLOCATOR_READY 20884\r\nALLOC_DENIED 63963136 1455\r\n"
+  },
+  "cancellationAt": 489.4253,
+  "cleanups": [
+    {
+      "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34",
+      "ms": 107.19630000000001,
+      "state": {
+        "owner": "exercise:8f1f91c0-df73-4350-8f39-e3952f292c34",
+        "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\2026-10-20T03-23-52-749Z-R10-limits\\T4-root\\learning\\sessions\\session-8f1f91c0-df73-4350-8f39-e3952f292c34",
+        "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\2026-10-20T03-23-52-749Z-R10-limits\\T4-root\\learning\\dispositions\\8f1f91c0-df73-4350-8f39-e3952f292c34.json",
+        "disposition": "CLEAN",
+        "proof": {
+          "kind": "VERIFIED",
+          "allRetainedSignaled": true,
+          "jobEmpty": true,
+          "observerSettled": true,
+          "unresolvedErrors": 0,
+          "retained": [
+            {
+              "pid": 20884,
+              "member": true,
+              "created": "31285316:182233301",
+              "root": true,
+              "image": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe",
+              "signaled": true,
+              "closed": false
+            },
+            {
+              "pid": 22144,
+              "member": true,
+              "created": "31285316:182535852",
+              "root": false,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "signaled": true,
+              "closed": false
+            }
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          },
+          "coverageGaps": []
+        },
+        "nativeStage": "HANDLES_CLOSED",
+        "persistenceStage": "ACKNOWLEDGED",
+        "workspaceState": "REMOVED",
+        "checkpoint": "CLEANUP_COMPLETE",
+        "lastError": null,
+        "processClean": true,
+        "cleanupComplete": true,
+        "finalized": true,
+        "released": true,
+        "managerResources": 0,
+        "counters": {
+          "spawn": 1,
+          "query": 17,
+          "terminate": 1,
+          "release": 1,
+          "handlesClosed": 2,
+          "delete": 1
+        },
+        "phase": "execute",
+        "rootPid": 20884,
+        "accounting": {
+          "totalProcesses": 2,
+          "activeProcesses": 0,
+          "limitTerminations": 0
+        },
+        "retained": [
+          {
+            "pid": 20884,
+            "member": true,
+            "created": "31285316:182233301",
+            "root": true,
+            "image": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe",
+            "signaled": true,
+            "closed": true
+          },
+          {
+            "pid": 22144,
+            "member": true,
+            "created": "31285316:182535852",
+            "root": false,
+            "image": "C:\\Windows\\System32\\conhost.exe",
+            "signaled": true,
+            "closed": true
+          }
+        ],
+        "coverageGaps": [],
+        "output": "ALLOCATOR_READY 20884\r\nALLOC_DENIED 63963136 1455\r\n",
+        "exitCode": 1,
+        "timeline": [
+          {
+            "event": "checkpoint-acknowledged",
+            "monotonicMs": 266.8556,
+            "elapsedMs": 32.516699999999986,
+            "checkpoint": "OWNED"
+          },
+          {
+            "event": "handle-retained",
+            "monotonicMs": 381.7028,
+            "elapsedMs": 147.3559,
+            "pid": 20884,
+            "key": "20884:31285316:182233301",
+            "root": true
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 381.9511,
+            "elapsedMs": 147.6027,
+            "members": [
+              20884
+            ],
+            "accounting": {
+              "totalProcesses": 1,
+              "activeProcesses": 1,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "launched",
+            "monotonicMs": 382.075,
+            "elapsedMs": 147.7275,
+            "rootPid": 20884,
+            "phase": "execute",
+            "executable": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe"
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 412.6269,
+            "elapsedMs": 178.28,
+            "members": [
+              20884,
+              22144
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "handle-retained",
+            "monotonicMs": 412.809,
+            "elapsedMs": 178.46150000000003,
+            "pid": 22144,
+            "key": "22144:31285316:182535852",
+            "root": false
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 436.3695,
+            "elapsedMs": 202.02150000000003,
+            "members": [
+              20884,
+              22144
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 436.6723,
+            "elapsedMs": 202.3239,
+            "members": [
+              20884,
+              22144
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 451.6682,
+            "elapsedMs": 217.3208,
+            "members": [
+              20884,
+              22144
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 468.7818,
+            "elapsedMs": 234.436,
+            "members": [
+              20884,
+              22144
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 486.5657,
+            "elapsedMs": 252.21740000000003,
+            "members": [
+              20884,
+              22144
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 487.5745,
+            "elapsedMs": 253.2263,
+            "members": [
+              20884,
+              22144
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "cleanup-stage-entry",
+            "monotonicMs": 490.2221,
+            "elapsedMs": 255.8737,
+            "nativeStage": "OWNED"
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 490.4141,
+            "elapsedMs": 256.06539999999995,
+            "members": [
+              20884,
+              22144
+            ],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 2,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "terminate-returned",
+            "monotonicMs": 490.5383,
+            "elapsedMs": 256.1897
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 490.5689,
+            "elapsedMs": 256.2201,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 491.5095,
+            "elapsedMs": 257.1608,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "root-exit",
+            "monotonicMs": 503.7332,
+            "elapsedMs": 269.38480000000004,
+            "code": 1
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 519.5771,
+            "elapsedMs": 285.2296,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "handle-signaled",
+            "monotonicMs": 519.6291,
+            "elapsedMs": 285.28059999999994,
+            "pid": 20884,
+            "created": "31285316:182233301"
+          },
+          {
+            "event": "handle-signaled",
+            "monotonicMs": 519.6455,
+            "elapsedMs": 285.2967,
+            "pid": 22144,
+            "created": "31285316:182535852"
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 520.9669,
+            "elapsedMs": 286.6184999999999,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 535.5452,
+            "elapsedMs": 301.1971,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "TERMINATION_VERIFIED",
+            "monotonicMs": 535.7113,
+            "elapsedMs": 301.36289999999997
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 537.0764,
+            "elapsedMs": 302.7279,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 553.9645,
+            "elapsedMs": 319.6165,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "checkpoint-acknowledged",
+            "monotonicMs": 554.7046,
+            "elapsedMs": 320.35609999999997,
+            "checkpoint": "RELEASE_READY"
+          },
+          {
+            "event": "job-snapshot",
+            "monotonicMs": 554.744,
+            "elapsedMs": 320.39519999999993,
+            "members": [],
+            "accounting": {
+              "totalProcesses": 2,
+              "activeProcesses": 0,
+              "limitTerminations": 0
+            }
+          },
+          {
+            "event": "native-release-start",
+            "monotonicMs": 554.9317,
+            "elapsedMs": 320.58309999999994,
+            "members": []
+          },
+          {
+            "event": "native-released",
+            "monotonicMs": 555.0538,
+            "elapsedMs": 320.7049999999999
+          },
+          {
+            "event": "observed-handles-closed",
+            "monotonicMs": 555.0769,
+            "elapsedMs": 320.7280999999999
+          },
+          {
+            "event": "checkpoint-acknowledged",
+            "monotonicMs": 572.984,
+            "elapsedMs": 338.63599999999997,
+            "checkpoint": "FINALIZED"
+          },
+          {
+            "event": "PROCESS_CLEAN",
+            "monotonicMs": 572.9947,
+            "elapsedMs": 338.64570000000003
+          },
+          {
+            "event": "checkpoint-acknowledged",
+            "monotonicMs": 596.5605,
+            "elapsedMs": 362.212,
+            "checkpoint": "CLEANUP_COMPLETE"
+          },
+          {
+            "event": "CLEANUP_COMPLETE",
+            "monotonicMs": 596.5697,
+            "elapsedMs": 362.22069999999997
+          },
+          {
+            "event": "lease-released",
+            "monotonicMs": 596.7064,
+            "elapsedMs": 362.3577
+          }
+        ]
+      },
+      "checkpoint": {
+        "schemaVersion": 2,
+        "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34",
+        "owner": "exercise:8f1f91c0-df73-4350-8f39-e3952f292c34",
+        "hostEpoch": "5d43bade-4f4e-43d7-8af8-84d0d69aab89",
+        "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\2026-10-20T03-23-52-749Z-R10-limits\\T4-root\\learning",
+        "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\2026-10-20T03-23-52-749Z-R10-limits\\T4-root\\learning\\sessions\\session-8f1f91c0-df73-4350-8f39-e3952f292c34",
+        "workspaceIdentity": {
+          "dev": "40663377",
+          "ino": "1407374883757978",
+          "birthtimeNs": "1792467324605264600"
+        },
+        "checkpoint": "CLEANUP_COMPLETE",
+        "revision": 3,
+        "proof": {
+          "kind": "VERIFIED",
+          "allRetainedSignaled": true,
+          "jobEmpty": true,
+          "observerSettled": true,
+          "unresolvedErrors": 0,
+          "retained": [
+            {
+              "pid": 20884,
+              "member": true,
+              "created": "31285316:182233301",
+              "root": true,
+              "image": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe",
+              "signaled": true,
+              "closed": false
+            },
+            {
+              "pid": 22144,
+              "member": true,
+              "created": "31285316:182535852",
+              "root": false,
+              "image": "C:\\Windows\\System32\\conhost.exe",
+              "signaled": true,
+              "closed": false
+            }
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          },
+          "coverageGaps": []
+        },
+        "finalized": true,
+        "nativeStage": "HANDLES_CLOSED",
+        "processClean": true,
+        "cleanupComplete": true,
+        "workspaceState": "REMOVED"
+      }
+    }
+  ],
+  "sessions": [
+    {
+      "owner": "exercise:8f1f91c0-df73-4350-8f39-e3952f292c34",
+      "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34",
+      "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\2026-10-20T03-23-52-749Z-R10-limits\\T4-root\\learning\\sessions\\session-8f1f91c0-df73-4350-8f39-e3952f292c34",
+      "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\2026-10-20T03-23-52-749Z-R10-limits\\T4-root\\learning\\dispositions\\8f1f91c0-df73-4350-8f39-e3952f292c34.json",
+      "disposition": "CLEAN",
+      "proof": {
+        "kind": "VERIFIED",
+        "allRetainedSignaled": true,
+        "jobEmpty": true,
+        "observerSettled": true,
+        "unresolvedErrors": 0,
+        "retained": [
+          {
+            "pid": 20884,
+            "member": true,
+            "created": "31285316:182233301",
+            "root": true,
+            "image": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe",
+            "signaled": true,
+            "closed": false
+          },
+          {
+            "pid": 22144,
+            "member": true,
+            "created": "31285316:182535852",
+            "root": false,
+            "image": "C:\\Windows\\System32\\conhost.exe",
+            "signaled": true,
+            "closed": false
+          }
+        ],
+        "accounting": {
+          "totalProcesses": 2,
+          "activeProcesses": 0,
+          "limitTerminations": 0
+        },
+        "coverageGaps": []
+      },
+      "nativeStage": "HANDLES_CLOSED",
+      "persistenceStage": "ACKNOWLEDGED",
+      "workspaceState": "REMOVED",
+      "checkpoint": "CLEANUP_COMPLETE",
+      "lastError": null,
+      "processClean": true,
+      "cleanupComplete": true,
+      "finalized": true,
+      "released": true,
+      "managerResources": 0,
+      "counters": {
+        "spawn": 1,
+        "query": 17,
+        "terminate": 1,
+        "release": 1,
+        "handlesClosed": 2,
+        "delete": 1
+      },
+      "phase": "execute",
+      "rootPid": 20884,
+      "accounting": {
+        "totalProcesses": 2,
+        "activeProcesses": 0,
+        "limitTerminations": 0
+      },
+      "retained": [
+        {
+          "pid": 20884,
+          "member": true,
+          "created": "31285316:182233301",
+          "root": true,
+          "image": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe",
+          "signaled": true,
+          "closed": true
+        },
+        {
+          "pid": 22144,
+          "member": true,
+          "created": "31285316:182535852",
+          "root": false,
+          "image": "C:\\Windows\\System32\\conhost.exe",
+          "signaled": true,
+          "closed": true
+        }
+      ],
+      "coverageGaps": [],
+      "output": "ALLOCATOR_READY 20884\r\nALLOC_DENIED 63963136 1455\r\n",
+      "exitCode": 1,
+      "timeline": [
+        {
+          "event": "checkpoint-acknowledged",
+          "monotonicMs": 266.8556,
+          "elapsedMs": 32.516699999999986,
+          "checkpoint": "OWNED"
+        },
+        {
+          "event": "handle-retained",
+          "monotonicMs": 381.7028,
+          "elapsedMs": 147.3559,
+          "pid": 20884,
+          "key": "20884:31285316:182233301",
+          "root": true
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 381.9511,
+          "elapsedMs": 147.6027,
+          "members": [
+            20884
+          ],
+          "accounting": {
+            "totalProcesses": 1,
+            "activeProcesses": 1,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "launched",
+          "monotonicMs": 382.075,
+          "elapsedMs": 147.7275,
+          "rootPid": 20884,
+          "phase": "execute",
+          "executable": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe"
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 412.6269,
+          "elapsedMs": 178.28,
+          "members": [
+            20884,
+            22144
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 2,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "handle-retained",
+          "monotonicMs": 412.809,
+          "elapsedMs": 178.46150000000003,
+          "pid": 22144,
+          "key": "22144:31285316:182535852",
+          "root": false
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 436.3695,
+          "elapsedMs": 202.02150000000003,
+          "members": [
+            20884,
+            22144
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 2,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 436.6723,
+          "elapsedMs": 202.3239,
+          "members": [
+            20884,
+            22144
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 2,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 451.6682,
+          "elapsedMs": 217.3208,
+          "members": [
+            20884,
+            22144
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 2,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 468.7818,
+          "elapsedMs": 234.436,
+          "members": [
+            20884,
+            22144
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 2,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 486.5657,
+          "elapsedMs": 252.21740000000003,
+          "members": [
+            20884,
+            22144
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 2,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 487.5745,
+          "elapsedMs": 253.2263,
+          "members": [
+            20884,
+            22144
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 2,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "cleanup-stage-entry",
+          "monotonicMs": 490.2221,
+          "elapsedMs": 255.8737,
+          "nativeStage": "OWNED"
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 490.4141,
+          "elapsedMs": 256.06539999999995,
+          "members": [
+            20884,
+            22144
+          ],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 2,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "terminate-returned",
+          "monotonicMs": 490.5383,
+          "elapsedMs": 256.1897
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 490.5689,
+          "elapsedMs": 256.2201,
+          "members": [],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 491.5095,
+          "elapsedMs": 257.1608,
+          "members": [],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "root-exit",
+          "monotonicMs": 503.7332,
+          "elapsedMs": 269.38480000000004,
+          "code": 1
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 519.5771,
+          "elapsedMs": 285.2296,
+          "members": [],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "handle-signaled",
+          "monotonicMs": 519.6291,
+          "elapsedMs": 285.28059999999994,
+          "pid": 20884,
+          "created": "31285316:182233301"
+        },
+        {
+          "event": "handle-signaled",
+          "monotonicMs": 519.6455,
+          "elapsedMs": 285.2967,
+          "pid": 22144,
+          "created": "31285316:182535852"
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 520.9669,
+          "elapsedMs": 286.6184999999999,
+          "members": [],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 535.5452,
+          "elapsedMs": 301.1971,
+          "members": [],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "TERMINATION_VERIFIED",
+          "monotonicMs": 535.7113,
+          "elapsedMs": 301.36289999999997
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 537.0764,
+          "elapsedMs": 302.7279,
+          "members": [],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 553.9645,
+          "elapsedMs": 319.6165,
+          "members": [],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "checkpoint-acknowledged",
+          "monotonicMs": 554.7046,
+          "elapsedMs": 320.35609999999997,
+          "checkpoint": "RELEASE_READY"
+        },
+        {
+          "event": "job-snapshot",
+          "monotonicMs": 554.744,
+          "elapsedMs": 320.39519999999993,
+          "members": [],
+          "accounting": {
+            "totalProcesses": 2,
+            "activeProcesses": 0,
+            "limitTerminations": 0
+          }
+        },
+        {
+          "event": "native-release-start",
+          "monotonicMs": 554.9317,
+          "elapsedMs": 320.58309999999994,
+          "members": []
+        },
+        {
+          "event": "native-released",
+          "monotonicMs": 555.0538,
+          "elapsedMs": 320.7049999999999
+        },
+        {
+          "event": "observed-handles-closed",
+          "monotonicMs": 555.0769,
+          "elapsedMs": 320.7280999999999
+        },
+        {
+          "event": "checkpoint-acknowledged",
+          "monotonicMs": 572.984,
+          "elapsedMs": 338.63599999999997,
+          "checkpoint": "FINALIZED"
+        },
+        {
+          "event": "PROCESS_CLEAN",
+          "monotonicMs": 572.9947,
+          "elapsedMs": 338.64570000000003
+        },
+        {
+          "event": "checkpoint-acknowledged",
+          "monotonicMs": 596.5605,
+          "elapsedMs": 362.212,
+          "checkpoint": "CLEANUP_COMPLETE"
+        },
+        {
+          "event": "CLEANUP_COMPLETE",
+          "monotonicMs": 596.5697,
+          "elapsedMs": 362.22069999999997
+        },
+        {
+          "event": "lease-released",
+          "monotonicMs": 596.7064,
+          "elapsedMs": 362.3577
+        }
+      ],
+      "quotaReadback": {
+        "quotaBytes": 67108864,
+        "configuredBeforeLaunch": 67108864,
+        "peakJobCommitBytes": 385024,
+        "flags": 8704,
+        "jobCommitReportedBytes": 385024,
+        "violationFlags": 0,
+        "events": [
+          {
+            "message": 6,
+            "pid": 20884
+          }
+        ]
+      }
+    }
+  ],
+  "memorySummary": [
+    {
+      "sessionId": "8f1f91c0-df73-4350-8f39-e3952f292c34",
+      "phase": "execute",
+      "quota": 67108864,
+      "peakJobCommitBytes": 67203072,
+      "maxReportedJobCommitBytes": 66150400,
+      "samples": 12
+    }
+  ],
+  "observer": {
+    "mainIdentity": {
+      "pid": 17184,
+      "created": "31285316:178075701"
+    },
+    "mainSignaled": true,
+    "elapsedMs": 737.4697000000015,
+    "allRetainedSignaled": true,
+    "observed": [
+      {
+        "pid": 20884,
+        "member": true,
+        "created": "31285316:182233301",
+        "root": true,
+        "image": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\limits\\allocator.exe",
+        "signaled": true,
+        "closed": false
+      },
+      {
+        "pid": 22144,
+        "member": true,
+        "created": "31285316:182535852",
+        "root": false,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "signaled": true,
+        "closed": false
+      }
+    ],
+    "timeline": [
+      {
+        "event": "retained",
+        "pid": 20884,
+        "created": "31285316:182233301",
+        "at": 45057.2176
+      },
+      {
+        "event": "retained",
+        "pid": 22144,
+        "created": "31285316:182535852",
+        "at": 45075.7039
+      }
+    ],
+    "watchdog": false,
+    "exit": {
+      "code": 0,
+      "signal": null
+    }
+  }
+}

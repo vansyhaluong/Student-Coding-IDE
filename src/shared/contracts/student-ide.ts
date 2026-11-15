@@ -10,6 +10,7 @@ import type { ProjectApi } from './project'
 import type { SearchApi } from './search'
 import type { TerminalContractApi } from './terminal'
 import type { RunApi } from './run'
+import type { RunSourceGuardApi } from './run-source-guard'
 
 export interface StudentIdeApi {
   learning: LearningApi
@@ -24,4 +25,5 @@ export interface StudentIdeApi {
   search: SearchApi
   terminal: TerminalContractApi
   run: RunApi
+  runSourceGuard: RunSourceGuardApi
 }

@@ -1,30 +1,46 @@
 import { randomUUID } from 'node:crypto'
-import { validateStartRunRequest, validateStopRunRequest, type RunEvent, type RunState,
-  type RunSession, type RunSessionId, type StartRunRequest } from '../../../shared/contracts/run'
+import { isRunSessionId, runInputCapability, validateCloseRunInputRequest,
+  validateSendRunInputRequest, validateStartRunRequest, validateStopRunRequest, validateSemanticStartRunRequest,
+  type RunInputAcknowledgement, type RunInputGateReason, type RunInputStatus,
+  type SemanticStartRunRequest, type RunExecutionPhase, type RunEvent, type RunState,
+  type RunSession, type RunSessionId, type RunTargetKind, type StartRunRequest,
+} from '../../../shared/contracts/run'
+import type { ProjectId } from '../../../shared/contracts/project'
 import { DomainError, invalidInputError, serializeAppError } from '../../errors/app-error'
-import { normalizePathIdentity } from '../project/project-identity'
-import { JavaScriptRunStrategy } from './javascript-run-strategy'
-import type { AuthorizedRunTarget, PreparedRun, RunRuntime, RunStrategy } from './run-strategy'
+import { runTargetIdentity, runExecutionFingerprint, snapshotExecution, snapshotPlan, runPlanFingerprint,
+  type RunPreparationContext,
+  type AuthorizedRunTarget, type PreparedRun, type RunRuntime, type RunStrategy,
+  type RunRuntimeContext } from './run-strategy'
 import type { PipedProcessAdapter, PipedProcessEvent, PipedRunProcess } from './piped-process-adapter'
+import { RunInputQueue, runInputRejection } from './run-input-queue'
 import type { ProcessManager } from '../process/process-manager'
+import { sourceGuardError, type RunSourceGuardPort, type RunSourceLease } from './run-source-guard'
 
 /** Later execution composition must authorize disk/project state, then revalidate
  * immediately before spawn. Renderer dirty/current-file state stays UI-owned. */
 export interface RunPreparationAuthority {
-  authorize(target: StartRunRequest, ownerId: number): Promise<AuthorizedRunTarget>
-  resolveRuntime(): Promise<RunRuntime>
+  authorize(target: StartRunRequest, ownerId: number, context?: RunPreparationContext): Promise<AuthorizedRunTarget>
+  resolveRuntime(context: RunRuntimeContext): Promise<RunRuntime>
 }
 export interface RunPreparation {
   readonly session: RunSession
   readonly execution: PreparedRun
+  readonly identity: string
+  readonly fingerprint: string
 }
 interface OwnedPreparation extends RunPreparation { readonly ownerId: number }
 interface LifecycleSession {
   session: RunSession
   readonly ownerId: number
   readonly identity: string
+  readonly kind: RunTargetKind
+  readonly projectGeneration: number
+  readonly ownerGeneration: number
   readonly ready: Promise<void>
   process?: PipedRunProcess
+  input?: RunInputQueue
+  /** Set when input must stay shut even if the execute step is created later. */
+  inputBlock?: RunInputGateReason
   cleanup?: Promise<void>
   exitCode: number | null
   stdoutEof: boolean
@@ -33,12 +49,26 @@ interface LifecycleSession {
   observationFailed: boolean
   finalized: boolean
   muted?: boolean
+  plan?: {
+    controller: AbortController
+    phase: RunExecutionPhase
+    generation: number
+    finished?: () => void
+    cleanupFailed: boolean
+    sourceLease?: RunSourceLease
+    sourceFailure?: DomainError
+  }
 }
 export interface RunExecutionOptions {
   adapter: PipedProcessAdapter
   manager: ProcessManager
   onEvent(ownerId: number, event: RunEvent): void
   onEventSinkError?(error: unknown): void
+  /** Main-only phase observation; no public IPC migration in M1-08. */
+  onPhase?(ownerId: number, session: RunSession, phase: RunExecutionPhase): void
+  /** Main-only terminal bookkeeping, independent of muted public event delivery. */
+  onFinalized?(ownerId: number, session: RunSession): void
+  sourceGuard?: RunSourceGuardPort
 }
 interface LaunchLifecycle {
   cleanup(): Promise<void>
@@ -50,8 +80,9 @@ interface LaunchLifecycle {
 export class RunService {
   private readonly preparations = new Map<RunSessionId, OwnedPreparation>()
   private readonly processes = new Map<RunSessionId, PipedRunProcess>()
-  private readonly strategies: readonly RunStrategy[] = [new JavaScriptRunStrategy()]
+  private readonly strategies: readonly RunStrategy[]
   private readonly sessions = new Map<RunSessionId, LifecycleSession>()
+  private readonly inputs = new Map<RunSessionId, { ownerId: number; projectId: ProjectId; queue: RunInputQueue }>()
   private readonly targets = new Map<string, LifecycleSession>()
   private readonly starts = new Map<string, Promise<unknown>>()
   private readonly pendingStarts = new Map<Promise<RunSession>, string>()
@@ -65,45 +96,59 @@ export class RunService {
   // Small tombstones support late Stop without retaining processes/output indefinitely.
   private readonly completed = new Map<RunSessionId, { session: RunSession; ownerId: number }>()
   constructor(private readonly authority: RunPreparationAuthority,
-    private readonly execution?: RunExecutionOptions) {}
+    strategies: readonly RunStrategy[], private readonly execution?: RunExecutionOptions) {
+    const kinds = new Set<string>()
+    this.strategies = Object.freeze(strategies.map(strategy => {
+      if (!['javascript-file', 'csharp-project'].includes(strategy.kind) || kinds.has(strategy.kind)) {
+        throw invalidInputError('run:configure', ['strategy'])
+      }
+      kinds.add(strategy.kind)
+      return Object.freeze({ kind: strategy.kind, supports: strategy.supports.bind(strategy),
+        prepare: strategy.prepare.bind(strategy),
+        ...(strategy.preparePlan ? { preparePlan: strategy.preparePlan.bind(strategy) } : {}) })
+    }))
+  }
 
   private async resolve(request: StartRunRequest, ownerId: number): Promise<{
-    target: StartRunRequest; execution: PreparedRun
+    target: StartRunRequest; execution: PreparedRun; identity: string; fingerprint: string
   }> {
     const validation = validateStartRunRequest(request)
     if (!validation.ok) throw invalidInputError('run:prepare', validation.issues.map((issue) => issue.path))
     if (!Number.isSafeInteger(ownerId) || ownerId <= 0) throw invalidInputError('run:prepare', ['owner'])
     // Capture validated input before awaiting any Main authority operation.
-    const target = validation.value
+    const target = Object.freeze(validation.value)
     if (target.dirty) throw new DomainError({ code: 'INVALID_INPUT', retryable: false,
       operation: 'run:prepare', message: 'Save this file before running it.' })
-    const strategy = this.strategies.find((candidate) => candidate.supports(target))
+    const matches = this.strategies.filter((candidate) => candidate.supports(target))
+    if (matches.length > 1) throw invalidInputError('run:prepare', ['strategy'])
+    const strategy = matches[0]
     if (!strategy) throw new DomainError({ code: 'UNSUPPORTED', retryable: false,
       operation: 'run:prepare', message: target.relativePath.endsWith('.ts')
         ? 'TypeScript Run is not supported in current V1.'
         : 'Run supports JavaScript .js files only in current V1.' })
-    const authorized = await this.authority.authorize(target, ownerId)
+    const authorized = Object.freeze({ ...await this.authority.authorize(target, ownerId) })
     if (authorized.projectId !== target.projectId || authorized.relativePath !== target.relativePath) {
       throw invalidInputError('run:prepare', ['target'])
     }
-    const runtime = await this.authority.resolveRuntime()
-    const execution = strategy.prepare(authorized, runtime)
-    return { target, execution }
+    const identity = runTargetIdentity(authorized, strategy.kind)
+    const runtime = await this.authority.resolveRuntime(Object.freeze({ strategyKind: strategy.kind, target: authorized }))
+    const execution = snapshotExecution(strategy.prepare(authorized, runtime))
+    const fingerprint = runExecutionFingerprint(identity, authorized, execution)
+    return { target, execution, identity, fingerprint }
   }
 
   async prepare(request: StartRunRequest, ownerId: number): Promise<RunPreparation> {
-    const { target, execution } = await this.resolve(request, ownerId)
+    const { target, execution, identity, fingerprint } = await this.resolve(request, ownerId)
     // Preparations are serialized by target identity at the final synchronous insertion.
-    const identity = normalizePathIdentity(execution.args[0], 'win32')
     if ([...this.preparations.values()].some((entry) =>
-      normalizePathIdentity(entry.execution.args[0], 'win32') === identity)) {
+      entry.identity === identity)) {
       throw new DomainError({ code: 'PROCESS_FAILED', retryable: true,
         operation: 'run:prepare', message: 'The previous Run preparation must be released first.' })
     }
     const session: RunSession = Object.freeze({ projectId: target.projectId,
       relativePath: target.relativePath, sessionId: `run_${randomUUID()}` as RunSessionId,
       state: 'STARTING' })
-    const preparation = Object.freeze({ session, execution })
+    const preparation = Object.freeze({ session, execution, identity, fingerprint })
     this.preparations.set(session.sessionId, { ...preparation, ownerId })
     return preparation
   }
@@ -112,6 +157,9 @@ export class RunService {
     const validation = validateStartRunRequest(request)
     if (!validation.ok) return Promise.reject(invalidInputError('run:start', ['target']))
     const target = validation.value
+    // The legacy public bridge remains JavaScript-only until M1-10.
+    if (/\.csproj$/i.test(target.relativePath)) return Promise.reject(new DomainError({ code: 'UNSUPPORTED',
+      message: 'C# Run requires the Main-owned execution plan.', operation: 'run:start', retryable: false }))
     const generation = this.projectGenerations.get(target.projectId) ?? 0
     const ownerGeneration = this.ownerGenerations.get(ownerId) ?? 0
     const check = () => {
@@ -129,10 +177,228 @@ export class RunService {
     return task
   }
 
+  /** Main-only plan entry point. The live JavaScript bridge keeps startRun semantics. */
+  startPlannedRun(request: SemanticStartRunRequest, ownerId: number): Promise<RunSession> {
+    const validation = validateSemanticStartRunRequest(request)
+    if (!validation.ok || !Number.isSafeInteger(ownerId) || ownerId <= 0) {
+      return Promise.reject(invalidInputError('run:start', ['target', 'owner']))
+    }
+    const target = Object.freeze(validation.value)
+    if (target.dirty) return Promise.reject(invalidInputError('run:start', ['dirty']))
+    const generation = this.projectGenerations.get(target.projectId) ?? 0
+    const ownerGeneration = this.ownerGenerations.get(ownerId) ?? 0
+    const check = () => {
+      if (this.stopping || this.projectBlocks.has(target.projectId)
+        || (this.projectGenerations.get(target.projectId) ?? 0) !== generation
+        || (this.ownerGenerations.get(ownerId) ?? 0) !== ownerGeneration) {
+        throw runFailure('run:start', 'Run is unavailable while this project is changing or closing.')
+      }
+    }
+    const task = this.reservePlan(target, ownerId, check)
+    this.pendingStarts.set(task, target.projectId)
+    this.pendingOwners.set(task, ownerId)
+    void task.finally(() => {
+      this.pendingStarts.delete(task); this.pendingOwners.delete(task)
+    }).catch(() => undefined)
+    return task
+  }
+
+  private async reservePlan(target: SemanticStartRunRequest, ownerId: number,
+    check: () => void): Promise<RunSession> {
+    check()
+    if (!this.execution) throw runFailure('run:start', 'Run execution is not configured.')
+    const matches = this.strategies.filter(strategy => strategy.kind === target.kind && strategy.supports(target))
+    if (matches.length !== 1) throw invalidInputError('run:start', ['strategy'])
+    const strategy = matches[0]
+    // Only cheap project/path authorization precedes the cancellable session.
+    const request = { projectId: target.projectId, relativePath: target.relativePath, dirty: false }
+    const authorized = Object.freeze({ ...await this.authority.authorize(request, ownerId) })
+    check()
+    if (authorized.projectId !== target.projectId || authorized.relativePath !== target.relativePath) {
+      throw invalidInputError('run:start', ['target'])
+    }
+    const identity = runTargetIdentity(authorized, strategy.kind)
+    const previous = this.starts.get(identity) ?? Promise.resolve()
+    const task = previous.catch(() => undefined).then(async () => {
+      check()
+      const old = this.targets.get(identity)
+      if (old) await this.stopRun(old.session.sessionId, ownerId)
+      check()
+      if ([...this.preparations.values()].some(preparation => preparation.identity === identity)) {
+        throw runFailure('run:start', 'The previous Run preparation must be released first.')
+      }
+      const entry: LifecycleSession = {
+        session: Object.freeze({ projectId: target.projectId, relativePath: target.relativePath,
+          sessionId: `run_${randomUUID()}` as RunSessionId, state: 'STARTING' }),
+        ownerId, identity, kind: strategy.kind, ready: Promise.resolve(), exitCode: null, stdoutEof: false,
+        stderrEof: false, cancelled: false, observationFailed: false, finalized: false,
+        projectGeneration: this.projectGenerations.get(target.projectId) ?? 0,
+        ownerGeneration: this.ownerGenerations.get(ownerId) ?? 0,
+        plan: { controller: new AbortController(), phase: 'PREPARING', generation: 0, cleanupFailed: false },
+      }
+      this.sessions.set(entry.session.sessionId, entry)
+      this.targets.set(identity, entry)
+      this.emit(entry, { type: 'state', session: entry.session })
+      this.publishPhase(entry, 'PREPARING')
+      void this.executePlan(entry, authorized, strategy, check)
+      return entry.session
+    })
+    this.starts.set(identity, task)
+    try { return await task }
+    finally { if (this.starts.get(identity) === task) this.starts.delete(identity) }
+  }
+
+  private cancelPlan(entry: LifecycleSession): void {
+    entry.cancelled = true
+    entry.plan!.controller.abort()
+  }
+
+  private publishPhase(entry: LifecycleSession, phase: RunExecutionPhase): void {
+    entry.plan!.phase = phase
+    if (this.stopping || entry.muted || entry.finalized) return
+    try { this.execution?.onPhase?.(entry.ownerId, entry.session, phase) }
+    catch { this.execution?.onEventSinkError?.(runFailure('run:event', 'Run event delivery failed.')) }
+  }
+
+  private async executePlan(entry: LifecycleSession, authorized: AuthorizedRunTarget,
+    strategy: RunStrategy, lifecycleCheck: () => void): Promise<void> {
+    const control = entry.plan!
+    const check = () => {
+      lifecycleCheck()
+      if (control.sourceFailure) throw control.sourceFailure
+      if (entry.finalized || entry.cancelled || control.controller.signal.aborted) {
+        throw runFailure('run:prepare', 'Run preparation was cancelled.')
+      }
+    }
+    const context: RunPreparationContext = Object.freeze({
+      signal: control.controller.signal, resourceOwnerId: sessionOwner(entry.session.sessionId),
+      registerResource: (close: () => Promise<void>) => {
+        check()
+        return this.execution!.manager.register({ id: `run-preparation:${randomUUID()}`,
+          ownerId: sessionOwner(entry.session.sessionId), close })
+      },
+    })
+    const prepare = async (target: AuthorizedRunTarget) => {
+      check()
+      const runtime = await abortable(this.authority.resolveRuntime(Object.freeze({
+        strategyKind: strategy.kind, target, preparation: context,
+      })), context.signal)
+      check()
+      const plan = await abortable(Promise.resolve(strategy.preparePlan
+        ? strategy.preparePlan(target, runtime, context)
+        : { steps: [{ phase: 'EXECUTING' as const, execution: strategy.prepare(target, runtime) }] }), context.signal)
+      check()
+      return snapshotPlan(plan, strategy.kind)
+    }
+    try {
+      if (strategy.kind === 'csharp-project') {
+        if (!this.execution!.sourceGuard) throw sourceGuardError('SOURCE_STATE_UNKNOWN')
+        control.sourceLease = this.execution!.sourceGuard.open(entry.session, entry.ownerId,
+          control.controller.signal, error => {
+            if (entry.finalized || control.sourceFailure) return
+            control.sourceFailure = error
+            this.emitError(entry, error)
+            control.controller.abort()
+            void this.requestCleanup(entry).then(() => this.finalize(entry, 'FAILED')).catch(() => undefined)
+          })
+        await control.sourceLease.check()
+        check()
+      }
+      const plan = await prepare(authorized)
+      const fingerprint = runPlanFingerprint(entry.identity, authorized, plan)
+      for (const [index, step] of plan.steps.entries()) {
+        check()
+        if (control.sourceLease) { await control.sourceLease.check(); check() }
+        const current = Object.freeze({ ...await abortable(this.authority.authorize({
+          projectId: entry.session.projectId, relativePath: entry.session.relativePath, dirty: false,
+        }, entry.ownerId, context), context.signal) })
+        check()
+        if (current.projectId !== entry.session.projectId || current.relativePath !== entry.session.relativePath
+          || runTargetIdentity(current, strategy.kind) !== entry.identity) {
+          throw invalidInputError('run:launch', ['target'])
+        }
+        const revalidated = await prepare(current)
+        if (runPlanFingerprint(entry.identity, current, revalidated) !== fingerprint) {
+          throw invalidInputError('run:launch', ['plan'])
+        }
+        // Preparation probes must release completely before native step creation.
+        await this.requestCleanup(entry)
+        check()
+        if (control.sourceLease) { await control.sourceLease.check(); check() }
+        entry.process = undefined
+        entry.exitCode = null; entry.stdoutEof = false; entry.stderrEof = false
+        entry.observationFailed = false
+        const generation = ++control.generation
+        const finished = new Promise<void>(resolve => { control.finished = resolve })
+        this.publishPhase(entry, step.phase)
+        check() // A synchronous phase observer may have requested Stop.
+        control.sourceLease?.assertValid()
+        let child: PipedRunProcess | undefined
+        const lineInput = strategy.kind === 'csharp-project' && step.phase === 'EXECUTING'
+        const unregister = this.execution!.manager.register({ id: `run-step:${entry.session.sessionId}:${generation}`,
+          ownerId: context.resourceOwnerId, close: () => this.cleanup(entry) })
+        const observeStep = (event: PipedProcessEvent) => {
+          if (control.generation === generation) this.observe(entry, event)
+        }
+        try {
+          child = lineInput
+            ? this.execution!.adapter.create(step.execution, observeStep, 'line-input')
+            : this.execution!.adapter.create(step.execution, observeStep)
+        } catch (error) {
+          unregister()
+          if (strategy.kind === 'csharp-project') throw new DomainError({ code: 'PROCESS_FAILED',
+            operation: 'run:spawn', message: 'The C# Run process could not be started.', retryable: false,
+            details: { reason: 'SPAWN_FAILED', phase: step.phase } })
+          throw error
+        }
+        const created = child
+        entry.process = forwardRunProcess(created, async () => {
+          await created.close()
+          if (!created.isReleased() || entry.exitCode === null || !entry.stdoutEof || !entry.stderrEof) {
+            throw runFailure('run:cleanup', 'Run process observers have not completed.')
+          }
+        })
+        if (lineInput) this.attachInput(entry, created)
+        // Subsequent edits never restart or cancel an already-executing program.
+        if (step.phase === 'EXECUTING') { control.sourceLease?.release(); control.sourceLease = undefined }
+        if (entry.session.state === 'STARTING') this.transition(entry, 'RUNNING')
+        await finished
+        await this.requestCleanup(entry)
+        check()
+        if (entry.observationFailed || entry.exitCode !== 0) {
+          if (strategy.kind === 'csharp-project' && !entry.observationFailed) this.emitError(entry, new DomainError({
+            code: 'PROCESS_FAILED', operation: 'run:step', retryable: false,
+            message: step.phase === 'BUILD_RESTORE' ? 'C# build or restore failed.' : 'C# execution failed.',
+            details: { reason: step.phase === 'BUILD_RESTORE' ? 'BUILD_OR_RESTORE_FAILED' : 'EXECUTION_FAILED',
+              phase: step.phase, exitCode: entry.exitCode },
+          }))
+          this.finalize(entry, 'FAILED'); return
+        }
+        ++control.generation // Retire callbacks before asynchronous step-gap preparation.
+        control.finished = undefined
+        if (index < plan.steps.length - 1) entry.exitCode = null
+      }
+      this.finalize(entry, 'EXITED')
+    } catch (error) {
+      if (entry.finalized) return
+      if (control.cleanupFailed) return
+      if (!entry.cancelled && !control.sourceFailure) this.emitError(entry, safeStartError(error))
+      this.transition(entry, 'STOPPING')
+      // Cleanup failure retains both session and resources; explicit Stop can retry.
+      try {
+        await this.requestCleanup(entry)
+        this.finalize(entry, entry.cancelled ? 'CANCELLED' : 'FAILED')
+      } catch { /* Safe cleanup error is emitted by the retained resource. */ }
+    }
+  }
+
   /** Main lifecycle lease; invalidates earlier asynchronous starts, even after release. */
   suspendProject(projectId: string): () => void {
     this.projectGenerations.set(projectId, (this.projectGenerations.get(projectId) ?? 0) + 1)
     this.projectBlocks.set(projectId, (this.projectBlocks.get(projectId) ?? 0) + 1)
+    for (const entry of this.sessions.values()) {
+      if (entry.session.projectId === projectId) this.closeLiveInput(entry, 'PROJECT_CHANGED')
+    }
     let released = false
     return () => {
       if (released) return
@@ -150,6 +416,12 @@ export class RunService {
   }
 
   async stopProject(projectId: string): Promise<void> {
+    this.projectGenerations.set(projectId, (this.projectGenerations.get(projectId) ?? 0) + 1)
+    for (const entry of this.sessions.values()) {
+      if (entry.session.projectId !== projectId) continue
+      this.closeLiveInput(entry, 'PROJECT_CHANGED')
+      if (entry.plan) this.cancelPlan(entry)
+    }
     await Promise.allSettled([...this.pendingStarts].filter(([, id]) => id === projectId).map(([task]) => task))
     const results = await Promise.allSettled([...this.sessions.values()]
       .filter((entry) => entry.session.projectId === projectId)
@@ -167,7 +439,11 @@ export class RunService {
   async stopOwner(ownerId: number): Promise<void> {
     this.ownerGenerations.set(ownerId, (this.ownerGenerations.get(ownerId) ?? 0) + 1)
     for (const entry of this.sessions.values()) {
-      if (entry.ownerId === ownerId) entry.muted = true
+      if (entry.ownerId === ownerId) {
+        entry.muted = true
+        this.closeLiveInput(entry, 'OWNER_LOST')
+        if (entry.plan) this.cancelPlan(entry)
+      }
     }
     await Promise.allSettled([...this.pendingOwners].filter(([, id]) => id === ownerId).map(([task]) => task))
     const results = await Promise.allSettled([...this.sessions.values()]
@@ -182,7 +458,11 @@ export class RunService {
 
   beginShutdown(): void {
     this.stopping = true
-    for (const entry of this.sessions.values()) entry.muted = true
+    for (const entry of this.sessions.values()) {
+      entry.muted = true
+      this.closeLiveInput(entry, 'SHUTDOWN')
+      if (entry.plan) this.cancelPlan(entry)
+    }
   }
 
   async stop(): Promise<void> {
@@ -203,7 +483,7 @@ export class RunService {
     try { resolved = await this.resolve(request, ownerId) }
     catch (error) { throw safeStartError(error) }
     check()
-    const identity = normalizePathIdentity(resolved.execution.args[0], 'win32')
+    const identity = resolved.identity
     // Canonical target serialization preserves concurrency between different files.
     const previous = this.starts.get(identity) ?? Promise.resolve()
     const task = previous.catch(() => undefined).then(async () => {
@@ -217,13 +497,15 @@ export class RunService {
         this.releasePreparation(preparation.session.sessionId, ownerId)
         throw error
       }
-      if (normalizePathIdentity(preparation.execution.args[0], 'win32') !== identity) {
+      if (preparation.identity !== identity || preparation.fingerprint !== resolved.fingerprint) {
         this.releasePreparation(preparation.session.sessionId, ownerId)
         throw invalidInputError('run:start', ['target'])
       }
       let ready!: () => void
-      const entry: LifecycleSession = { session: preparation.session, ownerId, identity,
+      const entry: LifecycleSession = { session: preparation.session, ownerId, identity, kind: 'javascript-file',
         ready: new Promise<void>((resolve) => { ready = resolve }), exitCode: null,
+        projectGeneration: this.projectGenerations.get(preparation.session.projectId) ?? 0,
+        ownerGeneration: this.ownerGenerations.get(ownerId) ?? 0,
         stdoutEof: false, stderrEof: false, cancelled: false, observationFailed: false, finalized: false }
       this.sessions.set(entry.session.sessionId, entry)
       this.targets.set(identity, entry)
@@ -268,7 +550,9 @@ export class RunService {
     this.getSession(sessionId, ownerId)
     const entry = this.sessions.get(sessionId)
     if (!entry) return
-    if (entry.exitCode === null) entry.cancelled = true
+    this.closeLiveInput(entry, 'STOPPED')
+    if (entry.plan) this.cancelPlan(entry)
+    else if (entry.exitCode === null) entry.cancelled = true
     this.transition(entry, 'STOPPING')
     await this.requestCleanup(entry)
   }
@@ -285,21 +569,35 @@ export class RunService {
   private async performCleanupRequest(entry: LifecycleSession): Promise<void> {
     await entry.ready
     if (entry.finalized) return
-    try { await this.execution!.manager.cleanupOwner(sessionOwner(entry.session.sessionId)) }
-    catch { throw runFailure('run:cleanup', 'Run cleanup failed. Retry Stop before running this file again.') }
+    try {
+      await this.execution!.manager.cleanupOwner(sessionOwner(entry.session.sessionId))
+      if (entry.plan) entry.plan.cleanupFailed = false
+      if (entry.plan && entry.cancelled) this.finalize(entry, 'CANCELLED')
+    }
+    catch {
+      const failure = runFailure('run:cleanup', 'Run cleanup failed. Retry Stop before running this file again.',
+        entry.plan && /\.csproj$/i.test(entry.session.relativePath) ? 'CLEANUP_FAILED' : undefined)
+      if (entry.plan) {
+        entry.plan.cleanupFailed = true
+        this.transition(entry, 'STOPPING')
+        this.emitError(entry, failure)
+      }
+      throw failure
+    }
   }
 
   private cleanup(entry: LifecycleSession): Promise<void> {
+    this.sealInput(entry)
     if (entry.finalized) return Promise.resolve()
     if (entry.cleanup) return entry.cleanup
-    this.transition(entry, 'STOPPING')
+    if (!entry.plan || entry.cancelled) this.transition(entry, 'STOPPING')
     const task = Promise.resolve().then(async () => {
       if (!entry.process) throw runFailure('run:cleanup', 'Run process is not ready for cleanup.')
       // The verified adapter waits for the tree, root, both EOFs and native release.
       await entry.process.close()
     }).catch(() => {
       const failure = runFailure('run:cleanup', 'Run cleanup failed. Retry Stop before running this file again.')
-      this.emitError(entry, failure)
+      if (!entry.plan) this.emitError(entry, failure)
       throw failure
     }).finally(() => { if (entry.cleanup === task) entry.cleanup = undefined })
     entry.cleanup = task
@@ -319,11 +617,16 @@ export class RunService {
     else if (event.type === 'exit') {
       if (entry.exitCode !== null) return
       entry.exitCode = event.exitCode
+      if (entry.plan?.phase === 'EXECUTING') this.closeLiveInput(entry, entry.cancelled ? 'STOPPED' : 'EXITED')
+      if (entry.plan) { entry.plan.finished?.(); return }
       // Root exit initiates owned descendant cleanup even if a child holds a pipe.
       void this.requestCleanup(entry).catch(() => undefined) // cleanup emits its safe failure
     } else if (!entry.observationFailed) {
       entry.observationFailed = true
-      this.emitError(entry, runFailure('run:output', 'Run output could not be fully observed.'))
+      if (entry.plan?.phase === 'EXECUTING') this.closeLiveInput(entry, entry.cancelled ? 'STOPPED' : 'EXITED')
+      this.emitError(entry, runFailure('run:output', 'Run output could not be fully observed.',
+        entry.plan && /\.csproj$/i.test(entry.session.relativePath) ? 'OBSERVATION_FAILED' : undefined))
+      if (entry.plan) { entry.plan.finished?.(); return }
       void this.requestCleanup(entry).catch(() => undefined) // ownership retained on failure
     }
   }
@@ -336,14 +639,22 @@ export class RunService {
 
   private finalize(entry: LifecycleSession, state: 'EXITED' | 'FAILED' | 'CANCELLED'): void {
     if (entry.finalized) return
+    this.sealInput(entry)
+    entry.plan?.sourceLease?.release()
     entry.session = Object.freeze({ ...entry.session, state })
     entry.finalized = true
     this.sessions.delete(entry.session.sessionId)
     if (this.targets.get(entry.identity) === entry) this.targets.delete(entry.identity)
     this.completed.set(entry.session.sessionId, { session: entry.session, ownerId: entry.ownerId })
-    if (this.completed.size > 128) this.completed.delete(this.completed.keys().next().value!)
+    if (this.completed.size > 128) {
+      const oldest = this.completed.keys().next().value!
+      this.completed.delete(oldest)
+      this.inputs.delete(oldest)
+    }
     this.emit(entry, { type: 'state', session: entry.session })
     this.emit(entry, { type: 'exit', session: entry.session, exitCode: entry.exitCode })
+    try { this.execution?.onFinalized?.(entry.ownerId, entry.session) }
+    catch { this.execution?.onEventSinkError?.(runFailure('run:event', 'Run finalization notification failed.')) }
   }
 
   private emitError(entry: LifecycleSession, error: DomainError): void {
@@ -365,7 +676,8 @@ export class RunService {
     const owned = this.preparations.get(sessionId)
     if (!owned || owned.ownerId !== ownerId) throw new DomainError({ code: 'PERMISSION_DENIED',
       retryable: false, operation: 'run:session', message: 'Run session is not owned by this window.' })
-    return { session: owned.session, execution: owned.execution }
+    return Object.freeze({ session: owned.session, execution: owned.execution,
+      identity: owned.identity, fingerprint: owned.fingerprint })
   }
 
   /** Only unstarted preparations; never an execution/cleanup substitute. */
@@ -382,15 +694,12 @@ export class RunService {
     const preparation = this.getPreparation(sessionId, ownerId)
     if (this.processes.has(sessionId)) throw new Error('Preparation has already launched.')
     // Recheck project/disk/runtime authority after async preparation, before creation.
-    const current = await this.authority.authorize({ projectId: preparation.session.projectId,
+    const current = await this.resolve({ projectId: preparation.session.projectId,
       relativePath: preparation.session.relativePath, dirty: false }, ownerId)
-    const execution = this.strategies.find((strategy) => strategy.supports(current))!
-      .prepare(current, await this.authority.resolveRuntime())
+    const execution = current.execution
     this.getPreparation(sessionId, ownerId)
     if (this.processes.has(sessionId)) throw new Error('Preparation has already launched.')
-    if (current.projectId !== preparation.session.projectId
-      || current.relativePath !== preparation.session.relativePath
-      || normalizePathIdentity(execution.args[0], 'win32') !== normalizePathIdentity(preparation.execution.args[0], 'win32')) {
+    if (current.identity !== preparation.identity || current.fingerprint !== preparation.fingerprint) {
       throw invalidInputError('run:launch', ['target'])
     }
     let native: PipedRunProcess | undefined
@@ -402,25 +711,186 @@ export class RunService {
     try { native = adapter.create(execution, observe) }
     catch (error) { unregister(); throw error }
     const created = native
-    const process: PipedRunProcess = {
-      ownership: created.ownership, settled: created.settled, isReleased: () => created.isReleased(),
-      close: async () => {
-        await created.close()
-        if (!created.isReleased()) throw new Error('Native Run resource was not released.')
-        lifecycle?.released()
-        this.processes.delete(sessionId)
-        this.preparations.delete(sessionId)
-        unregister()
-      },
-    }
+    const process = forwardRunProcess(created, async () => {
+      await created.close()
+      if (!created.isReleased()) throw new Error('Native Run resource was not released.')
+      lifecycle?.released()
+      this.processes.delete(sessionId)
+      this.preparations.delete(sessionId)
+      unregister()
+    })
     this.processes.set(sessionId, process)
     return process
   }
+
+  sendInput(value: unknown, ownerId: number): Promise<RunInputAcknowledgement> {
+    if (!Number.isSafeInteger(ownerId) || ownerId <= 0) return Promise.reject(invalidInputError('run:input', ['owner']))
+    const identity = inputIdentity(value)
+    if (!identity) return Promise.reject(invalidInputError('run:input', ['request']))
+    const validated = validateSendRunInputRequest(value)
+    const denial = this.denyInput(identity, ownerId)
+    if (denial) return Promise.resolve(denial)
+    if (!validated.ok) {
+      const text = value && typeof value === 'object' ? (value as { text?: unknown }).text : undefined
+      const exact = !!value && typeof value === 'object'
+        && Object.keys(value).length === 4
+        && ['projectId', 'sessionId', 'sequence', 'text'].every(key => Object.prototype.hasOwnProperty.call(value, key))
+      if (!exact || typeof text !== 'string') {
+        return Promise.resolve(runInputRejection(identity.projectId, identity.sessionId, identity.sequence, 'INVALID_INPUT'))
+      }
+      return this.queueFor(identity.sessionId).submit({ ...identity, text })
+    }
+    return this.queueFor(validated.value.sessionId).submit(validated.value)
+  }
+
+  closeInput(value: unknown, ownerId: number): Promise<RunInputAcknowledgement> {
+    if (!Number.isSafeInteger(ownerId) || ownerId <= 0) return Promise.reject(invalidInputError('run:input', ['owner']))
+    const identity = inputIdentity(value)
+    if (!identity) return Promise.reject(invalidInputError('run:input', ['request']))
+    const validated = validateCloseRunInputRequest(value)
+    const denial = this.denyInput(identity, ownerId)
+    if (denial) return Promise.resolve(denial)
+    if (!validated.ok) return Promise.resolve(runInputRejection(identity.projectId, identity.sessionId, identity.sequence, 'INVALID_INPUT'))
+    return this.queueFor(validated.value.sessionId).close(validated.value)
+  }
+
+  getInputStatus(sessionId: RunSessionId, ownerId: number): RunInputStatus {
+    if (!isRunSessionId(sessionId) || !Number.isSafeInteger(ownerId) || ownerId <= 0) {
+      throw invalidInputError('run:input', ['sessionId'])
+    }
+    const entry = this.sessions.get(sessionId)
+    const retained = this.inputs.get(sessionId)
+    const owner = entry?.ownerId ?? retained?.ownerId
+    if (owner === undefined || owner !== ownerId) throw inputDenied()
+    if (entry?.input) return entry.input.status()
+    if (!entry && retained) return retained.queue.status()
+    return this.inactiveStatus(entry!)
+  }
+
+  /** Owner, project, step, and lifecycle denials. Undefined means the live queue may accept the request. */
+  private denyInput(request: { projectId: ProjectId; sessionId: RunSessionId; sequence: number },
+    ownerId: number): RunInputAcknowledgement | undefined {
+    const entry = this.sessions.get(request.sessionId)
+    const retained = this.inputs.get(request.sessionId)
+    const owner = entry?.ownerId ?? retained?.ownerId
+    const projectId = entry?.session.projectId ?? retained?.projectId
+    if (owner === undefined || owner !== ownerId || projectId !== request.projectId) {
+      return runInputRejection(request.projectId, request.sessionId, request.sequence, 'SESSION_UNAVAILABLE')
+    }
+    if (entry) {
+      const blocked = this.inputGuard(entry)
+      if (blocked) {
+        this.closeLiveInput(entry, blocked)
+        return runInputRejection(request.projectId, request.sessionId, request.sequence, 'INPUT_CLOSED')
+      }
+    }
+    if (!(entry?.input ?? retained?.queue)) {
+      return runInputRejection(request.projectId, request.sessionId, request.sequence, 'CAPABILITY_DENIED')
+    }
+    return undefined
+  }
+
+  private queueFor(sessionId: RunSessionId): RunInputQueue {
+    const queue = this.sessions.get(sessionId)?.input ?? this.inputs.get(sessionId)?.queue
+    if (!queue) throw inputDenied()
+    return queue
+  }
+
+  private inputGuard(entry: LifecycleSession): RunInputGateReason | undefined {
+    if (this.stopping) return 'SHUTDOWN'
+    if ((this.ownerGenerations.get(entry.ownerId) ?? 0) !== entry.ownerGeneration) return 'OWNER_LOST'
+    if (this.projectBlocks.has(entry.session.projectId)
+      || (this.projectGenerations.get(entry.session.projectId) ?? 0) !== entry.projectGeneration) {
+      return 'PROJECT_CHANGED'
+    }
+    return undefined
+  }
+
+  private inactiveStatus(entry: LifecycleSession): RunInputStatus {
+    const phase = entry.plan?.phase ?? 'EXECUTING'
+    return {
+      projectId: entry.session.projectId,
+      sessionId: entry.session.sessionId,
+      capability: runInputCapability(entry.kind, phase),
+      nextSequence: 1,
+      queuedSubmissions: 0,
+      queuedUtf8Bytes: 0,
+      gate: 'CLOSED',
+      // Closed capability is the authority. EOF here means this step has no writer.
+      reason: entry.inputBlock ?? (this.stopping ? 'SHUTDOWN' : 'EOF'),
+    }
+  }
+
+  private attachInput(entry: LifecycleSession, process: PipedRunProcess): void {
+    if (process.stdin !== 'line-input' || !process.writeInput || !process.closeInput) return
+    const writeInput = process.writeInput
+    const closeInput = process.closeInput
+    const queue = new RunInputQueue(entry.session.projectId, entry.session.sessionId, {
+      writeInput: bytes => writeInput.call(process, bytes),
+      closeInput: () => closeInput.call(process),
+    }, () => {
+      if (!entry.finalized) void this.stopRun(entry.session.sessionId, entry.ownerId).catch(() => undefined)
+    })
+    entry.input = queue
+    this.inputs.set(entry.session.sessionId, {
+      ownerId: entry.ownerId, projectId: entry.session.projectId, queue,
+    })
+    if (entry.inputBlock) queue.closeGate(entry.inputBlock)
+    else if (this.stopping) queue.closeGate('SHUTDOWN')
+    else if (entry.cancelled) queue.closeGate('STOPPED')
+  }
+
+  /** First explicit lifecycle reason wins over EOF. Later reasons do not replace it. */
+  private closeLiveInput(entry: LifecycleSession, reason: RunInputGateReason): void {
+    if (entry.inputBlock === undefined || entry.inputBlock === 'EOF') entry.inputBlock = reason
+    entry.input?.closeGate(reason)
+  }
+
+  private sealInput(entry: LifecycleSession): void {
+    if (!entry.input || entry.input.status().gate === 'CLOSED') return
+    this.closeLiveInput(entry, this.stopping ? 'SHUTDOWN' : entry.cancelled ? 'STOPPED' : 'EXITED')
+  }
 }
 
+function forwardRunProcess(created: PipedRunProcess, close: () => Promise<void>): PipedRunProcess {
+  return {
+    ownership: created.ownership,
+    settled: created.settled,
+    isReleased: () => created.isReleased(),
+    ...(created.stdin === undefined ? {} : { stdin: created.stdin }),
+    ...(created.writeInput ? { writeInput: (bytes: Uint8Array) => created.writeInput!(bytes) } : {}),
+    ...(created.closeInput ? { closeInput: () => created.closeInput!() } : {}),
+    close,
+  }
+}
+function inputDenied(): DomainError {
+  return new DomainError({ code: 'PERMISSION_DENIED', operation: 'run:input', retryable: false,
+    message: 'Run session is not owned by this window.' })
+}
+function inputIdentity(value: unknown): { projectId: ProjectId; sessionId: RunSessionId; sequence: number } | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const record = value as Record<string, unknown>
+  if (typeof record.projectId !== 'string' || !/^project_[a-f0-9]{24}$/.test(record.projectId)) return undefined
+  if (!isRunSessionId(record.sessionId)) return undefined
+  if (typeof record.sequence !== 'number' || !Number.isSafeInteger(record.sequence) || record.sequence < 1) return undefined
+  return { projectId: record.projectId as ProjectId, sessionId: record.sessionId, sequence: record.sequence }
+}
 function sessionOwner(sessionId: RunSessionId): string { return `run-session:${sessionId}` }
-function runFailure(operation: string, message: string): DomainError {
-  return new DomainError({ code: 'PROCESS_FAILED', operation, message, retryable: true })
+/** Detach an uncooperative promise on cancellation while still observing rejection. */
+function abortable<T>(task: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener('abort', abort)
+      reject(runFailure('run:prepare', 'Run preparation was cancelled.'))
+    }
+    if (signal.aborted) { void task.catch(() => undefined); abort(); return }
+    signal.addEventListener('abort', abort, { once: true })
+    void task.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort))
+  })
+}
+function runFailure(operation: string, message: string, reason?: string): DomainError {
+  return new DomainError({ code: 'PROCESS_FAILED', operation, message, retryable: true,
+    ...(reason ? { details: { reason } } : {}) })
 }
 function safeStartError(error: unknown): DomainError {
   return error instanceof DomainError ? error : runFailure('run:start', 'The Run process could not be started.')

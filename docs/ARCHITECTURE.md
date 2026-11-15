@@ -2132,13 +2132,51 @@ V1 remains Windows 10/11 x64; packaged/installed verification remains Phase 7.
 
 The existing Phase 4 behavior described below is implemented JavaScript Run.
 ADR-024 extends the planned contract to C# Project Run with line-oriented stdin;
-the extension is `NOT_STARTED`. The non-interactive Run ownership row in Section
+the extension is `IN_PROGRESS` with M1-01 through M1-12 (including M1-09a) COMPLETE, including native
+argv, compatibility evidence, Run SDK/evaluation and target discovery/classification.
+M1-12 Core acceptance is `COMPLETE`. M2-01 through M2-05 are `COMPLETE`. M2-06 automated Windows 11 x64 Electron evidence PASS; manual W cells were not run, so M2-06 and M2-07 are not COMPLETE.
+M1-07 selection/persistence, M1-08 lifecycle, M1-09a source guard and M1-09 C# strategy
+composition are implemented in Main. M1-10 typed IPC/Preload is implemented.
+M1-11 presents compact target choice, project Save-first checks, and phase/failure
+output in the existing Run toolbar and Output panel.
+The non-interactive Run ownership row in Section
 4 describes the current baseline, not a prohibition on this approved extension.
 Terminal/PTY and LanguageServiceManager remain separate lifecycle domains.
 
 ### Planned C# Project Run design — ADR-024
 
+C# Project Run acceptance baseline: **Windows 11 x64**. The recorded Windows 11
+SDK 8/net8.0 and SDK 10/net10.0 evidence passes 32/32 cases; M1-04 is COMPLETE
+under the 2026-10-07 ADR-024 platform amendment. Windows 10 is outside the verified
+C# Project Run acceptance baseline. Compatibility is not claimed. Other IDE
+Windows 10/11 and Phase 7 packaging obligations remain unchanged. Native process
+ownership, two-step execution, stdin feasibility and fail-closed cleanup retain
+their accepted design. Production C# strategy, typed IPC, and M1-11 Run presentation
+are implemented. Typed input IPC and the Output line composer are implemented. Milestone 2 acceptance remains outstanding.
+
+M1-01 compatibility baseline: additive SemanticRunTarget/SemanticStartRunRequest,
+SemanticRunSession and resolution/failure DTOs are validated separately. The live
+RunApi/channels and legacy DTOs remain unchanged until authorized migration; new
+semantic requests are not accepted by the legacy bridge/service validators.
+
 #### Strategy, runtime and identity
+
+M1-02 implemented baseline: RunService receives a constructor-only snapshot of
+trusted strategies, with unique kinds and no ambiguous target dispatch. The
+application registers JavaScriptRunStrategy only. Unsupported/dirty requests
+retain their early rejection; filesystem authorization precedes runtime resolution
+and strategy preparation. RunRuntimeContext contains the trusted strategy kind and
+an immutable authorized target. No new public request, channel or process authority.
+
+Main derives identity as a JSON tuple of project ID, strategy kind and normalized
+Windows canonical target path, with absolute-path and containment checks independent
+of argv. The SHA-256 execution fingerprint covers identity, normalized canonical
+root, executable, ordered argv, cwd, shell flag and sorted environment entries.
+Preparation copies/freezes execution data; start-to-preparation and
+preparation-to-launch comparisons reject identity or fingerprint drift before
+native creation. The fingerprint is an execution-spec check, not a source-content
+snapshot; M1-09a now supplies the saved-source guard. Existing owner/project generation
+checks and fail-closed cleanup are retained.
 
 Main composes a fixed list of internal strategies: existing JavaScript and planned
 `CSharpRunStrategy`. No Renderer registration or plugin runner system. Add a
@@ -2158,13 +2196,35 @@ runtime and execution fingerprint immediately before native creation. Preserve
 one active session per canonical target and concurrency for different targets;
 another owner cannot replace an owned session.
 
-`PreparedRun` becomes a narrow execution plan: one JS step or two C# steps,
+M1-08 adds Main-only `RunExecutionPlan`/`RunExecutionStep` around immutable
+`PreparedRun` process specifications: one JS step or two C# steps,
 explicit executable/argument array/cwd/environment policy, stdin mode, and trusted
 step purpose. This is Main-only data. A Run session owns every step, callback and
 cleanup under ProcessManager. Intermediate build exit/EOF is not the session's
 final exit; clean the step completely before the next one. Use a step generation
 to reject late build callbacks. Stop cancels the plan, including the gap between
 steps. Register ownership before each native creation and retain failed cleanup.
+
+Implemented seam: `RunService.startPlannedRun` validates a semantic Main request,
+performs cheap project/path authorization, reserves the canonical target under the
+existing start queue and returns STARTING before runtime/strategy preparation.
+The existing live JavaScript `startRun`/prepare/launch API and event order remain
+unchanged. No CSharpRunStrategy or public plan API is composed. Plans accept only
+EXECUTING for JS or BUILD_RESTORE then EXECUTING for C#; renderer process options
+remain forbidden. Main-only `onPhase` observes phases without changing wire DTOs.
+
+`RunPreparationContext` supplies AbortSignal, the session resource owner and a
+register-before-create cleanup seam for trusted finite probes. Abort races detach
+uncooperative preparation promises; late completion cannot register resources or
+launch. Owned resources must safely close before their registration is released.
+Stop cleans registered preparation resources without waiting for preparation to
+return. Each launch reauthorizes canonical identity and re-resolves the immutable
+whole-plan fingerprint. Successful intermediate steps require root/EOF/native
+release and ProcessManager cleanup before callback generation retirement and
+next-step preparation. Failure retains session/resource ownership for explicit
+cleanup retry and blocks replacements/project close/shutdown. Existing project
+leases and owner/shutdown generations govern both single-step and planned sessions.
+This checks execution specifications, not source content; M1-09a supplies a separate approval/revision guard.
 
 For C#, reserve an owned STARTING session after cheap target/request authorization
 and return it before asynchronous probes/build. Publish bounded preparation,
@@ -2212,6 +2272,35 @@ including applicable ancestor global.json. Failed selection is invalid
 configuration; no SDK is missing dependency. Successful evaluation is preliminary;
 targeting packs, workload/restore failures and missing runtime can still fail later.
 
+M1-05 implementation: `DotnetRunRuntimeResolver` uses Main PATH executable
+validation and bounded `--list-sdks` inventory, then lets `--version` select the
+effective stable SDK >=8 in the canonical candidate directory. Inventory never
+selects the newest SDK. `DotnetSdkDetector` and C# language-service policy remain
+independent and unchanged. Nearest-ancestor `global.json` inspection is limited to
+64 levels and 64 KiB: syntax/comments and known SDK field shapes are validated
+because the host may silently ignore invalid settings. No roll-forward selection
+algorithm is implemented in Main; CLI decides applicability and effective version.
+
+`CsharpRunPreflight` authorizes one semantic candidate through FileSystemService,
+revalidates canonical identity after SDK resolution, and returns Main-only facts.
+`CsharpRunProbe` permits only inventory, version and fixed Debug evaluation requests
+(`-getProperty`/`-getItem`, `-nodeReuse:false`, `-noAutoResponse`, no target/restore).
+It uses the existing Run adapter's closed stdin, filtered inherited environment,
+shell:false and retained Windows Job ownership. Each command has a 20-second
+deadline and combined stdout/stderr budget of 1 MiB. ProcessManager registers
+ownership before spawn; completion awaits cleanup. Failed cleanup retains the
+resource and blocks new probes until explicit retry succeeds.
+
+Evaluation returns the requested properties as bounded strings, preserving empty
+computed values and separate TargetFramework/TargetFrameworks; at most 64 reference
+identities are returned as untrusted facts for later authorization. There is no
+discovery, recursive reference walk, Console classification, target selection or
+CSharpRunStrategy composition in M1-05. Existing semantic dependency/candidate
+failure DTOs remain unchanged; bounded failure details stay inside Main. Raw
+stdout/stderr, executable paths and process authority are not exposed over IPC.
+Evaluation is preliminary and does not prove restore, targeting-pack availability,
+runtime readiness or stability against subsequent external project/config edits.
+
 Authorize evaluated ProjectReferences recursively inside the active root with
 cycle detection and canonical deduplication. Reject missing/out-of-root references.
 This confines IDE path authority, not the behavior of user code or all MSBuild
@@ -2222,12 +2311,81 @@ not a misleading empty result. An unassessable candidate prevents claiming there
 is exactly one valid project. Present failures and allow explicit selection of a
 known eligible project; never silently ignore a broken candidate.
 
+M1-06 implementation: Main-only `CsharpRunTargetResolver.resolve(projectId, signal)`
+gets the active authority from ProjectService; it accepts no root/glob/options,
+LSP selection or editor state. It lists through FileSystemService, orders paths
+by normalized Windows identity with a code-unit tie-break, authorizes canonical
+files and deduplicates before invoking M1-05. The bounds above count all entries
+and unique discovered/referenced projects; relative paths use M1-01's 4096-character
+limit. Exclusions apply to discovery; an explicitly evaluated reference in an
+excluded directory must still be authorized and evaluated within the same limits.
+No solution parsing or solution membership filtering is used.
+
+Classification requires explicit SDK=true and OutputType=Exe; Web/test/WPF/Forms
+flags must be empty/false. Missing required facts or invalid boolean facts are
+UNASSESSABLE. Known modern TFMs net5.0 through net10.0 (plain or Windows-qualified)
+must not exceed the effective SDK major. Other platform/unknown/future TFMs are
+rejected, not guessed. A nonempty TargetFrameworks declaration, even a singleton,
+is rejected; no framework is selected from a list. Nonempty framework identifier
+and version must agree with .NETCoreApp and the single TFM; empty computed values
+are allowed only with the unambiguous known TFM and explicit evaluated SDK flag.
+This validates shape, not installed runtime/targeting packs or future build success.
+
+References are normalized relative to the canonical referring project, checked
+lexically for containment and reauthorized by FileSystemService. Absolute facts
+are accepted only inside that authority; drive-relative/device paths are rejected.
+Canonical graph nodes are evaluated once, with cycle detection and transitive
+failure propagation. A cycle, missing/external reference or failed reference
+evaluation makes the dependent candidate UNASSESSABLE/INVALID_PROJECT_REFERENCE.
+The 64-node bound also bounds graph depth; M1-05's 64-reference-per-node bound
+limits graph edges. No unbounded recursion or partial auto-choice occurs.
+
+Existing M1-01 resolution DTOs remain unchanged. Main-only assessments retain
+per-candidate classification detail/TFM/dependency reason, including when the
+wire FAILED result has no candidate list. Zero eligible with all candidates
+ineligible yields NO_RUNNABLE_PROJECT; one eligible and no unassessable yields
+READY with a semantic target only; multiple eligible or eligible plus unassessable
+yields SELECTION_REQUIRED without a target. With no eligible, SDK-only assessment
+failures yield DEPENDENCY_FAILED; other failures yield FAILED/PREFLIGHT_FAILED.
+Bounds, cancellation, project invalidation and retained-cleanup errors fail the
+whole operation. Project changes abort the supplied evaluator signal; listeners
+are removed in finally. The complete graph is reauthorized before cardinality.
+Results are not cached or launch authority. No app/IPC/UI composition, target
+store, CSharpRunStrategy, build/run or input is added by M1-06.
+
 `CSharpRunTargetStore` uses separate versioned Main JSON persistence keyed by
 canonical project identity, storing only relative selected `.csproj`. Revalidate
 saved paths and eligibility; removed/changed targets cause fresh selection rather
 than running a substitute silently. One valid candidate auto-selects, multiple
 require choice unless a still-valid saved choice exists. Persistence failure is
 reported; corrupt data safely falls back to selection. No LSP store mutation.
+
+M1-07 implementation: Main-only `CsharpRunTargetStore` provides resolve/select/
+clear/stop over the existing resolver and PersistenceService. Dedicated schema-1
+files under `csharp-run-targets/<canonical-project-id>.json` store only relativePath
+or an empty selection; app settings and the C# workspace store are independent.
+Every use resolves afresh and reauthorizes the chosen path. Requested/saved
+canonical identity is captured before resolver and compared afterward. Only a
+currently eligible discovered candidate may become READY; global discovery
+failures/bounds cannot be bypassed. No implicit choice is persisted.
+
+A stale saved target forces fresh selection, including when one different
+Console remains. Corruption/backup recovery also forces fresh selection and
+reports PERSISTENCE_RECOVERED; a historical backup is not automatically used as
+the current choice. Read permission/IO failures are distinct from corruption and
+return PERSISTENCE_FAILED. Clear writes an empty primary through existing atomic
+persistence, retaining the standard backup as recovery evidence only.
+
+Selection operations serialize per project and newer requests supersede older
+ones. Each captures the authorized ActiveProject object and aborts on project
+change, cancellation or stop; same-root reopen cannot validate an older operation.
+The persistence adapter checks that operation immediately before atomic rename.
+Already-started filesystem rename cannot be canceled and may finish in its old
+project's file; the returned result is invalidated and never crosses roots.
+Listeners are removed in finally, and stop drains pending operations/writes.
+Main selection metadata reports AUTOMATIC/SAVED/EXPLICIT/CLEARED/STALE/RECOVERED
+and safe issues without changing M1-01 wire DTOs. Public IPC/UI and execution
+composition remain later tasks; results require launch-time revalidation.
 
 #### Execution, errors and saved-source guard
 
@@ -2257,7 +2415,7 @@ intentional output, rendered as text and not forwarded into developer logs.
 Renderer computes dirty/external-conflict guards over all retained documents in
 the active folder project, not just the active C# file. Current unsaved-transition
 coordination exchanges approval only; it has no model snapshot/revision API.
-Plan a Run-owned bounded saved-source handshake in `RunSourceGuard`, patterned
+M1-09a implements a Run-owned bounded saved-source handshake in `RunSourceGuard`, patterned
 after its trusted-owner routing, without changing project-close approvals:
 Main emits a guard request with projectId/sessionId/opaque requestId; the owning
 Renderer responds with the same identities, monotonically increasing document
@@ -2272,20 +2430,150 @@ or auto-saved by later edits. External changes during build require revalidation
 SDK build is not an atomic source snapshot and cannot promise immunity to all
 concurrent external writes. Preserve editor contents and conflict semantics.
 
+Actual wiring: shared `run-source-guard.ts` defines exact semantic DTOs and three
+Run-owned request/release/reply channels; `studentIde.runSourceGuard` exposes only
+subscriptions and validated replies. Live JavaScript `studentIde.run` stays
+unchanged. Main validates the actual main frame as well as owner/project/session;
+owner navigation, destruction or renderer-process loss invalidates approvals.
+The five-second timeout and shared 64-live-session bound limit pending timers and
+approval/watch records, never the number of source buffers being checked.
+
+EditorModelManager tracks per-project monotonic revisions from retained document
+identity, model version, dirty, external-conflict and missing-disk state. Active tab
+or other-project changes do not alter this project's approval. RunSourceGuardController
+responds and watches those aggregate revisions without Save calls or buffer contents.
+Main keeps one current request per session, rejects stale/mismatched/duplicate
+responses, and accepts rechecks only at the original clean revision. Null revision
+means unknown and fails closed. Semantic AppError details distinguish dirty,
+conflict, unknown, changed, timeout, cancelled, unavailable and capacity failures.
+
+RunService's C# plan requires the guard before preparation, before each step and
+after async preparation immediately before spawn. Approved revision changes abort
+preparation/build and invoke existing owned cleanup; failed cleanup remains retained.
+Cancellation retires the guard and all timers. After execute creation, the guard
+retires and later edits do not cancel a running program.
+
+M1-09 composes `CSharpRunStrategy` with this existing lifecycle. `CsharpRunPreparation`
+reads Main's per-project target store through fresh M1-06 resolution, then evaluates
+the selected target with M1-05. It rejects ambiguity, stale selection, ownership
+mismatch and SDK failure; it never persists an automatic selection. Each preparation
+scope registers cleanup before probing, with a distinct child probe owner to avoid
+recursive session cleanup. Failed cleanup stays registered for retry.
+
+Only an internally evaluated runtime capability can produce the immutable two-step
+plan. Commands retain the M1-04 Debug/build-server/node-reuse policy. Effective SDK
+version and single TFM participate in the plan fingerprint, so drift between build
+and execute fails closed even when the dotnet host path is unchanged. Each step
+repeats selection, evaluation, identity and saved-source checks through M1-08/M1-09a.
+Build nonzero ends the session without execution; safe error details distinguish SDK,
+preflight, build/restore, execution, spawn, observation and cleanup failures.
+
+Main registers the C# strategy, while legacy `startRun` explicitly rejects `.csproj`;
+M1-10 calls the existing `startPlannedRun` seam through a separate semantic method. JavaScript
+commands and fingerprint semantics remain unchanged. No native/process adapter,
+Run UI, LSP, Terminal or stdin changes were made by M1-09. Windows 11 x64 evidence:
+14/14 real SDK 8/10 cases and 4/4 repeated resource cases PASS; see
+`spikes/csharp-project-run/M1-09-REPORT.md`. This guard still is not a disk snapshot.
+
+#### M1-10 typed Run IPC/Preload
+
+The existing `studentIde.run` capability now adds `resolveTargets({projectId})`,
+`selectTarget({kind:'csharp-project',projectId,relativePath})`, `clearTarget({projectId})`,
+`cancelResolution({projectId})`, `startProject({kind:'csharp-project',projectId,relativePath,dirty})`
+and `onProjectEvent(listener)`. Existing `start`, `stop(sessionId)` and `onEvent`
+keep JS wire compatibility; Stop serves both session kinds through Main ownership.
+No executable, argv, cwd, root, glob or traversal option can cross the request boundary.
+
+RunIpcService validates exact DTOs, authorizes the trusted live main frame and active
+project, and observes owner lifecycle. Async replies recheck the frame, owner
+generation and original authorized project object. Preload checks exact response
+envelopes/DTOs and project/path correspondence; listeners receive validated data
+only and have explicit disposers. Main projects results onto semantic resolution
+DTOs, excluding internal assessments, SDK commands and canonical paths.
+
+Pre-UI R2 adds optional `selectionDiagnostic` to the existing C# resolution DTO:
+only `STALE_TARGET` or `PERSISTENCE_RECOVERED`. Main projects those two TargetStore
+issues through the shared exact validator used by Preload. Normal resolutions
+omit the field and retain their prior shape. A diagnostic is forbidden on READY;
+it can accompany selection-required, no-runnable, dependency or failed results
+without overriding their state. Stale/recovered selection requires explicit
+confirmation even when only one eligible candidate remains. No remembered path,
+storage error or internal selection/assessment object crosses the bridge.
+
+CsharpRunTargetRequests owns finite discovery/selection probes through ProcessManager.
+The single-active-project architecture allows one outstanding target operation;
+concurrent requests fail with REQUEST_IN_PROGRESS. Cancellation is scoped to the
+current owner/project operation; callers await it before retrying. Resource ownership
+is registered before scope creation. Failed cleanup is retained, reports CLEANUP_FAILED
+and blocks replacement until cancellation/transition/shutdown cleanup succeeds.
+Explicit cancellation is distinguished from normal scope disposal and checked after
+cleanup, preventing a late successful response. Project guards hold a transition
+lease until project-changed (success) or transition-settled (failure). Reload/crash/
+destroy and filesystem unavailability also abort target operations.
+
+Starting C# does not perform blocking discovery before returning its session.
+The semantic relative path is a request, not selection authority: M1-09 re-reads
+Main's store/resolver and M1-09a approval during owned preparation and before launch.
+Unselected multiple candidates produce SELECTION_REQUIRED from resolution and from
+the failed session's semantic error event if a caller attempts Start directly.
+Sending another candidate cannot replace the stored target or bypass the guard.
+
+RunService's Main-only event/phase callbacks feed `run:project-event`, with semantic
+C# session snapshots, phase, stdout/stderr, terminal exit and validated failure unions.
+Raw AppError/native details are reduced to allowlisted reasons. A Main-only
+RunService `onFinalized` notification retires IPC phase records even when public
+events are muted. Owner invalidation/IPC shutdown do not discard active or retained
+failed-cleanup records; terminal cleanup retires them without public event delivery.
+Normal public exit also retires its record. JS events remain on `run:event`, with no duplicate
+delivery. RunService retains canonical session serialization, re-run ownership,
+generation checks and stale-process suppression. No new Run lifecycle or UI exists.
+
+Verification: 63 new tests/4 files, 443 focused tests/17 files, typecheck/scoped lint/
+whitespace PASS. See `spikes/csharp-project-run/M1-10-REPORT.md`. Native execution
+implementation is unchanged; M1-10 does not claim a new native smoke or Core Acceptance.
+
 #### Native pipes and session-scoped input
 
-Extend WindowsPipedProcessAdapter with bounded argument arrays and explicit
-Main-only stdin mode (`closed` for JS/build; `line-input` for C# execution).
+M1-03 implemented baseline: WindowsPipedProcessAdapter sends the immutable
+Main-prepared argv to dedicated native `createRun`; legacy `create`, `createGit`,
+`createCsharp` and `createCsharpPreflight` retain their entry contracts. Run's
+entry has a fixed closed-stdin policy (NUL/EOF), not a selectable writer mode.
+It accepts 0–1024 arguments, including empty strings, and uses the existing
+per-argument Windows quoting routine. The complete quoted command line must fit
+32766 UTF-16 code units plus its terminating NUL. Individual strings are bounded
+before allocation; non-string values and embedded NUL are rejected. Native
+validation requires an existing fully qualified drive/UNC executable `.exe`
+and directory cwd; Main still owns executable selection and project authorization.
+No PATH/cwd executable search or shell dispatch is added. Environment remains
+Main-inherited, sorted and filtered of NODE_OPTIONS/NODE_PATH/ELECTRON_RUN_AS_NODE;
+strategy environment additions remain rejected. Native Run environment blocks
+are bounded to 32767 UTF-16 units including terminators. Validation precedes pipe,
+Job and process creation; retained Job ownership/Stop/release are unchanged.
+This does not enable C# Run or the later input/SDK gate. Limits and quoting follow
+[CreateProcessW](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw)
+and [Microsoft argument parsing](https://learn.microsoft.com/en-us/cpp/c-language/parsing-c-command-line-arguments).
+
+Later input work adds selectable Main-only stdin mode
+(`closed` for JS/build; `line-input` for C# execution).
 Implement correct per-argument Windows quoting, NUL checks, explicit executable,
 shell:false, controlled inherited environment and handles. Keep existing native
 JS/Git/LSP entry points compatible; a dedicated Run entry/writer may reuse the
 internal pipe/Job primitives but never LSP sessions or language-process factories.
 Argument limits must respect CreateProcess command-line limits and fail safely.
 
+M2-02 implements that native mode. `createRunInput` is a Run-only overlapped
+stdin pipe with one in-flight UTF-8 write, ordered EOF, and Stop cancellation.
+`createRun` remains the closed default. The adapter exposes `writeInput` and
+`closeInput` only as Main-owned process methods. M2-03 forwards those methods
+from both RunService wrappers and queues them for the C# execute step. M2-04
+exposes that queue through typed `sendInput`, `closeInput`, and `inputStatus`.
+M2-05 composes those calls in Output for a C# execute session whose capability
+accepts input. JavaScript and build stay hidden.
+
 Native writes run asynchronously off the JS thread, ordered with one write in
-flight per session. PipedRunProcess gains optional Main-only stdin writing/closure;
-RunService's wrapper must forward this capability (it currently forwards only
-close/ownership). Creation-time Windows Job assignment remains atomic. Pending
+flight per session. PipedRunProcess has optional Main-only stdin writing/closure.
+RunService forwards that capability and owns the per-session queue. Creation-time
+Windows Job assignment remains atomic. Pending
 writes and callback references participate in resource finalization; Stop must
 cancel/unblock a blocked pipe without waiting forever for a read.
 
@@ -2535,7 +2823,7 @@ Windows Job using the existing private native pipe/ownership primitives. A Git
 root exit terminates surviving owned hook descendants; release requires root
 exit, both pipe EOFs, native settlement and an empty Job. Cleanup failure retains
 ownership and blocks new work, project release and application shutdown until a
-cleanup retry succeeds. Run retains its separate single-target native entry and
+cleanup retry succeeds. Run retains its separate closed-stdin native entry and
 semantic lifecycle. No generic process capability crosses Preload.
 
 ## 12. Language-service architecture

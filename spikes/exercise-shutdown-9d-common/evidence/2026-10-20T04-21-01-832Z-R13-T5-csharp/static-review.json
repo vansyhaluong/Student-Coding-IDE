@@ -1,0 +1,10 @@
+﻿{
+    "scope":  "Static review before R13/R14; no new scenarios",
+    "csharp":  "Explicit redirected stdout/stderr; handlers before Start; concurrent BeginOutputReadLine/BeginErrorReadLine; flush before readiness parsing; no WaitForExit",
+    "javascript":  "Native child stdout/stderr explicitly inherit; named gate signaled only after ALLOCATOR_READY and observer retention",
+    "t6_timeout":  "Root emits readiness and child PID; child stdio ignore is intentional; cleanup fault cleared before one planned retry",
+    "t6_memory":  "Uses reviewed JavaScript inherit/gate path; stage-aware FINALIZED retry retains existing assertions",
+    "t7":  "Root-only handshake used; absolute phase/operation minimum unchanged; pending IO keeps and joins original task; no task abandonment",
+    "otherFixtureChanges":  "NONE",
+    "limitsWorkloadAssertionsPolicyB":  "UNCHANGED"
+}

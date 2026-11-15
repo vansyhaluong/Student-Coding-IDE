@@ -14,6 +14,7 @@ import { createProjectBridge } from './project'
 import { createSearchBridge } from './search'
 import { createTerminalBridge } from './terminal'
 import { createRunBridge } from './run'
+import { createRunSourceGuardBridge } from './run-source-guard'
 
 export function createPreloadApi(
   ipcRenderer: IpcRendererLike,
@@ -31,5 +32,6 @@ export function createPreloadApi(
     search: createSearchBridge(ipcRenderer),
     terminal: createTerminalBridge(ipcRenderer),
     run: createRunBridge(ipcRenderer),
+    runSourceGuard: createRunSourceGuardBridge(ipcRenderer),
   }
 }

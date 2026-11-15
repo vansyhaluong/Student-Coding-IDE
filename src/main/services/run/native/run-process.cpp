@@ -3,6 +3,7 @@
 #define NOMINMAX
 #include <windows.h>
 #include <node_api.h>
+#include <algorithm>
 #include <atomic>
 #include <memory>
 #include <string>
@@ -20,14 +21,21 @@ struct Handle {
 struct Session {
   Handle job, root, out, err, inputWrite;
   bool csharp = false;
+  bool runInput = false;
+  bool inputClosed = false;
+  bool eofPending = false;
   unsigned pendingWrites = 0;
   DWORD pid = 0;
   napi_threadsafe_function events = nullptr;
   napi_ref callback = nullptr;
+  napi_ref eofCallback = nullptr;
   napi_async_cleanup_hook_handle cleanup = nullptr;
   std::thread stdoutThread, stderrThread, rootThread;
   std::atomic<bool> teardown{false};
+  std::atomic<bool> cancelInput{false};
+  HANDLE cancelEvent = nullptr;
   bool drained = false, released = false, abandoned = false;
+  ~Session() { if (cancelEvent) CloseHandle(cancelEvent); }
 };
 struct Event { std::string type; std::string data; DWORD code = 0; };
 static DWORD active(Session* s) {
@@ -86,6 +94,7 @@ static void release(Session* s) {
   if (s->released) return;
   check(s->pendingWrites == 0 && s->drained && active(s) == 0 && WaitForSingleObject(s->root.value, 0) == WAIT_OBJECT_0,
     "Native process is not ready for release");
+  if (s->cancelEvent) { CloseHandle(s->cancelEvent); s->cancelEvent = nullptr; }
   s->inputWrite.close(); s->out.close(); s->err.close(); s->root.close(); s->job.close(); s->released = true;
 }
 static void finalizeEvents(napi_env env, void* data, void*) {
@@ -119,8 +128,9 @@ static void teardown(napi_async_cleanup_hook_handle hook, void* data) {
     napi_release_threadsafe_function(s->events, napi_tsfn_abort);
   }
 }
-static std::wstring string(napi_env env, napi_value value) {
+static std::wstring string(napi_env env, napi_value value, size_t limit = SIZE_MAX) {
   size_t size = 0; napiCheck(napi_get_value_string_utf16(env, value, nullptr, 0, &size));
+  check(size <= limit, "Process string exceeds limit");
   std::u16string result(size + 1, 0);
   napiCheck(napi_get_value_string_utf16(env, value, result.data(), result.size(), &size));
   result.resize(size); check(result.find(u'\0') == std::u16string::npos, "NUL in process argument");
@@ -135,28 +145,62 @@ static std::wstring quote(const std::wstring& input) {
   }
   result.append(slashes * 2, L'\\'); return result + L"\"";
 }
+// Run-only defense in depth. Main resolves and authorizes these paths; never
+// search PATH/cwd or infer an executable from a command string in this binding.
+static void runPath(const std::wstring& path, bool directory) {
+  const bool drive = path.size() >= 3 && ((path[0] >= L'A' && path[0] <= L'Z')
+    || (path[0] >= L'a' && path[0] <= L'z')) && path[1] == L':'
+    && (path[2] == L'\\' || path[2] == L'/');
+  const auto share = path.find(L'\\', 2);
+  const bool unc = path.size() > 2 && path[0] == L'\\' && path[1] == L'\\'
+    && path[2] != L'?' && path[2] != L'.' && share != std::wstring::npos
+    && share > 2 && share + 1 < path.size() && path[share + 1] != L'\\';
+  check((drive || unc) && path.find_first_of(L"\"*?\r\n") == std::wstring::npos,
+    "Run requires fully qualified executable and cwd");
+  if (!directory) check(path.size() >= 4 && _wcsicmp(path.c_str() + path.size() - 4, L".exe") == 0,
+    "Run requires a native executable");
+  DWORD attributes = GetFileAttributesW(path.c_str());
+  check(attributes != INVALID_FILE_ATTRIBUTES && bool(attributes & FILE_ATTRIBUTE_DIRECTORY) == directory,
+    "Invalid Run executable or cwd");
+}
 static napi_value create(napi_env env, napi_callback_info info) {
   std::unique_ptr<Session> s = std::make_unique<Session>();
   try {
     size_t argc = 5; napi_value argv[5]; void* mode = nullptr;
     napiCheck(napi_get_cb_info(env, info, &argc, argv, nullptr, &mode));
-    check(argc == 5, "Expected executable, target, cwd, environment, observer");
-    s->csharp = mode && *static_cast<int*>(mode) == 2;
-    auto executable = string(env, argv[0]), cwd = string(env, argv[2]);
+    check(argc == 5, "Expected executable, arguments, cwd, environment, observer");
+    const int selected = mode ? *static_cast<int*>(mode) : 0;
+    const bool runArray = selected == 3 || selected == 4;
+    s->csharp = selected == 2;
+    s->runInput = selected == 4;
+    const size_t limit = runArray ? 32766 : SIZE_MAX;
+    auto executable = string(env, argv[0], limit), cwd = string(env, argv[2], limit);
+    if (runArray) {
+      runPath(executable, false); runPath(cwd, true);
+      napi_valuetype type; napiCheck(napi_typeof(env, argv[4], &type));
+      check(type == napi_function, "Run observer must be a function");
+    }
     auto command = quote(executable);
     if (mode) {
-      // Private Git adapter only. Run retains its original single-target entry.
+      // Dedicated Run array entry; legacy Run/Git/LSP signatures remain compatible.
       uint32_t count; napiCheck(napi_get_array_length(env, argv[1], &count));
+      if (runArray) check(count <= 1024, "Too many Run arguments");
       for (uint32_t i = 0; i < count; ++i) {
         napi_value value; napiCheck(napi_get_element(env, argv[1], i, &value));
-        command += L" " + quote(string(env, value));
+        auto argument = quote(string(env, value, limit));
+        if (runArray) check(command.size() + 1 + argument.size() <= limit, "Run command line exceeds limit");
+        command += L" " + argument;
       }
     } else command += L" " + quote(string(env, argv[1]));
+    if (runArray) check(command.size() <= limit, "Run command line exceeds limit");
     uint32_t envCount; napiCheck(napi_get_array_length(env, argv[3], &envCount));
+    if (runArray) check(envCount <= 32767, "Run environment exceeds limit");
     std::wstring environment;
     for (uint32_t i = 0; i < envCount; ++i) {
       napi_value value; napiCheck(napi_get_element(env, argv[3], i, &value));
-      auto entry = string(env, value); check(entry.find(L'=') != std::wstring::npos, "Invalid environment entry");
+      auto entry = string(env, value, limit); check(entry.find(L'=') != std::wstring::npos, "Invalid environment entry");
+      if (runArray) check(entry.find(L'=') > 0 && environment.size() + entry.size() + 2 <= 32767,
+        "Invalid or oversized Run environment");
       environment += entry; environment += L'\0';
     }
     environment += L'\0'; if (!envCount) environment += L'\0';
@@ -166,7 +210,23 @@ static napi_value create(napi_env env, napi_callback_info info) {
     check(CreatePipe(&s->err.value, &errWrite.value, &sa, 0), "stderr pipe failed");
     check(SetHandleInformation(s->out.value, HANDLE_FLAG_INHERIT, 0), "stdout inherit failed");
     check(SetHandleInformation(s->err.value, HANDLE_FLAG_INHERIT, 0), "stderr inherit failed");
-    if (s->csharp) {
+    if (s->runInput) {
+      // Overlapped write end so Stop can cancel a full pipe. The read end stays synchronous for the child.
+      static std::atomic<unsigned> pipeSerial{0};
+      const std::wstring name = L"\\\\.\\pipe\\student-ide-run-stdin-" + std::to_wstring(GetCurrentProcessId())
+        + L"-" + std::to_wstring(pipeSerial.fetch_add(1));
+      SECURITY_ATTRIBUTES inherit{sizeof(inherit), nullptr, TRUE};
+      input.value = CreateNamedPipeW(name.c_str(), PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE,
+        PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+        1, 4096, 4096, 0, &inherit);
+      check(input.value != INVALID_HANDLE_VALUE, "Run stdin pipe failed");
+      s->inputWrite.value = CreateFileW(name.c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, nullptr);
+      check(s->inputWrite.value != INVALID_HANDLE_VALUE, "Run stdin writer failed");
+      check(SetHandleInformation(s->inputWrite.value, HANDLE_FLAG_INHERIT, 0), "Run stdin inherit failed");
+      s->cancelEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+      check(s->cancelEvent != nullptr, "Run stdin cancel event failed");
+    } else if (s->csharp) {
       check(CreatePipe(&input.value, &s->inputWrite.value, &sa, 0), "C# stdin pipe failed");
       check(SetHandleInformation(s->inputWrite.value, HANDLE_FLAG_INHERIT, 0), "C# stdin inherit failed");
     } else input.value = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -245,7 +305,21 @@ static napi_value control(napi_env env, napi_callback_info info) {
     napi_value result; napiCheck(napi_get_undefined(env, &result));
     if (op == L"pid") napiCheck(napi_create_uint32(env, s->pid, &result));
     else if (op == L"count") napiCheck(napi_create_uint32(env, s->released ? 0 : active(s), &result));
-    else if (op == L"terminate") { if (!s->released) check(TerminateJobObject(s->job.value, 1), "Job termination failed"); }
+    else if (op == L"terminate") {
+      if (!s->released) {
+        if (s->runInput) {
+          s->cancelInput.store(true);
+          if (s->cancelEvent) SetEvent(s->cancelEvent);
+          if (s->inputWrite.value) CancelIoEx(s->inputWrite.value, nullptr);
+        }
+        check(TerminateJobObject(s->job.value, 1), "Job termination failed");
+      }
+    } else if (op == L"cancel-input") {
+      check(s->runInput && !s->released, "Run stdin unavailable");
+      s->cancelInput.store(true);
+      if (s->cancelEvent) SetEvent(s->cancelEvent);
+      if (s->inputWrite.value) CancelIoEx(s->inputWrite.value, nullptr);
+    }
     else if (op == L"release") {
       release(s);
       if (s->cleanup) { napi_remove_async_cleanup_hook(s->cleanup); s->cleanup = nullptr; }
@@ -308,18 +382,151 @@ static napi_value writeCsharp(napi_env env, napi_callback_info info) {
     napi_throw_error(env, nullptr, error.what()); return nullptr;
   }
 }
+struct RunWrite {
+  Session* session;
+  std::string bytes;
+  napi_async_work work = nullptr;
+  napi_ref owner = nullptr, callback = nullptr;
+  bool delivered = false;
+  bool cancelled = false;
+};
+static void reportStatus(napi_env env, napi_ref callback, const char* status) {
+  napi_value function, receiver, result, ignored;
+  napi_get_reference_value(env, callback, &function);
+  napi_get_undefined(env, &receiver);
+  napi_create_string_utf8(env, status, NAPI_AUTO_LENGTH, &result);
+  napi_call_function(env, receiver, function, 1, &result, &ignored);
+}
+static void reportDirect(napi_env env, napi_value callback, const char* status) {
+  napi_value receiver, result, ignored;
+  napi_get_undefined(env, &receiver);
+  napi_create_string_utf8(env, status, NAPI_AUTO_LENGTH, &result);
+  napi_call_function(env, receiver, callback, 1, &result, &ignored);
+}
+static bool writeRunBytes(Session* session, const std::string& bytes) {
+  HANDLE event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  if (!event) return false;
+  size_t offset = 0;
+  bool delivered = true;
+  while (offset < bytes.size()) {
+    if (session->cancelInput.load()) { delivered = false; break; }
+    OVERLAPPED overlapped{};
+    overlapped.hEvent = event;
+    ResetEvent(event);
+    const DWORD chunk = static_cast<DWORD>(std::min<size_t>(bytes.size() - offset, 4096));
+    DWORD count = 0;
+    if (WriteFile(session->inputWrite.value, bytes.data() + offset, chunk, &count, &overlapped)) {
+      if (!count) { delivered = false; break; }
+      offset += count;
+      continue;
+    }
+    if (GetLastError() != ERROR_IO_PENDING) { delivered = false; break; }
+    HANDLE waits[2] = { event, session->cancelEvent };
+    const DWORD waited = WaitForMultipleObjects(2, waits, FALSE, INFINITE);
+    if (waited != WAIT_OBJECT_0) {
+      CancelIoEx(session->inputWrite.value, &overlapped);
+      GetOverlappedResult(session->inputWrite.value, &overlapped, &count, TRUE);
+      delivered = false;
+      break;
+    }
+    if (!GetOverlappedResult(session->inputWrite.value, &overlapped, &count, FALSE) || !count) {
+      delivered = false;
+      break;
+    }
+    offset += count;
+  }
+  CloseHandle(event);
+  return delivered && offset == bytes.size();
+}
+static napi_value writeRun(napi_env env, napi_callback_info info) {
+  auto write = std::make_unique<RunWrite>();
+  try {
+    size_t argc = 3; napi_value argv[3];
+    napiCheck(napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
+    check(argc == 3, "Expected Run session, bytes, callback");
+    napiCheck(napi_get_value_external(env, argv[0], reinterpret_cast<void**>(&write->session)));
+    auto s = write->session;
+    check(s->runInput && !s->csharp && !s->released && !s->teardown && !s->inputClosed
+      && !s->cancelInput.load() && s->pendingWrites == 0 && s->inputWrite.value, "Run stdin unavailable");
+    void* data; size_t size;
+    napiCheck(napi_get_buffer_info(env, argv[1], &data, &size));
+    check(size <= 16 * 1024, "Run stdin chunk exceeds bound");
+    write->bytes.assign(static_cast<char*>(data), size);
+    napiCheck(napi_create_reference(env, argv[0], 1, &write->owner));
+    napiCheck(napi_create_reference(env, argv[2], 1, &write->callback));
+    napiCheck(napi_create_async_work(env, nullptr, text(env, "Run stdin"),
+      [](napi_env, void* value) {
+        auto w = static_cast<RunWrite*>(value);
+        if (w->bytes.empty()) {
+          w->cancelled = w->session->cancelInput.load();
+          w->delivered = !w->cancelled;
+          return;
+        }
+        w->delivered = writeRunBytes(w->session, w->bytes);
+        w->cancelled = !w->delivered && w->session->cancelInput.load();
+      }, [](napi_env env, napi_status, void* value) {
+        std::unique_ptr<RunWrite> w(static_cast<RunWrite*>(value));
+        auto s = w->session;
+        --s->pendingWrites;
+        const char* status = w->delivered ? "delivered" : w->cancelled ? "cancelled" : "broken";
+        try { reportStatus(env, w->callback, status); } catch (...) {}
+        napi_delete_reference(env, w->callback); napi_delete_reference(env, w->owner);
+        if (s->eofPending) {
+          s->eofPending = false;
+          napi_ref eof = s->eofCallback; s->eofCallback = nullptr;
+          try { if (s->inputWrite.value) s->inputWrite.close(); s->inputClosed = true; } catch (...) {}
+          if (eof) { try { reportStatus(env, eof, "closed"); } catch (...) {} napi_delete_reference(env, eof); }
+        }
+        napi_delete_async_work(env, w->work);
+      }, write.get(), &write->work));
+    napiCheck(napi_queue_async_work(env, write->work));
+    ++s->pendingWrites; write.release();
+    napi_value result; napi_get_undefined(env, &result); return result;
+  } catch (const std::exception& error) {
+    if (write->work) napi_delete_async_work(env, write->work);
+    if (write->callback) napi_delete_reference(env, write->callback);
+    if (write->owner) napi_delete_reference(env, write->owner);
+    napi_throw_error(env, nullptr, error.what()); return nullptr;
+  }
+}
+static napi_value closeRunInput(napi_env env, napi_callback_info info) {
+  try {
+    size_t argc = 2; napi_value argv[2];
+    napiCheck(napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
+    check(argc == 2, "Expected Run session and callback");
+    Session* s; napiCheck(napi_get_value_external(env, argv[0], reinterpret_cast<void**>(&s)));
+    check(s->runInput && !s->csharp && !s->released && !s->teardown, "Run stdin unavailable");
+    if (s->inputClosed) { reportDirect(env, argv[1], "closed"); }
+    else if (s->pendingWrites > 0) {
+      check(s->eofCallback == nullptr, "Run stdin EOF already queued");
+      napiCheck(napi_create_reference(env, argv[1], 1, &s->eofCallback));
+      s->eofPending = true;
+    } else {
+      if (s->inputWrite.value) s->inputWrite.close();
+      s->inputClosed = true;
+      reportDirect(env, argv[1], "closed");
+    }
+    napi_value result; napi_get_undefined(env, &result); return result;
+  } catch (const std::exception& error) { napi_throw_error(env, nullptr, error.what()); return nullptr; }
+}
 static napi_value init(napi_env env, napi_value exports) {
   static int gitMode = 1;
   static int csharpMode = 2;
+  static int runMode = 3; // Closed stdin; never enables the C# language writer.
+  static int runInputMode = 4; // Run line-input only. LSP and Git entries stay unchanged.
   napi_property_descriptor methods[] = {
     {"create", nullptr, create, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"createRun", nullptr, create, nullptr, nullptr, nullptr, napi_default, &runMode},
+    {"createRunInput", nullptr, create, nullptr, nullptr, nullptr, napi_default, &runInputMode},
     {"control", nullptr, control, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"createGit", nullptr, create, nullptr, nullptr, nullptr, napi_default, &gitMode},
     {"createCsharp", nullptr, create, nullptr, nullptr, nullptr, napi_default, &csharpMode},
     {"createCsharpPreflight", nullptr, create, nullptr, nullptr, nullptr, napi_default, &gitMode},
     {"writeCsharp", nullptr, writeCsharp, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"writeRun", nullptr, writeRun, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"closeRunInput", nullptr, closeRunInput, nullptr, nullptr, nullptr, napi_default, nullptr},
   };
-  napi_define_properties(env, exports, 6, methods);
+  napi_define_properties(env, exports, 10, methods);
   napi_set_named_property(env, exports, "capability", text(env, "student-ide-piped-job-v1"));
   return exports;
 }

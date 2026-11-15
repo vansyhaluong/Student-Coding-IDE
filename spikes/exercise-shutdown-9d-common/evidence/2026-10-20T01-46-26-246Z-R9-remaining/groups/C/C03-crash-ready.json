@@ -1,0 +1,78 @@
+{
+  "hostPid": 26156,
+  "id": "C03",
+  "root": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning",
+  "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\sessions\\session-f72c306d-d0c0-47af-8ee2-56a63387fc84",
+  "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\dispositions\\f72c306d-d0c0-47af-8ee2-56a63387fc84.json",
+  "session": {
+    "owner": "exercise:f72c306d-d0c0-47af-8ee2-56a63387fc84",
+    "sessionId": "f72c306d-d0c0-47af-8ee2-56a63387fc84",
+    "workspace": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\sessions\\session-f72c306d-d0c0-47af-8ee2-56a63387fc84",
+    "recordPath": "D:\\coding-ide\\out\\exercise-shutdown-9d-common\\staged\\2026-10-20T01-46-26-246Z-R9-remaining\\C03-crash\\learning\\dispositions\\f72c306d-d0c0-47af-8ee2-56a63387fc84.json",
+    "disposition": null,
+    "proof": null,
+    "nativeStage": "OWNED",
+    "persistenceStage": "ACKNOWLEDGED",
+    "workspaceState": "RETAINED",
+    "checkpoint": "OWNED",
+    "lastError": null,
+    "processClean": false,
+    "cleanupComplete": false,
+    "finalized": false,
+    "released": false,
+    "managerResources": 1,
+    "counters": {
+      "spawn": 1,
+      "query": 10,
+      "terminate": 0,
+      "release": 0,
+      "handlesClosed": 0,
+      "delete": 0
+    },
+    "phase": "execute",
+    "rootPid": 29556,
+    "retained": [
+      {
+        "pid": 29556,
+        "member": true,
+        "created": "31285301:375274504",
+        "root": true,
+        "image": "C:\\Program Files\\dotnet\\dotnet.exe",
+        "signaled": false,
+        "closed": false
+      },
+      {
+        "pid": 29928,
+        "member": true,
+        "created": "31285301:375670359",
+        "root": false,
+        "image": "C:\\Windows\\System32\\conhost.exe",
+        "signaled": false,
+        "closed": false
+      }
+    ],
+    "coverageGaps": [],
+    "output": "READY-CSHARP\r\n",
+    "exitCode": null
+  },
+  "members": [
+    29556,
+    29928
+  ],
+  "identities": [
+    {
+      "pid": 29556,
+      "member": true,
+      "created": "31285301:375274504",
+      "image": "C:\\Program Files\\dotnet\\dotnet.exe"
+    },
+    {
+      "pid": 29928,
+      "member": true,
+      "created": "31285301:375670359",
+      "image": "C:\\Windows\\System32\\conhost.exe"
+    }
+  ],
+  "sequence": 1,
+  "monotonicMs": 7046.0687
+}

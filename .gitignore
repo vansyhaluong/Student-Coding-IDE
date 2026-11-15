@@ -14,4 +14,5 @@ resources/csharp-ls/
 .DS_Store
 Thumbs.db
 /spikes/
-/prototypes/
+/release/
+

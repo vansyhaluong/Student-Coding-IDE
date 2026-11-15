@@ -1,3 +1,4 @@
+import { JavaScriptRunStrategy } from '../../src/main/services/run/javascript-run-strategy'
 import { describe, expect, it, vi } from 'vitest'
 import { NodeRuntimeDetector } from '../../src/main/services/dependencies/node-runtime'
 import { RunService } from '../../src/main/services/run/run-service'
@@ -41,7 +42,7 @@ describe('Phase 4B RunService internal launch seam', () => {
     const authority = { authorize: vi.fn(async () => ({ projectId, relativePath: 'index.js',
       canonicalRoot: 'C:\\project', canonicalFile: 'C:\\project\\index.js' })),
     resolveRuntime: vi.fn(async () => ({ executable: 'C:\\node\\node.exe' })) }
-    const service = new RunService(authority)
+    const service = new RunService(authority, [new JavaScriptRunStrategy()])
     const manager = new ProcessManager()
     let released = false
     const native: PipedRunProcess = { ownership: { mode: 'LEGACY_ROOT_OWNED', rootPid: 1 },

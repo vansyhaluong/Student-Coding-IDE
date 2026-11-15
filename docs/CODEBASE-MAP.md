@@ -1627,23 +1627,95 @@ No Python, Java, or custom/alternate HTML diagnostics provider was added.
 
 ## Planned C# Project Run modules — ADR-024 / Plan Section 13.7
 
-Status: `NOT_STARTED`; this table is a planning map, not an actual-source claim.
+Status: `IN_PROGRESS` with M1-01 contracts, M1-02 Main foundations, M1-03 native argv
+M1-04 isolated compatibility evidence, M1-05 resolver/evaluation and M1-06
+discovery/classification, M1-07 selection/persistence, M1-08 lifecycle, M1-09a source guard
+and M1-09 strategy composition COMPLETE. M1-10 typed C# Run IPC/Preload is COMPLETE;
+M1-11 presentation is COMPLETE (2026-11-12); M1-12 Core acceptance is COMPLETE after the 2026-11-15 suite-hygiene pass (smoke 48/48 retained, `npm test` 1608/1608); M2-01 through M2-05 are COMPLETE; M2-06 automated Electron evidence PASS (60/60), manual W not run, so M2-06 and M2-07 are not COMPLETE.
+The module table distinguishes
+actual foundations from planned composition.
 Existing Run/Output files are extended only in explicitly authorized future tasks.
 No module below was created by the 2026-10-07 planning update.
 
+M1-01 actual foundation (2026-10-07): `src/shared/contracts/run.ts` now includes
+additive semantic targets, phases, C# resolution/failure DTOs and exact validators;
+`tests/contracts/run-validation.test.ts` provides 74 focused contract tests.
+Existing JS API/channels and Main/Preload/Renderer implementations remain unchanged.
+At M1-01 no planned C# Main module was actual; later production composition remains deferred.
+
+M1-02 actual foundation (2026-10-07): existing `run-service.ts` and
+`run-strategy.ts` own canonical identity, execution fingerprint, immutable
+preparation snapshots, constructor-only strategy registration and contextual
+runtime resolution. `javascript-run-strategy.ts` declares its kind; `main/index.ts`
+still composes JS only. `run-runtime.ts` exports the JS strategy for existing
+native smoke harnesses. New `tests/main/run-identity.test.ts` and extended Run
+lifecycle tests cover the foundation; existing tests/smokes explicitly inject JS.
+No new production module, native adapter change or IPC/UI implementation.
+
+M1-03 actual extension (2026-10-07): `windows-piped-process-adapter.ts` uses
+dedicated closed-stdin native `createRun` with bounded argv and filtered inherited
+environment. `piped-process-adapter.ts` documents the internal policy;
+`native/run-process.cpp` validates paths/strings/bounds before OS resource creation.
+New `tests/main/windows-run-arguments.test.ts`, `tests/fixtures/run/argv.js` and
+`argv-tree.js`, and extended `scripts/smoke-run-native.mjs` cover round-trip,
+bounds, EOF/environment, repeated handle cleanup and multi-argument tree Stop.
+No C# production strategy, public Run API or Output change.
+
+M1-04 actual isolated evidence (2026-10-07): `spikes/csharp-project-run/` contains
+`harness.mjs`, `build-native.mjs`, `native-prototype.cpp`, Console/build-hold
+fixtures, README/REPORT and recorded JSON evidence. The probe compiles existing
+pipe/Job primitives separately; production native code and app composition are
+unchanged. Windows 11 x64/net8.0+net10.0 has 32/32 passing cases; M1-04 is COMPLETE
+under ADR-024's platform scope amendment. Windows 10 is outside the verified C#
+Project Run acceptance baseline; compatibility is not claimed. This gate enabled
+the subsequently completed M1-05 foundation. No production strategy or stdin is implemented.
+
+M1-05 actual foundation (2026-10-07): `dependencies/dotnet-run-runtime.ts` owns
+Run SDK policy/context; `run/csharp-run-preflight.ts` authorizes and evaluates one
+candidate; `run/csharp-run-probe.ts` bounds fixed native commands and retains
+ProcessManager ownership through cleanup. `run-runtime.ts` exports these Main-only
+modules for verification/later composition; `main/index.ts` still composes JS only.
+`tests/main/csharp-run-preflight.test.ts` has 60 focused tests; the real
+`scripts/smoke-csharp-run-preflight.mjs` and
+`spikes/csharp-project-run/evidence/m1-05-preflight.json` record 20 passing cases.
+
+M1-06 actual foundation (2026-10-08): `run/csharp-run-target-resolver.ts` owns
+independent bounded discovery, canonical reference graph and evaluated Console
+classification. `run-runtime.ts` exports it for verification/later composition;
+`main/index.ts` is unchanged. `tests/main/csharp-run-targets.test.ts` adds 62 tests.
+`scripts/smoke-csharp-run-targets.mjs` and
+`spikes/csharp-project-run/M1-06-REPORT.md` / `evidence/m1-06-targets.json` record
+14 real SDK 8/10 cases. No store, picker, strategy or public capability is added.
+
+M1-07 actual foundation (2026-10-08): `run/csharp-run-target-store.ts` reuses
+PersistenceService under a separate `csharp-run-targets/<projectId>.json` namespace.
+`tests/main/csharp-run-target-store.test.ts` covers selection/reopen/isolation,
+stale/corrupt/IO/atomic failure and asynchronous lifecycle. Main-only helper;
+no export/composition, settings schema, LSP store or wire contract changes.
+
 | Domain / responsibility | Proposed path | Ownership / status |
 |---|---|---|
-| C# fixed build/run strategy | `src/main/services/run/csharp-run-strategy.ts` | Main Run domain; planned |
-| Console target discovery/evaluation | `src/main/services/run/csharp-run-target-resolver.ts`, `csharp-run-preflight.ts` in that directory | Main; planned; not CsharpWorkspace or LSP session |
-| Remembered Run target | `src/main/services/run/csharp-run-target-store.ts` | Main versioned JSON store; planned; separate from IntelliSense store |
-| Run SDK eligibility | `src/main/services/dependencies/dotnet-run-runtime.ts` | Main; planned; shared inventory helpers, independent Run policy |
-| Saved-source preparation guard | `src/main/services/run/run-source-guard.ts` | Main Run-owned bounded Renderer handshake; planned; no Monaco ownership |
-| Bounded stdin queue | `src/main/services/run/run-input-queue.ts` | Main Run session; planned M2 |
-| Existing identity/plan/process seams | `src/main/services/run/run-service.ts`, `run-strategy.ts`, `piped-process-adapter.ts`, `windows-piped-process-adapter.ts`, `native/run-process.cpp` | Existing actual modules; planned extension with JS/Git/LSP regressions |
-| Semantic Run wire boundary | `src/shared/contracts/run.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts` | Existing actual modules; planned target/phase/guard/input DTOs and validators |
-| Target selection and line composer | `src/renderer/src/features/output/run-controller.ts`, `EditorRunAction.tsx`, `OutputPanel.tsx`, `use-project-run.ts` | Existing actual Output feature; planned minimal extension |
-| Compatibility evidence | `spikes/csharp-project-run/REPORT.md` and isolated harness | Planned M1-04 evidence only; no new dependency without separate authorization |
-| C# Run acceptance | `tests/main/csharp-run-*.test.ts`, `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-csharp-run.mjs` | New focused tests/smoke planned; existing integration suite extended |
+| C# fixed build/run strategy | `src/main/services/run/csharp-run-strategy.ts` | Actual M1-09; evaluated runtime capability, immutable M1-04 build/run commands and SDK/TFM fingerprint |
+| Owned C# preparation composition | `src/main/services/run/csharp-run-preparation.ts` | Actual M1-09; fresh Main target-store resolution and M1-05 evaluation per checkpoint, session-owned probe cleanup, no selection writes |
+| Strategy verification | `tests/main/csharp-run-strategy.test.ts`, `scripts/smoke-csharp-run-strategy.mjs`, `spikes/csharp-project-run/M1-09-REPORT.md` | Actual M1-09; 30 focused tests, real Windows SDK 8/10 execution/Stop and repeated resource evidence |
+| Console target discovery | `src/main/services/run/csharp-run-target-resolver.ts` | Actual M1-06; bounded canonical discovery, evaluated classification, reference graph and 0/1/multiple resolution; no persistence/execution |
+| Single-project facts and bounded probes | `src/main/services/run/csharp-run-preflight.ts`, `csharp-run-probe.ts` | Actual M1-05; Main Run ownership, no CsharpWorkspace/LSP session reuse |
+| Remembered Run target | `src/main/services/run/csharp-run-target-store.ts` | Actual M1-07; Main resolve/select/clear, isolated schema-1 JSON via PersistenceService, fresh resolver/canonical validation; no public API |
+| Run SDK eligibility | `src/main/services/dependencies/dotnet-run-runtime.ts` | Actual M1-05; shared executable validation, independent Run >=8 policy and CLI-selected SDK |
+| Saved-source preparation guard | `src/main/services/run/run-source-guard.ts` | Actual M1-09a; Main approval/revision authority, trusted-frame reply handler, 5s/64-session bounds, abort/invalidations; no Monaco ownership |
+| Source guard contracts/bridge | `src/shared/contracts/run-source-guard.ts`, `src/preload/bridge/run-source-guard.ts` | Actual exact request/release/reply DTOs and narrow studentIde.runSourceGuard; existing JS Run API unchanged |
+| Retained source revision/response | `src/renderer/src/features/editor/models/editor-model-manager.ts`, `src/renderer/src/features/output/run-source-guard-controller.ts`, `use-project-run.ts` | Actual project-wide dirty/conflict/missing aggregation and revision observer; no Save calls or new UI |
+| Source guard verification | `tests/contracts/run-source-guard-validation.test.ts`, `tests/main/run-source-guard.test.ts`, `tests/main/run-source-guard-lifecycle.test.ts`, `tests/renderer/run-source-guard.test.ts`, `tests/preload/run-source-guard-bridge.test.ts` | Actual M1-09a focused contracts/ownership/editor/bridge/integration; fake process lifecycle, no production dotnet launch |
+| Bounded stdin queue | `src/main/services/run/run-input-queue.ts`, `run-service.ts`, `tests/main/run-input-queue.test.ts` | Actual M2-03; per-session order, bounds, EOF, and lifecycle close. M2-04 calls it through typed input IPC |
+| Run native stdin | `src/main/services/run/native/run-process.cpp`, `windows-piped-process-adapter.ts`, `piped-process-adapter.ts`, `scripts/smoke-run-input.mjs`, `tests/fixtures/run-input-child.mjs`, `tests/main/run-input-native.integration.test.ts` | Actual M2-02; `createRunInput` / adapter `writeInput` and `closeInput`, forwarded by RunService for a C# execute step |
+| Existing identity/plan/process seams | `src/main/services/run/run-service.ts`, `run-strategy.ts`, `piped-process-adapter.ts`, `windows-piped-process-adapter.ts`, `native/run-process.cpp` | Actual M1-08 Main plan lifecycle; early owned preparation, abort/resource context, sequential cleanup and fingerprint/generation checks; M2-02 native stdin and M2-03 queue sit on these seams |
+| Semantic Run wire boundary | `src/shared/contracts/run.ts`, `run-project.ts`, `src/main/ipc/run-ipc-service.ts`, `src/preload/bridge/run.ts`, `tests/main/run-input-ipc.test.ts` | Actual M1-10 operations, M2-01 input contracts, and M2-04 send/close/status on the trusted Run bridge |
+| Finite target request ownership | `src/main/services/run/csharp-run-target-requests.ts` | Actual M1-10; one outstanding active-project operation, owner cancellation, project transition lease, registered scope cleanup and stale-response rejection |
+| C# Run IPC verification | `tests/contracts/run-project-validation.test.ts`, `tests/main/run-project-ipc.test.ts`, `tests/main/csharp-run-target-requests.test.ts`, `tests/preload/run-project-bridge.test.ts`, `spikes/csharp-project-run/M1-10-REPORT.md` | Actual M1-10; 63 new tests, production-domain IPC integration with controlled SDK/process ports; no new native smoke |
+| Target selection and Run presentation | `src/renderer/src/features/output/run-controller.ts`, `EditorRunAction.tsx`, `RunTargetDialog.tsx`, `OutputPanel.tsx`, `use-project-run.ts`, `tests/renderer/run-input-composer.test.tsx` | Actual M1-11 presentation plus M2-05 line composer: Enter sends, Shift+Enter and IME do not, EOF, busy/closed state, unsent text stays off the next run |
+| C# Run UI verification | `tests/renderer/csharp-run-ui.test.tsx`, `tests/renderer/run-output.integration.test.tsx`, `scripts/build-csharp-run-ui-smoke.mjs`, `scripts/smoke-csharp-run-ui.mjs` | Actual M1-11 focused UI/JS regressions and isolated real Electron/SDK/native smoke; no M1-12 acceptance claim |
+| Compatibility evidence | `spikes/csharp-project-run/REPORT.md`, `harness.mjs`, `native-prototype.cpp`, `build-native.mjs`, `fixtures/`, `evidence/` | M1-04 COMPLETE; Windows 11 x64 32/32 PASS under revised scope; no new dependency |
+| C# Run acceptance | `tests/main/csharp-run-*.test.ts`, `tests/renderer/run-output.integration.test.tsx`, `scripts/smoke-csharp-run.mjs`, `vitest.config.ts` | Actual M1-12 COMPLETE: Core native/UI matrix on SDK 8/10, suite hygiene so `npm test` exits 0; prototypes stay excluded and untracked |
 
 TerminalService, LanguageServiceManager and Exercise Runtime retain independent
 semantics. No generic renderer process service, new panel system or public native

@@ -21,11 +21,16 @@ export * from './language'
 export * from './language-validation'
 export * from './project'
 export * from './run'
+export * from './run-source-guard'
 export * from './search'
 export * from './student-ide'
 export * from './terminal'
 export * from './validation'
+<<<<<<< HEAD
 export * from './smart-hints'
 export * from './learning-chat'
 export * from './project-agent'
 export * from './project-agent-validation'
+=======
+export * from './run-project'
+>>>>>>> origin/develop
